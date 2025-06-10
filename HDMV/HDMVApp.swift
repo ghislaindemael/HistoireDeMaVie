@@ -10,9 +10,10 @@ import SwiftData
 
 @main
 struct HDMVApp: App {
-    var sharedModelContainer: ModelContainer = {
+    static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            
+            MealType.self,
+            Meal.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -27,6 +28,6 @@ struct HDMVApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(HDMVApp.sharedModelContainer)
     }
 }

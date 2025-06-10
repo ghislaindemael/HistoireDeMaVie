@@ -5,11 +5,9 @@ struct SettingsPage: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack {
                 AuthComponent(expanded: !auth.isAuthenticated)
-                
-                
-                
+                CachingComponent(expanded: false)
                 Spacer()
             }
             .padding()

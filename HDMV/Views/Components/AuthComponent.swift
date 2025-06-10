@@ -23,7 +23,7 @@ struct AuthComponent: View {
 
     var body: some View {
         DisclosureGroup("Supabase Login", isExpanded: $isExpanded) {
-            VStack(spacing: 10) {
+            VStack(spacing: 5) {
                 TextField("Email", text: $email)
                     .textFieldStyle(.roundedBorder)
                     .keyboardType(.emailAddress)
@@ -77,7 +77,7 @@ struct AuthComponent: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.blue, lineWidth: 1)
         )
-        .padding()
+        
     }
 
     private func login() async {
