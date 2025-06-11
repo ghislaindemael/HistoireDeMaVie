@@ -13,7 +13,8 @@ struct HDMVApp: App {
     static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             MealType.self,
-            Meal.self
+            Meal.self,
+            AgendaEntry.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

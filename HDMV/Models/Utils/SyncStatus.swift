@@ -12,4 +12,5 @@ enum SyncStatus: Sendable {
     case syncing    // The object is attempting an upload to Supabase
     case local      // The object exists locally but has not been saved yet.
     case failed     // The last attempt to save the object to Supabase failed.
+    case undefined
 }

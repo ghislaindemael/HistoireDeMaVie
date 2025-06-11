@@ -76,3 +76,7 @@ struct MealsPage: View {
     }
     
 }
+
+#Preview {
+    MealsPage()
+}

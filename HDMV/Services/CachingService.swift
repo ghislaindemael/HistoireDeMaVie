@@ -31,8 +31,6 @@ class CachingService: ObservableObject {
     }
     
     func ensureCacheIsLoaded() async {
-        // Await the value of the task. If the task is already complete,
-        // this returns instantly. If it's not, it waits for it to finish.
         await initialLoadingTask?.value
     }
     

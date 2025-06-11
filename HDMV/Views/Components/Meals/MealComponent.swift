@@ -33,50 +33,38 @@ struct MealComponent: View {
             // --- Header Row (unchanged) ---
             HStack {
                 Text(meal.mealType?.name ?? "Unknown Meal")
-                    .font(.title2)
+                    .font(.title3)
                     .foregroundColor(.accentColor)
                 Spacer()
                 HStack {
                     if !isEditing {
-                        uploadButton
+                        SyncStatusButton(status: meal.syncStatus)
                     }
-                    syncStatusIndicator
-                    editDoneButton
+                    toggleEditButton
                 }
                 .font(.title)
             }
             
             // --- EDIT MODE ---
             if isEditing {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Time")
+                        Spacer()
                         DatePicker("Start Time", selection: $editableTimeStart, displayedComponents: .hourAndMinute)
-                        
-                        Toggle(isOn: $isTimeEndEnabled) {
-                            Text("Set End Time")
-                        }
-                        
-                        if isTimeEndEnabled {
-                            DatePicker("End Time", selection: $editableTimeEnd, displayedComponents: .hourAndMinute)
-                        }
-                        
-                        TextEditor(text: $meal.content)
-                            .frame(minHeight: 80)
-                            .background(Color(.white))
-                            .cornerRadius(8)
-                            .focused($focusedField, equals: .content)
-                            .toolbar {
-                                ToolbarItemGroup(placement: .keyboard) {
-                                    Spacer()
-                                    Button("Done") {
-                                        focusedField = nil
-                                    }
-                                }
-                            }
-                        
+                            .labelsHidden()
+                        Text("to")
+                        DatePicker("End Time", selection: $editableTimeEnd, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
                     }
-                    .font(.subheadline)
+                    TextEditor(text: $meal.content)
+                        .frame(minHeight: 80)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(8)
+                        .focused($focusedField, equals: .content)
+                    
                 }
+                .font(.subheadline)
                 
                 // --- DISPLAY MODE ---
             } else {
@@ -95,25 +83,31 @@ struct MealComponent: View {
                                 Button(action: endMealNow) {
                                     Text("End now")
                                         .font(.caption.bold())
-                                        .padding(.horizontal, 8).padding(.vertical, 4)
-                                        .background(Color.blue).foregroundColor(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
                                         .cornerRadius(6)
                                 }
                             }
                         }
-                        .font(.subheadline).foregroundColor(.secondary)
+                        .foregroundColor(.secondary)
                         
                         // Content display
                         if !meal.content.isEmpty {
                             Text(meal.content)
-                                .font(.body).foregroundColor(.primary)
+                                .foregroundColor(.primary)
                         }
                     }
    
                 }
+                .font(.subheadline)
             }
         }
-        .padding().background(Color(.systemGray5)).cornerRadius(10)
+        .padding().background(Color(.secondarySystemBackground)).cornerRadius(10)
+        .onTapGesture {
+            focusedField = nil
+        }
         
     }
     
@@ -198,7 +192,7 @@ struct MealComponent: View {
     }
     
     @ViewBuilder
-    private var editDoneButton: some View {
+    private var toggleEditButton: some View {
         Button(action: {
             if isEditing {
                 saveChanges()
@@ -210,40 +204,6 @@ struct MealComponent: View {
                 .foregroundStyle(isEditing ? Color.green : Color.accentColor)
         }
         .buttonStyle(.borderless)
-    }
-    
-    @ViewBuilder
-    private var syncStatusIndicator: some View {
-        switch meal.syncStatus {
-            case .synced:
-                Image(systemName: "checkmark.icloud.fill")
-                    .foregroundColor(.green)
-            case .syncing:
-                ProgressView()
-            case .local:
-                Image(systemName: "icloud.slash")
-            case .failed:
-                Image(systemName: "xmark.icloud.fill")
-                    .foregroundColor(.red)
-                
-        }
-            
-    }
-    
-    @ViewBuilder
-    private var uploadButton: some View {
-        switch meal.syncStatus {
-            case .synced, .syncing:
-                EmptyView()
-            case .local, .failed:
-                Button(action: {
-                    onRetry()
-                }) {
-                    Label("Upload", systemImage: "icloud.and.arrow.up.fill")
-                        .labelStyle(.iconOnly)
-                }
-                .foregroundStyle(.green)
-        }
     }
     
     private func formattedTime(_ timeString: String) -> String { String(timeString.prefix(5)) }

@@ -23,7 +23,6 @@ struct AddMealSheet: View {
     private enum FocusField: Hashable {
         case content
     }
-    
     @FocusState private var focusedField: FocusField?
     
     // Access the cached meal types
@@ -103,7 +102,6 @@ struct AddMealSheet: View {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") {
-                        
                         focusedField = nil
                     }
                 }
