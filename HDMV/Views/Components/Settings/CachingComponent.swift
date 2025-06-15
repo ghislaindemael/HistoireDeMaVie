@@ -15,7 +15,7 @@ struct CachingComponent: View {
     @State private var lastUpdated: Date?
     @State private var errorMessage: String?
     
-    init(expanded: Bool) {
+    init(expanded: Bool = false) {
         _isExpanded = State(initialValue: expanded)
     }
 

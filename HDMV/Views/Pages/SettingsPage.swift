@@ -7,7 +7,8 @@ struct SettingsPage: View {
         NavigationStack {
             VStack {
                 AuthComponent(expanded: !auth.isAuthenticated)
-                CachingComponent(expanded: false)
+                CachingComponent()
+                DataManagementComponent()
                 Spacer()
             }
             .padding()

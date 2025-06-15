@@ -78,17 +78,23 @@ class MealService {
         return newMeal
     }
     
-    func updateMeal(_ mealDto: MealDTO) async throws {
+    func updateMeal(_ mealDto: MealDTO) async throws -> Bool {
         guard let supabase = self.supabaseClient else {
             throw NSError(domain: "MealServiceError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Supabase client is not initialized."])
         }
         
         // Update the row in the 'my_meals' table where the 'id' matches.
-        try await supabase
+        let updatedMeals: [MealDTO] = try await supabase
             .from("my_meals")
             .update(mealDto)
             .eq("id", value: mealDto.id)
+            .select()
             .execute()
+            .value
+        
+        print("Updated meals:", updatedMeals)
+        
+        return !updatedMeals.isEmpty
     }
 
 

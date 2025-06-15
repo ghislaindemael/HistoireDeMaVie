@@ -90,6 +90,32 @@ class MealsViewModel: ObservableObject {
         }
     }
     
+    func endMealNow(for meal: Meal) {
+        // 1. Find the meal in the view model's published array.
+        guard let index = meals.firstIndex(where: { $0.id == meal.id }) else { return }
+        
+        // 2. Create the timestamp and update the meal's properties in the array.
+        // This will instantly update any view observing the 'meals' array.
+        let nowString = timeFormatter.string(from: Date())
+        meals[index].timeEnd = nowString
+        meals[index].syncStatus = .syncing
+        
+        // 3. Persist this change to the local SwiftData store immediately.
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save ended meal locally: \(error)")
+            // If saving fails, revert the status to indicate an error.
+            meals[index].syncStatus = .failed
+            return
+        }
+        
+        // 4. Start the background task to sync the update with Supabase.
+        Task {
+            await self.syncExistingMealUpdate(mealId: meal.id)
+        }
+    }
+    
     /// Called from MealComponent when an existing meal is modified locally.
     func mealWasUpdated(_ meal: Meal) {
         // 1. Immediately save any local changes (like new content or end time)
@@ -106,6 +132,7 @@ class MealsViewModel: ObservableObject {
             
             objectWillChange.send()
             meals[index].syncStatus = .syncing
+            meals[index].timeEnd = meal.timeEnd
             Task {
                 await self.syncExistingMealUpdate(mealId: meal.id)
             }
@@ -165,8 +192,7 @@ class MealsViewModel: ObservableObject {
         }
     }
     
-    private func syncExistingMealUpdate(mealId: Int) async { // <-- Takes an ID
-        // Find the "live" meal object from the array to ensure we have the latest state
+    private func syncExistingMealUpdate(mealId: Int) async {
         guard let mealForDto = meals.first(where: { $0.id == mealId }) else {
             return
         }
@@ -174,18 +200,24 @@ class MealsViewModel: ObservableObject {
         let mealDto = mealToDTO(mealForDto)
         
         do {
-            try await mealService.updateMeal(mealDto)
-            // Find the object again by its ID and update its status
+            let didUpdateSuccessfully = try await mealService.updateMeal(mealDto)
+            
             if let index = meals.firstIndex(where: { $0.id == mealId }) {
                 objectWillChange.send()
-                meals[index].syncStatus = .synced
+                
+                if didUpdateSuccessfully {
+                    meals[index].syncStatus = .synced
+                } else {
+                    print("Update sent, but no matching meal was found on the server.")
+                    meals[index].syncStatus = .failed
+                }
             }
         } catch {
             if let index = meals.firstIndex(where: { $0.id == mealId }) {
                 objectWillChange.send()
                 meals[index].syncStatus = .failed
             }
-            print("Failed to update meal: \(error)")
+            print("Failed to execute update request: \(error)")
         }
     }
     
@@ -202,6 +234,12 @@ class MealsViewModel: ObservableObject {
         
         let descriptor = FetchDescriptor<Meal>(predicate: predicate)
         return try modelContext.fetch(descriptor)
+    }
+    
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
     }
     
     

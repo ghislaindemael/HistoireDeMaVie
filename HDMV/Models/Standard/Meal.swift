@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class Meal: Identifiable {
     @Attribute(.unique) var id: Int
-    var date: String
+    var date: String = Date().rawValue
     var timeStart: String
     var timeEnd: String?
     var content: String

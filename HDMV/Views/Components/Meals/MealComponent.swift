@@ -5,35 +5,22 @@ struct MealComponent: View {
     
     var onUpdate: () -> Void
     var onRetry: () -> Void
+    var onEndNow: () -> Void
     
     // This state now controls the entire component's edit mode
     @State private var isEditing = false
     
-    // State variables to hold the date values while editing
-    @State private var editableTimeStart: Date = Date()
-    @State private var editableTimeEnd: Date = Date()
-    @State private var isTimeEndEnabled: Bool = false
     
-    private struct MealSnapshot {
-        var timeStart: String
-        var timeEnd: String?
-        var content: String
-    }
+    @State private var snapshot: Meal?
     
-    @State private var snapshot: MealSnapshot?
-    
-    private enum FocusField: Hashable {
-        case content
-    }
-    
-    @FocusState private var focusedField: FocusField?
     
     var body: some View {
+        
         VStack(alignment: .leading, spacing: 12) {
-            // --- Header Row (unchanged) ---
+            
             HStack {
                 Text(meal.mealType?.name ?? "Unknown Meal")
-                    .font(.title3)
+                    .font(.title3.bold())
                     .foregroundColor(.accentColor)
                 Spacer()
                 HStack {
@@ -45,69 +32,46 @@ struct MealComponent: View {
                 .font(.title)
             }
             
-            // --- EDIT MODE ---
             if isEditing {
+                MealEditorView(
+                    meal: $meal
+                )
+            } else {
+                
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Time")
-                        Spacer()
-                        DatePicker("Start Time", selection: $editableTimeStart, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                        Text("to")
-                        DatePicker("End Time", selection: $editableTimeEnd, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                    }
-                    TextEditor(text: $meal.content)
-                        .frame(minHeight: 80)
-                        .background(Color(.tertiarySystemBackground))
-                        .cornerRadius(8)
-                        .focused($focusedField, equals: .content)
-                    
-                }
-                .font(.subheadline)
-                
-                // --- DISPLAY MODE ---
-            } else {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Time display
-                        HStack {
-                            Image(systemName: "clock")
-                            Text(formattedTime(meal.timeStart))
-                            
-                            if let timeEnd = meal.timeEnd {
-                                Image(systemName: "arrow.right")
-                                Text(formattedTime(timeEnd))
-                            } else {
-                                // This button remains for quick-ending a meal
-                                Button(action: endMealNow) {
-                                    Text("End now")
-                                        .font(.caption.bold())
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.blue)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(6)
-                                }
+                        Image(systemName: "clock")
+                        Text("\(formattedTime(meal.timeStart))")
+                        if let timeEnd = meal.timeEnd {
+                            Image(systemName: "arrow.right")
+                            Text(formattedTime(timeEnd))
+                        } else {
+                            Button(action: onEndNow)
+                            {
+                                Text("End now")
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(6)
                             }
                         }
-                        .foregroundColor(.secondary)
-                        
-                        // Content display
-                        if !meal.content.isEmpty {
-                            Text(meal.content)
-                                .foregroundColor(.primary)
-                        }
                     }
-   
+                    .foregroundColor(.secondary)
+                    
+                    if !meal.content.isEmpty {
+                        Text(meal.content)
+                            .foregroundColor(.primary)
+                    }
+                    
+                    
                 }
                 .font(.subheadline)
             }
         }
-        .padding().background(Color(.secondarySystemBackground)).cornerRadius(10)
-        .onTapGesture {
-            focusedField = nil
-        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
         
     }
     
@@ -116,34 +80,25 @@ struct MealComponent: View {
     private func startEditing() {
         // --- UPDATED ---
         // 1. Take a snapshot of the current data BEFORE entering edit mode.
-        self.snapshot = MealSnapshot(
+        self.snapshot = Meal(
+            id: -1,
+            date: meal.date,
             timeStart: meal.timeStart,
             timeEnd: meal.timeEnd,
-            content: meal.content
+            content: meal.content,
+            mealTypeId: meal.mealTypeId
         )
         self.meal.syncStatus = .local
         
-        // 2. Populate the editable state variables as before.
-        self.editableTimeStart = date(from: meal.timeStart)
-        if let timeEndStr = meal.timeEnd {
-            self.isTimeEndEnabled = true
-            self.editableTimeEnd = date(from: timeEndStr)
-        } else {
-            self.isTimeEndEnabled = false
-            self.editableTimeEnd = editableTimeStart.addingTimeInterval(15 * 60)
-        }
+        // 2. Set editing mode to true to build the view
         self.isEditing = true
+        
     }
     
     
     private func saveChanges() {
-        // --- UPDATED ---
-        // 1. Get the new values from the UI state.
-        let newTimeStart = timeFormatter.string(from: editableTimeStart)
-        let newTimeEnd = isTimeEndEnabled ? timeFormatter.string(from: editableTimeEnd) : nil
-        // Note: meal.content is already updated via its @Binding.
         
-        // 2. Safely unwrap the snapshot we took earlier.
+        // 1. Safely unwrap the snapshot we took earlier.
         guard let original = snapshot else {
             
             self.isEditing = false
@@ -151,22 +106,19 @@ struct MealComponent: View {
             return
         }
         
-        // 3. Compare the original snapshot with the new values.
+        // 2. Compare the original snapshot with the new values.
         let hasChanges = (
-            original.timeStart != newTimeStart ||
-            original.timeEnd != newTimeEnd ||
+            original.mealTypeId != meal.mealTypeId ||
+            original.timeStart != meal.timeStart ||
+            original.timeEnd != meal.timeEnd ||
             original.content != meal.content
         )
         
-        // 4. Update the meal model regardless of changes (to reflect UI).
-        meal.timeStart = newTimeStart
-        meal.timeEnd = newTimeEnd
         
         // 5. Exit edit mode and clear the snapshot.
         self.isEditing = false
         self.snapshot = nil
         
-        // 6. ONLY call onUpdate if there were actual changes.
         if hasChanges {
             onUpdate()
         } else {
@@ -174,10 +126,6 @@ struct MealComponent: View {
         }
     }
     
-    private func endMealNow() {
-        meal.timeEnd = timeFormatter.string(from: Date())
-        onUpdate()
-    }
     
     private func date(from timeString: String) -> Date {
         let parsingFormatter = DateFormatter()

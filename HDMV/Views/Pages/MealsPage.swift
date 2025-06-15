@@ -44,7 +44,10 @@ struct MealsPage: View {
                         MealComponent(
                             meal: $meal,
                             onUpdate: { viewModel.mealWasUpdated($meal.wrappedValue) },
-                            onRetry: { viewModel.retryUpload(for: $meal.wrappedValue) }
+                            onRetry: { viewModel.retryUpload(for: $meal.wrappedValue) },
+                            onEndNow: {
+                                viewModel.endMealNow(for: $meal.wrappedValue)
+                            }
                         )
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
