@@ -14,7 +14,9 @@ struct HDMVApp: App {
         let schema = Schema([
             MealType.self,
             Meal.self,
-            AgendaEntry.self
+            AgendaEntry.self,
+            VehicleType.self,
+            Vehicle.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

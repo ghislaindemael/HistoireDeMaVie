@@ -29,6 +29,13 @@ struct CachingComponent: View {
                         .fontWeight(.bold)
                 }
                 
+                HStack {
+                    Text("Cached Vehicle Types:")
+                    Spacer()
+                    Text("\(cachingService.cachedVehicleTypes.count)")
+                        .fontWeight(.bold)
+                }
+                
                 if let lastUpdated = lastUpdated {
                     HStack {
                         Text("Last Updated:")
@@ -54,7 +61,7 @@ struct CachingComponent: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                     } else {
-                        Text("Recache Meal Types")
+                        Text("Recache Data")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                             .background(Color.green)
@@ -78,7 +85,8 @@ struct CachingComponent: View {
         isLoading = true
         errorMessage = nil
         do {
-            try await cachingService.recacheMealTypes()
+            try await cachingService.cacheMealTypes()
+            try await cachingService.cacheVehiclesTypes()
             lastUpdated = Date()
         } catch {
             errorMessage = "Failed to recache: \(error.localizedDescription)"

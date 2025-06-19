@@ -14,19 +14,20 @@ class CachingService: ObservableObject {
     static let shared = CachingService()
     
     @Published var cachedMealTypes: [MealType] = []
+    @Published var cachedVehicleTypes: [VehicleType] = []
     
     private let modelContainer: ModelContainer
-    private let mealService = MealService() // Use the new MealService
+    private let mealService = MealService()
+    private let vehicleService = VehicleService()
     
     private var initialLoadingTask: Task<Void, Never>?
     
     private init() {
-        // Use the single, persistent container you defined in your App struct.
         self.modelContainer = HDMVApp.sharedModelContainer
         
-        // Now, this function will load from the CORRECT database on app launch.
         self.initialLoadingTask = Task {
-            await self.loadMealTypesFromLocalStore()
+            await self.loadLocalMealTypes()
+            await self.loadLocalVehicleTypes()
         }
     }
     
@@ -36,10 +37,10 @@ class CachingService: ObservableObject {
     
     /// Fetches fresh meal types from the `MealService`, deletes all existing `MealType`
     /// entries from the local SwiftData store, and saves the new data.
-    func recacheMealTypes() async throws {
+    func cacheMealTypes() async throws {
         // 1. Fetch fresh data using the MealService
         let mealTypeDTOS = try await mealService.fetchAllMealTypes()
-        let mealTypes = convertToMealTypeEntities(from: mealTypeDTOS)
+        let mealTypes = dtosToMealTypeObjects(from: mealTypeDTOS)
         
         // 2. Clear existing MealType data from the local store
         try modelContainer.mainContext.delete(model: MealType.self)
@@ -53,14 +54,37 @@ class CachingService: ObservableObject {
         try modelContainer.mainContext.save()
         
         // 5. Update the published property
-        await self.loadMealTypesFromLocalStore()
+        await self.loadLocalMealTypes()
     }
     
     /// Loads all `MealType` objects from the local SwiftData store into the `cachedMealTypes` property.
-    func loadMealTypesFromLocalStore() async {
+    func loadLocalMealTypes() async {
         let descriptor = FetchDescriptor<MealType>(sortBy: [SortDescriptor(\.id)])
         if let mealTypes = try? modelContainer.mainContext.fetch(descriptor) {
             self.cachedMealTypes = mealTypes
+        }
+    }
+    
+    func cacheVehiclesTypes() async throws {
+        
+        let vehicleTypeDTOS = try await vehicleService.fetchVehicleTypes()
+        let vehicleTypes = dtosToVehicleTypeObjects(from: vehicleTypeDTOS)
+        
+        try modelContainer.mainContext.delete(model: VehicleType.self)
+        
+        for vehicleType in vehicleTypes {
+            modelContainer.mainContext.insert(vehicleType)
+        }
+        
+        try modelContainer.mainContext.save()
+        await self.loadLocalVehicleTypes()
+        
+    }
+    
+    func loadLocalVehicleTypes() async {
+        let descriptor = FetchDescriptor<VehicleType>(sortBy: [SortDescriptor(\.id)])
+        if let vehicleTypes = try? modelContainer.mainContext.fetch(descriptor) {
+            self.cachedVehicleTypes = vehicleTypes
         }
     }
 }

@@ -83,7 +83,7 @@ struct MealDTO: Codable, Identifiable, Sendable {
     }
 }
 
-func dtoToMealObjects(from dtos: [MealDTO]) -> [Meal] {
+func dtosToMealObjects(from dtos: [MealDTO]) -> [Meal] {
     return dtos.map { dto in
         Meal(
             id: dto.id ?? -1,

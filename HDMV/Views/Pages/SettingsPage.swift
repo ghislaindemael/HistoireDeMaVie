@@ -9,6 +9,7 @@ struct SettingsPage: View {
                 AuthComponent(expanded: !auth.isAuthenticated)
                 CachingComponent()
                 DataManagementComponent()
+                ConfigPageLinksComponent()
                 Spacer()
             }
             .padding()

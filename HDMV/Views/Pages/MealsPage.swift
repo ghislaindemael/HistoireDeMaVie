@@ -67,6 +67,13 @@ struct MealsPage: View {
                         Image(systemName: "plus")
                     }
                 }
+                
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !viewModel.isOnline {
+                        Image(systemName: "wifi.slash")
+                            .foregroundColor(.red)
+                    }
+                }
             }
         } // End of the NavigationStack
         // These modifiers affect the whole view, so they are fine here.

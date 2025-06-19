@@ -15,7 +15,6 @@ struct DataManagementComponent: View {
     
     // To add a new model to this tool, just add its type to this array.
     private let manageableModels: [any PersistentModel.Type] = [
-        MealType.self,
         Meal.self,
         AgendaEntry.self
     ]
@@ -69,9 +68,6 @@ struct DataManagementComponent: View {
             switch modelType {
                 case is Meal.Type:
                     let descriptor = FetchDescriptor<Meal>()
-                    return try modelContext.fetchCount(descriptor)
-                case is MealType.Type:
-                    let descriptor = FetchDescriptor<MealType>()
                     return try modelContext.fetchCount(descriptor)
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()

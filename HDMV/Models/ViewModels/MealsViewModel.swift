@@ -10,6 +10,9 @@ class MealsViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isAddingMeal = false
     
+    @Published var isOnline: Bool = true
+    private var networkMonitor = NetworkMonitor.shared
+    
     private let mealService = MealService()
     // Get a direct reference to the main database context from our shared container
     private let modelContext: ModelContext
@@ -21,6 +24,9 @@ class MealsViewModel: ObservableObject {
     init() {
         // Initialize the modelContext from the shared container
         self.modelContext = HDMVApp.sharedModelContainer.mainContext
+        
+        self.isOnline = networkMonitor.isConnected
+        networkMonitor.$isConnected.assign(to: &$isOnline)
     }
     
     // MARK: - Core Data Logic
@@ -33,19 +39,19 @@ class MealsViewModel: ObservableObject {
         
         do {
             // 1. Fetch remote meals from Supabase in the background
-            async let remoteMealsTask = mealService.fetchMeals(for: selectedDate)
-            
+            let remoteMeals: [Meal]
+            if isOnline {
+                async let remoteMealsTask = mealService.fetchMeals(for: selectedDate)
+                let remoteDTOs = try await remoteMealsTask
+                remoteMeals = dtosToMealObjects(from: remoteDTOs)
+                remoteMeals.forEach { $0.syncStatus = .synced }
+            } else {
+                remoteMeals = []
+            }
             // 2. Fetch locally saved, unsynced meals from SwiftData
             let localMeals = try fetchLocalUnsyncedMeals(for: selectedDate)
             
-            // 3. Await the remote meals and convert them to Meal objects
-            let remoteDTOs = try await remoteMealsTask
-            let remoteMeals = dtoToMealObjects(from: remoteDTOs)
-            
-            // Add .synced status to all meals fetched from remote
-            remoteMeals.forEach { $0.syncStatus = .synced }
-            
-            // 4. Merge the lists, preventing duplicates
+            // 3. Merge the lists, preventing duplicates
             // Create a set of remote IDs for quick lookup
             let remoteMealIDs = Set(remoteMeals.map { $0.id })
             // Filter out any local meals that might have been synced since last launch
@@ -85,8 +91,10 @@ class MealsViewModel: ObservableObject {
         meals.insert(meal, at: 0)
         
         // 3. Attempt to upload in the background
-        Task {
-            await uploadNewMeal(meal)
+        if isOnline {
+            Task {
+                await uploadNewMeal(meal)
+            }
         }
     }
     
@@ -111,8 +119,10 @@ class MealsViewModel: ObservableObject {
         }
         
         // 4. Start the background task to sync the update with Supabase.
-        Task {
-            await self.syncExistingMealUpdate(mealId: meal.id)
+        if isOnline {
+            Task {
+                await self.syncExistingMealUpdate(mealId: meal.id)
+            }
         }
     }
     
@@ -131,10 +141,15 @@ class MealsViewModel: ObservableObject {
             guard let index = meals.firstIndex(where: { $0.id == meal.id }) else { return }
             
             objectWillChange.send()
-            meals[index].syncStatus = .syncing
             meals[index].timeEnd = meal.timeEnd
-            Task {
-                await self.syncExistingMealUpdate(mealId: meal.id)
+            
+            if isOnline {
+                meals[index].syncStatus = .syncing
+                Task {
+                    await self.syncExistingMealUpdate(mealId: meal.id)
+                }
+            } else {
+                meals[index].syncStatus = .local
             }
         }
     }
@@ -142,7 +157,10 @@ class MealsViewModel: ObservableObject {
     
     /// Retries uploading a meal that previously failed.
     func retryUpload(for meal: Meal) {
-        guard let index = meals.firstIndex(where: { $0.id == meal.id }) else { return }
+        guard isOnline, let index = meals.firstIndex(where: { $0.id == meal.id }) else {
+            errorMessage = "No internet connection. Please try again later."
+            return
+        }
         
         objectWillChange.send()
         meals[index].syncStatus = .local // Show the spinner again
@@ -159,6 +177,15 @@ class MealsViewModel: ObservableObject {
     }
         
     private func uploadNewMeal(_ meal: Meal) async {
+        
+        guard isOnline else {
+            if let index = meals.firstIndex(where: { $0.id == meal.id }) {
+                objectWillChange.send()
+                meals[index].syncStatus = .failed
+            }
+            return
+        }
+
         var mealDto = mealToDTO(meal)
         mealDto.id = nil
         
@@ -175,7 +202,7 @@ class MealsViewModel: ObservableObject {
             if let index = meals.firstIndex(where: { $0.id == meal.id }) {
                 meals.remove(at: index)
                 
-                let finalMeal = dtoToMealObjects(from: [insertedDto]).first!
+                let finalMeal = dtosToMealObjects(from: [insertedDto]).first!
                 finalMeal.syncStatus = .synced
                 finalMeal.mealType = cachedMealTypes.first { $0.id == finalMeal.mealTypeId }
                 meals.insert(finalMeal, at: 0)
@@ -193,7 +220,11 @@ class MealsViewModel: ObservableObject {
     }
     
     private func syncExistingMealUpdate(mealId: Int) async {
-        guard let mealForDto = meals.first(where: { $0.id == mealId }) else {
+        guard isOnline, let mealForDto = meals.first(where: { $0.id == mealId }) else {
+            if let index = meals.firstIndex(where: { $0.id == mealId }) {
+                objectWillChange.send()
+                meals[index].syncStatus = .failed
+            }
             return
         }
         

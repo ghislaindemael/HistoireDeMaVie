@@ -66,9 +66,6 @@ struct DataWipeDetailView: View {
                 case is Meal.Type:
                     let descriptor = FetchDescriptor<Meal>()
                     count = try modelContext.fetchCount(descriptor)
-                case is MealType.Type:
-                    let descriptor = FetchDescriptor<MealType>()
-                    count = try modelContext.fetchCount(descriptor)
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
                     count = try modelContext.fetchCount(descriptor)
