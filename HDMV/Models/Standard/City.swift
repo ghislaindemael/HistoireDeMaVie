@@ -6,19 +6,37 @@
 //
 
 import Foundation
+import SwiftData
 
-struct City: Identifiable, Hashable, Codable {
-    let id: Int
-    let slug: String
-    let name: String
-    let countryID: Int
-    let isMajor: Bool
+@Model
+final class City {
+    @Attribute(.unique) var id: Int
+    var slug: String
+    var name: String
+    var rank: Int
     
-    init(id: Int, slug: String, name: String, countryID: Int, isMajor: Bool) {
+    var country_id: Int
+    
+    init(id: Int, slug: String, name: String, rank: Int, country_id: Int) {
         self.id = id
         self.slug = slug
         self.name = name
-        self.countryID = countryID
-        self.isMajor = isMajor
+        self.rank = rank
+        self.country_id = country_id
     }
+}
+
+struct CityDTO: Codable, Identifiable, Sendable {
+    var id: Int?
+    var slug: String
+    var name: String
+    var rank: Int
+    var country_id: Int
+}
+
+struct NewCityPayload: Encodable {
+    var slug: String
+    var name: String
+    var rank: Int
+    var country_id: Int
 }

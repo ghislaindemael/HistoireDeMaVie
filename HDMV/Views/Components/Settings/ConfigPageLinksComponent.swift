@@ -16,14 +16,21 @@
 import SwiftUI
 import SwiftData
 
+struct ConfigPageLink {
+    let title: String
+    let destination: AnyView
+}
+
+
 struct ConfigPageLinksComponent: View {
     
     @Environment(\.modelContext) private var modelContext
     @State private var isExpanded: Bool = false
     
-    // Add your vehicle-related models here
-    private let manageableModels: [any PersistentModel.Type] = [
-        Vehicle.self,
+    private let configPages: [ConfigPageLink] = [
+        ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
+        ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
+        ConfigPageLink(title: "Places", destination: AnyView(PlacesPage()))
     ]
     
     init(expanded: Bool = false) {
@@ -33,14 +40,14 @@ struct ConfigPageLinksComponent: View {
     var body: some View {
         DisclosureGroup("Config pages", isExpanded: $isExpanded) {
             VStack(spacing: 4) {
-                ForEach(manageableModels.indices, id: \.self) { index in
-                    let modelType = manageableModels[index]
-                        
+                ForEach(configPages.indices, id: \.self) { index in
+                    let page = configPages[index]
+                    
                     NavigationLink {
-                        VehiclesPage()
+                        page.destination
                     } label: {
                         HStack {
-                            Text(String(describing: modelType))
+                            Text(page.title)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -50,7 +57,7 @@ struct ConfigPageLinksComponent: View {
                     }
                     .buttonStyle(.plain)
                     
-                    if index < manageableModels.count - 1 {
+                    if index < configPages.count - 1 {
                         Divider()
                     }
                 }
