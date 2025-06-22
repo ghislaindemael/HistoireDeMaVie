@@ -19,7 +19,8 @@ struct HDMVApp: App {
             Vehicle.self,
             Country.self,
             City.self,
-            Place.self
+            Place.self,
+            Trip.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

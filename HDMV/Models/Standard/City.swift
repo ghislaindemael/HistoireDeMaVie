@@ -14,15 +14,16 @@ final class City {
     var slug: String
     var name: String
     var rank: Int
-    
     var country_id: Int
+    var cache: Bool = true
     
-    init(id: Int, slug: String, name: String, rank: Int, country_id: Int) {
+    init(id: Int, slug: String, name: String, rank: Int, country_id: Int, cache: Bool = true) {
         self.id = id
         self.slug = slug
         self.name = name
         self.rank = rank
         self.country_id = country_id
+        self.cache = cache
     }
 }
 
@@ -32,6 +33,7 @@ struct CityDTO: Codable, Identifiable, Sendable {
     var name: String
     var rank: Int
     var country_id: Int
+    var cache: Bool
 }
 
 struct NewCityPayload: Encodable {
@@ -39,4 +41,5 @@ struct NewCityPayload: Encodable {
     var name: String
     var rank: Int
     var country_id: Int
+    var cache: Bool = true
 }

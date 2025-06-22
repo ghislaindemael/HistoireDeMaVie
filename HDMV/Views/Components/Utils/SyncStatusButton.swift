@@ -36,7 +36,7 @@ struct SyncStatusButton: View {
                     }
                 }
                 .disabled(action == nil)
-            case .undefined:
+            case .undef:
                 Image(systemName: "questionmark.circle.fill")
         }
     }

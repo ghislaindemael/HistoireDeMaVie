@@ -7,10 +7,10 @@
 
 import Foundation
 
-enum SyncStatus: Sendable {
+enum SyncStatus: String, Codable, Sendable {
     case synced     // The object is saved to Supabase and is up-to-date.
     case syncing    // The object is attempting an upload to Supabase
     case local      // The object exists locally but has not been saved yet.
     case failed     // The last attempt to save the object to Supabase failed.
-    case undefined
+    case undef
 }

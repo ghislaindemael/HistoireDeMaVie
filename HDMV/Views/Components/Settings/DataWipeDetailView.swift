@@ -69,6 +69,9 @@ struct DataWipeDetailView: View {
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
                     count = try modelContext.fetchCount(descriptor)
+                case is Trip.Type:
+                    let descriptor = FetchDescriptor<Trip>()
+                    count = try modelContext.fetchCount(descriptor)
                 default:
                     print("Warning: Unhandled model type in fetchCount: \(modelType)")
                     count = 0
@@ -85,11 +88,9 @@ struct DataWipeDetailView: View {
         do {
             try modelContext.delete(model: modelType)
             print("Successfully deleted all \(modelName) objects.")
-            // Refresh the count to show it's now zero
             fetchCount()
         } catch {
             print("Failed to delete \(modelName) objects: \(error)")
-            // Optionally, show an error alert to the user
         }
     }
 }

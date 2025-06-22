@@ -22,7 +22,7 @@ class AgendaViewModel: ObservableObject {
     @Published var selectedDate: Date = Date()
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    @Published var syncStatus: SyncStatus = .undefined
+    @Published var syncStatus: SyncStatus = .undef
     @Published var isNewEntry: Bool = false
     
     private let agendaService = AgendaService()

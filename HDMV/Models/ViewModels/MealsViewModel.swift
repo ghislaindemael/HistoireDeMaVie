@@ -11,7 +11,7 @@ class MealsViewModel: ObservableObject {
     @Published var isAddingMeal = false
     
     @Published var isOnline: Bool = true
-    private var networkMonitor = NetworkMonitor.shared
+    private var networkMonitor = NetworkMonitor()
     
     private let mealService = MealService()
     // Get a direct reference to the main database context from our shared container

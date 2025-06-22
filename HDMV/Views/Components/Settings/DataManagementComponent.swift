@@ -13,10 +13,10 @@ struct DataManagementComponent: View {
     @Environment(\.modelContext) private var modelContext
     @State private var isExpanded: Bool = false
     
-    // To add a new model to this tool, just add its type to this array.
     private let manageableModels: [any PersistentModel.Type] = [
         Meal.self,
-        AgendaEntry.self
+        AgendaEntry.self,
+        Trip.self,
     ]
     
     init(expanded: Bool = false) {
@@ -31,7 +31,6 @@ struct DataManagementComponent: View {
                     let modelType = manageableModels[index]
                     
                     NavigationLink {
-                        // Navigate to the detail view for the selected type
                         DataWipeDetailView(modelType: modelType)
                     } label: {
                         HStack {
@@ -64,13 +63,15 @@ struct DataManagementComponent: View {
     /// Fetches the current count for a given model type from the context.
     private func fetchCount(for modelType: any PersistentModel.Type) -> Int {
         do {
-            // Create a dynamic fetch descriptor for the given type
             switch modelType {
                 case is Meal.Type:
                     let descriptor = FetchDescriptor<Meal>()
                     return try modelContext.fetchCount(descriptor)
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
+                    return try modelContext.fetchCount(descriptor)
+                case is Trip.Type:
+                    let descriptor = FetchDescriptor<Trip>()
                     return try modelContext.fetchCount(descriptor)
                 default:
                     print("Warning: Unhandled model type in fetchCount: \(modelType)")
@@ -84,7 +85,6 @@ struct DataManagementComponent: View {
 }
 
 #Preview {
-    // Wrap the component in a NavigationStack to enable NavigationLinks
     NavigationStack {
         VStack {
             DataManagementComponent(expanded: true)

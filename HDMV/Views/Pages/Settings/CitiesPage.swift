@@ -18,7 +18,7 @@ struct CitiesPage: View {
     
     private var filteredCities: [City] {
         guard let country = selectedCountry else {
-            return []
+            return viewModel.cities
         }
         return viewModel.cities.filter { $0.country_id == country.id }
     }
@@ -26,7 +26,7 @@ struct CitiesPage: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Filter")) {
+                Section() {
                     Picker("Select Country", selection: $selectedCountry) {
                         Text("Select a Country...").tag(nil as Country?)
                         ForEach(viewModel.countries) { country in
@@ -38,14 +38,26 @@ struct CitiesPage: View {
                 if selectedCountry != nil {
                     Section(header: Text(selectedCountry?.name ?? "Cities")) {
                         ForEach(filteredCities) { city in
-                            CityRowView(city: city) { newRank in
-                                viewModel.updateRank(for: city, to: newRank)
+                            CityRowView(
+                                city: city,
+                                onRankChanged: { newRank in
+                                    viewModel.updateRank(for: city, to: newRank)
+                                },
+                                onCacheToggle: {
+                                    viewModel.toggleCache(for: city)
+                                }
+                            )
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                let cityToArchive = filteredCities[index]
+                                viewModel.archiveCity(for: cityToArchive)
                             }
                         }
                     }
                 } else {
                     Section {
-                        Text("Please select a country to view its cities.")
+                        Text("Please select a country")
                     }
                 }
             }
@@ -54,6 +66,15 @@ struct CitiesPage: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { isShowingCreateSheet.toggle() }) {
                         Image(systemName: "plus")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        Task {
+                            await viewModel.refreshDataFromServer()
+                        }
+                    }) {
+                        Image(systemName: "icloud.and.arrow.down.fill")
                     }
                 }
             }
@@ -82,7 +103,7 @@ struct CitiesPage: View {
             container.mainContext.insert(france)
             
             container.mainContext.insert(City(id: 10, slug: "geneva", name: "Geneva", rank: 2, country_id: 1))
-            container.mainContext.insert(City(id: 11, slug: "zurich", name: "Zürich", rank: 1, country_id: 1))
+            container.mainContext.insert(City(id: 11, slug: "aubonne", name: "Aubonne-Pizy-Montherod", rank: 1, country_id: 1))
             container.mainContext.insert(City(id: 12, slug: "lausanne", name: "Lausanne", rank: 3, country_id: 1))
             container.mainContext.insert(City(id: 20, slug: "paris", name: "Paris", rank: 1, country_id: 2))
 
@@ -92,5 +113,5 @@ struct CitiesPage: View {
         }
     }()
     
-    return CitiesPage().modelContainer(container)
+    CitiesPage().modelContainer(container)
 }
