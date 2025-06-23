@@ -15,7 +15,6 @@ class PlacesPageViewModel: ObservableObject {
     @Published var isLoading = false
     
     private let placesService = PlacesService()
-    // We also need the CitiesService to get the list of cities for filtering
     private let citiesService = CitiesService()
     
     private var modelContext: ModelContext?
@@ -35,24 +34,37 @@ class PlacesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         self.isLoading = true
         defer { self.isLoading = false }
+        
+        self.cities = []
+        self.places = []
 
         do {
             async let placeDTOs = try placesService.fetchPlaces()
             async let cityDTOs = try citiesService.fetchCities()
             
-            // Clear old cache
-            try context.delete(model: Place.self)
-            try context.delete(model: City.self) // Also refresh cities
+            let fetchedCityDTOs = try await cityDTOs
+            let fetchedPlaceDTOs = try await placeDTOs
             
-            // Insert new data
-            for dto in try await cityDTOs {
+            let cityIdToNameMap = fetchedCityDTOs.reduce(into: [Int: String]()) { dictionary, cityDTO in
+                if let id = cityDTO.id {
+                    dictionary[id] = cityDTO.name
+                }
+            }
+            
+            try context.delete(model: Place.self)
+            try context.delete(model: City.self)
+            
+            for dto in fetchedCityDTOs {
                 if let id = dto.id {
                     context.insert(City(id: id, slug: dto.slug, name: dto.name, rank: dto.rank, country_id: dto.country_id))
                 }
             }
-            for dto in try await placeDTOs {
-                if let id = dto.id {
-                    context.insert(Place(id: id, name: dto.name, city_id: dto.city_id))
+            for dto in fetchedPlaceDTOs {
+                if let id = dto.id, dto.cache == true {
+                    let newPlace = Place(id: id, name: dto.name, city_id: dto.city_id, cache: dto.cache)
+                    let cityName = cityIdToNameMap[dto.city_id] ?? "Unknown City"
+                    newPlace.localName = "\(cityName) - \(newPlace.name)"
+                    context.insert(newPlace)
                 }
             }
             
@@ -80,19 +92,51 @@ class PlacesPageViewModel: ObservableObject {
     
     func createPlace(name: String, city: City) async {
         guard let context = modelContext else { return }
-        let payload = NewPlacePayload(name: name, city_id: city.id)
+        let payload = NewPlacePayload(name: name, city_id: city.id, cache: true)
         
         do {
             let createdDTO = try await placesService.createPlace(payload)
             guard let finalId = createdDTO.id else { return }
             
-            let finalPlace = Place(id: finalId, name: createdDTO.name, city_id: createdDTO.city_id)
+            let finalPlace = Place(id: finalId, name: createdDTO.name, city_id: createdDTO.city_id, cache: createdDTO.cache)
+            finalPlace.localName = "\(city.name) - \(finalPlace.name)"
             context.insert(finalPlace)
             try context.save()
             
             fetchFromCache()
         } catch {
             print("Failed to create place: \(error)")
+        }
+    }
+    
+    /// Toggles the cache status for a place.
+    func toggleCache(for place: Place) {
+        Task {
+            do {
+                try await placesService.updateCacheStatus(forPlaceId: place.id, isActive: place.cache)
+                try modelContext?.save()
+            } catch {
+                print("Failed to update place cache status: \(error). Reverting.")
+                place.cache.toggle()
+            }
+        }
+    }
+    
+    /// Archives a place instead of deleting it.
+    func archivePlace(for place: Place) {
+        guard let context = modelContext else { return }
+        
+        places.removeAll { $0.id == place.id }
+        
+        Task {
+            do {
+                try await placesService.archivePlace(forPlaceId: place.id)
+                context.delete(place)
+                try context.save()
+            } catch {
+                print("Failed to archive place on server: \(error).")
+                fetchFromCache()
+            }
         }
     }
 }

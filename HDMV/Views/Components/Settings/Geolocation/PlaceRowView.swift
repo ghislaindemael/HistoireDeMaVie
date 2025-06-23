@@ -9,9 +9,19 @@
 import SwiftUI
 
 struct PlaceRowView: View {
-    let place: Place
+    @Bindable var place: Place
+    
+    let onCacheToggle: () -> Void
     
     var body: some View {
-        Text(place.name)
+        HStack {
+            Text(place.name)
+            Spacer()
+            Toggle("Cache", isOn: $place.cache)
+                .labelsHidden()
+                .onChange(of: place.cache) { oldValue, newValue in
+                    onCacheToggle()
+                }
+        }
     }
 }

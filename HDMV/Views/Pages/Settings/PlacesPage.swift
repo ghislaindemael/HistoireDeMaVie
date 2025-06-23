@@ -27,7 +27,7 @@ struct PlacesPage: View {
                     Picker("Select City", selection: $selectedCity) {
                         Text("Select a City...").tag(nil as City?)
                         ForEach(viewModel.cities) { city in
-                            Text(city.name).tag(city as City?)
+                            Text(city.name).tag(city as City)
                         }
                     }
                 }
@@ -35,7 +35,15 @@ struct PlacesPage: View {
                 if selectedCity != nil {
                     Section(header: Text(selectedCity?.name ?? "Places")) {
                         ForEach(filteredPlaces) { place in
-                            PlaceRowView(place: place)
+                            PlaceRowView(place: place) {
+                                viewModel.toggleCache(for: place)
+                            }
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                let placeToArchive = filteredPlaces[index]
+                                viewModel.archivePlace(for: placeToArchive)
+                            }
                         }
                     }
                 } else {
@@ -47,7 +55,11 @@ struct PlacesPage: View {
             .navigationTitle("Places")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { Task { await viewModel.refreshDataFromServer() }}) {
+                    Button(action: {
+                        Task {
+                            self.selectedCity = nil
+                            await viewModel.refreshDataFromServer() }
+                    }) {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
@@ -90,5 +102,5 @@ struct PlacesPage: View {
         } catch { fatalError("Failed to create container: \(error)") }
     }()
     
-    return PlacesPage().modelContainer(container)
+    PlacesPage().modelContainer(container)
 }
