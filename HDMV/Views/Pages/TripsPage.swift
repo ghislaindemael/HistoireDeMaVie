@@ -13,6 +13,9 @@ struct TripsPage: View {
     @StateObject private var viewModel = TripsPageViewModel()
     
     @Query(sort: [SortDescriptor<Trip>(\.time_start, order: .reverse)]) private var localCacheTrips: [Trip]
+    @Query private var vehicleTypes: [VehicleType]
+    @Query private var vehicles: [Vehicle]
+    @Query private var places: [Place]
     
     @State private var tripToEdit: Trip?
     
@@ -59,7 +62,7 @@ struct TripsPage: View {
             List {
                 ForEach(viewModel.displayTrips) { trip in
                     VStack(spacing: 8) {
-                        TripRowView(displayTrip: trip)
+                        TripRowView(displayTrip: trip, vehicleTypes: vehicleTypes, vehicles: vehicles, places: places)
                         if trip.time_end == nil {
                             Button("End Trip Now") {
                                 if let modelTrip = viewModel.prepareForEdit(trip: trip) {
@@ -162,8 +165,8 @@ struct TripsPage: View {
             
             let trip1 = Trip(
                 id: 201,
-                time_start: .now.addingTimeInterval(-10800),
-                time_end: .now.addingTimeInterval(-7200),
+                time_start: .now.addingTimeInterval(-1000),
+                time_end: .now.addingTimeInterval(-720),
                 vehicle_id: car.id,
                 place_start_id: cern.id,
                 place_end_id: airport.id,

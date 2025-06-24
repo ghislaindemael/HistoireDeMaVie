@@ -57,7 +57,6 @@ struct PlacesPage: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         Task {
-                            self.selectedCity = nil
                             await viewModel.refreshDataFromServer() }
                     }) {
                         Image(systemName: "arrow.clockwise")

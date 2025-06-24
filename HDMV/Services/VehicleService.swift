@@ -45,8 +45,6 @@ class VehicleService {
             throw NSError(domain: "VehicleServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not available"])
         }
         
-        // Use single() to ensure we get exactly one record back.
-        // Supabase returns the newly created row by default.
         let createdVehicle: VehicleDTO = try await supabaseClient
             .from("data_vehicles")
             .insert(vehicle, returning: .representation)

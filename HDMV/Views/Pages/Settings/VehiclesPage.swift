@@ -30,7 +30,7 @@ struct VehiclesPage: View {
                         Picker("Vehicle Type", selection: $selectedVehicleType) {
                             Text("All Types").tag(nil as VehicleType?)
                             ForEach(viewModel.vehicleTypes) { type in
-                                Text(type.name).tag(type as VehicleType?)
+                                Text(type.icon + " " + type.name).tag(type as VehicleType?)
                             }
                         }
                     }

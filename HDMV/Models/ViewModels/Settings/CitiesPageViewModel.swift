@@ -53,10 +53,10 @@ class CitiesPageViewModel: ObservableObject {
         defer { self.isLoading = false }
         
         do {
-            async let cachedCityDTOs = try citiesService.fetchCachableCities()
-            async let uncachedCityDTOs = try citiesService.fetchUncachableCities()
+            async let cachableCityDTOs = try citiesService.fetchCachableCities()
+            async let uncachableCityDTOs = try citiesService.fetchUncachableCities()
             
-            let allDTOs = (try await cachedCityDTOs) + (try await uncachedCityDTOs)
+            let allDTOs = (try await cachableCityDTOs) + (try await uncachableCityDTOs)
             
             var masterList: [City] = []
             for dto in allDTOs {
@@ -72,8 +72,8 @@ class CitiesPageViewModel: ObservableObject {
             
             try context.delete(model: City.self)
             
-            for dto in try await cachedCityDTOs {
-                if let id = dto.id {
+            for dto in try await cachableCityDTOs {
+                if let id = dto.id, dto.cache == true {
                     context.insert(City(id: id, slug: dto.slug, name: dto.name, rank: dto.rank, country_id: dto.country_id, cache: dto.cache))
                 }
             }

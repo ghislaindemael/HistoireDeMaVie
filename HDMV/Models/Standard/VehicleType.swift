@@ -13,7 +13,7 @@ final class VehicleType: Identifiable, Codable {
     @Attribute(.unique) var id: Int
     var slug: String
     var name: String
-    var icon: String?
+    var icon: String
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -22,7 +22,7 @@ final class VehicleType: Identifiable, Codable {
         case icon
     }
     
-    init(id: Int, slug: String, name: String, icon: String?) {
+    init(id: Int, slug: String, name: String, icon: String) {
         self.id = id
         self.slug = slug
         self.name = name
@@ -43,7 +43,6 @@ final class VehicleType: Identifiable, Codable {
         try container.encode(slug, forKey: .slug)
         try container.encode(name, forKey: .name)
         try container.encode(icon, forKey: .icon)
-        
     }
     
 }
@@ -52,7 +51,7 @@ struct VehicleTypeDTO: Codable, Identifiable, Sendable {
     let id: Int
     let slug: String
     let name: String
-    let icon: String?
+    let icon: String
     
     enum CodingKeys: String, CodingKey {
         case id

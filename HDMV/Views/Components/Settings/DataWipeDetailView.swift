@@ -11,6 +11,8 @@ import SwiftData
 struct DataWipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @State private var items: [any PersistentModel] = []
+
     
     /// The specific model type this view will manage (e.g., Meal.self).
     let modelType: any PersistentModel.Type
@@ -28,6 +30,19 @@ struct DataWipeDetailView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+            
+            List {
+                ForEach(Array(items.enumerated()), id: \.element.id) { _, item in
+                    describeView(for: item)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            deleteItem(item)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            }
             
             HStack {
                 Text("Objects to delete:")
@@ -50,7 +65,7 @@ struct DataWipeDetailView: View {
         }
         .padding()
         .navigationTitle(modelName)
-        .onAppear(perform: fetchCount)
+        .onAppear(perform: fetchItems)
         .alert("Are you sure?", isPresented: $isShowingConfirmAlert) {
             Button("Delete All", role: .destructive, action: deleteAllData)
             Button("Cancel", role: .cancel) { }
@@ -60,37 +75,97 @@ struct DataWipeDetailView: View {
     }
     
     /// Fetches the count of objects for the current model type.
-    private func fetchCount() {
+    private func fetchItems() {
         do {
             switch modelType {
                 case is Meal.Type:
                     let descriptor = FetchDescriptor<Meal>()
-                    count = try modelContext.fetchCount(descriptor)
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
-                    count = try modelContext.fetchCount(descriptor)
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 case is Trip.Type:
                     let descriptor = FetchDescriptor<Trip>()
-                    count = try modelContext.fetchCount(descriptor)
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
+                case is City.Type:
+                    let descriptor = FetchDescriptor<City>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
+                case is Place.Type:
+                    let descriptor = FetchDescriptor<Place>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 default:
-                    print("Warning: Unhandled model type in fetchCount: \(modelType)")
+                    print("Warning: Unhandled model type in fetchItems: \(modelType)")
+                    items = []
                     count = 0
             }
         } catch {
-            print("Failed to fetch count for \(modelName): \(error)")
+            print("Failed to fetch items: \(error)")
+            items = []
             count = 0
         }
-        
     }
+
     
     /// Performs the deletion of all objects for the current model type.
     private func deleteAllData() {
         do {
             try modelContext.delete(model: modelType)
             print("Successfully deleted all \(modelName) objects.")
-            fetchCount()
+            fetchItems()
         } catch {
             print("Failed to delete \(modelName) objects: \(error)")
+        }
+    }
+    
+    private func describeView(for item: any PersistentModel) -> AnyView {
+        switch item {
+            case let meal as Meal:
+                return AnyView(
+                    HStack {
+                        Text(meal.date)
+                            .font(.body)
+                        Text("\(meal.mealTypeId)")
+                    }
+                )
+            case let entry as AgendaEntry:
+                return AnyView(
+                    VStack(alignment: .leading) {
+                        Text(entry.date)
+                        Text(entry.daySummary)
+                            .font(.headline)
+                    }
+                )
+            case let city as City:
+                return AnyView(
+                    Text(city.name)
+                )
+            case let place as Place:
+                return AnyView(
+                    Text(place.localName)
+                )
+            default:
+                return AnyView(Text("Unknown Object"))
+        }
+    }
+
+    
+    private func deleteItem(_ item: any PersistentModel) {
+        modelContext.delete(item)
+        do {
+            try modelContext.save()
+            fetchItems()
+        } catch {
+            print("Failed to delete item: \(error)")
         }
     }
 }

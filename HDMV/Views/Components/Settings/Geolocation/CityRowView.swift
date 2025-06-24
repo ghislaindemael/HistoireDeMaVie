@@ -52,6 +52,7 @@ struct CityRowView: View {
         HStack(spacing: 8) {
             HStack(spacing: 8) {
                 Text("Cache")
+                    .lineLimit(1)
                 Toggle("Cache", isOn: $city.cache)
                     .labelsHidden()
                     .scaleEffect(0.9)

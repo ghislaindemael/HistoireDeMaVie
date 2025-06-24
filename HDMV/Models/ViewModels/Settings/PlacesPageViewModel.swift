@@ -30,63 +30,65 @@ class PlacesPageViewModel: ObservableObject {
     
     // MARK: - Data Loading and Caching
     
-    func refreshDataFromServer() async {
-        guard let context = modelContext else { return }
-        self.isLoading = true
-        defer { self.isLoading = false }
-        
-        self.cities = []
-        self.places = []
-
-        do {
-            async let placeDTOs = try placesService.fetchPlaces()
-            async let cityDTOs = try citiesService.fetchCities()
-            
-            let fetchedCityDTOs = try await cityDTOs
-            let fetchedPlaceDTOs = try await placeDTOs
-            
-            let cityIdToNameMap = fetchedCityDTOs.reduce(into: [Int: String]()) { dictionary, cityDTO in
-                if let id = cityDTO.id {
-                    dictionary[id] = cityDTO.name
-                }
-            }
-            
-            try context.delete(model: Place.self)
-            try context.delete(model: City.self)
-            
-            for dto in fetchedCityDTOs {
-                if let id = dto.id {
-                    context.insert(City(id: id, slug: dto.slug, name: dto.name, rank: dto.rank, country_id: dto.country_id))
-                }
-            }
-            for dto in fetchedPlaceDTOs {
-                if let id = dto.id, dto.cache == true {
-                    let newPlace = Place(id: id, name: dto.name, city_id: dto.city_id, cache: dto.cache)
-                    let cityName = cityIdToNameMap[dto.city_id] ?? "Unknown City"
-                    newPlace.localName = "\(cityName) - \(newPlace.name)"
-                    context.insert(newPlace)
-                }
-            }
-            
-            try context.save()
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
-    }
-    
     private func fetchFromCache() {
         guard let context = modelContext else { return }
         do {
             let placeDescriptor = FetchDescriptor<Place>(sortBy: [SortDescriptor(\.name)])
             self.places = try context.fetch(placeDescriptor)
             
-            let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.rank), SortDescriptor(\.name)])
+            let cityDescriptor = FetchDescriptor<City>(
+                predicate: #Predicate { $0.cache == true },
+                sortBy: [SortDescriptor(\.rank), SortDescriptor(\.name)]
+            )
             self.cities = try context.fetch(cityDescriptor)
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
     }
+    
+    func refreshDataFromServer() async {
+        guard let context = modelContext else { return }
+        self.isLoading = true
+        defer { self.isLoading = false }
+        
+        do {
+            // Fetch places from network (both cachable and uncachable)
+            async let cachablePlacesDTOs = try placesService.fetchCachablePlaces()
+            async let uncachablePlacesDTOs = try placesService.fetchUncachablePlaces()
+            
+            let cachablePlaces = try await cachablePlacesDTOs
+            let uncachablePlaces = try await uncachablePlacesDTOs
+            
+            // Fetch cities only from local cache
+            let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.rank), SortDescriptor(\.name)])
+            let cachedCities = try context.fetch(cityDescriptor)
+            let cityMap = Dictionary(uniqueKeysWithValues: cachedCities.map { ($0.id, $0.name) })
+            
+            // Combine places for UI display (master list)
+            let allPlacesDTOs = cachablePlaces + uncachablePlaces
+            self.places = allPlacesDTOs.compactMap { dto in
+                guard let id = dto.id else { return nil }
+                let place = Place(id: id, name: dto.name, city_id: dto.city_id, cache: dto.cache)
+                place.localName = "\(cityMap[dto.city_id] ?? "Unknown City") - \(place.name)"
+                return place
+            }.sorted { $0.name < $1.name }
+            
+            // Cache only cachable places (clear old cached places first)
+            try context.delete(model: Place.self)
+            for dto in cachablePlaces where dto.cache == true {
+                guard let id = dto.id else { continue }
+                let place = Place(id: id, name: dto.name, city_id: dto.city_id, cache: true)
+                place.localName = "\(cityMap[dto.city_id] ?? "Unknown City") - \(place.name)"
+                context.insert(place)
+            }
+            
+            try context.save()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
+    }
+
+
     
     // MARK: - User Actions
     
