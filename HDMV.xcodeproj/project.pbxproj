@@ -30,6 +30,8 @@
 		158A5AC42DF75A1F00D003C2 /* Exceptions for "HDMV" folder in "HDMV" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Config/Debug.xconfig,
+				Config/Release.xconfig,
 				Info.plist,
 			);
 			target = 15635EB12DF62DA900DE97E5 /* HDMV */;
@@ -154,7 +156,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					15635EB12DF62DA900DE97E5 = {
 						CreatedOnToolsVersion = 16.3;

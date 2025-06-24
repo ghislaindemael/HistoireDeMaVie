@@ -18,6 +18,7 @@ struct TripsPage: View {
     
     public init() {}
     
+    
     var body: some View {
         NavigationStack {
             tripListView
@@ -46,41 +47,84 @@ struct TripsPage: View {
         }
     }
     
-    // MARK: - View Components (Fix 3)
+    // MARK: - View Components
     
     /// A computed property for the main view content to help the compiler.
     private var tripListView: some View {
-        VStack {
+        VStack(spacing: 12) {
             DatePicker("Select Date", selection: $viewModel.selectedDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .padding(.horizontal)
             
-            List(viewModel.displayTrips) { trip in
-                TripRowView(displayTrip: trip, onEndTrip: {
-                    if let modelTrip = viewModel.prepareForEdit(trip: trip) {
-                        modelTrip.time_end = .now
-                        try? modelContext.save()
+            List {
+                ForEach(viewModel.displayTrips) { trip in
+                    VStack(spacing: 8) {
+                        TripRowView(displayTrip: trip)
+                        if trip.time_end == nil {
+                            Button("End Trip Now") {
+                                if let modelTrip = viewModel.prepareForEdit(trip: trip) {
+                                    modelTrip.time_end = .now
+                                    try? modelContext.save()
+                                    Task {
+                                        await viewModel.syncChanges()
+                                    }
+                                }
+                            }
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .buttonStyle(.plain)
+                        }
                     }
-                })
-                .onTapGesture {
-                    tripToEdit = viewModel.prepareForEdit(trip: trip)
+                    .background(
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                tripToEdit = viewModel.prepareForEdit(trip: trip)
+                            }
+                    )
+                    .onLongPressGesture {
+                        tripToEdit = viewModel.prepareForEdit(trip: trip)
+                    }
                 }
-                .listRowBackground(trip.isLocal ? Color.orange.opacity(0.2) : Color.clear)
             }
         }
     }
     
-    /// A computed property for the toolbar content.
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        
         ToolbarItem(placement: .navigationBarLeading) {
-            Button(action: { Task { await viewModel.syncChanges() } }) {
-                Image(systemName: "arrow.clockwise")
+            Button(action: {
+                Task { await viewModel.loadData() }
+            }) {
+                Image(systemName: "icloud.and.arrow.down")
+                Text("Refresh")
+            }
+            .accessibilityLabel("Reload trips")
+        }
+        
+        if viewModel.hasLocalTrips {
+            ToolbarItem(placement: .principal) {
+                Button(action: {
+                    Task { await viewModel.syncChanges() }
+                }) {
+                    Image(systemName: "icloud.and.arrow.up")
+                    Text("Save")
+                }
+                .accessibilityLabel("Sync changes")
             }
         }
+        
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button("Start Trip") {
+            Button(action: {
                 viewModel.createNewTripInCache()
+            }) {
+                Image(systemName: "plus")
+                Text("New trip")
             }
         }
     }

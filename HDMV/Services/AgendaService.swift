@@ -42,9 +42,7 @@ class AgendaService {
             .select()
             .execute()
             .value
-        
-        print(insertedRows)
-        
+                
         guard let newAgenda = insertedRows.first else {
             throw NSError(domain: "AgendaServiceError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to decode inserted agenda."])
         }
