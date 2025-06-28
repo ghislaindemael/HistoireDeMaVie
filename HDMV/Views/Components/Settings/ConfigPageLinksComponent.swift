@@ -30,7 +30,8 @@ struct ConfigPageLinksComponent: View {
     private let configPages: [ConfigPageLink] = [
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
-        ConfigPageLink(title: "Places", destination: AnyView(PlacesPage()))
+        ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
+        ConfigPageLink(title: "People", destination: AnyView(PeoplePage()))
     ]
     
     init(expanded: Bool = false) {
