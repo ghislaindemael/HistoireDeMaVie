@@ -12,15 +12,15 @@ struct NewPersonSheet: View {
     @ObservedObject var viewModel: PeoplePageViewModel
     
     @State private var newPerson: NewPersonPayload = NewPersonPayload()
-    @State private var name: String = ""
     @State private var isSaving = false
     
-    private var isFormValid: Bool { !name.isEmpty }
+    private var isFormValid: Bool { !newPerson.name.isEmpty && !newPerson.familyName.isEmpty }
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Person Details") {
+                    TextField("Slug", text: $newPerson.slug)
                     TextField("Name", text: $newPerson.name)
                     TextField("Family name", text: $newPerson.familyName)
                     TextField("Surname", text: Binding(
@@ -51,7 +51,7 @@ struct NewPersonSheet: View {
                     Section { ProgressView() }
                 }
             }
-            .navigationTitle("New Place")
+            .navigationTitle("New Person")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

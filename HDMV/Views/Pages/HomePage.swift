@@ -14,5 +14,5 @@ struct HomePage: View {
 }
 
 #Preview {
-    MealsPage()
+    HomePage()
 }

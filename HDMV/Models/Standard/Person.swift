@@ -74,13 +74,18 @@ struct PersonDTO: Codable, Identifiable, Sendable {
     
 }
 
-struct NewPersonPayload: Encodable {
+struct NewPersonPayload: Codable, Sendable {
     var slug: String
     var name: String
     var familyName: String
     var surname: String?
     var birthdate: Date?
     var cache: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case slug, name, surname, birthdate, cache
+        case familyName = "family_name"
+    }
     
     init() {
         self.slug = ""

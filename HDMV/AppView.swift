@@ -7,12 +7,17 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct AppView: View {
     var body: some View {
         TabView() {
             Tab ("Home", systemImage: "house.fill") {
                 HomePage()
             }
+            
+            Tab ("Interactions", systemImage: "person.2.fill") {
+                PeopleInteractionsPage()
+            }
+            
             Tab ("Trips", systemImage: "car.fill") {
                 TripsPage()
             }
@@ -35,5 +40,5 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView()
+    AppView()
 }

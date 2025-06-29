@@ -21,6 +21,8 @@ struct HDMVApp: App {
             City.self,
             Place.self,
             Trip.self,
+            Person.self,
+            PersonInteraction.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -33,7 +35,7 @@ struct HDMVApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppView()
         }
         .modelContainer(HDMVApp.sharedModelContainer)
     }

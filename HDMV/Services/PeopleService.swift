@@ -44,14 +44,23 @@ class PeopleService {
     
     func createPerson(_ payload: NewPersonPayload) async throws -> PersonDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        return try await supabaseClient
+        
+        let response = try await supabaseClient
             .from("data_people")
-            .insert(payload, returning: .representation)
+            .insert(payload)
             .select()
-            .single()
             .execute()
-            .value
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .formatted(DateFormatter.dateOnly)
+        
+        let dtos = try decoder.decode([PersonDTO].self, from: response.data)
+        guard let person = dtos.first else {
+            throw URLError(.cannotParseResponse)
+        }
+        return person
     }
+
     
     func updatePerson(_ person: PersonDTO) async throws {
         guard let supabaseClient = supabaseClient else { return }

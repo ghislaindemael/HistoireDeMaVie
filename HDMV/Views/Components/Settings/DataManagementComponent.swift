@@ -18,7 +18,9 @@ struct DataManagementComponent: View {
         AgendaEntry.self,
         Trip.self,
         City.self,
-        Place.self
+        Place.self,
+        Person.self,
+        PersonInteraction.self
     ]
     
     init(expanded: Bool = false) {
@@ -84,6 +86,12 @@ struct DataManagementComponent: View {
                     return try modelContext.fetchCount(descriptor)
                 case is Place.Type:
                     let descriptor = FetchDescriptor<Place>()
+                    return try modelContext.fetchCount(descriptor)
+                case is Person.Type:
+                    let descriptor = FetchDescriptor<Person>()
+                    return try modelContext.fetchCount(descriptor)
+                case is PersonInteraction.Type:
+                    let descriptor = FetchDescriptor<PersonInteraction>()
                     return try modelContext.fetchCount(descriptor)
                 default:
                     print("Warning: Unhandled model type in fetchCount: \(modelType)")

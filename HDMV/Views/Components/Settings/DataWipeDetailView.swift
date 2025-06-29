@@ -12,7 +12,7 @@ struct DataWipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var items: [any PersistentModel] = []
-
+    
     
     /// The specific model type this view will manage (e.g., Meal.self).
     let modelType: any PersistentModel.Type
@@ -34,13 +34,13 @@ struct DataWipeDetailView: View {
             List {
                 ForEach(Array(items.enumerated()), id: \.element.id) { _, item in
                     describeView(for: item)
-                    .swipeActions {
-                        Button(role: .destructive) {
-                            deleteItem(item)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                        .swipeActions {
+                            Button(role: .destructive) {
+                                deleteItem(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
                 }
             }
             
@@ -103,6 +103,16 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
+                case is Person.Type:
+                    let descriptor = FetchDescriptor<Person>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
+                case is PersonInteraction.Type:
+                    let descriptor = FetchDescriptor<PersonInteraction>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 default:
                     print("Warning: Unhandled model type in fetchItems: \(modelType)")
                     items = []
@@ -114,7 +124,7 @@ struct DataWipeDetailView: View {
             count = 0
         }
     }
-
+    
     
     /// Performs the deletion of all objects for the current model type.
     private func deleteAllData() {
@@ -153,11 +163,19 @@ struct DataWipeDetailView: View {
                 return AnyView(
                     Text(place.localName)
                 )
+            case let person as Person:
+                return AnyView(
+                    Text(person.fullName)
+                )
+            case let interaction as PersonInteraction:
+                return AnyView(
+                    PersonInteractionRowView(interaction: interaction, person: nil)
+                )
             default:
                 return AnyView(Text("Unknown Object"))
         }
     }
-
+    
     
     private func deleteItem(_ item: any PersistentModel) {
         modelContext.delete(item)
@@ -173,7 +191,6 @@ struct DataWipeDetailView: View {
 
 #Preview {
     NavigationStack {
-        // Example for previewing with the Meal model
         DataWipeDetailView(modelType: Meal.self)
     }
     .modelContainer(for: Meal.self)

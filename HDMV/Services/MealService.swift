@@ -99,11 +99,3 @@ class MealService {
 
 
 }
-
-extension ISO8601DateFormatter {
-    static let justDate: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
-        return formatter
-    }()
-}

@@ -25,8 +25,11 @@ public extension DateFormatter {
     /// A static formatter for displaying a medium-style date (e.g., "Jun 24, 2025").
     static var dateOnly: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter
     }
+    
+    
 }

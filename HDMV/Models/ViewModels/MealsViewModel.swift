@@ -11,7 +11,6 @@ class MealsViewModel: ObservableObject {
     @Published var isAddingMeal = false
     
     @Published var isOnline: Bool = true
-    private var networkMonitor = NetworkMonitor()
     
     private let mealService = MealService()
     // Get a direct reference to the main database context from our shared container
@@ -22,11 +21,8 @@ class MealsViewModel: ObservableObject {
     }
     
     init() {
-        // Initialize the modelContext from the shared container
         self.modelContext = HDMVApp.sharedModelContainer.mainContext
-        
-        self.isOnline = networkMonitor.isConnected
-        networkMonitor.$isConnected.assign(to: &$isOnline)
+        self.isOnline = NetworkMonitor.shared.isConnected
     }
     
     // MARK: - Core Data Logic
@@ -38,7 +34,6 @@ class MealsViewModel: ObservableObject {
         await CachingService.shared.ensureCacheIsLoaded()
         
         do {
-            // 1. Fetch remote meals from Supabase in the background
             let remoteMeals: [Meal]
             if isOnline {
                 async let remoteMealsTask = mealService.fetchMeals(for: selectedDate)
