@@ -5,7 +5,6 @@
 //  Created by Ghislain Demael on 18.06.2025.
 //
 
-
 import Foundation
 import Network
 import Combine
@@ -14,10 +13,10 @@ import Combine
 class NetworkMonitor: ObservableObject {
     static let shared = NetworkMonitor()
     
+    @Published var isConnected = false
+    
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")
-    
-    @Published var isConnected = false
     
     private init() {
         monitor.pathUpdateHandler = { [weak self] path in
@@ -28,4 +27,3 @@ class NetworkMonitor: ObservableObject {
         monitor.start(queue: queue)
     }
 }
-

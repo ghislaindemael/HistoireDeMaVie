@@ -15,14 +15,9 @@ final class Meal: Identifiable {
     var timeStart: String
     var timeEnd: String?
     var content: String
-    
-    // This holds the foreign key ID
+    var syncStatus: SyncStatus = SyncStatus.local
     var mealTypeId: Int
     
-    @Transient var syncStatus: SyncStatus = .local
-    // This establishes the actual relationship to MealType
-    // SwiftData will automatically link this based on a matching attribute if set up correctly,
-    // but for fetching, we'll manually link them.
     @Transient var mealType: MealType?
     
     enum CodingKeys: String, CodingKey {
@@ -35,40 +30,30 @@ final class Meal: Identifiable {
     }
     
     // Memberwise initializer
-    init(id: Int, date: String, timeStart: String, timeEnd: String?, content: String, mealTypeId: Int, syncStatus: SyncStatus = .synced) {
+    init(id: Int, date: String, timeStart: String, timeEnd: String?, content: String, mealTypeId: Int, syncStatus: SyncStatus = .local) {
         self.id = id
         self.date = date
         self.timeStart = timeStart
         self.timeEnd = timeEnd
         self.content = content
         self.mealTypeId = mealTypeId
+        self.syncStatus = syncStatus
     }
     
-    // Decodable initializer
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(Int.self, forKey: .id)
-        self.date = try container.decode(String.self, forKey: .date)
-        self.timeStart = try container.decode(String.self, forKey: .timeStart)
-        self.timeEnd = try container.decodeIfPresent(String.self, forKey: .timeEnd)
-        self.content = try container.decode(String.self, forKey: .content)
-        self.mealTypeId = try container.decode(Int.self, forKey: .mealTypeId)
+    init(fromDTO dto: MealDTO) {
+        self.id = dto.id
+        self.date = dto.date
+        self.timeStart = dto.timeStart
+        self.timeEnd = dto.timeEnd
+        self.content = dto.content
+        self.mealTypeId = dto.mealTypeId
+        self.syncStatus = SyncStatus.synced
     }
     
-    // Encodable function
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(date, forKey: .date)
-        try container.encode(timeStart, forKey: .timeStart)
-        try container.encodeIfPresent(timeEnd, forKey: .timeEnd)
-        try container.encode(content, forKey: .content)
-        try container.encode(mealTypeId, forKey: .mealTypeId)
-    }
 }
 
 struct MealDTO: Codable, Identifiable, Sendable {
-    var id: Int?
+    var id: Int
     let date: String
     let timeStart: String
     let timeEnd: String?
@@ -86,7 +71,7 @@ struct MealDTO: Codable, Identifiable, Sendable {
 func dtosToMealObjects(from dtos: [MealDTO]) -> [Meal] {
     return dtos.map { dto in
         Meal(
-            id: dto.id ?? -1,
+            id: dto.id,
             date: dto.date,
             timeStart: dto.timeStart,
             timeEnd: dto.timeEnd,

@@ -56,8 +56,7 @@ struct MealsPage: View {
                     }
                     
                 }
-            } // End of the VStack containing your page content
-            // --- FIX: Modifiers are now placed on the VStack ---
+            }
             .navigationTitle("My Meals")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -75,8 +74,7 @@ struct MealsPage: View {
                     }
                 }
             }
-        } // End of the NavigationStack
-        // These modifiers affect the whole view, so they are fine here.
+        }
         .sheet(isPresented: $viewModel.isAddingMeal) {
             AddMealSheet(for: viewModel.selectedDate, onSave: viewModel.addMeal)
         }

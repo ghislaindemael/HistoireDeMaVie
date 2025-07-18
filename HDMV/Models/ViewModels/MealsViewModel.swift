@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import Combine
 
 @MainActor
 class MealsViewModel: ObservableObject {
@@ -9,11 +10,12 @@ class MealsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isAddingMeal = false
-    
-    @Published var isOnline: Bool = true
+        
+    @Published var isOnline: Bool = false
+    private var networkStatusBinding: PropertyBinder<MealsViewModel, Bool>?
+
     
     private let mealService = MealService()
-    // Get a direct reference to the main database context from our shared container
     private let modelContext: ModelContext
     
     private var cachedMealTypes: [MealType] {
@@ -22,8 +24,9 @@ class MealsViewModel: ObservableObject {
     
     init() {
         self.modelContext = HDMVApp.sharedModelContainer.mainContext
-        self.isOnline = NetworkMonitor.shared.isConnected
+        self.networkStatusBinding = PropertyBinder(syncingNetworkStatusTo: \.isOnline, on: self)
     }
+    
     
     // MARK: - Core Data Logic
     
@@ -49,7 +52,6 @@ class MealsViewModel: ObservableObject {
             // 3. Merge the lists, preventing duplicates
             // Create a set of remote IDs for quick lookup
             let remoteMealIDs = Set(remoteMeals.map { $0.id })
-            // Filter out any local meals that might have been synced since last launch
             let uniqueLocalMeals = localMeals.filter { !remoteMealIDs.contains($0.id) }
             
             // Combine and sort so new items appear at the top
@@ -182,7 +184,7 @@ class MealsViewModel: ObservableObject {
         }
 
         var mealDto = mealToDTO(meal)
-        mealDto.id = nil
+        //mealDto.id = nil
         
         do {
             // This attempts to save the meal to Supabase...
