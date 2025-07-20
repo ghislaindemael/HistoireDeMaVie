@@ -67,6 +67,15 @@ struct TripDetailSheet: View {
         }
     }
     
+    private var isSelectedVehicleCar: Bool {
+        guard let vehicle_id = vehicle_id,
+              let vehicle = vehicles.first(where: { $0.id == vehicle_id })
+        else {
+            return false
+        }
+        return vehicle.type == 1
+    }
+    
     // MARK: - UI Sections
     
     private var timeSection: some View {
@@ -91,7 +100,10 @@ struct TripDetailSheet: View {
                     Text(vehicle.name).tag(vehicle.id as Int?)
                 }
             }
-            Toggle("Am I the driver", isOn: $am_driver)
+            if isSelectedVehicleCar {
+                Toggle("Am I the driver", isOn: $am_driver)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
     }
     
@@ -220,3 +232,4 @@ private extension Binding where Value == String? {
         )
     }
 }
+

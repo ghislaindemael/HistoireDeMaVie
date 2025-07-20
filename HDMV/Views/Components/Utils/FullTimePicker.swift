@@ -36,12 +36,36 @@ struct FullTimePicker: View {
                             .fill(Color(.systemGray6))
                     )
                     .contentShape(Rectangle())
-                    .onTapGesture {
+                    .gesture(
+                        TapGesture(count: 2)
+                            .onEnded {
+                                setTimeTo(hour: 12, minute: 0, second: 0)
+                            }
+                            .exclusively(
+                                before:
+                                    DragGesture(minimumDistance: 20, coordinateSpace: .local)
+                                    .onEnded { value in
+                                        if value.translation.width < -20 {
+                                            setTimeTo(hour: 0, minute: 0, second: 0)
+                                        } else if value.translation.width > 20 {
+                                            // swipe right
+                                            setTimeTo(hour: 23, minute: 59, second: 59)
+                                        } else {
+                                            // treat as toggle if not enough drag
+                                            withAnimation(.snappy) {
+                                                isExpanded.toggle()
+                                            }
+                                        }
+                                    }
+                            )
+                    )
+                    .onTapGesture(count: 1) {
                         updatePickerState(from: selection)
-                        withAnimation(.snappy) {
+                        withAnimation() {
                             isExpanded.toggle()
                         }
                     }
+
             }
             .animation(nil, value: isExpanded)
             
@@ -74,7 +98,7 @@ struct FullTimePicker: View {
                 }
                 // By setting a height on the HStack, we can control the vertical size of the picker wheels.
                 // A smaller height means fewer items are visible at once.
-                .frame(height: 90)
+                .frame(height: 110)
                 .frame(maxWidth: .infinity)
                 // When any of the internal picker states change, update the external Date binding
                 .onChange(of: hour) { _, _ in updateDate() }
@@ -121,6 +145,18 @@ struct FullTimePicker: View {
             if newDate != selection {
                 selection = newDate
             }
+        }
+    }
+    
+    private func setTimeTo(hour: Int, minute: Int, second: Int) {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: selection)
+        components.hour = hour
+        components.minute = minute
+        components.second = second
+        if let newDate = calendar.date(from: components) {
+            selection = newDate
+            updatePickerState(from: newDate)
         }
     }
 }
