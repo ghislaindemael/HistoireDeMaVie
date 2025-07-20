@@ -60,11 +60,13 @@ struct AgendaPage: View {
             }
             .navigationTitle("Agenda")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    SyncStatusButton(
-                        status: viewModel.syncStatus,
-                        action: viewModel.saveChanges
-                    )
+                ToolbarItem(placement: .principal){
+                    SyncStatusIndicator(status: viewModel.syncStatus)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save",systemImage: "icloud.and.arrow.up") {
+                        viewModel.saveChanges()
+                    }
                 }
             }
             .onTapGesture {

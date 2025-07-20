@@ -29,13 +29,15 @@ struct SyncStatusIndicator: View {
                     .foregroundStyle(.yellow)
                 
             case .local:
-                Image(systemName: "exclamationmark.icloud.fill")
+                Image(systemName: "xmark.icloud.fill")
                     .foregroundStyle(.orange)
             
             case .failed:
+                Image(systemName: "exclamationmark.icloud.fill")
+                    .foregroundStyle(.red)
+            case .toDelete:
                 Image(systemName: "xmark.icloud.fill")
                     .foregroundStyle(.red)
-                
             case .undef:
                 Image(systemName: "xmark.icloud.fill")
                     .foregroundStyle(.primary)

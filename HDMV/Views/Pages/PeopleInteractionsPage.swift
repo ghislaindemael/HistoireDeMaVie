@@ -16,6 +16,8 @@ struct PeopleInteractionsPage: View {
     
     @State private var editingInteraction: PersonInteraction? = nil
     @State private var endingInteractionId: Int?
+    @State private var deletingInteraction: PersonInteraction? = nil
+
     
     // MARK: - Filtering State
     @State private var selectedPersonId: Int? = nil
@@ -63,7 +65,20 @@ struct PeopleInteractionsPage: View {
                     )
                 }
         }
+        .alert("Delete Interaction?", isPresented: .constant(deletingInteraction != nil), presenting: deletingInteraction) { interaction in
+            Button("Delete", role: .destructive) {
+                deleteInteraction(interaction)
+                deletingInteraction = nil
+            }
+            Button("Cancel", role: .cancel) {
+                deletingInteraction = nil
+            }
+        } message: { interaction in
+            Text("Are you sure you want to delete this interaction with \(people.first(where: { $0.id == interaction.person_id })?.fullName ?? "Unknown")?")
+        }
+
     }
+    
     
     // MARK: - View Components
     
@@ -77,7 +92,10 @@ struct PeopleInteractionsPage: View {
             List {
                 ForEach(filteredInteractions) { interaction in
                     viewForRow(for: interaction )
+                        
                 }
+                .onDelete(perform: delete)
+                
             }
         }
         
@@ -202,6 +220,21 @@ struct PeopleInteractionsPage: View {
             }
         }
     }
+    
+    private func deleteInteraction(_ interaction: PersonInteraction) {
+        Task {
+            await viewModel.deleteInteraction(interaction)
+        }
+    }
+    
+    private func delete(at offsets: IndexSet) {
+        if let first = offsets.first {
+            deletingInteraction = filteredInteractions[first]
+        }
+    }
+
+
+
 }
 
 #Preview {

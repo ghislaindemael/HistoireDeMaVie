@@ -136,6 +136,11 @@ class PeopleInteractionsPageViewModel: ObservableObject {
                     context.delete(local)
                     onlineInteractions.append(inserted)
                     localInteractions.removeAll { $0.id == local.id }
+                } else if local.syncStatus == .toDelete {
+                    try await interactionService.deleteInteraction(id: local.id)
+                    context.delete(local)
+                    localInteractions.removeAll { $0.id == local.id }
+                    onlineInteractions.removeAll { $0.id == local.id }
                 } else {
                     let updated = try await interactionService.updateInteraction(interaction: local)
                     updated.syncStatus = .synced
@@ -200,5 +205,34 @@ class PeopleInteractionsPageViewModel: ObservableObject {
             await syncChanges()
         }
     }
+    
+    func deleteInteraction(_ interaction: PersonInteraction) async {
+        guard let context = modelContext else { return }
+        
+        do {
+            if interaction.id > 0 {
+                let success = try await interactionService.deleteInteraction(id: interaction.id)
+                if success {
+                    print("✅ Deleted interaction \(interaction.id) from Supabase.")
+                } else {
+                    print("⚠️ Supabase deletion not confirmed for interaction \(interaction.id).")
+                }
+            } else {
+                print("ℹ️ Interaction \(interaction.id) is local only, skipping Supabase delete.")
+            }
+            
+            onlineInteractions.removeAll { $0.id == interaction.id }
+            localInteractions.removeAll { $0.id == interaction.id }
+            context.delete(interaction)
+            mergeInteractions()
+            
+        } catch {
+            print("❌ Failed to delete interaction \(interaction.id): \(error)")
+        }
+    }
+
+
+
+
 
 }
