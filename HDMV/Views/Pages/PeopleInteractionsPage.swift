@@ -15,11 +15,25 @@ struct PeopleInteractionsPage: View {
     @Query private var people: [Person]
     
     @State private var editingInteraction: PersonInteraction? = nil
-    
     @State private var endingInteractionId: Int?
+    
+    // MARK: - Filtering State
+    @State private var selectedPersonId: Int? = nil
+    @State private var showUnassigned: Bool = true
+    @State private var isFilteringExpanded: Bool = false
     
     public init() {}
     
+    private var filteredInteractions: [PersonInteraction] {
+        viewModel.allInteractions.filter { interaction in
+            let isAssigned = interaction.person_id > 0
+            
+            if isAssigned {
+                return selectedPersonId == nil || interaction.person_id == selectedPersonId
+            }
+            return showUnassigned
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -48,7 +62,6 @@ struct PeopleInteractionsPage: View {
                         }
                     )
                 }
-
         }
     }
     
@@ -60,14 +73,39 @@ struct PeopleInteractionsPage: View {
             DatePicker("Select Date", selection: $viewModel.selectedDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .padding(.horizontal)
-            
+            filteringControls
             List {
-                ForEach(viewModel.allInteractions) { interaction in
+                ForEach(filteredInteractions) { interaction in
                     viewForRow(for: interaction )
                 }
             }
         }
         
+    }
+    
+    /// A collapsible group with filtering options.
+    @ViewBuilder
+    private var filteringControls: some View {
+        DisclosureGroup("Filtering", isExpanded: $isFilteringExpanded) {
+            HStack(spacing: 16) {
+                Picker("Person", selection: $selectedPersonId) {
+                    Text("All People").tag(Int?.none)
+                    ForEach(people) { person in
+                        Text(person.fullName).tag(person.id as Int?)
+                    }
+                }
+                .pickerStyle(.menu)
+                
+                Spacer()
+                
+                Text("Unassigned")
+                Toggle("Unassigned", isOn: $showUnassigned)
+                    .labelsHidden()
+            }
+            .padding(.vertical, 6)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 4)
     }
     
     private func viewForRow(for interaction: PersonInteraction) -> some View {

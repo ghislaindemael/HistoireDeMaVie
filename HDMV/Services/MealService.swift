@@ -17,7 +17,6 @@ import Foundation
 
 class MealService {
     
-    // Use the shared Supabase client
     private let supabaseClient = SupabaseService.shared.client
     
     /// Fetches all standard meal types from the 'data_meals' table in Supabase.
@@ -38,23 +37,26 @@ class MealService {
     }
     
     func fetchMeals(for date: Date) async throws -> [MealDTO] {
-        let dateString = ISO8601DateFormatter.justDate.string(from: date)
+        
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
         
         guard let supabaseClient = SupabaseService.shared.client else {
             return []
         }
         
-        let response: [MealDTO] = try await supabaseClient
+        return try await supabaseClient
             .from("my_meals")
             .select()
-            .eq("date", value: dateString)
+            .gte("time_start", value: ISO8601DateFormatter().string(from: startOfDay))
+            .lt("time_start", value: ISO8601DateFormatter().string(from: endOfDay))
+            .order("time_start", ascending: true)
             .execute()
             .value
         
-        return response
     }
     
-    func insertMeal(_ mealDto: MealDTO) async throws -> MealDTO {
+    func insertMeal(_ newMeal: NewMealPayload) async throws -> MealDTO {
 
         guard let supabase = self.supabaseClient else {
             throw NSError(
@@ -66,10 +68,11 @@ class MealService {
         
         let insertedMeals: [MealDTO] = try await supabase
             .from("my_meals")
-            .insert(mealDto, returning: .representation)
+            .insert(newMeal, returning: .representation)
             .select()
             .execute()
             .value
+        
         
         guard let newMeal = insertedMeals.first else {
             throw NSError(domain: "MealServiceError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to decode inserted meal after insertion."])
@@ -78,22 +81,19 @@ class MealService {
         return newMeal
     }
     
-    func updateMeal(_ mealDto: MealDTO) async throws -> Bool {
+    func updateMeal(mealDto dto: MealDTO) async throws -> Bool {
         guard let supabase = self.supabaseClient else {
             throw NSError(domain: "MealServiceError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Supabase client is not initialized."])
         }
         
-        // Update the row in the 'my_meals' table where the 'id' matches.
         let updatedMeals: [MealDTO] = try await supabase
             .from("my_meals")
-            .update(mealDto)
-            .eq("id", value: mealDto.id)
+            .update(dto)
+            .eq("id", value: dto.id)
             .select()
             .execute()
             .value
-        
-        print("Updated meals:", updatedMeals)
-        
+                
         return !updatedMeals.isEmpty
     }
 

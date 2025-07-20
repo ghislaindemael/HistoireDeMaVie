@@ -39,11 +39,6 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     
     // MARK: - Data Flow Orchestration
     
-    func isCurrentlyConnected() async -> Bool {
-        try? await Task.sleep(nanoseconds: 300_000_000)
-        return NetworkMonitor.shared.isConnected
-    }
-    
     func loadData() async {
         isLoading = true
         await fetchOnlineInteractions()

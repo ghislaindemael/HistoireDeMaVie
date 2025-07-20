@@ -11,30 +11,24 @@ import SwiftData
 @Model
 final class Meal: Identifiable {
     @Attribute(.unique) var id: Int
-    var date: String = Date().rawValue
-    var timeStart: String
-    var timeEnd: String?
-    var content: String
-    var syncStatus: SyncStatus = SyncStatus.local
+    var time_start: Date
+    var time_end: Date?
+    var content: String?
     var mealTypeId: Int
+    var syncStatus: SyncStatus = SyncStatus.local
     
     @Transient var mealType: MealType?
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case date
-        case timeStart = "time_start"
-        case timeEnd = "time_end"
-        case content
-        case mealTypeId = "meal_id"
+        case id, time_start, time_end, content
+        case mealTypeId = "type_id"
     }
     
     // Memberwise initializer
-    init(id: Int, date: String, timeStart: String, timeEnd: String?, content: String, mealTypeId: Int, syncStatus: SyncStatus = .local) {
+    init(id: Int, time_start: Date, time_end: Date?, content: String?, mealTypeId: Int = 0, syncStatus: SyncStatus = .local) {
         self.id = id
-        self.date = date
-        self.timeStart = timeStart
-        self.timeEnd = timeEnd
+        self.time_start = time_start
+        self.time_end = time_end
         self.content = content
         self.mealTypeId = mealTypeId
         self.syncStatus = syncStatus
@@ -42,9 +36,8 @@ final class Meal: Identifiable {
     
     init(fromDTO dto: MealDTO) {
         self.id = dto.id
-        self.date = dto.date
-        self.timeStart = dto.timeStart
-        self.timeEnd = dto.timeEnd
+        self.time_start = dto.time_start
+        self.time_end = dto.time_end
         self.content = dto.content
         self.mealTypeId = dto.mealTypeId
         self.syncStatus = SyncStatus.synced
@@ -54,41 +47,72 @@ final class Meal: Identifiable {
 
 struct MealDTO: Codable, Identifiable, Sendable {
     var id: Int
-    let date: String
-    let timeStart: String
-    let timeEnd: String?
-    let content: String
+    let time_start: Date
+    let time_end: Date?
+    let content: String?
     let mealTypeId: Int
     
     enum CodingKeys: String, CodingKey {
-        case id, date, content
-        case timeStart = "time_start"
-        case timeEnd = "time_end"
-        case mealTypeId = "meal_id"
+        case id, time_start, time_end, content
+        case mealTypeId = "type_id"
+    }
+    
+    init(from meal: Meal){
+        self.id = meal.id
+        self.time_start = meal.time_start
+        self.time_end = meal.time_end
+        self.content = meal.content
+        self.mealTypeId = meal.mealTypeId
     }
 }
+
+struct NewMealPayload: Encodable {
+    var time_start: Date
+    var time_end: Date?
+    var content: String?
+    var mealTypeId: Int
+    
+    init() {
+        self.time_start = .now
+        self.time_end = nil
+        self.content = nil
+        self.mealTypeId = -1
+    }
+    
+    init(time_start: Date, time_end: Date? = nil,
+         content: String?, mealTypeId: Int = 0) {
+        self.time_start = time_start
+        self.time_end = time_end
+        self.content = content
+        self.mealTypeId = mealTypeId
+        
+    }
+    
+    init(fromMeal meal: Meal){
+        self.time_start = meal.time_start
+        self.time_end = meal.time_end
+        self.content = meal.content
+        self.mealTypeId = meal.mealTypeId
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case time_start
+        case time_end
+        case content
+        case mealTypeId = "type_id"
+    }
+}
+
 
 func dtosToMealObjects(from dtos: [MealDTO]) -> [Meal] {
     return dtos.map { dto in
         Meal(
             id: dto.id,
-            date: dto.date,
-            timeStart: dto.timeStart,
-            timeEnd: dto.timeEnd,
+            time_start: dto.time_start,
+            time_end: dto.time_end,
             content: dto.content,
             mealTypeId: dto.mealTypeId,
+            syncStatus: SyncStatus.synced
         )
     }
-}
-
-/// Helper to convert a Meal model to a MealDTO.
-func mealToDTO(_ meal: Meal) -> MealDTO {
-    return MealDTO(
-        id: meal.id,
-        date: meal.date,
-        timeStart: meal.timeStart,
-        timeEnd: meal.timeEnd,
-        content: meal.content,
-        mealTypeId: meal.mealTypeId
-    )
 }

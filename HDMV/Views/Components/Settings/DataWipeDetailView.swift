@@ -142,7 +142,7 @@ struct DataWipeDetailView: View {
             case let meal as Meal:
                 return AnyView(
                     HStack {
-                        Text(meal.date)
+                        Text(meal.time_start.ISO8601Format())
                             .font(.body)
                         Text("\(meal.mealTypeId)")
                     }
