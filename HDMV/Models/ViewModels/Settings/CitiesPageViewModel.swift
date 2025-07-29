@@ -11,14 +11,23 @@ import SwiftData
 
 @MainActor
 class CitiesPageViewModel: ObservableObject {
-        
-    @Published var cities: [City] = []
-    @Published var countries: [Country] = []
-    @Published var isLoading = false
-    
     
     private var modelContext: ModelContext?
+    private var settings = SettingsStore.shared
+    @Published var isLoading = false
+        
     private let citiesService = CitiesService()
+    @Published var cities: [City] = []
+    @Published var countries: [Country] = []
+    @Published var filteredCities: [City] = []
+
+    
+    @Published var selectedCountry: Country? {
+        didSet {
+            updateFilteredCities()
+        }
+    }
+    
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -46,41 +55,77 @@ class CitiesPageViewModel: ObservableObject {
         }
     }
     
+    // This private function updates the filtered list whenever the source data changes
+    private func updateFilteredCities() {
+        guard let selectedCountry else {
+            self.filteredCities = []
+            return
+        }
+        self.filteredCities = cities.filter { $0.country_id == selectedCountry.id }
+    }
+    
     
     func refreshDataFromServer() async {
-        guard let context = modelContext else { return }
         self.isLoading = true
         defer { self.isLoading = false }
         
         do {
-            async let cachableCityDTOs = try citiesService.fetchCachableCities()
-            async let uncachableCityDTOs = try citiesService.fetchUncachableCities()
             
-            let allDTOs = (try await cachableCityDTOs) + (try await uncachableCityDTOs)
-            
+            let dtos = try await citiesService.fetchCities(
+                includeArchived: settings.includeArchived
+            )
+
             var masterList: [City] = []
-            for dto in allDTOs {
-                if let id = dto.id {
-                    masterList.append(City(id: id, slug: dto.slug, name: dto.name, rank: dto.rank, country_id: dto.country_id, cache: dto.cache))
-                }
+            for dto in dtos {
+                masterList.append(
+                    City(fromDto: dto)
+                )
             }
+                    
             masterList.sort { c1, c2 in
-                if c1.rank != c2.rank { return c1.rank < c2.rank }
-                else { return c1.name < c2.name }
+                 return c1.name < c2.name
             }
             self.cities = masterList
+            updateFilteredCities()
             
-            try context.delete(model: City.self)
-            
-            for dto in try await cachableCityDTOs {
-                if let id = dto.id, dto.cache == true {
-                    context.insert(City(id: id, slug: dto.slug, name: dto.name, rank: dto.rank, country_id: dto.country_id, cache: dto.cache))
-                }
-            }
-            
-            try context.save()
         } catch {
             print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
+    func cacheCities() {
+        guard let context = modelContext, let selectedCountry = selectedCountry else {
+            print("Cannot cache: model context or selected country is missing.")
+            return
+        }
+        
+        print("Caching cities for \(selectedCountry.name)...")
+        
+        do {
+            let countryId = selectedCountry.id
+            let predicate = #Predicate<City> { city in
+                city.country_id == countryId
+            }
+            let descriptor = FetchDescriptor<City>(predicate: predicate)
+            let existingCities = try context.fetch(descriptor)
+            
+            for city in existingCities {
+                context.delete(city)
+            }
+            print("Deleted \(existingCities.count) existing cached cities for this country.")
+            
+            let citiesToCache = self.cities.filter { $0.country_id == countryId && $0.cache }
+            
+            for city in citiesToCache {
+                context.insert(city)
+            }
+            print("Inserting \(citiesToCache.count) new cities to cache.")
+            
+            try context.save()
+            print("Successfully cached cities for \(selectedCountry.name).")
+            
+        } catch {
+            print("Failed to perform targeted cache for cities: \(error)")
         }
     }
     
@@ -93,13 +138,10 @@ class CitiesPageViewModel: ObservableObject {
         let payload = NewCityPayload(slug: slug, name: name, rank: rank, country_id: country.id)
         
         do {
-            let createdDTO = try await citiesService.createCity(payload)
-            guard let finalId = createdDTO.id else { return }
-            
-            let finalCity = City(id: finalId, slug: createdDTO.slug, name: createdDTO.name, rank: createdDTO.rank, country_id: createdDTO.country_id, cache: createdDTO.cache)
-            context.insert(finalCity)
-            try context.save()
-            
+            let newCityDTO = try await citiesService.createCity(payload)
+            let newCity = City(fromDto: newCityDTO)
+            context.insert(newCity)
+            try? context.save()
             fetchFromCache()
         } catch {
             print("Failed to create city: \(error)")
@@ -111,13 +153,6 @@ class CitiesPageViewModel: ObservableObject {
         let oldRank = city.rank
 
         city.rank = newRank
-        cities.sort { c1, c2 in
-            if c1.rank != c2.rank {
-                return c1.rank < c2.rank
-            } else {
-                return c1.name < c2.name
-            }
-        }
         
         Task {
             do {
@@ -128,11 +163,7 @@ class CitiesPageViewModel: ObservableObject {
                 print("Failed to update rank on server: \(error). Reverting.")
                 city.rank = oldRank
                 cities.sort { c1, c2 in
-                    if c1.rank != c2.rank {
-                        return c1.rank < c2.rank
-                    } else {
-                        return c1.name < c2.name
-                    }
+                    return c1.name < c2.name
                 }
             }
         }
@@ -140,18 +171,11 @@ class CitiesPageViewModel: ObservableObject {
     
     /// Toggles the cache status for a city.
     func toggleCache(for city: City) {
-        guard let context = modelContext else { return }
-        
         Task {
             do {
-                try await citiesService.updateCacheStatus(forCityId: city.id, isActive: city.cache)
-                if city.cache {
-                    context.insert(city)
-                } else {
-                    context.delete(city)
-                }
-                try context.save()
-                
+                try await citiesService.updateCacheStatus(
+                    forCityId: city.id, shouldCache: city.cache
+                )
             } catch {
                 print("Failed to update cache status on server: \(error). Reverting.")
                 city.cache.toggle()
@@ -175,5 +199,21 @@ class CitiesPageViewModel: ObservableObject {
             }
         }
     }
+    
+    func unarchiveCity(for city: City) {
+        city.archived = false
+        
+        Task {
+            do {
+                try await citiesService.unarchiveCity(id: city.id)
+                objectWillChange.send()
+            } catch {
+                print("Failed to un-archive city on server: \(error). Reverting.")
+                city.archived = true
+                objectWillChange.send()
+            }
+        }
+    }
+
     
 }

@@ -25,9 +25,10 @@ struct NewCitySheet: View {
         NavigationView {
             Form {
                 Section("City Details") {
-                    TextField("Name", text: $name)
                     TextField("Slug", text: $slug)
                         .autocapitalization(.none)
+                    TextField("Name", text: $name)
+                    
                 }
                 
                 Section("Classification") {

@@ -211,12 +211,7 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         
         do {
             if interaction.id > 0 {
-                let success = try await interactionService.deleteInteraction(id: interaction.id)
-                if success {
-                    print("✅ Deleted interaction \(interaction.id) from Supabase.")
-                } else {
-                    print("⚠️ Supabase deletion not confirmed for interaction \(interaction.id).")
-                }
+                try await interactionService.deleteInteraction(id: interaction.id)
             } else {
                 print("ℹ️ Interaction \(interaction.id) is local only, skipping Supabase delete.")
             }

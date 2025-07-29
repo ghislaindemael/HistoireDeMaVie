@@ -12,39 +12,29 @@ struct PlacesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PlacesPageViewModel()
     
-    @State private var isShowingCreateSheet = false
-    @State private var selectedCity: City?
-    
-    private var filteredPlaces: [Place] {
-        guard let city = selectedCity else { return [] }
-        return viewModel.places.filter { $0.city_id == city.id }
-    }
+    @State private var isShowingAddSheet = false
     
     var body: some View {
         NavigationStack {
             Form {
                 Section(header: Text("Filter by City")) {
-                    Picker("Select City", selection: $selectedCity) {
+                    // The Picker is now bound to the ViewModel's selectedCity property
+                    Picker("Select City", selection: $viewModel.selectedCity) {
                         Text("Select a City...").tag(nil as City?)
                         ForEach(viewModel.cities) { city in
-                            Text(city.name).tag(city as City)
+                            Text(city.name).tag(city as City?)
                         }
                     }
                 }
                 
-                if selectedCity != nil {
-                    Section(header: Text(selectedCity?.name ?? "Places")) {
-                        ForEach(filteredPlaces) { place in
+                if viewModel.selectedCity != nil {
+                    Section(header: Text(viewModel.selectedCity?.name ?? "Places")) {
+                        ForEach(viewModel.filteredPlaces) { place in
                             PlaceRowView(place: place) {
                                 viewModel.toggleCache(for: place)
                             }
                         }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let placeToArchive = filteredPlaces[index]
-                                viewModel.archivePlace(for: placeToArchive)
-                            }
-                        }
+                        .onDelete(perform: deletePlace)
                     }
                 } else {
                     Section {
@@ -53,27 +43,29 @@ struct PlacesPage: View {
                 }
             }
             .navigationTitle("Places")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        Task {
-                            await viewModel.refreshDataFromServer() }
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isShowingCreateSheet.toggle() }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .task {
+            .standardConfigPageToolbar(
+                entityName: "places",
+                refreshAction: {
+                    await viewModel.refreshDataFromServer()
+                },
+                cacheAction: {
+                    viewModel.cachePlacesForSelectedCity()
+                },
+                isShowingAddSheet: $isShowingAddSheet
+            )
+            .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .sheet(isPresented: $isShowingCreateSheet) {
-                NewPlaceSheet(viewModel: viewModel)
+            .sheet(isPresented: $isShowingAddSheet) {
+                NewPlaceSheet(viewModel: viewModel, city: viewModel.selectedCity)
             }
+        }
+    }
+    
+    private func deletePlace(at offsets: IndexSet) {
+        for index in offsets {
+            let placeToArchive = viewModel.filteredPlaces[index]
+            viewModel.archivePlace(for: placeToArchive)
         }
     }
 }
@@ -101,5 +93,7 @@ struct PlacesPage: View {
         } catch { fatalError("Failed to create container: \(error)") }
     }()
     
-    PlacesPage().modelContainer(container)
+    PlacesPage()
+        .modelContainer(container)
+        .environmentObject(SettingsStore())
 }

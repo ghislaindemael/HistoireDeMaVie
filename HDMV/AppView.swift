@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct AppView: View {
+    
+    @EnvironmentObject var settings: SettingsStore
+    
     var body: some View {
         TabView() {
             Tab ("Home", systemImage: "house.fill") {

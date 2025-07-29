@@ -19,6 +19,7 @@ class CachingService: ObservableObject {
     private let modelContainer: ModelContainer
     private let mealService = MealService()
     private let vehicleService = VehicleService()
+    private let countriesService = CountriesService()
     
     private var initialLoadingTask: Task<Void, Never>?
     
@@ -87,4 +88,5 @@ class CachingService: ObservableObject {
             self.cachedVehicleTypes = vehicleTypes
         }
     }
+    
 }

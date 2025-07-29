@@ -32,11 +32,14 @@ struct HDMVApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    @StateObject var settings = SettingsStore()
 
     var body: some Scene {
         WindowGroup {
             AppView()
         }
         .modelContainer(HDMVApp.sharedModelContainer)
+        .environmentObject(settings)
     }
 }

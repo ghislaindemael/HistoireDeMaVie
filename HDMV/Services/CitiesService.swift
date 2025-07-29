@@ -10,12 +10,16 @@ import Foundation
 
 class CitiesService {
     private let supabaseClient = SupabaseService.shared.client
-    
-    func fetchCountries() async throws -> [CountryDTO] {
+        
+    func fetchCities(forCountryId countryId: Int) async throws -> [CityDTO] {
         guard let supabaseClient = supabaseClient else { return [] }
+        
         return try await supabaseClient
-            .from("data_countries")
+            .from("data_cities")
             .select()
+            .eq("country_id", value: countryId)
+            .eq("archived", value: false)
+            .order("rank", ascending: true)
             .order("name", ascending: true)
             .execute()
             .value
@@ -33,27 +37,18 @@ class CitiesService {
             .value
     }
     
-    /// Fetches ONLY the cities that are marked for caching and are not archived.
-    func fetchCachableCities() async throws -> [CityDTO] {
+    func fetchCities(includeArchived: Bool = false) async throws -> [CityDTO] {
         guard let supabaseClient = supabaseClient else { return [] }
-        return try await supabaseClient
+        
+        var query = supabaseClient
             .from("data_cities")
             .select()
-            .eq("archived", value: false)
-            .eq("cache", value: true)
-            .order("rank", ascending: true)
-            .order("name", ascending: true)
-            .execute()
-            .value
-    }
-    
-    func fetchUncachableCities() async throws -> [CityDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        return try await supabaseClient
-            .from("data_cities")
-            .select()
-            .eq("archived", value: false)
-            .eq("cache", value: false)
+        
+        if !includeArchived {
+            query = query.eq("archived", value: false)
+        }
+        
+        return try await query
             .order("rank", ascending: true)
             .order("name", ascending: true)
             .execute()
@@ -72,20 +67,22 @@ class CitiesService {
     }
     
     func updateCity(_ city: CityDTO) async throws {
-        guard let supabaseClient = supabaseClient, let cityId = city.id else { return }
+        guard let supabaseClient = supabaseClient else { return }
         try await supabaseClient
             .from("data_cities")
             .update(city)
-            .eq("id", value: cityId)
+            .eq("id", value: city.id)
             .execute()
     }
     
-    func updateCacheStatus(forCityId cityId: Int, isActive: Bool) async throws {
-        guard let supabaseClient = supabaseClient else { return }
+    func updateCacheStatus(forCityId cityId: Int, shouldCache: Bool) async throws {
+        guard let supabaseClient = supabaseClient else {
+            return
+        }
         
         try await supabaseClient
             .from("data_cities")
-            .update(["cache": isActive])
+            .update(["cache": shouldCache])
             .eq("id", value: cityId)
             .execute()
     }
@@ -100,12 +97,24 @@ class CitiesService {
             .execute()
     }
     
+    /// Sets the 'archived' status of a city to true.
     func archiveCity(id: Int) async throws {
         guard let supabaseClient = supabaseClient else { return }
         
         try await supabaseClient
             .from("data_cities")
             .update(["archived": true])
+            .eq("id", value: id)
+            .execute()
+    }
+    
+    /// Sets the 'archived' status of a city to false.
+    func unarchiveCity(id: Int) async throws {
+        guard let supabaseClient = supabaseClient else { return }
+        
+        try await supabaseClient
+            .from("data_cities")
+            .update(["archived": false])
             .eq("id", value: id)
             .execute()
     }

@@ -6,13 +6,6 @@
 //
 
 
-//
-//  MealType.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 09.06.2025.
-//
-
 import Foundation
 import SwiftData
 

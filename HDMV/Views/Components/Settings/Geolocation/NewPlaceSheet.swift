@@ -15,8 +15,18 @@ struct NewPlaceSheet: View {
     @State private var name: String = ""
     @State private var selectedCity: City?
     @State private var isSaving = false
-
+    
     private var isFormValid: Bool { !name.isEmpty && selectedCity != nil }
+    
+    /// Custom initializer to accept a pre-selected city.
+    /// - Parameters:
+    ///   - viewModel: The view model for handling data operations.
+    ///   - city: The city that should be pre-selected in the picker.
+    init(viewModel: PlacesPageViewModel, city: City? = nil) {
+        self.viewModel = viewModel
+        // Initialize the @State property with the passed-in city.
+        self._selectedCity = State(initialValue: city)
+    }
     
     var body: some View {
         NavigationView {

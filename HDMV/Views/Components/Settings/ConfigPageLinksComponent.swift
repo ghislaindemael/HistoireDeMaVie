@@ -25,10 +25,12 @@ struct ConfigPageLink {
 struct ConfigPageLinksComponent: View {
     
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var settings = SettingsStore.shared
     @State private var isExpanded: Bool = false
     
     private let configPages: [ConfigPageLink] = [
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
+        ConfigPageLink(title: "Countries", destination: AnyView(CountriesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
         ConfigPageLink(title: "People", destination: AnyView(PeoplePage()))
@@ -39,8 +41,9 @@ struct ConfigPageLinksComponent: View {
     }
 
     var body: some View {
-        DisclosureGroup("Config pages", isExpanded: $isExpanded) {
+        DisclosureGroup("Configuration", isExpanded: $isExpanded) {
             VStack(spacing: 4) {
+                Toggle("Fetch archived", isOn: $settings.includeArchived)
                 ForEach(configPages.indices, id: \.self) { index in
                     let page = configPages[index]
                     

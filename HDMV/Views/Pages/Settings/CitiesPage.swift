@@ -11,33 +11,27 @@ import SwiftData
 
 struct CitiesPage: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var settings: SettingsStore
     @StateObject private var viewModel = CitiesPageViewModel()
     
     @State private var isShowingCreateSheet = false
-    @State private var selectedCountry: Country?
     
-    private var filteredCities: [City] {
-        guard let country = selectedCountry else {
-            return viewModel.cities
-        }
-        return viewModel.cities.filter { $0.country_id == country.id }
-    }
     
     var body: some View {
         NavigationStack {
             Form {
-                Section() {
-                    Picker("Select Country", selection: $selectedCountry) {
-                        Text("Select a Country...").tag(nil as Country?)
+                Section("Filter") {
+                    Picker("Country", selection: $viewModel.selectedCountry) {
+                        Text("Select").tag(nil as Country?)
                         ForEach(viewModel.countries) { country in
                             Text(country.name).tag(country as Country?)
                         }
                     }
                 }
                 
-                if selectedCountry != nil {
-                    Section(header: Text(selectedCountry?.name ?? "Cities")) {
-                        ForEach(filteredCities) { city in
+                if viewModel.selectedCountry  != nil {
+                    Section() {
+                        ForEach(viewModel.filteredCities) { city in
                             CityRowView(
                                 city: city,
                                 onRankChanged: { newRank in
@@ -47,13 +41,25 @@ struct CitiesPage: View {
                                     viewModel.toggleCache(for: city)
                                 }
                             )
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let cityToArchive = filteredCities[index]
-                                viewModel.archiveCity(for: cityToArchive)
+    
+                            .swipeActions {
+                                if city.archived {
+                                    Button() {
+                                        viewModel.unarchiveCity(for: city)
+                                    } label: {
+                                        Label("Un-archive", systemImage: "archivebox.fill")
+                                    }
+                                    .tint(.green)
+                                } else {
+                                    Button(role: .destructive) {
+                                        viewModel.archiveCity(for: city)
+                                    } label: {
+                                        Label("Archive", systemImage: "archivebox.fill")
+                                    }
+                                }
                             }
                         }
+                        
                     }
                 } else {
                     Section {
@@ -63,18 +69,31 @@ struct CitiesPage: View {
             }
             .navigationTitle("Cities")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isShowingCreateSheet.toggle() }) {
-                        Image(systemName: "plus")
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button(action: {
+                            Task {
+                                await viewModel.refreshDataFromServer()
+                            }
+                        }) {
+                            Label(
+                                "Refresh \(settings.includeArchived ? "all " : "")cities",
+                                systemImage: "icloud.and.arrow.down"
+                            )
+                        }
+                    
+                        Button(action: { viewModel.cacheCities() }) {
+                            Label("Re-cache cities", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
+                        }
+                        
+                    } label: {
+                        Label("Actions", systemImage: "ellipsis.circle")
                     }
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        Task {
-                            await viewModel.refreshDataFromServer()
-                        }
-                    }) {
-                        Image(systemName: "icloud.and.arrow.down.fill")
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { isShowingCreateSheet.toggle() }) {
+                        Image(systemName: "plus")
                     }
                 }
             }
@@ -97,15 +116,12 @@ struct CitiesPage: View {
             let container = try ModelContainer(for: schema, configurations: [config])
             
             let switzerland = Country(id: 1, slug: "ch", name: "Switzerland")
-            let france = Country(id: 2, slug: "fr", name: "France")
             
             container.mainContext.insert(switzerland)
-            container.mainContext.insert(france)
             
             container.mainContext.insert(City(id: 10, slug: "geneva", name: "Geneva", rank: 2, country_id: 1))
-            container.mainContext.insert(City(id: 11, slug: "aubonne", name: "Aubonne-Pizy-Montherod", rank: 1, country_id: 1))
+            container.mainContext.insert(City(id: 11, slug: "aubonne", name: "Aubonne-Pizy-Montherod", rank: 1, country_id: 1, archived: true))
             container.mainContext.insert(City(id: 12, slug: "lausanne", name: "Lausanne", rank: 3, country_id: 1))
-            container.mainContext.insert(City(id: 20, slug: "paris", name: "Paris", rank: 1, country_id: 2))
 
             return container
         } catch {

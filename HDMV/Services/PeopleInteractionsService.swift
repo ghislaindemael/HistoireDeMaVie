@@ -94,7 +94,7 @@ class PeopleInteractionsService {
         return PersonInteraction(fromDTO: updatedDTO)
     }
     
-    func deleteInteraction(id: Int) async throws -> Bool {
+    func deleteInteraction(id: Int) async throws {
         guard let supabaseClient = supabaseClient else {
             throw URLError(.cannotConnectToHost)
         }
@@ -106,10 +106,8 @@ class PeopleInteractionsService {
                 .eq("id", value: id)
                 .execute()
             print("Deleted successfully")
-            return true
         } catch {
             print("Failed to delete interaction: \(error.localizedDescription)")
-            return false
         }
 
     }
