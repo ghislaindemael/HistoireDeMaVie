@@ -7,7 +7,6 @@ struct SettingsPage: View {
         NavigationStack {
             VStack {
                 AuthComponent(expanded: !auth.isAuthenticated)
-                CachingComponent()
                 DataManagementComponent()
                 ConfigPageLinksComponent()
                 Spacer()

@@ -11,38 +11,29 @@ struct NewCountrySheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: CountriesPageViewModel
     
-    @State private var name: String = ""
-    @State private var slug: String = ""
+    @State private var payload = NewCountryPayload()
+
     
     private var isFormValid: Bool {
-        !name.isEmpty && !slug.isEmpty
+        !payload.slug.isEmpty && !payload.name.isEmpty
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section("Country Details") {
-                    TextField("Slug", text: $slug)
+                Section("Details") {
+                    TextField("Slug", text: $payload.slug)
                         .autocapitalization(.none)
-                    TextField("Name", text: $name)
-                    
+                    TextField("Name", text: $payload.name)
                 }
             }
             .navigationTitle("New Country")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+            .standardNewModelSheetToolbar(
+                isFormValid: isFormValid,
+                onDone: {
+                    await viewModel.createCountry(payload: payload)
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        Task {
-                            await viewModel.createCountry(name: name, slug: slug)
-                            dismiss()
-                        }
-                    }
-                    .disabled(!isFormValid)
-                }
-            }
+            )
         }
     }
 }

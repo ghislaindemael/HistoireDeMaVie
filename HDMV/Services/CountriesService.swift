@@ -7,27 +7,22 @@
 
 import Foundation
 
-class CountriesService {
+class CountriesService: CountriesServiceProtocol {
+    
     private let supabaseClient = SupabaseService.shared.client
+    private let settings = SettingsStore.shared
+    
+    private let TABLE_NAME: String = "data_countries"
+
     
     func fetchCountries() async throws -> [CountryDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        return try await supabaseClient
-            .from("data_countries")
-            .select()
-            .order("name", ascending: true)
-            .execute()
-            .value
-    }
-            
-    func fetchCountries(includeArchived: Bool = false) async throws -> [CountryDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         
         var query = supabaseClient
-            .from("data_countries")
+            .from(TABLE_NAME)
             .select()
         
-        if !includeArchived {
+        if !settings.includeArchived {
             query = query.eq("archived", value: false)
         }
         
@@ -36,11 +31,12 @@ class CountriesService {
             .execute()
             .value
     }
+            
     
-    func createCountry(_ payload: NewCountryPayload) async throws -> CountryDTO {
+    func createCountry(payload: NewCountryPayload) async throws -> CountryDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         return try await supabaseClient
-            .from("data_countries")
+            .from(TABLE_NAME)
             .insert(payload, returning: .representation)
             .select()
             .single()
@@ -49,40 +45,35 @@ class CountriesService {
     }
     
     
-    func updateCacheStatus(
-        forCountryId countryId: Int,
-        shouldCache: Bool
-    ) async throws {
-        guard let supabaseClient = supabaseClient else {
-            return
-        }
+    func updateCacheStatus(for country: Country) async throws {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         
         try await supabaseClient
-            .from("data_countries")
-            .update(["cache": shouldCache])
-            .eq("id", value: countryId)
+            .from(TABLE_NAME)
+            .update(["cache": country.cache])
+            .eq("id", value: country.id)
             .execute()
     }
         
-    /// Sets the 'archived' status of a country to true.
-    func archiveCountry(id: Int) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        
+    /// Sets the 'archived' column of a country to true in  supabase.
+    func archiveCountry(country: Country) async throws {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+
         try await supabaseClient
-            .from("data_countries")
+            .from(TABLE_NAME)
             .update(["archived": true])
-            .eq("id", value: id)
+            .eq("id", value: country.id)
             .execute()
     }
     
-    /// Sets the 'archived' status of a country to false.
-    func unarchiveCountry(id: Int) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        
+    /// Sets the 'archived' column of a country to false in  supabase.
+    func unarchiveCountry(country: Country) async throws {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+
         try await supabaseClient
-            .from("data_countries")
+            .from(TABLE_NAME)
             .update(["archived": false])
-            .eq("id", value: id)
+            .eq("id", value: country.id)
             .execute()
     }
     

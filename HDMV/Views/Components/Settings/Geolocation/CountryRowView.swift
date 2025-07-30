@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CountryRowView: View {
+    
     @Bindable var country: Country
     
     let onCacheToggle: () -> Void

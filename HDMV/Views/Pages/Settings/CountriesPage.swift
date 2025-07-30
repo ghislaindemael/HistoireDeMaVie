@@ -20,16 +20,14 @@ struct CountriesPage: View {
             Form {
                 countriesList
             }
-            
             .navigationTitle("Countries")
             .standardConfigPageToolbar(
-                entityName: "countries",
-                refreshAction: viewModel.refreshDataFromServer,
+                refreshAction: viewModel.fetchFromServer,
                 cacheAction: viewModel.cacheCountries,
                 isShowingAddSheet: $isShowingAddSheet
             )
             .onAppear {
-                viewModel.setup(modelContext: modelContext)
+                viewModel.setup(modelContext: modelContext, settings: settings)
             }
             .sheet(isPresented: $isShowingAddSheet) {
                 NewCountrySheet(viewModel: viewModel)

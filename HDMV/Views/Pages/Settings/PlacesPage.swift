@@ -44,7 +44,6 @@ struct PlacesPage: View {
             }
             .navigationTitle("Places")
             .standardConfigPageToolbar(
-                entityName: "places",
                 refreshAction: {
                     await viewModel.refreshDataFromServer()
                 },

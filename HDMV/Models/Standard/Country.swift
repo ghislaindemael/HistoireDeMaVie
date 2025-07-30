@@ -43,6 +43,6 @@ struct CountryDTO: Codable, Identifiable, Sendable {
 }
 
 struct NewCountryPayload: Encodable {
-    var slug: String
-    var name: String
+    var slug: String = ""
+    var name: String = ""
 }

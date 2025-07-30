@@ -12,18 +12,27 @@ import SwiftData
 class CountriesPageViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
-    private var settings = SettingsStore.shared
+    private var settings: SettingsStore?
+    
+    
     @Published var isLoading = false
+    @Published var countries: [Country] = []
     
     private let countriesService = CountriesService()
-    @Published var countries: [Country] = []
+    
+    // MARK: Initialization
+    
+    init() {}
         
-    func setup(modelContext: ModelContext) {
+    func setup(modelContext: ModelContext, settings: SettingsStore) {
         self.modelContext = modelContext
+        self.settings = settings
+        
         fetchFromCache()
+        
         if countries.isEmpty {
             Task {
-                await refreshDataFromServer()
+                await fetchFromServer()
             }
         }
     }
@@ -31,7 +40,7 @@ class CountriesPageViewModel: ObservableObject {
     
     // MARK: - Data Loading and Caching
     
-    private func fetchFromCache() {
+    func fetchFromCache() {
         guard let context = modelContext else { return }
         do {
             let descriptor = FetchDescriptor<Country>(sortBy: [SortDescriptor(\.name)])
@@ -41,32 +50,21 @@ class CountriesPageViewModel: ObservableObject {
         }
     }
     
-    func refreshDataFromServer() async {
-        self.isLoading = true
-        defer { self.isLoading = false }
+    func fetchFromServer() async {
+        isLoading = true
+        defer { isLoading = false }
         
         do {
+            let dtos = try await countriesService.fetchCountries()
             
-            let dtos = try await countriesService.fetchCountries(
-                includeArchived: settings.includeArchived
-            )
-            
-            var masterList: [Country] = []
-            for dto in dtos {
-                masterList.append(
-                    Country(fromDto: dto)
-                )
-            }
-            
-            masterList.sort { c1, c2 in
-                return c1.name < c2.name
-            }
-            self.countries = masterList
-            
+            countries = dtos
+                .map(Country.init(fromDto:))
+                .sorted { $0.name < $1.name }
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
     }
+
     
     func cacheCountries() {
         guard let context = modelContext else {
@@ -90,12 +88,11 @@ class CountriesPageViewModel: ObservableObject {
     
     // MARK: - User Actions
     
-    func createCountry(name: String, slug: String) async {
+    func createCountry(payload: NewCountryPayload) async {
         guard let context = modelContext else { return }
-        let payload = NewCountryPayload(slug: slug, name: name)
         
         do {
-            let newCountryDTO = try await countriesService.createCountry(payload)
+            let newCountryDTO = try await countriesService.createCountry(payload: payload)
             let newCountry = Country(fromDto: newCountryDTO)
             context.insert(newCountry)
             try? context.save()
@@ -109,9 +106,7 @@ class CountriesPageViewModel: ObservableObject {
     func toggleCache(for country: Country) {
         Task {
             do {
-                try await countriesService.updateCacheStatus(
-                    forCountryId: country.id, shouldCache: country.cache
-                )
+                try await countriesService.updateCacheStatus(for: country)
             } catch {
                 print("Failed to update cache status on server: \(error). Reverting.")
                 country.cache.toggle()
@@ -124,7 +119,7 @@ class CountriesPageViewModel: ObservableObject {
                 
         Task {
             do {
-                try await countriesService.archiveCountry(id: country.id)
+                try await countriesService.archiveCountry(country: country)
                 context.delete(country)
                 countries.removeAll { $0.id == country.id }
 
@@ -141,7 +136,7 @@ class CountriesPageViewModel: ObservableObject {
         
         Task {
             do {
-                try await countriesService.unarchiveCountry(id: country.id)
+                try await countriesService.unarchiveCountry(country: country)
                 objectWillChange.send()
             } catch {
                 print("Failed to un-archive country: \(error). Reverting.")
@@ -153,3 +148,5 @@ class CountriesPageViewModel: ObservableObject {
     
     
 }
+
+extension CountriesPageViewModel: CountriesPageViewModelProtocol {}
