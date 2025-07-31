@@ -9,17 +9,15 @@ import Foundation
 import SwiftData
 
 @Model
-final class VehicleType: Identifiable, Codable {
+final class VehicleType {
     @Attribute(.unique) var id: Int
     var slug: String
     var name: String
     var icon: String
+    var cache: Bool = true
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case slug
-        case name
-        case icon
+        case id, slug, name, icon, cache
     }
     
     init(id: Int, slug: String, name: String, icon: String) {
@@ -27,22 +25,15 @@ final class VehicleType: Identifiable, Codable {
         self.slug = slug
         self.name = name
         self.icon = icon
+        self.cache = cache
     }
     
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(Int.self, forKey: .id)
-        self.slug = try container.decode(String.self, forKey: .slug)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.icon = try container.decode(String.self, forKey: .icon)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(slug, forKey: .slug)
-        try container.encode(name, forKey: .name)
-        try container.encode(icon, forKey: .icon)
+    init(fromDto dto: VehicleTypeDTO){
+        self.id = dto.id
+        self.slug = dto.slug
+        self.name = dto.name
+        self.icon = dto.icon
+        self.cache = dto.cache
     }
     
 }
@@ -52,32 +43,16 @@ struct VehicleTypeDTO: Codable, Identifiable, Sendable {
     let slug: String
     let name: String
     let icon: String
+    let cache: Bool
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case slug
-        case name
-        case icon
+        case id, slug, name, icon, cache
     }
 }
 
-func dtosToVehicleTypeObjects(from dtos: [VehicleTypeDTO]) -> [VehicleType] {
-    return dtos.map { dto in
-        VehicleType(
-            id: dto.id,
-            slug: dto.slug,
-            name: dto.name,
-            icon: dto.icon
-        )
-    }
+struct NewVehicleTypePayload: Encodable {
+    var slug: String = ""
+    var name: String = ""
+    var icon: String = ""
 }
 
-/// Helper to convert a VehicleType model to a VehicleTypeDTO.
-func vehicleTypeToDTO(_ vehicleType: VehicleType) -> VehicleTypeDTO {
-    return VehicleTypeDTO(
-        id: vehicleType.id,
-        slug: vehicleType.slug,
-        name: vehicleType.slug,
-        icon: vehicleType.icon
-    )
-}

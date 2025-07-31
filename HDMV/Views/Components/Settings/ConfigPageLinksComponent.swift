@@ -5,14 +5,6 @@
 //  Created by Ghislain Demael on 19.06.2025.
 //
 
-
-//
-//  VehicleDataManagementComponent.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 18.06.2025.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -32,8 +24,10 @@ struct ConfigPageLinksComponent: View {
         ConfigPageLink(title: "Countries", destination: AnyView(CountriesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
+        ConfigPageLink(title: "People", destination: AnyView(PeoplePage())),
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
-        ConfigPageLink(title: "People", destination: AnyView(PeoplePage()))
+        ConfigPageLink(title: "VehicleTypes", destination: AnyView(VehicleTypesPage())),
+        
     ]
     
     init(expanded: Bool = false) {

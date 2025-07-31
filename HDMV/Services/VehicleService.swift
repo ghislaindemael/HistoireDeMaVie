@@ -9,20 +9,11 @@ import Foundation
 
 class VehicleService {
     private let supabaseClient = SupabaseService.shared.client
+    private let settings = SettingsStore.shared
     
-    func fetchVehicleTypes() async throws -> [VehicleTypeDTO] {
-        guard let supabaseClient = SupabaseService.shared.client else {
-            return []
-        }
-        
-        let response: [VehicleTypeDTO] = try await supabaseClient
-            .from("data_vehicle_types")
-            .select()
-            .execute()
-            .value
-        
-        return response
-    }
+    private let VEHICLES_TABLE_NAME: String = "data_vehicles"
+    private let VEHICLE_TYPES_TABLE_NAME: String = "data_vehicle_types"
+    
     
     func fetchVehicles() async throws -> [VehicleDTO] {
         guard let supabaseClient = supabaseClient else { return [] }
@@ -74,6 +65,47 @@ class VehicleService {
             .delete()
             .eq("id", value: id)
             .execute()
+    }
+    
+    func updateCacheStatus(
+        forVehicleTypeId countryId: Int,
+        shouldCache: Bool
+    ) async throws {
+        guard let supabaseClient = supabaseClient else {
+            return
+        }
+        
+        try await supabaseClient
+            .from("data_vehicle_types")
+            .update(["cache": shouldCache])
+            .eq("id", value: countryId)
+            .execute()
+    }
+    
+    
+    func fetchVehicleTypes() async throws -> [VehicleTypeDTO] {
+        guard let supabaseClient = SupabaseService.shared.client else {
+            return []
+        }
+        
+        let response: [VehicleTypeDTO] = try await supabaseClient
+            .from("data_vehicle_types")
+            .select()
+            .execute()
+            .value
+        
+        return response
+    }
+    
+    func createVehicleType(payload: NewVehicleTypePayload) async throws -> VehicleTypeDTO {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        return try await supabaseClient
+            .from(VEHICLE_TYPES_TABLE_NAME)
+            .insert(payload, returning: .representation)
+            .select()
+            .single()
+            .execute()
+            .value
     }
     
     
