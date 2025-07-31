@@ -15,7 +15,6 @@ struct DataManagementComponent: View {
     
     // An array of the model types to be managed by this component.
     private let modelTypes: [any PersistentModel.Type] = [
-        Meal.self,
         AgendaEntry.self,
         Trip.self,
         City.self,
@@ -91,7 +90,6 @@ struct DataManagementComponent: View {
         do {
             // The switch ensures type-safety for the delete operation.
             switch modelType {
-                case is Meal.Type: try modelContext.delete(model: Meal.self)
                 case is AgendaEntry.Type: try modelContext.delete(model: AgendaEntry.self)
                 case is Trip.Type: try modelContext.delete(model: Trip.self)
                 case is City.Type: try modelContext.delete(model: City.self)
@@ -110,7 +108,6 @@ struct DataManagementComponent: View {
     private func fetchCount(for modelType: any PersistentModel.Type) -> Int {
         do {
             switch modelType {
-                case is Meal.Type: return try modelContext.fetchCount(FetchDescriptor<Meal>())
                 case is AgendaEntry.Type: return try modelContext.fetchCount(FetchDescriptor<AgendaEntry>())
                 case is Trip.Type: return try modelContext.fetchCount(FetchDescriptor<Trip>())
                 case is City.Type: return try modelContext.fetchCount(FetchDescriptor<City>())
@@ -137,5 +134,5 @@ struct DataManagementComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [Meal.self, AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, PersonInteraction.self])
+    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, PersonInteraction.self])
 }

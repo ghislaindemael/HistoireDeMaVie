@@ -25,10 +25,6 @@ struct AppView: View {
                 TripsPage()
             }
             
-            Tab("Meals", systemImage: "fork.knife.circle") {
-                MealsPage()
-            }
-            
             Tab ("Agenda", systemImage: "pencil.and.list.clipboard"){
                 AgendaPage()
             }

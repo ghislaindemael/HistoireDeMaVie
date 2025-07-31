@@ -78,11 +78,6 @@ struct DataWipeDetailView: View {
     private func fetchItems() {
         do {
             switch modelType {
-                case is Meal.Type:
-                    let descriptor = FetchDescriptor<Meal>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
                     let results = try modelContext.fetch(descriptor)
@@ -139,14 +134,6 @@ struct DataWipeDetailView: View {
     
     private func describeView(for item: any PersistentModel) -> AnyView {
         switch item {
-            case let meal as Meal:
-                return AnyView(
-                    HStack {
-                        Text(meal.time_start.ISO8601Format())
-                            .font(.body)
-                        Text("\(meal.mealTypeId)")
-                    }
-                )
             case let entry as AgendaEntry:
                 return AnyView(
                     VStack(alignment: .leading) {
@@ -191,7 +178,7 @@ struct DataWipeDetailView: View {
 
 #Preview {
     NavigationStack {
-        DataWipeDetailView(modelType: Meal.self)
+        DataWipeDetailView(modelType: AgendaEntry.self)
     }
-    .modelContainer(for: Meal.self)
+    .modelContainer(for: AgendaEntry.self)
 }
