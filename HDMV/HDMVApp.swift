@@ -12,6 +12,7 @@ import SwiftData
 struct HDMVApp: App {
     static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
+            Activity.self,
             MealType.self,
             Meal.self,
             AgendaEntry.self,
