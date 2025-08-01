@@ -24,38 +24,38 @@ struct AuthComponent: View {
     var body: some View {
         DisclosureGroup("Supabase Login", isExpanded: $isExpanded) {
             VStack(spacing: 5) {
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
-
-                Button {
-                    Task {
-                        await login()
+                if !auth.isAuthenticated {
+                    TextField("Email", text: $email)
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                    
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(.roundedBorder)
+                    
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.caption)
                     }
-                } label: {
-                    if isLoading {
-                        ProgressView()
-                    } else {
-                        Text("Log In")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                    
+                    Button {
+                        Task {
+                            await login()
+                        }
+                    } label: {
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Log In")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                     }
-                }
-                
-                if auth.isAuthenticated {
+                } else {
                     VStack(spacing: 8) {
                         Text("Logged in as:")
                         Text(auth.session?.user.email ?? "unknown")
@@ -66,7 +66,11 @@ struct AuthComponent: View {
                                 await auth.logout()
                             }
                         }
-                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
                 }
             }
