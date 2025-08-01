@@ -66,7 +66,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                         localInstance.details = dto.details
                     }
                 } else {
-                    context.insert(ActivityInstance(from: dto))
+                    context.insert(ActivityInstance(fromDto: dto))
                 }
             }
             
@@ -104,7 +104,8 @@ class MyActivitiesPageViewModel: ObservableObject {
                         time_start: instance.time_start,
                         time_end: instance.time_end,
                         activity_id: instance.activity_id,
-                        details: instance.details
+                        details: instance.details,
+                        activity_details: instance.decodedActivityDetails
                     )
                     do {
                         if instance.id < 0 {
@@ -168,9 +169,3 @@ class MyActivitiesPageViewModel: ObservableObject {
     }
 }
 
-// Helper to create a Model from a DTO
-extension ActivityInstance {
-    convenience init(from dto: ActivityInstanceDTO) {
-        self.init(id: dto.id, time_start: dto.time_start, time_end: dto.time_end, activity_id: dto.activity_id, details: dto.details, syncStatus: .synced)
-    }
-}

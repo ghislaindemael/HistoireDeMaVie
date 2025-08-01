@@ -13,16 +13,18 @@ struct ActivityInstanceDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @Bindable var instance: ActivityInstance
-    // The sheet receives the pre-fetched activity tree.
     let activityTree: [Activity]
     
-    // State to manage the optional end time.
     @State private var hasEndTime: Bool
+    
+    private var selectedActivity: Activity? {
+        guard let id = instance.activity_id else { return nil }
+        return activityTree.flatMap { $0.flattened() }.first { $0.id == id }
+    }
     
     init(instance: ActivityInstance, activityTree: [Activity]) {
         self.instance = instance
         self.activityTree = activityTree
-        // Initialize the toggle state based on whether an end time exists.
         _hasEndTime = State(initialValue: instance.time_end != nil)
     }
     
@@ -30,7 +32,6 @@ struct ActivityInstanceDetailSheet: View {
         NavigationView {
             Form {
                 Section("Activity") {
-                    // This now links to a dedicated view for hierarchical selection.
                     NavigationLink(destination: ActivitySelectorView(
                         activityTree: activityTree,
                         selectedActivityId: $instance.activity_id
@@ -38,7 +39,6 @@ struct ActivityInstanceDetailSheet: View {
                         HStack {
                             Text("Select Activity")
                             Spacer()
-                            // Display the name of the currently selected activity.
                             if let selectedActivity = findActivity(by: instance.activity_id) {
                                 Text(selectedActivity.name)
                                     .foregroundStyle(.secondary)
@@ -48,7 +48,6 @@ struct ActivityInstanceDetailSheet: View {
                 }
                 
                 Section("Basics") {
-                    // Use the new FullTimePicker component.
                     FullTimePicker(label: "Start Time", selection: $instance.time_start)
                     
                     Toggle("Has End Time", isOn: $hasEndTime)
@@ -68,6 +67,12 @@ struct ActivityInstanceDetailSheet: View {
                     ))
                     .lineLimit(3...)
                 }
+                
+                if let activity = selectedActivity, activity.type != .generic {
+                    Section(header: Text("Activity Details")) {
+                        specializedDetailsView(for: activity)
+                    }
+                }
 
             }
             .navigationTitle(instance.activity_id == nil ? "New Activity" : "Edit Activity")
@@ -80,6 +85,25 @@ struct ActivityInstanceDetailSheet: View {
                 try? modelContext.save()
                 dismiss()
             }
+        }
+    }
+    
+    @ViewBuilder
+    private func specializedDetailsView(for activity: Activity) -> some View {
+        switch activity.type {
+            case .meal:
+                MealDetailsEditView(metadata: $instance.decodedActivityDetails)
+            case .reading:
+                Text("Reading details editor placeholder")
+            case .generic:
+                TextEditor(text: .init(
+                    get: { instance.details ?? "" },
+                    set: { instance.details = $0.isEmpty ? nil : $0 }
+                ))
+                .frame(minHeight: 100)
+            default:
+                EmptyView()
+                
         }
     }
     

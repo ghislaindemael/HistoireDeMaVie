@@ -15,24 +15,26 @@ final class Activity: Identifiable, Hashable {
     var slug: String
     var parent_id: Int?
     var icon: String
+    var type: ActivityType?
     var cache: Bool
     var archived: Bool
-    
+
     // Used to build the tree structure in memory after fetching.
     @Transient var children: [Activity] = []
     
-    init(id: Int, name: String, slug: String, parent_id: Int? = nil, icon: String, cache: Bool = true, archived: Bool = false) {
+    init(id: Int, name: String, slug: String, parent_id: Int? = nil, icon: String,type: ActivityType? = nil, cache: Bool = true, archived: Bool = false) {
         self.id = id
         self.name = name
         self.slug = slug
         self.parent_id = parent_id
         self.icon = icon
+        self.type = type
         self.cache = cache
         self.archived = archived
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, slug, cache, archived, parent_id, icon
+        case id, name, slug, cache, archived, parent_id, icon, type
     }
     
     init(fromDto dto: ActivityDTO) {
@@ -41,6 +43,7 @@ final class Activity: Identifiable, Hashable {
         self.slug = dto.slug
         self.parent_id = dto.parent_id
         self.icon = dto.icon
+        self.type = dto.type
         self.cache = dto.cache
         self.archived = dto.archived
     }
@@ -88,7 +91,6 @@ final class Activity: Identifiable, Hashable {
         return self.children.isEmpty ? nil : self.children
     }
     
-    
 }
 
 // MARK: - Data Transfer Objects (DTOs)
@@ -100,6 +102,7 @@ struct ActivityDTO: Codable {
     let slug: String
     let parent_id: Int?
     let icon: String
+    let type: ActivityType?
     let cache: Bool
     let archived: Bool
 }
@@ -110,4 +113,5 @@ struct NewActivityPayload: Codable {
     let slug: String
     let parent_id: Int?
     let icon: String
+    let type: ActivityType?
 }

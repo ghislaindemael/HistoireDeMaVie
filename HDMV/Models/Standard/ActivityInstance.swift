@@ -15,7 +15,9 @@ final class ActivityInstance {
     var time_end: Date?
     var activity_id: Int?
     var details: String?
+    var activity_details: Data?
     var syncStatus: SyncStatus = SyncStatus.undef
+
 
     init(id: Int, time_start: Date, time_end: Date? = nil, activity_id: Int? = nil, details: String? = nil, syncStatus: SyncStatus = .local) {
         self.id = id
@@ -34,6 +36,16 @@ final class ActivityInstance {
         self.details = dto.details
         self.syncStatus = .synced
     }
+    
+    var decodedActivityDetails: ActivityDetails? {
+        get {
+            guard let data = activity_details else { return nil }
+            return try? JSONDecoder().decode(ActivityDetails.self, from: data)
+        }
+        set {
+            activity_details = try? JSONEncoder().encode(newValue)
+        }
+    }
 }
 
 struct ActivityInstanceDTO: Codable, Identifiable {
@@ -42,6 +54,8 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let time_end: Date?
     let activity_id: Int?
     let details: String?
+    let activity_details: ActivityDetails?
+
 }
 
 
@@ -50,4 +64,5 @@ struct ActivityInstancePayload: Codable {
     let time_end: Date?
     let activity_id: Int?
     let details: String?
+    let activity_details: ActivityDetails?
 }

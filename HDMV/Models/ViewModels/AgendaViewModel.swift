@@ -105,7 +105,6 @@ class AgendaViewModel: ObservableObject {
                 self.isNewEntry = false
                 
             } catch {
-                // --- FAILURE: SAVE WORK TO LOCAL DB ---
                 self.saveToLocalDatabase()
                 self.syncStatus = .failed
                 self.errorMessage = "Offline. Saved locally."

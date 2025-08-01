@@ -15,6 +15,7 @@ struct NewActivitySheet: View {
     @State private var slug: String = ""
     @State private var selectedParent: Activity?
     @State private var icon: String = ""
+    @State private var type: ActivityType = .generic
     
     @Environment(\.dismiss) private var dismiss
     
@@ -31,6 +32,11 @@ struct NewActivitySheet: View {
                     TextField("Icon", text: $icon)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                    Picker("Type", selection: $type) {
+                        ForEach(ActivityType.allCases, id: \.self) { activityType in
+                            Text(activityType.rawValue.capitalized).tag(activityType)
+                        }
+                    }
                 }
                 
                 Section("Parent Activity") {
@@ -63,7 +69,8 @@ struct NewActivitySheet: View {
                                 name: name,
                                 slug: slug,
                                 parent_id: selectedParent?.id,
-                                icon: iconForPayload
+                                icon: iconForPayload,
+                                type: type
                             )
                             await viewModel.createActivity(payload: payload)
                             dismiss()
