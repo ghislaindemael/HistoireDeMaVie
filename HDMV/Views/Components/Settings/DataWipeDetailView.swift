@@ -78,6 +78,16 @@ struct DataWipeDetailView: View {
     private func fetchItems() {
         do {
             switch modelType {
+                case is Activity.Type:
+                    let descriptor = FetchDescriptor<Activity>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
+                case is ActivityInstance.Type:
+                    let descriptor = FetchDescriptor<ActivityInstance>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 case is AgendaEntry.Type:
                     let descriptor = FetchDescriptor<AgendaEntry>()
                     let results = try modelContext.fetch(descriptor)
@@ -134,6 +144,10 @@ struct DataWipeDetailView: View {
     
     private func describeView(for item: any PersistentModel) -> AnyView {
         switch item {
+            case let activity as Activity:
+                return AnyView(
+                    ActivityRowView(activity: activity)
+                )
             case let entry as AgendaEntry:
                 return AnyView(
                     VStack(alignment: .leading) {

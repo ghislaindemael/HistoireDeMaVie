@@ -17,10 +17,17 @@ struct ActivitiesPage: View {
         NavigationStack {
             List {
                 OutlineGroup(viewModel.activityTree, children: \.optionalChildren) { activity in
-                    HStack {
-                        IconView(iconString: activity.icon)
-                            .foregroundStyle(.primary)
-                        Text(activity.name)
+                    HStack{
+                        ActivityRowView(activity: activity)
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { activity.cache },
+                            set: { _ in
+                                Task {
+                                    await viewModel.toggleCache(for: activity)
+                                }
+                            }
+                        ))
                     }
                 }
             }

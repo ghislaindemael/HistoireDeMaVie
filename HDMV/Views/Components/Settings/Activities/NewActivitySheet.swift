@@ -76,7 +76,6 @@ struct NewActivitySheet: View {
     }
 }
 
-// A dedicated view for selecting a parent from the tree
 struct ParentSelectorView: View {
     let activities: [Activity]
     @Binding var selectedParent: Activity?
@@ -84,7 +83,6 @@ struct ParentSelectorView: View {
     
     var body: some View {
         List {
-            // Option to select no parent
             Button("Top Level") {
                 selectedParent = nil
                 dismiss()

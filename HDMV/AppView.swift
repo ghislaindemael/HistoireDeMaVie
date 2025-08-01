@@ -21,8 +21,8 @@ struct AppView: View {
                 PeopleInteractionsPage()
             }
             
-            Tab ("Trips", systemImage: "car.fill") {
-                TripsPage()
+            Tab ("Activities", systemImage: "flowchart") {
+                MyActivitiesPage()
             }
             
             Tab ("Agenda", systemImage: "pencil.and.list.clipboard"){

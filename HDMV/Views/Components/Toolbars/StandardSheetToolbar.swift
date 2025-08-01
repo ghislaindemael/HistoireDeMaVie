@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-struct StandardNewModelSheetToolbar: ViewModifier {
+struct StandardSheetToolbar: ViewModifier {
     @Environment(\.dismiss) private var dismiss
     
     /// Called when the Done button is tapped.
@@ -38,12 +38,12 @@ struct StandardNewModelSheetToolbar: ViewModifier {
 
 extension View {
     /// Adds a standard Cancel/Done toolbar for model creation sheets.
-    func standardNewModelSheetToolbar(
+    func standardSheetToolbar(
         isFormValid: Bool,
         onDone: @escaping () async -> Void
     ) -> some View {
         self.modifier(
-            StandardNewModelSheetToolbar(
+            StandardSheetToolbar(
                 onDone: onDone,
                 isFormValid: isFormValid
             )

@@ -15,6 +15,8 @@ struct DataManagementComponent: View {
     
     // An array of the model types to be managed by this component.
     private let modelTypes: [any PersistentModel.Type] = [
+        Activity.self,
+        ActivityInstance.self,
         AgendaEntry.self,
         Trip.self,
         City.self,
@@ -30,7 +32,6 @@ struct DataManagementComponent: View {
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             VStack(spacing: 4) {
-                // Using an identifiable struct for the list is cleaner than using indices.
                 ForEach(modelTypes.indices, id: \.self) { index in
                     let modelType = modelTypes[index]
                     ModelRow(modelType: modelType)
@@ -56,13 +57,11 @@ struct DataManagementComponent: View {
     /// A private view for each row to keep the body clean.
     private func ModelRow(modelType: any PersistentModel.Type) -> some View {
         NavigationLink {
-            // The detail view remains the same
             DataWipeDetailView(modelType: modelType)
         } label: {
             HStack {
                 Text(String(describing: modelType))
                 Spacer()
-                // The count is now fetched within the row
                 Text("\(fetchCount(for: modelType))")
                     .fontWeight(.bold)
                 Image(systemName: "chevron.right")
@@ -72,7 +71,6 @@ struct DataManagementComponent: View {
             .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
-        // Add a swipe action on the leading edge (swipe right)
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 deleteAll(for: modelType)
@@ -90,6 +88,8 @@ struct DataManagementComponent: View {
         do {
             // The switch ensures type-safety for the delete operation.
             switch modelType {
+                case is Activity.Type: try modelContext.delete(model: Activity.self)
+                case is ActivityInstance.Type: try modelContext.delete(model: ActivityInstance.self)
                 case is AgendaEntry.Type: try modelContext.delete(model: AgendaEntry.self)
                 case is Trip.Type: try modelContext.delete(model: Trip.self)
                 case is City.Type: try modelContext.delete(model: City.self)
@@ -108,6 +108,8 @@ struct DataManagementComponent: View {
     private func fetchCount(for modelType: any PersistentModel.Type) -> Int {
         do {
             switch modelType {
+                case is Activity.Type: return try modelContext.fetchCount(FetchDescriptor<Activity>())
+                case is ActivityInstance.Type: return try modelContext.fetchCount(FetchDescriptor<ActivityInstance>())
                 case is AgendaEntry.Type: return try modelContext.fetchCount(FetchDescriptor<AgendaEntry>())
                 case is Trip.Type: return try modelContext.fetchCount(FetchDescriptor<Trip>())
                 case is City.Type: return try modelContext.fetchCount(FetchDescriptor<City>())

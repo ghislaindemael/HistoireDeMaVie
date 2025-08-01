@@ -28,7 +28,7 @@ struct NewCountrySheet: View {
                 }
             }
             .navigationTitle("New Country")
-            .standardNewModelSheetToolbar(
+            .standardSheetToolbar(
                 isFormValid: isFormValid,
                 onDone: {
                     await viewModel.createCountry(payload: payload)

@@ -29,7 +29,7 @@ struct NewVehicleTypeSheet: View {
                 }
             }
             .navigationTitle("New Country")
-            .standardNewModelSheetToolbar(
+            .standardSheetToolbar(
                 isFormValid: isFormValid,
                 onDone: {
                     await viewModel.createVehicleType(payload:payload)

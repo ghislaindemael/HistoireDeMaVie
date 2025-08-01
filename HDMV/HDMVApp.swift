@@ -13,6 +13,7 @@ struct HDMVApp: App {
     static var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Activity.self,
+            ActivityInstance.self,
             AgendaEntry.self,
             VehicleType.self,
             Vehicle.self,

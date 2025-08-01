@@ -137,27 +137,36 @@ class ActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    /// **MODIFIED**: This function now provides immediate UI feedback and performs an efficient,
-    /// granular update on the local cache instead of a full refresh.
+
     func toggleCache(for activity: Activity) async {
-        let newCacheStatus = !activity.cache
-        let branchToUpdate = activity.flattened()
+        let newCacheState = !activity.cache
         
-        for item in branchToUpdate {
-            item.cache = newCacheStatus
+        if !newCacheState {
+            setCacheState(for: activity, to: false)
+        } else {
+            activity.cache = newCacheState
         }
         
         do {
             try await activitiesService.updateCacheStatus(for: activity)
             
-            await updateCache(forBranch: activity)
-            
+            await cacheAllActivities(from: allActivities)
         } catch {
-            let originalCacheStatus = !newCacheStatus
-            for item in branchToUpdate {
-                item.cache = originalCacheStatus
+            print("❌ Failed to update cache status in DB. Reverting change. Error: \(error)")
+            setCacheState(for: activity, to: !newCacheState)
+        }
+    }
+    
+    private func setCacheState(for activity: Activity, to state: Bool) {
+        // If we are turning caching OFF, we must turn it off for all children.
+        // If we are turning it ON, we only turn it on for the selected activity.
+        if !state {
+            activity.cache = false
+            for child in activity.children {
+                setCacheState(for: child, to: false)
             }
-            print("❌ Cache toggle error, rolled back in-memory state: \(error)")
+        } else {
+            activity.cache = true
         }
     }
 }

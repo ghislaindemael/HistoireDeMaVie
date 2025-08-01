@@ -12,7 +12,7 @@ import SwiftUI
 /// This modifier adds a leading menu with "Refresh" and "Re-cache" options,
 /// and a trailing "Add" button. It is designed to be generic and can be configured
 /// for different data types (e.g., "countries", "cities").
-struct StandardConfigPageToolbar: ViewModifier {
+struct ConfigPageToolbar: ViewModifier {
     @EnvironmentObject var settings: SettingsStore
     
     /// An asynchronous closure to be executed when the "Refresh" button is tapped.
@@ -75,7 +75,7 @@ extension View {
         isShowingAddSheet: Binding<Bool>
     ) -> some View {
         self.modifier(
-            StandardConfigPageToolbar(
+            ConfigPageToolbar(
                 refreshAction: refreshAction,
                 cacheAction: cacheAction,
                 isShowingAddSheet: isShowingAddSheet
