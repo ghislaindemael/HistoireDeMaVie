@@ -6,4 +6,9 @@
 //
 
 *.xconfig
-**/*.xcuserdata/
+*.xcuserdatad
+*.xcscmblueprint
+*.xccheckout
+
+# xcuserdata folders (all workspaces & projects)
+**/xcuserdata/
