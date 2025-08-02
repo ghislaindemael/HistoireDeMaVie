@@ -18,7 +18,7 @@ struct DataManagementComponent: View {
         Activity.self,
         ActivityInstance.self,
         AgendaEntry.self,
-        Trip.self,
+        TripLeg.self,
         City.self,
         Place.self,
         Person.self,
@@ -91,7 +91,7 @@ struct DataManagementComponent: View {
                 case is Activity.Type: try modelContext.delete(model: Activity.self)
                 case is ActivityInstance.Type: try modelContext.delete(model: ActivityInstance.self)
                 case is AgendaEntry.Type: try modelContext.delete(model: AgendaEntry.self)
-                case is Trip.Type: try modelContext.delete(model: Trip.self)
+                case is TripLeg.Type: try modelContext.delete(model: TripLeg.self)
                 case is City.Type: try modelContext.delete(model: City.self)
                 case is Place.Type: try modelContext.delete(model: Place.self)
                 case is Person.Type: try modelContext.delete(model: Person.self)
@@ -111,7 +111,7 @@ struct DataManagementComponent: View {
                 case is Activity.Type: return try modelContext.fetchCount(FetchDescriptor<Activity>())
                 case is ActivityInstance.Type: return try modelContext.fetchCount(FetchDescriptor<ActivityInstance>())
                 case is AgendaEntry.Type: return try modelContext.fetchCount(FetchDescriptor<AgendaEntry>())
-                case is Trip.Type: return try modelContext.fetchCount(FetchDescriptor<Trip>())
+                case is TripLeg.Type: return try modelContext.fetchCount(FetchDescriptor<TripLeg>())
                 case is City.Type: return try modelContext.fetchCount(FetchDescriptor<City>())
                 case is Place.Type: return try modelContext.fetchCount(FetchDescriptor<Place>())
                 case is Person.Type: return try modelContext.fetchCount(FetchDescriptor<Person>())
@@ -136,5 +136,5 @@ struct DataManagementComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, PersonInteraction.self])
+    .modelContainer(for: [AgendaEntry.self, TripLeg.self, City.self, Place.self, Person.self, PersonInteraction.self])
 }

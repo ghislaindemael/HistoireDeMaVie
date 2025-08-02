@@ -8,5 +8,6 @@
 enum ActivityType: String, Codable, CaseIterable {
     case meal
     case reading
+    case trip
     case generic
 }

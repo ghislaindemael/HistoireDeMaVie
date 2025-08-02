@@ -16,6 +16,7 @@ struct NewActivitySheet: View {
     @State private var selectedParent: Activity?
     @State private var icon: String = ""
     @State private var type: ActivityType = .generic
+    @State private var generate_trips: Bool = false
     
     @Environment(\.dismiss) private var dismiss
     
@@ -37,6 +38,7 @@ struct NewActivitySheet: View {
                             Text(activityType.rawValue.capitalized).tag(activityType)
                         }
                     }
+                    Toggle("Generate trips", isOn: $generate_trips)
                 }
                 
                 Section("Parent Activity") {
@@ -70,7 +72,8 @@ struct NewActivitySheet: View {
                                 slug: slug,
                                 parent_id: selectedParent?.id,
                                 icon: iconForPayload,
-                                type: type
+                                type: type,
+                                generate_trips: generate_trips
                             )
                             await viewModel.createActivity(payload: payload)
                             dismiss()

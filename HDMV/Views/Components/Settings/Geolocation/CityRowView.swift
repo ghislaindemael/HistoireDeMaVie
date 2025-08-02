@@ -55,7 +55,6 @@ struct CityRowView: View {
                     .lineLimit(1)
                 Toggle("Cache", isOn: $city.cache)
                     .labelsHidden()
-                    .scaleEffect(0.9)
                     .onChange(of: city.cache) {
                         onCacheToggle()
                     }

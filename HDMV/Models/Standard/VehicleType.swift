@@ -36,6 +36,10 @@ final class VehicleType {
         self.cache = dto.cache
     }
     
+    var label: String {
+        return "\(self.icon) \(self.name)"
+    }
+    
 }
 
 struct VehicleTypeDTO: Codable, Identifiable, Sendable {

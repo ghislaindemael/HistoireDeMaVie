@@ -16,25 +16,37 @@ final class Activity: Identifiable, Hashable {
     var parent_id: Int?
     var icon: String
     var type: ActivityType?
+    var generate_trips: Bool = false
     var cache: Bool
     var archived: Bool
 
     // Used to build the tree structure in memory after fetching.
     @Transient var children: [Activity] = []
     
-    init(id: Int, name: String, slug: String, parent_id: Int? = nil, icon: String,type: ActivityType? = nil, cache: Bool = true, archived: Bool = false) {
+    init(
+        id: Int,
+        name: String,
+        slug: String,
+        parent_id: Int? = nil,
+        icon: String,
+        type: ActivityType? = nil,
+        generate_trips: Bool = false,
+        cache: Bool = true,
+        archived: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.slug = slug
         self.parent_id = parent_id
         self.icon = icon
         self.type = type
+        self.generate_trips = generate_trips
         self.cache = cache
         self.archived = archived
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, slug, cache, archived, parent_id, icon, type
+        case id, name, slug, cache, archived, parent_id, icon, type, generate_trips
     }
     
     init(fromDto dto: ActivityDTO) {
@@ -44,6 +56,7 @@ final class Activity: Identifiable, Hashable {
         self.parent_id = dto.parent_id
         self.icon = dto.icon
         self.type = dto.type
+        self.generate_trips = dto.generate_trips
         self.cache = dto.cache
         self.archived = dto.archived
     }
@@ -103,6 +116,7 @@ struct ActivityDTO: Codable {
     let parent_id: Int?
     let icon: String
     let type: ActivityType?
+    let generate_trips: Bool
     let cache: Bool
     let archived: Bool
 }
@@ -114,4 +128,5 @@ struct NewActivityPayload: Codable {
     let parent_id: Int?
     let icon: String
     let type: ActivityType?
+    let generate_trips: Bool
 }

@@ -15,14 +15,19 @@ final class Place {
     @Attribute(.unique) var id: Int
     var name: String
     var city_id: Int
-    var localName: String = ""
+    var city_name: String = ""
     var cache: Bool = true
     var archived: Bool = false
     
-    init(id: Int, name: String, city_id: Int, cache: Bool = true, archived: Bool = false) {
+    var localName: String {
+        return "\(city_name) - \(name)"
+    }
+
+    init(id: Int, name: String, city_id: Int, city_name: String = "", cache: Bool = true, archived: Bool = false) {
         self.id = id
         self.name = name
         self.city_id = city_id
+        self.city_name = city_name
         self.cache = cache
         self.archived = archived
     }

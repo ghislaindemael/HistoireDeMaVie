@@ -15,12 +15,18 @@ struct ReadingDetails: Codable {
     var pageCount: Int
 }
 
+struct TripDetails: Codable {
+    
+}
+
 // MARK: The handler
 enum ActivityDetails: Codable {
     case meal(MealDetails)
     case reading(ReadingDetails)
-    case none
-
+    case trip(TripDetails)
+    case generic
+    case unknown
+    
     private enum CodingKeys: String, CodingKey {
         case type
         case payload
@@ -38,7 +44,7 @@ enum ActivityDetails: Codable {
             let details = try container.decode(ReadingDetails.self, forKey: .payload)
             self = .reading(details)
         default:
-            self = .none
+            self = .unknown
         }
     }
 
@@ -51,8 +57,14 @@ enum ActivityDetails: Codable {
         case .reading(let details):
             try container.encode("reading", forKey: .type)
             try container.encode(details, forKey: .payload)
-        case .none:
-            try container.encode("none", forKey: .type)
+        case .trip(let details):
+            try container.encode("trip", forKey: .type)
+            try container.encode(details, forKey: .payload)
+        case .generic:
+            try container.encode("generic", forKey: .type)
+        case .unknown:
+            try container.encode("unknown", forKey: .type)
         }
+        
     }
 }

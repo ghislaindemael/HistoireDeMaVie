@@ -13,66 +13,45 @@ struct NewVehicleSheet: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: VehiclesPageViewModel
     
-    @State private var name: String = ""
-    @State private var selectedVehicleType: VehicleType?
-    @State private var cityIdString: String = ""
+    @State private var payload: NewVehiclePayload = NewVehiclePayload()
     
     private var isFormValid: Bool {
-        !name.isEmpty && selectedVehicleType != nil
+        !payload.name.isEmpty && (payload.type > 1)
     }
-    
+        
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Vehicle Details")) {
-                    TextField("Name", text: $name)
+                    TextField("Name", text: $payload.name)
                     
-                    Picker("Vehicle Type", selection: $selectedVehicleType) {
+                    Picker("Vehicle Type", selection: $payload.type) {
                         Text("Select a type").tag(nil as VehicleType?)
                         ForEach(viewModel.vehicleTypes) { type in
                             Text(type.name).tag(type as VehicleType?)
                         }
                     }
                     
-                    TextField("City ID (Optional)", text: $cityIdString)
-                        .keyboardType(.numberPad)
-                }
-                
-                
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        Task {
-                            await createVehicle()
+                    Picker("City", selection: Binding(
+                        get: { payload.city_id ?? -1 },
+                        set: { payload.city_id = $0 == -1 ? nil : $0 }
+                    )) {
+                        Text("None").tag(-1)
+                        ForEach(viewModel.cities, id: \.id) { city in
+                            Text(city.name).tag(city.id)
                         }
                     }
-                    .disabled(!isFormValid)
+                    .pickerStyle(.menu)
                 }
+                
+                
             }
+            .standardSheetToolbar(
+                isFormValid: isFormValid,
+                onDone: {
+                    await viewModel.createVehicle(payload:payload)
+                }
+            )
         }
     }
-    
-    private func createVehicle() async {
-        guard let selectedVehicleType = selectedVehicleType else {
-            return
-        }
-                
-        let cityId = Int(cityIdString)
-        
-        await viewModel.createVehicle(
-            name: name,
-            type: selectedVehicleType,
-            city_id: cityId
-        )
-                
-        dismiss()
-    }
-    
 }

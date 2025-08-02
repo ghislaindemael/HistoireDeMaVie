@@ -16,33 +16,27 @@
 import SwiftUI
 
 struct VehicleRow: View {
-    let vehicle: Vehicle
-    let label: String
-    
-    // An action to perform, passed in from the parent
-    let onToggleFavorite: () -> Void
+    @Bindable var vehicle: Vehicle
+    let onCacheToggle: () -> Void
     
     var body: some View {
         HStack() {
-            Text(label)
+            Text(vehicle.label)
                 .font(.headline)
             
             Spacer()
             
-            Button(action: onToggleFavorite) {
-                Image(systemName: vehicle.favourite ? "star.fill" : "star")
-                    .foregroundColor(vehicle.favourite ? .yellow : .gray)
-            }
-            .buttonStyle(.plain)
+            Toggle("Cache", isOn: $vehicle.cache)
+                .labelsHidden()
+                .onChange(of: vehicle.cache) {
+                    onCacheToggle()
+                }
+            .labelsHidden()
         }
-        .padding(.vertical, 4)
     }
 }
 
 #Preview {
-    let vehicle = Vehicle(
-        id: 1, name: "Test", favourite: true, type: 1
-    )
-    
-    VehicleRow(vehicle: vehicle, label: "Test label", onToggleFavorite: {})
+    let vehicle = Vehicle(id: 1, name: "Test", type: 1, cache: true)
+    VehicleRow(vehicle: vehicle, onCacheToggle: {})
 }

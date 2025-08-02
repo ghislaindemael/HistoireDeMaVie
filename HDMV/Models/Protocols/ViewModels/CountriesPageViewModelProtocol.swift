@@ -18,7 +18,7 @@ protocol CountriesPageViewModelProtocol: AnyObject {
     func fetchFromServer() async
     func cacheCountries()
     func createCountry(payload: NewCountryPayload) async
-    func toggleCache(for country: Country)
+    func updateCache(for country: Country)
     func archiveCountry(for country: Country)
     func unarchiveCountry(for country: Country)
     

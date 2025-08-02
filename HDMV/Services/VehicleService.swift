@@ -14,14 +14,13 @@ class VehicleService {
     private let VEHICLES_TABLE_NAME: String = "data_vehicles"
     private let VEHICLE_TYPES_TABLE_NAME: String = "data_vehicle_types"
     
+    // MARK: Vehicles
     
     func fetchVehicles() async throws -> [VehicleDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         let response: [VehicleDTO] = try await supabaseClient
-            .from("data_vehicles")
+            .from(VEHICLES_TABLE_NAME)
             .select()
-            .order("favourite", ascending: false)
             .order("type", ascending: true)
             .order("name", ascending: true)
             .execute()
@@ -31,14 +30,11 @@ class VehicleService {
     }
     
     /// Inserts a new vehicle into the database and returns the created record, including the new ID.
-    func createVehicle(_ vehicle: VehicleDTO) async throws -> VehicleDTO {
-        guard let supabaseClient = supabaseClient else {
-            throw NSError(domain: "VehicleServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not available"])
-        }
-        
+    func createVehicle(payload: NewVehiclePayload) async throws -> VehicleDTO {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         let createdVehicle: VehicleDTO = try await supabaseClient
-            .from("data_vehicles")
-            .insert(vehicle, returning: .representation)
+            .from(VEHICLES_TABLE_NAME)
+            .insert(payload, returning: .representation)
             .select()
             .single()
             .execute()
@@ -47,53 +43,34 @@ class VehicleService {
         return createdVehicle
     }
     
-    func updateVehicle(_ vehicle: VehicleDTO) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        
+    func updateCache(forVehicle vehicle: Vehicle) async throws {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         try await supabaseClient
-            .from("data_vehicles")
-            .update(vehicle)
+            .from(VEHICLES_TABLE_NAME)
+            .update(["cache": vehicle.cache])
             .eq("id", value: vehicle.id)
             .execute()
     }
     
     func deleteVehicle(id: Int) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         try await supabaseClient
-            .from("vehicles")
+            .from(VEHICLES_TABLE_NAME)
             .delete()
             .eq("id", value: id)
             .execute()
     }
     
-    func updateCacheStatus(
-        forVehicleTypeId countryId: Int,
-        shouldCache: Bool
-    ) async throws {
-        guard let supabaseClient = supabaseClient else {
-            return
-        }
-        
-        try await supabaseClient
-            .from("data_vehicle_types")
-            .update(["cache": shouldCache])
-            .eq("id", value: countryId)
-            .execute()
-    }
-    
+
+    // MARK: Vehicle types
     
     func fetchVehicleTypes() async throws -> [VehicleTypeDTO] {
-        guard let supabaseClient = SupabaseService.shared.client else {
-            return []
-        }
-        
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         let response: [VehicleTypeDTO] = try await supabaseClient
-            .from("data_vehicle_types")
+            .from(VEHICLE_TYPES_TABLE_NAME)
             .select()
             .execute()
             .value
-        
         return response
     }
     
@@ -108,5 +85,13 @@ class VehicleService {
             .value
     }
     
+    func updateCache(forVehicleType vehicleType: VehicleType) async throws {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        try await supabaseClient
+            .from(VEHICLE_TYPES_TABLE_NAME)
+            .update(["cache": vehicleType.cache])
+            .eq("id", value: vehicleType.id)
+            .execute()
+    }
     
 }

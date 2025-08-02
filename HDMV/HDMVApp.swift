@@ -20,7 +20,7 @@ struct HDMVApp: App {
             Country.self,
             City.self,
             Place.self,
-            Trip.self,
+            TripLeg.self,
             Person.self,
             PersonInteraction.self
         ])

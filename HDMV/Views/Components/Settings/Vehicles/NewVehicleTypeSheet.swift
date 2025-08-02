@@ -13,7 +13,6 @@ struct NewVehicleTypeSheet: View {
     
     @State private var payload = NewVehicleTypePayload()
     
-    
     private var isFormValid: Bool {
         !payload.slug.isEmpty && !payload.name.isEmpty && !payload.icon.isEmpty
     }

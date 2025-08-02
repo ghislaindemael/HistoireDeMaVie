@@ -103,7 +103,7 @@ class CountriesPageViewModel: ObservableObject {
     }
         
     /// Toggles the cache status for a country.
-    func toggleCache(for country: Country) {
+    func updateCache(for country: Country) {
         Task {
             do {
                 try await countriesService.updateCacheStatus(for: country)

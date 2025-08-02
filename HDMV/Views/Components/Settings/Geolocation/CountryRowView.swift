@@ -54,7 +54,6 @@ struct CountryRowView: View {
                     .lineLimit(1)
                 Toggle("Cache", isOn: $country.cache)
                     .labelsHidden()
-                    .scaleEffect(0.9)
                     .onChange(of: country.cache) {
                         onCacheToggle()
                     }

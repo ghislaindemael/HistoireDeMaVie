@@ -20,8 +20,20 @@ struct VehicleTypesPage: View {
             Form {
                 Section {
                     ForEach(viewModel.vehicleTypes) { type in
-                        Text("\(type.icon) \(type.name)")
-                            .tag(type as VehicleType?)
+                        HStack {
+                            Text("\(type.label)")
+                                .tag(type as VehicleType?)
+                            Spacer()
+                            
+                            Toggle("Cache", isOn: Binding(
+                                get: { type.cache },
+                                set: { _ in
+                                    viewModel.toggleCache(for: type)
+                                }
+                            ))
+                            .labelsHidden()
+                        }
+
                     }
                 }
             }
@@ -54,10 +66,9 @@ struct VehicleTypesPage: View {
             let carType = VehicleType(id: 1, slug: "car", name: "Car", icon: "car.fill")
             let bikeType = VehicleType(id: 2, slug: "bicycle", name: "Bicycle", icon: "bicycle")
             
-            let vehicle1 = Vehicle(id: 101, name: "Le Viano", favourite: true, type: carType.id, city_id: 12)
-            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", favourite: false, type: bikeType.id)
-            let vehicle3 = Vehicle(id: 104, name: "La Defender", favourite: false, type: carType.id)
-            
+            let vehicle1 = Vehicle(id: 101, name: "Le Viano", type: carType.id, city_id: 12)
+            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", type: bikeType.id)
+            let vehicle3 = Vehicle(id: 104, name: "La Defender", type: carType.id)
             
             let context = container.mainContext
             context.insert(carType)
@@ -73,7 +84,7 @@ struct VehicleTypesPage: View {
         }
     }()
     
-    return NavigationStack {
+    NavigationStack {
         VehiclesPage()
             .modelContainer(container)
     }

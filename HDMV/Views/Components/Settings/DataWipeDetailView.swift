@@ -93,8 +93,8 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
-                case is Trip.Type:
-                    let descriptor = FetchDescriptor<Trip>()
+                case is TripLeg.Type:
+                    let descriptor = FetchDescriptor<TripLeg>()
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -171,6 +171,14 @@ struct DataWipeDetailView: View {
             case let interaction as PersonInteraction:
                 return AnyView(
                     PersonInteractionRowView(interaction: interaction, person: nil)
+                )
+            case let tripleg as TripLeg:
+                return AnyView(
+                    TripLegRowView(
+                        tripLeg: tripleg,
+                        vehicle: nil,
+                        places: []
+                    )
                 )
             default:
                 return AnyView(Text("Unknown Object"))

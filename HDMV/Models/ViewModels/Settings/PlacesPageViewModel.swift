@@ -96,6 +96,7 @@ class PlacesPageViewModel: ObservableObject {
         
         do {
             let cityId = selectedCity.id
+            let cityName = selectedCity.name
             let predicate = #Predicate<Place> { $0.city_id == cityId }
             let descriptor = FetchDescriptor<Place>(predicate: predicate)
             let existingPlaces = try context.fetch(descriptor)
@@ -107,6 +108,7 @@ class PlacesPageViewModel: ObservableObject {
             let placesToCache = self.places.filter { $0.city_id == cityId && $0.cache }
             
             for place in placesToCache {
+                place.city_name = cityName
                 context.insert(place)
             }
             

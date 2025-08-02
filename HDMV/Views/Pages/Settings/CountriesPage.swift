@@ -42,7 +42,7 @@ struct CountriesPage: View {
                 CountryRowView(
                     country: country,
                     onCacheToggle: {
-                        viewModel.toggleCache(for: country)
+                        viewModel.updateCache(for: country)
                     }
                 )
                 .swipeActions {

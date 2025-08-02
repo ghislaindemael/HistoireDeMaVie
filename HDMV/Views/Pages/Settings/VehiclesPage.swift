@@ -10,7 +10,7 @@ import SwiftData
 
 struct VehiclesPage: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel = VehiclesPageViewModel()
+    @StateObject var viewModel = VehiclesPageViewModel()
     
     @State private var isShowingCreateSheet = false
     @State private var selectedVehicleType: VehicleType?
@@ -24,28 +24,23 @@ struct VehiclesPage: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                Form {
-                    Section(header: Text("Filter")) {
-                        Picker("Vehicle Type", selection: $selectedVehicleType) {
-                            Text("All Types").tag(nil as VehicleType?)
-                            ForEach(viewModel.vehicleTypes) { type in
-                                Text(type.icon + " " + type.name).tag(type as VehicleType?)
-                            }
-                        }
-                    }
-                    
-                    Section(header: Text(selectedVehicleType?.name ?? "All Vehicles")) {
-                        ForEach(filteredVehicles) { vehicle in
-                            VehicleRow(
-                                vehicle: vehicle,
-                                label: viewModel.vehicleLabel(for: vehicle),
-                                onToggleFavorite: { viewModel.toggleFavorite(for: vehicle) }
-                            )
-                        }
-                    }
-                }
-                
+            Form {
+                vehicleFilterSection
+                vehicleListSection
+            }
+            .navigationTitle("Vehicles")
+            .standardConfigPageToolbar(
+                refreshAction: viewModel.fetchFromServer,
+                cacheAction: viewModel.cacheVehicles,
+                isShowingAddSheet: $isShowingCreateSheet
+            )
+            .task {
+                viewModel.setup(modelContext: modelContext)
+            }
+            .sheet(isPresented: $isShowingCreateSheet) {
+                NewVehicleSheet(viewModel: viewModel)
+            }
+            .overlay {
                 if viewModel.isLoading {
                     ProgressView()
                         .scaleEffect(2)
@@ -54,29 +49,34 @@ struct VehiclesPage: View {
                         .background(Color.black.opacity(0.2))
                 }
             }
-            .navigationTitle("Vehicles")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        Task { await viewModel.refreshDataFromServer() }
-                    }) {
-                        Image(systemName: "arrow.trianglehead.counterclockwise.icloud.fill")
-                    }
+        }
+    }
+    
+    private var vehicleFilterSection: some View {
+        Section(header: Text("Filter")) {
+            Picker("Vehicle Type", selection: $selectedVehicleType) {
+                Text("All Types").tag(nil as VehicleType?)
+                ForEach(viewModel.vehicleTypes) { type in
+                    Text(type.label).tag(type as VehicleType?)
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isShowingCreateSheet.toggle() }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .task {
-                viewModel.setup(modelContext: modelContext)
-            }
-            .sheet(isPresented: $isShowingCreateSheet) {
-                NewVehicleSheet(viewModel: viewModel)
             }
         }
     }
+    
+    private var vehicleListSection: some View {
+        Section(header: Text(selectedVehicleType?.name ?? "All Vehicles")) {
+            ForEach(filteredVehicles) { vehicle in
+                VehicleRow(
+                    vehicle: vehicle,
+                    onCacheToggle: {
+                        viewModel.toggleCache(for: vehicle)
+                    }
+                )
+            }
+        }
+    }
+
+
     
     private func deleteVehicles(at offsets: IndexSet) {
         for index in offsets {
@@ -97,9 +97,9 @@ struct VehiclesPage: View {
             let carType = VehicleType(id: 1, slug: "car", name: "Car", icon: "car.fill")
             let bikeType = VehicleType(id: 2, slug: "bicycle", name: "Bicycle", icon: "bicycle")
             
-            let vehicle1 = Vehicle(id: 101, name: "Le Viano", favourite: true, type: carType.id, city_id: 12)
-            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", favourite: false, type: bikeType.id)
-            let vehicle3 = Vehicle(id: 104, name: "La Defender", favourite: false, type: carType.id)
+            let vehicle1 = Vehicle(id: 101, name: "Le Viano", type: carType.id, city_id: 12)
+            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", type: bikeType.id)
+            let vehicle3 = Vehicle(id: 104, name: "La Defender", type: carType.id)
             
             
             let context = container.mainContext
@@ -116,7 +116,7 @@ struct VehiclesPage: View {
         }
     }()
     
-    return NavigationStack {
+    NavigationStack {
         VehiclesPage()
             .modelContainer(container)
     }

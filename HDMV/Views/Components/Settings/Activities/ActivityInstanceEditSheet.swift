@@ -12,79 +12,117 @@ struct ActivityInstanceDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    @Bindable var instance: ActivityInstance
-    let activityTree: [Activity]
+    @ObservedObject var viewModel: MyActivitiesPageViewModel
     
-    @State private var hasEndTime: Bool
+    @Bindable var instance: ActivityInstance
+    
+    @State private var showEndTime: Bool
+    @State private var tripLegToEdit: TripLeg?
     
     private var selectedActivity: Activity? {
-        guard let id = instance.activity_id else { return nil }
-        return activityTree.flatMap { $0.flattened() }.first { $0.id == id }
+        viewModel.findActivity(by: instance.activity_id)
     }
     
-    init(instance: ActivityInstance, activityTree: [Activity]) {
+    init(instance: ActivityInstance, viewModel: MyActivitiesPageViewModel) {
         self.instance = instance
-        self.activityTree = activityTree
-        _hasEndTime = State(initialValue: instance.time_end != nil)
+        self.viewModel = viewModel
+        _showEndTime = State(initialValue: instance.time_end != nil)
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section("Activity") {
-                    NavigationLink(destination: ActivitySelectorView(
-                        activityTree: activityTree,
-                        selectedActivityId: $instance.activity_id
-                    )) {
-                        HStack {
-                            Text("Select Activity")
-                            Spacer()
-                            if let selectedActivity = findActivity(by: instance.activity_id) {
-                                Text(selectedActivity.name)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-                
-                Section("Basics") {
-                    FullTimePicker(label: "Start Time", selection: $instance.time_start)
-                    
-                    Toggle("Has End Time", isOn: $hasEndTime)
-                    
-                    if hasEndTime {
-                        FullTimePicker(label: "End Time", selection: .init(
-                            get: { instance.time_end ?? instance.time_start },
-                            set: { instance.time_end = $0 }
-                        ))
-                    }
-                }
-                
-                Section("Details") {
-                    TextEditor(text: .init(
-                        get: { instance.details ?? "" },
-                        set: { instance.details = $0.isEmpty ? nil : $0 }
-                    ))
-                    .lineLimit(3...)
-                }
-                
+                basicsSection
+                detailsSection
                 if let activity = selectedActivity, activity.type != .generic {
-                    Section(header: Text("Activity Details")) {
-                        specializedDetailsView(for: activity)
-                    }
+                    specializedDetailsSection(for: activity)
                 }
-
+                
+                if selectedActivity?.generate_trips == true {
+                    tripLegsSection
+                }
             }
-            .navigationTitle(instance.activity_id == nil ? "New Activity" : "Edit Activity")
+            .navigationTitle(selectedActivity?.name ?? "New Activity")
+            .sheet(item: $tripLegToEdit) { leg in
+                TripLegDetailSheet(
+                    tripLeg: leg,
+                    vehicles: viewModel.vehicles,
+                    cities: viewModel.cities,
+                    places: viewModel.places
+                )
+            }
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar(isFormValid: true) {
                 instance.syncStatus = .local
-                if !hasEndTime {
+                if !showEndTime {
                     instance.time_end = nil
                 }
                 try? modelContext.save()
                 dismiss()
             }
+        }
+    }
+    
+    // MARK: - UI Sections
+    
+    private var basicsSection: some View {
+        Section("Basics") {
+            NavigationLink(destination: ActivitySelectorView(
+                activityTree: viewModel.activityTree,
+                selectedActivityId: $instance.activity_id
+            )) {
+                HStack {
+                    Text("Select Activity")
+                    Spacer()
+                    if let activity = selectedActivity {
+                        Text(activity.name)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            FullTimePicker(label: "Start Time", selection: $instance.time_start)
+            Toggle("End Time?", isOn: $showEndTime)
+            if showEndTime {
+                FullTimePicker(label: "End Time", selection: Binding(
+                    get: { instance.time_end ?? Date() },
+                    set: { instance.time_end = $0 }
+                ))
+            }
+        }
+    }
+    
+    private var detailsSection: some View {
+        Section("Details") {
+            TextEditor(text: Binding(
+                get: { instance.details ?? "" },
+                set: { instance.details = $0.isEmpty ? nil : $0 }
+            ))
+            .lineLimit(3...)
+        }
+    }
+    
+    private func specializedDetailsSection(for activity: Activity) -> some View {
+        Section(header: Text("Activity Details")) {
+            specializedDetailsView(for: activity)
+        }
+    }
+    
+    private var tripLegsSection: some View {
+        Section("Trip Legs") {
+            ForEach(viewModel.tripLegs(for: instance.id)) { leg in
+                let instanceTripLegs = viewModel.tripLegs(for: instance.id)
+                let instancePlaces = viewModel.tripsPlaces(for: instanceTripLegs)
+                
+                Button(action: { tripLegToEdit = leg }) {
+                    TripLegRowView(
+                        tripLeg: leg,
+                        vehicle: viewModel.findVehicle(by: leg.vehicle_id),
+                        places: instancePlaces
+                    )
+                }
+            }
+            
+            
         }
     }
     
@@ -94,23 +132,13 @@ struct ActivityInstanceDetailSheet: View {
             case .meal:
                 MealDetailsEditView(metadata: $instance.decodedActivityDetails)
             case .reading:
-                Text("Reading details editor placeholder")
+                Text("Reading details editor")
             case .generic:
-                TextEditor(text: .init(
-                    get: { instance.details ?? "" },
-                    set: { instance.details = $0.isEmpty ? nil : $0 }
-                ))
+                Text("Additional details")
                 .frame(minHeight: 100)
             default:
                 EmptyView()
-                
         }
-    }
-    
-    /// Helper function to find an activity by its ID in the tree.
-    private func findActivity(by id: Int?) -> Activity? {
-        guard let id = id else { return nil }
-        return activityTree.flatMap { $0.flattened() }.first { $0.id == id }
     }
 }
 
@@ -132,11 +160,14 @@ private struct ActivitySelectorView: View {
                     selectedActivityId = activity.id
                     dismiss()
                 }) {
-                    ActivityRowView(activity: activity)
+                    HStack {
+                        IconView(iconString: activity.icon)
+                        Text(activity.name)
+                    }
+                    .foregroundStyle(.primary)
                 }
             }
         }
         .navigationTitle("Select an Activity")
     }
 }
-

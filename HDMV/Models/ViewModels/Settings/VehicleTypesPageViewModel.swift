@@ -110,13 +110,10 @@ class VehicleTypesPageViewModel: ObservableObject {
     }
     
     /// Toggles the cache status for a vehicle type.
-    func toggleCacheForVehicleType(for vehicleType: VehicleType) {
+    func toggleCache(for vehicleType: VehicleType) {
         Task {
             do {
-                try await vehiclesService.updateCacheStatus(
-                    forVehicleTypeId: vehicleType.id,
-                    shouldCache: vehicleType.cache
-                )
+                try await vehiclesService.updateCache(forVehicleType: vehicleType)
             } catch {
                 print("Failed to update cache status on server: \(error). Reverting.")
                 vehicleType.cache.toggle()
