@@ -64,6 +64,7 @@ struct MyActivitiesPage: View {
                         let instanceTripLegs = viewModel.tripLegs(for: instance.id)
                         let instanceVehicles = viewModel.tripsVehicles(for: instanceTripLegs)
                         let instancePlaces = viewModel.tripsPlaces(for: instanceTripLegs)
+                        let hasActiveLegs = instanceTripLegs.contains { $0.time_end == nil }
                         
                         ActivityInstanceRowView(
                             instance: instance,
@@ -85,7 +86,7 @@ struct MyActivitiesPage: View {
                         .onTapGesture {
                             instanceToEdit = instance
                         }
-                        if instance.time_end == nil {
+                        if instance.time_end == nil && !hasActiveLegs {
                             EndItemButton(title: "End Activity") {
                                 viewModel.endActivityInstance(instance: instance)
                             }

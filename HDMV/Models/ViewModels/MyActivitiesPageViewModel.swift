@@ -10,7 +10,7 @@ import SwiftData
 
 @MainActor
 class MyActivitiesPageViewModel: ObservableObject {
-
+    
     private var modelContext: ModelContext?
     private let instanceService = ActivityInstanceService()
     private let tripLegsService = TripsService()
@@ -25,7 +25,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     @Published var cities: [City] = []
     @Published var places: [Place] = []
     @Published var vehicleTypes: [VehicleType] = []
-
+    
     var hasLocalChanges: Bool {
         let instancesChanged = instances.contains { $0.syncStatus != .synced }
         let tripsChanged = tripLegs.contains { $0.syncStatus != .synced }
@@ -35,7 +35,6 @@ class MyActivitiesPageViewModel: ObservableObject {
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchActivities()
-        fetchTripLegs()
         fetchCatalogueData()
     }
     
@@ -70,7 +69,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             print("Failed to fetch trip legs: \(error)")
         }
     }
-
+    
     
     private func fetchCatalogueData() {
         guard let context = modelContext else { return }
@@ -113,15 +112,24 @@ class MyActivitiesPageViewModel: ObservableObject {
         return self.places.filter { allPlaceIds.contains($0.id) }
     }
     
+    func findPlace(by id: Int?) -> Place? {
+        guard let id = id else { return nil }
+        return places.first { $0.id == id }
+    }
+    
     func tripsVehicleTypes(for vehicles: [Vehicle]) -> [VehicleType] {
         let typeIds = Set(vehicles.map { $0.type })
         return self.vehicleTypes.filter { typeIds.contains($0.id) }
     }
     
+    func unassignedTripLegs() -> [TripLeg] {
+        return self.tripLegs.filter { $0.parent_id == nil || $0.parent_id! < 0}
+    }
+    
     // MARK: - Core Synchronization Logic
     
     func syncWithServer() async {
-        isLoading = true        
+        isLoading = true
         await syncActivityInstances()
         await syncTripLegs()
         
@@ -147,11 +155,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             for dto in onlineInstances {
                 if let localInstance = localDict[dto.id] {
                     if localInstance.syncStatus == .synced {
-                        localInstance.time_start = dto.time_start
-                        localInstance.time_end = dto.time_end
-                        localInstance.activity_id = dto.activity_id
-                        localInstance.details = dto.details
-                        localInstance.decodedActivityDetails = dto.activity_details
+                        localInstance.update(fromDto: dto)
                     }
                 } else {
                     context.insert(ActivityInstance(fromDto: dto))
@@ -175,7 +179,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     private func syncTripLegs() async {
         guard let context = modelContext else { return }
-                
+        
         do {
             let onlineTripLegs = try await tripLegsService.fetchTripLegs(for: selectedDate)
             let onlineDict = Dictionary(uniqueKeysWithValues: onlineTripLegs.map { ($0.id, $0) })
@@ -223,7 +227,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             print("Error during trip leg sync: \(error)")
         }
     }
-
+    
     
     func syncChanges() async {
         guard let context = modelContext else { return }
@@ -260,17 +264,41 @@ class MyActivitiesPageViewModel: ObservableObject {
         )
         do {
             if instance.id < 0 {
+                let temporaryId = instance.id
                 let newDTO = try await self.instanceService.createActivityInstance(payload)
                 instance.id = newDTO.id
+                
+                updateTripLegsParentId(from: temporaryId, to: newDTO.id)
+                
             } else {
                 _ = try await self.instanceService.updateActivityInstance(id: instance.id, payload: payload)
             }
             instance.syncStatus = .synced
         } catch {
-            print("Failed to sync instance \(instance.id): \(error). Marking as failed.")
             instance.syncStatus = .failed
+            print("Failed to sync instance \(instance.id): \(error).")
         }
     }
+    
+    private func updateTripLegsParentId(from oldId: Int, to newId: Int) {
+        guard let context = modelContext else { return }
+        let children = self.tripLegs.filter { $0.parent_id == oldId }
+        for child in children {
+            child.parent_id = newId
+        }
+        try? context.save()
+    }
+    
+    func claim(tripLeg: TripLeg, for instance: ActivityInstance) {
+        guard let context = modelContext else { return }
+        
+        if let legToUpdate = self.tripLegs.first(where: { $0.id == tripLeg.id }) {
+            legToUpdate.parent_id = instance.id
+            legToUpdate.syncStatus = .local
+            try? context.save()
+        }
+    }
+    
     
     private func sync(tripLeg: TripLeg, in context: ModelContext) async {
         let payload = TripLegPayload(

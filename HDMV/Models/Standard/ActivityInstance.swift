@@ -19,22 +19,36 @@ final class ActivityInstance {
     var syncStatus: SyncStatus = SyncStatus.undef
 
 
-    init(id: Int, time_start: Date, time_end: Date? = nil, activity_id: Int? = nil, details: String? = nil, syncStatus: SyncStatus = .local) {
+    init(
+        id: Int,
+        time_start: Date,
+        time_end: Date? = nil,
+        activity_id: Int? = nil,
+        details: String? = nil,
+        activity_details: ActivityDetails? = nil,
+        syncStatus: SyncStatus = .local
+    ) {
         self.id = id
         self.time_start = time_start
         self.time_end = time_end
         self.activity_id = activity_id
         self.details = details
         self.syncStatus = syncStatus
+        self.decodedActivityDetails = activity_details
     }
     
-    init(fromDto dto: ActivityInstanceDTO){
-        self.id = dto.id
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
-        self.activity_id = dto.activity_id
-        self.details = dto.details
-        self.syncStatus = .synced
+    convenience init(
+        fromDto dto: ActivityInstanceDTO
+    ){
+        self.init(
+            id: dto.id,
+            time_start: dto.time_start,
+            time_end: dto.time_end,
+            activity_id: dto.activity_id,
+            details: dto.details,
+            syncStatus: .synced
+        )
+        self.decodedActivityDetails = dto.activity_details
     }
     
     var decodedActivityDetails: ActivityDetails? {
@@ -46,6 +60,17 @@ final class ActivityInstance {
             activity_details = try? JSONEncoder().encode(newValue)
         }
     }
+    
+    func update(fromDto dto: ActivityInstanceDTO) {
+        self.id = dto.id
+        self.time_start = dto.time_start
+        self.time_end = dto.time_end
+        self.activity_id = dto.activity_id
+        self.details = dto.details
+        self.decodedActivityDetails = dto.activity_details
+        self.syncStatus = .synced
+    }
+    
 }
 
 struct ActivityInstanceDTO: Codable, Identifiable {

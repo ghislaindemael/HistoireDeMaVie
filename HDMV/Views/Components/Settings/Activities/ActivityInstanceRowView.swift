@@ -19,6 +19,11 @@ struct ActivityInstanceRowView: View {
     let onStartTripLeg: (Int) -> Void
     let onEditTripLeg: (TripLeg) -> Void
     let onEndTripLeg: (TripLeg) -> Void
+    
+    var hasActiveLeg: Bool {
+        tripLegs.contains { $0.time_end == nil }
+    }
+
         
     var body: some View {
         VStack(alignment: .leading) {
@@ -51,6 +56,12 @@ struct ActivityInstanceRowView: View {
             if activity?.generate_trips == true {
                 tripLegsSection
                     .padding(.leading, 30)
+                
+                if instance.time_end == nil && !hasActiveLeg {
+                    StartItemButton(title: "Start trip leg") {
+                        onStartTripLeg(instance.id)
+                    }
+                }
             }
             
         }
@@ -77,17 +88,7 @@ struct ActivityInstanceRowView: View {
                 .buttonStyle(.plain)
             }
             
-            Button(action: {
-                onStartTripLeg(instance.id)
-            }) {
-                Label("New Trip Leg", systemImage: "plus.circle")
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .buttonStyle(.plain)
+            
         }
     }
 }

@@ -72,11 +72,10 @@ struct TripLegDetailSheet: View {
     
     private var timeSection: some View {
         Section(header: Text("Time")) {
-            DatePicker("Start Time", selection: $tripLeg.time_start)
-            Toggle("Has End Time", isOn: $showEndTime.animation())
-            
+            FullTimePicker(label: "Start Time", selection: $tripLeg.time_start)
+            Toggle("End Time?", isOn: $showEndTime)
             if showEndTime {
-                DatePicker("End Time", selection: Binding(
+                FullTimePicker(label: "End Time", selection: Binding(
                     get: { tripLeg.time_end ?? Date() },
                     set: { tripLeg.time_end = $0 }
                 ))
@@ -107,8 +106,10 @@ struct TripLegDetailSheet: View {
                     Text(city.name).tag(city.id as Int?)
                 }
             }
-            .onChange(of: selectedStartCityId) {
-                tripLeg.place_start_id = nil
+            .onChange(of: selectedStartCityId) { oldValue, newValue in
+                if oldValue != nil {
+                    tripLeg.place_start_id = nil
+                }
             }
             
             if selectedStartCityId != nil {
@@ -130,8 +131,10 @@ struct TripLegDetailSheet: View {
                     Text(city.name).tag(city.id as Int?)
                 }
             }
-            .onChange(of: selectedEndCityId) {
-                tripLeg.place_end_id = nil
+            .onChange(of: selectedEndCityId) { oldValue, newValue in
+                if oldValue != nil {
+                    tripLeg.place_end_id = nil
+                }
             }
             
             if selectedEndCityId != nil {

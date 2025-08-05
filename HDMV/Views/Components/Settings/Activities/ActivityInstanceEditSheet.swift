@@ -40,6 +40,9 @@ struct ActivityInstanceDetailSheet: View {
                 
                 if selectedActivity?.generate_trips == true {
                     tripLegsSection
+                    if !viewModel.unassignedTripLegs().isEmpty {
+                        claimTripLegsSection
+                    }
                 }
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
@@ -122,9 +125,25 @@ struct ActivityInstanceDetailSheet: View {
                 }
             }
             
-            
+        }
+        
+    }
+    
+    private var claimTripLegsSection: some View {
+        Section("Claim trip legs"){
+            ForEach(viewModel.unassignedTripLegs()) { leg in
+                Button(action: { viewModel.claim(tripLeg: leg, for: instance) }) {
+                    TripLegRowView(
+                        tripLeg: leg,
+                        vehicle: viewModel.findVehicle(by: leg.vehicle_id),
+                        places: viewModel.tripsPlaces(for: [leg])
+                    )
+                }
+            }
         }
     }
+    
+    
     
     @ViewBuilder
     private func specializedDetailsView(for activity: Activity) -> some View {
