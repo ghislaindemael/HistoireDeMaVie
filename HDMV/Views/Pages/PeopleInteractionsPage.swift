@@ -12,22 +12,16 @@ struct PeopleInteractionsPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PeopleInteractionsPageViewModel()
     
-    @Query private var people: [Person]
-    
-    @State private var editingInteraction: PersonInteraction? = nil
-    @State private var endingInteractionId: Int?
+    @State private var interactionToEdit: PersonInteraction? = nil
     @State private var deletingInteraction: PersonInteraction? = nil
-
     
     // MARK: - Filtering State
     @State private var selectedPersonId: Int? = nil
     @State private var showUnassigned: Bool = true
     @State private var isFilteringExpanded: Bool = false
-    
-    public init() {}
-    
+        
     private var filteredInteractions: [PersonInteraction] {
-        viewModel.allInteractions.filter { interaction in
+        viewModel.interactions.filter { interaction in
             let isAssigned = interaction.person_id > 0
             
             if isAssigned {
@@ -40,10 +34,16 @@ struct PeopleInteractionsPage: View {
     var body: some View {
         NavigationStack {
             interactionsListView
-                .navigationTitle("Interactions")
-                .toolbar { toolbarContent }
+                .navigationTitle("People Interactions")
+                .logPageToolbar(
+                    refreshAction: { await viewModel.syncWithServer() },
+                    syncAction: { await viewModel.syncChanges() },
+                    addNowAction: { viewModel.createNewInteractionInCache() },
+                    addAtNoonAction: { viewModel.createNewInteractionAtNoonInCache() },
+                    hasLocalChanges: viewModel.hasLocalChanges
+                )
                 .task(id: viewModel.selectedDate) {
-                    await viewModel.loadData()
+                    await viewModel.syncWithServer()
                 }
                 .onAppear {
                     viewModel.setup(modelContext: modelContext)
@@ -54,14 +54,10 @@ struct PeopleInteractionsPage: View {
                             .padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
-                .sheet(item: $editingInteraction) { interaction in
-                    EditInteractionSheet(
-                        people: people,
+                .sheet(item: $interactionToEdit) { interaction in
+                    PersonInteractionEditSheet(
                         interaction: interaction,
-                        onSave: { updated in
-                            viewModel.updateInteraction(updated)
-                            editingInteraction = nil
-                        }
+                        viewModel: viewModel
                     )
                 }
         }
@@ -74,15 +70,13 @@ struct PeopleInteractionsPage: View {
                 deletingInteraction = nil
             }
         } message: { interaction in
-            Text("Are you sure you want to delete this interaction with \(people.first(where: { $0.id == interaction.person_id })?.fullName ?? "Unknown")?")
+            Text("Are you sure you want to delete this interaction with \(viewModel.people.first(where: { $0.id == interaction.person_id })?.fullName ?? "Unknown")?")
         }
-
+        
     }
-    
     
     // MARK: - View Components
     
-    /// A computed property for the main view content to help the compiler.
     private var interactionsListView: some View {
         VStack(spacing: 12) {
             DatePicker("Select Date", selection: $viewModel.selectedDate, displayedComponents: .date)
@@ -92,7 +86,6 @@ struct PeopleInteractionsPage: View {
             List {
                 ForEach(filteredInteractions) { interaction in
                     viewForRow(for: interaction )
-                        
                 }
                 .onDelete(perform: delete)
                 
@@ -101,14 +94,13 @@ struct PeopleInteractionsPage: View {
         
     }
     
-    /// A collapsible group with filtering options.
     @ViewBuilder
     private var filteringControls: some View {
         DisclosureGroup("Filtering", isExpanded: $isFilteringExpanded) {
             HStack(spacing: 16) {
                 Picker("Person", selection: $selectedPersonId) {
                     Text("All People").tag(Int?.none)
-                    ForEach(people) { person in
+                    ForEach(viewModel.people) { person in
                         Text(person.fullName).tag(person.id as Int?)
                     }
                 }
@@ -130,101 +122,22 @@ struct PeopleInteractionsPage: View {
         VStack(spacing: 8) {
             PersonInteractionRowView(
                 interaction: interaction,
-                person: people.first(where: { $0.id == interaction.person_id })
+                person: viewModel.people.first(where: { $0.id == interaction.person_id })
             )
-            .padding(.top, interaction.time_end == nil ? 6 : 0)
-            .animation(nil, value: endingInteractionId)
-            .zIndex(1)
-            
-            endInteractionButton(for: interaction)
-                .frame(maxHeight: interaction.time_end == nil ? .infinity : 0)
-                .opacity(interaction.time_end == nil ? 1 : 0)
-                .animation(.easeInOut(duration: 0.5), value: interaction.time_end)
-                .scaleEffect(endingInteractionId == interaction.id ? 0.01 : 1.0)
-        }
-        .background(
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    editingInteraction = interaction
+            .contentShape(Rectangle())
+            .onTapGesture {
+                interactionToEdit = interaction
+            }
+            if interaction.time_end == nil {
+                EndItemButton(title: "End Interaction") {
+                    viewModel.endPersonInteraction(interaction: interaction)
                 }
-        )
-        .onLongPressGesture {
-            editingInteraction = interaction
-        }
-    }
-    
-    @ViewBuilder
-    private func endInteractionButton(for interaction: PersonInteraction) -> some View {
-        
-        Button("End Interaction") {
-            withAnimation {
-                endingInteractionId = interaction.id
-            } completion: {
-                let ended = interaction
-                ended.time_end = .now
-                viewModel.updateInteraction(ended)
-                endingInteractionId = nil
-            }
-        }
-        .font(.headline)
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color.red)
-        .foregroundColor(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .buttonStyle(.plain)
-    }
-    
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button(action: {
-                Task { await viewModel.loadData() }
-            }) {
-                Image(systemName: "icloud.and.arrow.down")
-                Text("Refresh")
-            }
-            .accessibilityLabel("Reload trips")
-        }
-        
-        if viewModel.hasLocalInteractions {
-            ToolbarItem(placement: .principal) {
-                Button(action: {
-                    Task { await viewModel.syncChanges() }
-                }) {
-                    Image(systemName: "icloud.and.arrow.up")
-                    Text("Save")
-                }
-                .accessibilityLabel("Sync changes")
-            }
-        }
-        
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button(action: {
-                let new = PersonInteraction(
-                    id: viewModel.generateTempID(),
-                    date: viewModel.selectedDate,
-                    time_start: .now,
-                    time_end: nil,
-                    person_id: 0,
-                    in_person: true,
-                    details: nil,
-                    percentage: 100,
-                    syncStatus: SyncStatus.local
-                )
-                editingInteraction = new
-            }) {
-                Label("New", systemImage: "plus")
             }
         }
     }
     
     private func deleteInteraction(_ interaction: PersonInteraction) {
-        Task {
-            await viewModel.deleteInteraction(interaction)
-        }
+        viewModel.deleteInteraction(interaction)
     }
     
     private func delete(at offsets: IndexSet) {
@@ -232,10 +145,8 @@ struct PeopleInteractionsPage: View {
             deletingInteraction = filteredInteractions[first]
         }
     }
-
-
-
 }
+
 
 #Preview {
     let container: ModelContainer = {
@@ -249,52 +160,31 @@ struct PeopleInteractionsPage: View {
             let container = try ModelContainer(for: schema, configurations: [config])
             let context = container.mainContext
             
-            let matthieuC = Person(
-                id: 1,
-                slug: "matthieuC",
-                name: "Matthieu",
-                familyName: "Colin",
-                surname: "Brug",
-                birthdate: nil,
-                cache: true
-            )
+            let matthieuC = Person(id: 1, slug: "matthieuC", name: "Matthieu", familyName: "Colin", surname: "Brug", birthdate: nil, cache: true)
+            let matthieuD = Person(id: 2, slug: "matthieuD", name: "Matthieu", familyName: "Dumont", surname: nil, birthdate: nil, cache: true)
             
-            let matthieuD = Person(
-                id: 2,
-                slug: "matthieuD",
-                name: "Matthieu",
-                familyName: "Dumont",
-                surname: nil,
-                birthdate: nil,
-                cache: true
-            )
-
             context.insert(matthieuC)
             context.insert(matthieuD)
             
-            
             let interaction1 = PersonInteraction(
                 id: 201,
-                date: .now,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: .now.addingTimeInterval(-720),
                 person_id: 1,
                 in_person: true,
                 details: "Test",
-                percentage: 100,
+                percentage: 100
             )
             
             let interaction2 = PersonInteraction(
                 id: 202,
-                date: .now,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: nil,
                 person_id: 2,
                 in_person: false,
                 details: "Test",
-                percentage: 50,
+                percentage: 50
             )
-
             
             context.insert(interaction1)
             context.insert(interaction2)
@@ -307,4 +197,3 @@ struct PeopleInteractionsPage: View {
     
     PeopleInteractionsPage().modelContainer(container)
 }
-

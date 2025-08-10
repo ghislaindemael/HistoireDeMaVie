@@ -34,18 +34,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        fetchActivities()
         fetchCatalogueData()
-    }
-    
-    private func fetchActivities() {
-        guard let context = modelContext else { return }
-        do {
-            let descriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
-            self.activityTree = Activity.buildTree(from: try context.fetch(descriptor))
-        } catch {
-            print("Failed to fetch activities: \(error)")
-        }
     }
     
     private func fetchTripLegs() {
@@ -78,6 +67,8 @@ class MyActivitiesPageViewModel: ObservableObject {
             self.cities = try context.fetch(FetchDescriptor<City>(sortBy: [SortDescriptor(\.rank), SortDescriptor(\.name)]))
             self.places = try context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.name)]))
             self.vehicleTypes = try context.fetch(FetchDescriptor<VehicleType>())
+            let descriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
+            self.activityTree = Activity.buildTree(from: try context.fetch(descriptor))
         } catch {
             print("Failed to fetch catalogue data: \(error)")
         }

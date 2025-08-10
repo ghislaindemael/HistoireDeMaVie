@@ -12,222 +12,205 @@ import SwiftData
 
 @MainActor
 class PeopleInteractionsPageViewModel: ObservableObject {
-
+    
     private var modelContext: ModelContext?
-    
-    @Published var selectedDate: Date = .now
-    @Published var allInteractions: [PersonInteraction] = []
+    private let interactionService = PeopleInteractionsService()
     @Published var isLoading: Bool = false
+
+    @Published var selectedDate: Date = .now
+    @Published var interactions: [PersonInteraction] = []
     
-    private var interactionService: PeopleInteractionsService = PeopleInteractionsService()
-    private var onlineInteractions: [PersonInteraction] = []
-    private var localInteractions: [PersonInteraction] = []
+    @Published var people: [Person] = []
     
-    var hasLocalInteractions: Bool {
-        localInteractions.contains { $0.syncStatus != .synced }
+    var hasLocalChanges: Bool {
+        interactions.contains { $0.syncStatus != .synced }
     }
-    
-    init() {}
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
+        fetchCatalogueData()
+    }
+    
+    // MARK: - Data Fetching
         
-        Task {
-            await loadData()
-        }
-    }
-    
-    // MARK: - Data Flow Orchestration
-    
-    func loadData() async {
-        isLoading = true
-        await fetchOnlineInteractions()
-        fetchLocalInteractions()
-        mergeInteractions()
-        isLoading = false
-    }
-    
-    private func fetchOnlineInteractions() async {
+    private func fetchCatalogueData() {
+        guard let context = modelContext else { return }
         do {
-            self.onlineInteractions = try await interactionService.fetchInteractions(for: selectedDate)
+            let descriptor = FetchDescriptor<Person>(sortBy: [
+                SortDescriptor(\.familyName, order: .forward),
+                SortDescriptor(\.name, order: .forward)
+            ])
+            self.people = try context.fetch(descriptor)
         } catch {
-            print("Failed to fetch online trips. Showing local changes only. Error: \(error)")
-            self.onlineInteractions = []
+            print("Failed to fetch people: \(error)")
         }
     }
     
-    private func fetchLocalInteractions() {
+    // MARK: Transmitted data
+    
+    func findPerson(by id:Int?) -> Person? {
+        guard let id = id else { return nil }
+        return people.first { $0.id == id }
+    }
+
+    
+    // MARK: - Core Synchronization Logic
+    
+    func syncWithServer() async {
+        isLoading = true
+        defer { isLoading = false }
+        await syncInteractions()
+    }
+    
+    private func syncInteractions() async {
+        
         guard let context = modelContext else { return }
         
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: selectedDate)
-        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        let predicate = #Predicate<PersonInteraction> { $0.time_start >= startOfDay && $0.time_start < endOfDay }
         
         do {
-            let descriptor = FetchDescriptor<PersonInteraction>(
-                predicate: #Predicate { interaction in
-                    interaction.date >= startOfDay && interaction.date < endOfDay
-                },
-                sortBy: [
-                    SortDescriptor(\.time_start),
-                    SortDescriptor(\.person_id)
-                ]
-            )
-            self.localInteractions = try context.fetch(descriptor)
+            let onlineInteractions = try await interactionService.fetchInteractions(for: selectedDate)
+            let onlineDict = Dictionary(uniqueKeysWithValues: onlineInteractions.map { ($0.id, $0) })
+            
+            let descriptor = FetchDescriptor<PersonInteraction>(predicate: predicate)
+            let localInteractions = try context.fetch(descriptor)
+            let localDict = Dictionary(uniqueKeysWithValues: localInteractions.map { ($0.id, $0) })
+            
+            for dto in onlineInteractions {
+                if let localInteraction = localDict[dto.id] {
+                    if localInteraction.syncStatus == .synced {
+                        localInteraction.update(fromDto: dto)
+                    }
+                } else {
+                    context.insert(PersonInteraction(fromDto: dto))
+                }
+            }
+            
+            for localInteraction in localInteractions {
+                if onlineDict[localInteraction.id] == nil && localInteraction.syncStatus == .synced {
+                    context.delete(localInteraction)
+                }
+            }
+            
+            try context.save()
+            
+            let refreshedDescriptor = FetchDescriptor<PersonInteraction>(predicate: predicate, sortBy: [SortDescriptor(\.time_start, order: .reverse)])
+            self.interactions = try context.fetch(refreshedDescriptor)
         } catch {
-            print("Failed to fetch from cache: \(error)")
+            print("Error during instance sync: \(error)")
         }
     }
-
-    
-    private func mergeInteractions() {
-        let combined = localInteractions + onlineInteractions
-        
-        var seenIDs = Set<Int>()
-        let unique = combined.filter { interaction in
-            if seenIDs.contains(interaction.id) {
-                return false
-            } else {
-                seenIDs.insert(interaction.id)
-                return true
-            }
-        }
-        
-        self.allInteractions = unique.sorted {
-            if $0.time_start == $1.time_start {
-                return $0.person_id < $1.person_id
-            } else {
-                return $0.time_start < $1.time_start
-            }
-        }
-    }
-
-    
-    
-    // MARK: User actions
     
     func syncChanges() async {
         guard let context = modelContext else { return }
         
-        let dirty = localInteractions.filter {
-            $0.syncStatus == .local || $0.syncStatus == .failed
-        }
+        let interactionsToSync = self.interactions.filter { $0.syncStatus != .synced && $0.syncStatus != .toDelete}
         
-        for local in dirty {
-            do {
-                guard local.person_id != 0 else {
-                    local.syncStatus = .failed
-                    context.insert(local)
-                    continue
+        guard !interactionsToSync.isEmpty else { return }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        await withTaskGroup(of: Void.self) { group in
+            for interaction in interactionsToSync {
+                group.addTask {
+                    await self.sync(interaction: interaction, in: context)
                 }
-                
-                local.syncStatus = .syncing
-                if local.id < 0 {
-                    let payload = NewPersonInteractionPayload(
-                        date: local.date,
-                        time_start: DateFormatter.timeOnly.string(from: local.time_start),
-                        time_end: local.time_end.map { DateFormatter.timeOnly.string(from: $0) },
-                        person_id: local.person_id,
-                        in_person: local.in_person,
-                        details: local.details,
-                        percentage: local.percentage
-                    )
-                    let inserted = try await interactionService.insertInteraction(payload: payload)
-                    context.delete(local)
-                    onlineInteractions.append(inserted)
-                    localInteractions.removeAll { $0.id == local.id }
-                } else if local.syncStatus == .toDelete {
-                    try await interactionService.deleteInteraction(id: local.id)
-                    context.delete(local)
-                    localInteractions.removeAll { $0.id == local.id }
-                    onlineInteractions.removeAll { $0.id == local.id }
-                } else {
-                    let updated = try await interactionService.updateInteraction(interaction: local)
-                    updated.syncStatus = .synced
-                    context.delete(local)
-                    localInteractions.removeAll { $0.id == local.id }
-                    onlineInteractions.append(updated)
-                }
-            } catch {
-                print("❌ Full sync error: \(error)")
-                local.syncStatus = .failed
-                localInteractions.removeAll { $0.id == local.id }
-                context.delete(local)
-                context.insert(local)
-                localInteractions.append(local)
             }
         }
         
-        await loadData()
+        try? context.save()
+    }
+    
+    private func sync(interaction: PersonInteraction, in context: ModelContext) async {
+        let payload = PersonInteractionPayload(from: interaction)
+        do {
+            if interaction.id < 0 {
+                let newDTO = try await self.interactionService.createInteraction(payload)
+                interaction.id = newDTO.id
+            } else {
+                _ = try await self.interactionService.updatePersonInteraction(id: interaction.id, payload: payload)
+            }
+            interaction.syncStatus = .synced
+        } catch {
+            interaction.syncStatus = .failed
+            print("Failed to sync interaction \(interaction.id): \(error).")
+        }
+    }
+    
+    // MARK: User Actions
+        
+    func deleteInteraction(_ interaction: PersonInteraction) {
+        guard let context = modelContext else { return }
+        
+        if interaction.id < 0 {
+            context.delete(interaction)
+        } else {
+            interaction.syncStatus = .toDelete
+        }
+        
+        try? context.save()
+
     }
     
     func generateTempID() -> Int {
-        let minExistingID = localInteractions
-            .map { $0.id }
-            .filter { $0 < 0 }
-            .min() ?? 0
+        let minExistingID = interactions.map(\.id).filter { $0 < 0 }.min() ?? 0
         return minExistingID - 1
     }
-
     
-    func updateInteraction(_ interaction: PersonInteraction) {
+    func endPersonInteraction(interaction: PersonInteraction){
         guard let context = modelContext else { return }
-        
-        if interaction.syncStatus == .synced {
-            // 1. Remove from onlineInteractions and localInteractions + context
-            onlineInteractions.removeAll { $0.id == interaction.id }
-            
-            if let index = localInteractions.firstIndex(where: { $0.id == interaction.id }) {
-                context.delete(localInteractions[index])
-                localInteractions.remove(at: index)
-            }
-            
-            // 2. Mutate the original instance's syncStatus directly
-            interaction.syncStatus = .local
-            
-            // 3. Insert the same (mutated) instance to localInteractions and context
-            context.insert(interaction)
-            localInteractions.append(interaction)
-            
-        } else {
-            // For local/fail cases, replace the existing entry with the new one
-            if let index = localInteractions.firstIndex(where: { $0.id == interaction.id }) {
-                context.delete(localInteractions[index])
-                localInteractions.remove(at: index)
-            }
-            context.insert(interaction)
-            localInteractions.append(interaction)
-        }
-        
-        mergeInteractions()
-        
-        Task {
-            await syncChanges()
-        }
-    }
-    
-    func deleteInteraction(_ interaction: PersonInteraction) async {
-        guard let context = modelContext else { return }
-        
         do {
-            if interaction.id > 0 {
-                try await interactionService.deleteInteraction(id: interaction.id)
-            } else {
-                print("ℹ️ Interaction \(interaction.id) is local only, skipping Supabase delete.")
-            }
-            
-            onlineInteractions.removeAll { $0.id == interaction.id }
-            localInteractions.removeAll { $0.id == interaction.id }
-            context.delete(interaction)
-            mergeInteractions()
-            
+            interaction.time_end = .now
+            interaction.syncStatus = .local
+            try context.save()
         } catch {
-            print("❌ Failed to delete interaction \(interaction.id): \(error)")
+            print("Failed to end interaction.")
         }
     }
-
-
-
-
-
+    
+    func createNewInteractionInCache() {
+        guard let context = modelContext else { return }
+        let newInteraction =
+            PersonInteraction(
+                id: generateTempID(),
+                time_start: .now,
+                person_id: 0,
+                in_person: true,
+                details: nil,
+                percentage: 100)
+        
+        context.insert(newInteraction)
+        do {
+            try context.save()
+            self.interactions.append(newInteraction)
+        } catch {
+            print("Failed to create interaction: \(error)")
+        }
+    }
+    
+    func createNewInteractionAtNoonInCache() {
+        guard let context = modelContext else { return }
+        let noonOnSelectedDate = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDate) ?? selectedDate
+        let newInteraction =
+        PersonInteraction(
+            id: generateTempID(),
+            time_start: noonOnSelectedDate,
+            person_id: 0,
+            in_person: true,
+            details: nil,
+            percentage: 100)
+        context.insert(newInteraction)
+        do {
+            try context.save()
+            self.interactions.append(newInteraction)
+            self.interactions.sort { $0.time_start > $1.time_start }
+        } catch {
+            print("Failed to save new interaction at noon: \(error)")
+        }
+    }
+        
+    
 }

@@ -10,43 +10,35 @@ import Foundation
 class PeopleService {
     
     private let supabaseClient = SupabaseService.shared.client
+    private let settings = SettingsStore.shared
     
-    func fetchAllPeople() async throws -> [PersonDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
+    private let TABLE_NAME = "data_people"
         
-        let response = try await supabaseClient
-            .from("data_people")
+    func fetchPeople() async throws -> [PersonDTO] {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        
+        var query = supabaseClient
+            .from(TABLE_NAME)
             .select()
-            .eq("archived", value: false)
-            .order("name", ascending: true)
-            .execute()
         
-        let data = response.data
+        if !settings.includeArchived {
+            query = query.eq("archived", value: false)
+        }
+        
+        let response = try await query.execute()
+        
         let decoder = DecoderFactory.dateOnlyDecoder()
-        return try decoder.decode([PersonDTO].self, from: data)
+        let people = try decoder.decode([PersonDTO].self, from: response.data)
+        
+        return people
     }
-
     
-    func fetchPeopleByCache(cache: Bool) async throws -> [PersonDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        let response = try await supabaseClient
-            .from("data_people")
-            .select()
-            .eq("archived", value: false)
-            .eq("cache", value: cache)
-            .order("name", ascending: true)
-            .execute()
-        
-        let data = response.data
-        let decoder = DecoderFactory.dateOnlyDecoder()
-        return try decoder.decode([PersonDTO].self, from: data)
-    }
     
     func createPerson(_ payload: NewPersonPayload) async throws -> PersonDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         
         let response = try await supabaseClient
-            .from("data_people")
+            .from(TABLE_NAME)
             .insert(payload)
             .select()
             .execute()
@@ -65,7 +57,7 @@ class PeopleService {
     func updatePerson(_ person: PersonDTO) async throws {
         guard let supabaseClient = supabaseClient else { return }
         try await supabaseClient
-            .from("data_people")
+            .from(TABLE_NAME)
             .update(person)
             .eq("id", value: person.id)
             .execute()

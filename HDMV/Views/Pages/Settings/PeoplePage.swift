@@ -5,7 +5,7 @@ struct PeoplePage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PeoplePageViewModel()
     
-    @State private var isShowingCreateSheet = false
+    @State private var isShowingAddSheet = false
     
     var body: some View {
         NavigationStack {
@@ -31,27 +31,16 @@ struct PeoplePage: View {
                 }
             }
             .navigationTitle("People")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        Task {
-                            await viewModel.refreshDataFromServer()
-                        }
-                    }) {
-                        Image(systemName: "icloud.and.arrow.down.fill")
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { isShowingCreateSheet.toggle() }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
+            .standardConfigPageToolbar(
+                refreshAction: viewModel.fetchFromServer,
+                cacheAction: viewModel.cachePeople,
+                isShowingAddSheet: $isShowingAddSheet
+            )
         }
         .task {
             viewModel.setup(modelContext: modelContext)
         }
-        .sheet(isPresented: $isShowingCreateSheet) {
+        .sheet(isPresented: $isShowingAddSheet) {
             NewPersonSheet(viewModel: viewModel)
         }
     }

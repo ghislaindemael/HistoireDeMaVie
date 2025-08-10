@@ -21,9 +21,12 @@ class PeoplePageViewModel: ObservableObject {
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         
+        fetchFromCache()
         
         if people.isEmpty {
-            Task { await refreshDataFromServer() }
+            Task {
+                await fetchFromServer()
+            }
         }
     }
     
@@ -41,31 +44,18 @@ class PeoplePageViewModel: ObservableObject {
         }
     }
     
-    func refreshDataFromServer() async {
-        guard let context = modelContext else { return }
+    func fetchFromServer() async {
         self.isLoading = true
         defer { self.isLoading = false }
         
         do {
-            async let cachableDTOs = try peopleService.fetchPeopleByCache(cache: true)
-            async let uncachableDTOs = try peopleService.fetchPeopleByCache(cache: false)
+            let peopleDTOs = try await peopleService.fetchPeople()
             
-            let cachablePeople = try await cachableDTOs
-            let uncachablePeople = try await uncachableDTOs
-            
-            let allPeopleDTOs = cachablePeople + uncachablePeople
-            self.people = allPeopleDTOs.compactMap { dto in
+            self.people = peopleDTOs.compactMap { dto in
                 Person(fromDTO: dto)
             }.sorted {
                 ($0.familyName, $0.name) < ($1.familyName, $1.name)
             }
-            
-            try context.delete(model: Place.self)
-            for dto in cachablePeople {
-                let person = Person(fromDTO: dto)
-                context.insert(person)
-            }
-            try context.save()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
@@ -74,6 +64,25 @@ class PeoplePageViewModel: ObservableObject {
     
     
     // MARK: - User Actions
+    
+    func cachePeople() {
+        guard let context = modelContext else {
+            print("Cannot cache: model context is missing.")
+            return
+        }
+        
+        do {
+            try context.delete(model: Person.self)
+            let peopleToCache = self.people.filter { $0.cache }
+            
+            for person in peopleToCache {
+                context.insert(person)
+            }
+            try context.save()
+        } catch {
+            print("Failed to perform targeted cache update for people: \(error)")
+        }
+    }
     
     func createPerson(newPerson: NewPersonPayload) async throws {
         guard let context = modelContext else { return }

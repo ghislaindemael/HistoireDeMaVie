@@ -1,119 +1,56 @@
 //
-//  PeopleInteractionsService.swift
+//  PeopleInteractionService.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 29.06.2025.
 //
 
+
 import Foundation
-import Supabase
 
 class PeopleInteractionsService {
     
-    private let supabaseClient: SupabaseClient? = SupabaseService.shared.client
+    private let supabaseClient = SupabaseService.shared.client
+    private let settings = SettingsStore.shared
     
-    func fetchInteractions(for date: Date) async throws -> [PersonInteraction] {
-        guard let supabaseClient = supabaseClient else {
-            throw URLError(.cannotConnectToHost)
-        }
+    private let TABLE_NAME = "my_people_interactions"
+    
+    func fetchInteractions(for date: Date) async throws -> [PersonInteractionDTO] {
+        guard let supabaseClient = supabaseClient else { return [] }
         
-        let dateString = ISO8601DateFormatter.justDate.string(from: date)
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        let response = try await supabaseClient
-            .from("my_people_interactions")
+        return try await supabaseClient
+            .from(TABLE_NAME)
             .select()
-            .eq("date", value: dateString)
+            .gte("time_start", value: ISO8601DateFormatter().string(from: startOfDay))
+            .lt("time_start", value: ISO8601DateFormatter().string(from: endOfDay))
+            .order("time_start", ascending: false)
             .execute()
-        
-        let data = response.data
-        let decoder = DecoderFactory.dateOnlyDecoder()
-        let dtos = try decoder.decode([PersonInteractionDTO].self, from: data)
-        return dtos.map(PersonInteraction.init(fromDTO:))
+            .value
     }
     
-    func insertInteraction(payload: NewPersonInteractionPayload) async throws -> PersonInteraction {
-        guard let supabaseClient = supabaseClient else {
-            throw URLError(.cannotConnectToHost)
-        }
-        
-        let response = try await supabaseClient
-            .from("my_people_interactions")
-            .insert(payload)
+    func createInteraction(_ payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        return try await supabaseClient
+            .from(TABLE_NAME)
+            .insert(payload, returning: .representation)
             .select()
+            .single()
             .execute()
-        
-        let data = response.data
-        let decoder = DecoderFactory.dateOnlyDecoder()
-        let dtos = try decoder.decode([PersonInteractionDTO].self, from: data)
-        
-        guard let dto = dtos.first else {
-            throw URLError(.cannotParseResponse)
-        }
-        return PersonInteraction(fromDTO: dto)
+            .value
     }
-
-
     
-    func updateInteraction(interaction: PersonInteraction) async throws -> PersonInteraction {
-        guard let supabaseClient = supabaseClient else {
-            throw URLError(.cannotConnectToHost)
-        }
-        
-        let timeFormatter = DateFormatter.timeOnly
-
-        let dto = PersonInteractionDTO(
-            id: interaction.id,
-            date: interaction.date,
-            time_start: timeFormatter.string(from: interaction.time_start),
-            time_end: interaction.time_end != nil ? timeFormatter.string(from: interaction.time_end!) : nil,
-            person_id: interaction.person_id,
-            in_person: interaction.in_person,
-            details: interaction.details,
-            percentage: interaction.percentage
-        )
-        
-        
-        let response = try await supabaseClient
-            .from("my_people_interactions")
-            .update(dto)
-            .eq("id", value: interaction.id)
-            .select("*")
+    func updatePersonInteraction(id: Int, payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+        guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
+        return try await supabaseClient
+            .from(TABLE_NAME)
+            .update(payload)
+            .eq("id", value: id)
+            .select()
+            .single()
             .execute()
-        
-        let data = response.data
-        
-        guard !data.isEmpty else {
-            throw URLError(.cannotParseResponse)
-        }
-        
-        let decoder = DecoderFactory.dateOnlyDecoder()
-        let dtos = try decoder.decode([PersonInteractionDTO].self, from: data)
-        guard let updatedDTO = dtos.first else {
-            throw URLError(.cannotParseResponse)
-        }
-        return PersonInteraction(fromDTO: updatedDTO)
+            .value
     }
-    
-    func deleteInteraction(id: Int) async throws {
-        guard let supabaseClient = supabaseClient else {
-            throw URLError(.cannotConnectToHost)
-        }
-        
-        do {
-            _ = try await supabaseClient
-                .from("my_people_interactions")
-                .delete()
-                .eq("id", value: id)
-                .execute()
-            print("Deleted successfully")
-        } catch {
-            print("Failed to delete interaction: \(error.localizedDescription)")
-        }
-
-    }
-
-
-
-    
 }
-
