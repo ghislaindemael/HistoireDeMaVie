@@ -1,43 +1,31 @@
-//
-//  ContentView.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 08.06.2025.
-//
-
 import SwiftUI
 
 struct AppView: View {
-    
     @EnvironmentObject var settings: SettingsStore
+    @EnvironmentObject var appNavigator: AppNavigator
     
     var body: some View {
-        TabView() {
-            Tab ("Home", systemImage: "house.fill") {
-                HomePage()
-            }
+        TabView(selection: $appNavigator.selectedTab) {
             
-            Tab ("Interactions", systemImage: "person.2.fill") {
-                PeopleInteractionsPage()
-            }
+            HomePage()
+                .tabItem { Label("Home", systemImage: "house.fill") }
+                .tag(Tab.home)
             
-            Tab ("Activities", systemImage: "flowchart") {
-                MyActivitiesPage()
-            }
+            PeopleInteractionsPage()
+                .tabItem { Label("Interactions", systemImage: "person.2.fill") }
+                .tag(Tab.interactions)
             
-            Tab ("Agenda", systemImage: "pencil.and.list.clipboard"){
-                AgendaPage()
-            }
+            MyActivitiesPage()
+                .tabItem { Label("Activities", systemImage: "flowchart") }
+                .tag(Tab.activities)
             
-            Tab ("Settings", systemImage: "gearshape") {
-                SettingsPage()
-            }
+            AgendaPage()
+                .tabItem { Label("Agenda", systemImage: "pencil.and.list.clipboard") }
+                .tag(Tab.agenda)
+            
+            SettingsPage()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(Tab.settings)
         }
     }
-}
-
-
-
-#Preview {
-    AppView()
 }

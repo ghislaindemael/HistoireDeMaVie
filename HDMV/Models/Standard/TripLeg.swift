@@ -11,7 +11,7 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class TripLeg : CustomStringConvertible {
+final class TripLeg : CustomStringConvertible, TimableModel, SyncableModel {
     @Attribute(.unique) var id: Int
     
     var parent_id: Int?

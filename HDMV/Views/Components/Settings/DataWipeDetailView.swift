@@ -10,7 +10,9 @@ import SwiftData
 
 struct DataWipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var appNavigator: AppNavigator
     @Environment(\.dismiss) private var dismiss
+    
     @State private var items: [any PersistentModel] = []
     
     
@@ -24,35 +26,44 @@ struct DataWipeDetailView: View {
         String(describing: modelType)
     }
     
+    private var unsyncedItemsCount: Int {
+        let syncableItems = items.compactMap { $0 as? any SyncableModel }
+        return syncableItems.filter { $0.syncStatus != .synced }.count
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
-            Text("This tool will permanently delete all data for the selected model type.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
             List {
-                ForEach(Array(items.enumerated()), id: \.element.id) { _, item in
-                    describeView(for: item)
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                deleteItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
+                ForEach(items, id: \.persistentModelID) { item in
+                    Button(action: {
+                        navigateToItem(item)
+                    }) {
+                        describeView(for: item)
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            deleteItem(item)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
                 }
             }
             
             HStack {
-                Text("Objects to delete:")
+                Text("Total objects: ")
                 Spacer()
                 Text("\(count)")
-                    .font(.title.bold())
+                    .font(.title2.bold())
             }
-            
-            Spacer()
-            
+            HStack {
+                Text("Unsnyced items: ")
+                Spacer()
+                Text("\(unsyncedItemsCount)")
+                    .font(.title2.bold())
+            }
+                                    
             Button(role: .destructive) {
                 isShowingConfirmAlert = true
             } label: {
@@ -144,6 +155,10 @@ struct DataWipeDetailView: View {
     
     private func describeView(for item: any PersistentModel) -> AnyView {
         switch item {
+            case let instance as ActivityInstance:
+                return AnyView(
+                    instance.debugView
+                )
             case let activity as Activity:
                 return AnyView(
                     ActivityRowView(activity: activity)
@@ -193,6 +208,14 @@ struct DataWipeDetailView: View {
             fetchItems()
         } catch {
             print("Failed to delete item: \(error)")
+        }
+    }
+    
+    private func navigateToItem(_ item: any PersistentModel) {
+        if let instance = item as? ActivityInstance {
+            appNavigator.selectedDate = instance.time_start
+            appNavigator.selectedTab = .activities
+            dismiss()
         }
     }
 }

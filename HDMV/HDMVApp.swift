@@ -34,6 +34,7 @@ struct HDMVApp: App {
     }()
     
     @StateObject var settings = SettingsStore()
+    @StateObject var appNavigator = AppNavigator()
 
     var body: some Scene {
         WindowGroup {
@@ -41,5 +42,6 @@ struct HDMVApp: App {
         }
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)
+        .environmentObject(appNavigator)
     }
 }

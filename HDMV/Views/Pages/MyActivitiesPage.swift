@@ -10,6 +10,8 @@ import SwiftData
 
 struct MyActivitiesPage: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var appNavigator: AppNavigator
+    
     @StateObject private var viewModel = MyActivitiesPageViewModel()
     
     @State private var instanceToEdit: ActivityInstance?
@@ -21,15 +23,19 @@ struct MyActivitiesPage: View {
                 .navigationTitle("My Activities")
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
-                    syncAction: { await viewModel.syncChanges() },
+                    syncAction: { await viewModel.uploadLocalChanges() },
                     addNowAction: { viewModel.createNewInstanceInCache() },
                     addAtNoonAction: { viewModel.createNewInstanceAtNoonInCache() },
                     hasLocalChanges: viewModel.hasLocalChanges
                 )
                 .task(id: viewModel.selectedDate) {
-                    await viewModel.syncWithServer()
+                    viewModel.fetchLocalDataForSelectedDate()
                 }
                 .onAppear {
+                    if let navDate = appNavigator.selectedDate {
+                        viewModel.selectedDate = navDate
+                        appNavigator.selectedDate = nil
+                    }
                     viewModel.setup(modelContext: modelContext)
                 }
                 .sheet(item: $instanceToEdit) { instance in
@@ -46,9 +52,8 @@ struct MyActivitiesPage: View {
                         places: viewModel.places
                     )
                 }
-                .overlay {
-                    if viewModel.isLoading { ProgressView() }
-                }
+                .syncingOverlay(viewModel.isLoading)
+            
         }
     }
     

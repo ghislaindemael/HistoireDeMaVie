@@ -7,9 +7,10 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
-final class ActivityInstance {
+final class ActivityInstance : SyncableModel, TimableModel, CustomStringConvertible {
     @Attribute(.unique) var id: Int
     var time_start: Date
     var time_end: Date?
@@ -71,6 +72,52 @@ final class ActivityInstance {
         self.syncStatus = .synced
     }
     
+    var description: String {
+        """
+        ActivityInstance(
+            id: \(id),
+            time_start: \(time_start),
+            time_end: \(String(describing: time_end)),
+            activity_id: \(String(describing: activity_id)),
+            details: \(String(describing: details)),
+            syncStatus: \(syncStatus),
+            activityDetails: \(activity_details?.debugDescription ?? "nil")        
+        )
+        """
+    }
+    
+    var debugView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
+
+                Spacer()
+                SyncStatusIndicator(status: syncStatus)
+            }
+        
+            if let time_end {
+                Text("End: \(time_end.formatted(date: .abbreviated, time: .shortened))")
+            } else {
+                Text("End: In Progress")
+            }
+            
+            if let activity_id {
+                Text("Activity ID: \(activity_id)")
+            } else {
+                Text("Activity: Unset")
+                    .bold()
+                    .foregroundStyle(.orange)
+                
+            }
+            
+            Text("Details: \(details ?? "N/A")")
+            
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+    
 }
 
 struct ActivityInstanceDTO: Codable, Identifiable {
@@ -90,4 +137,18 @@ struct ActivityInstancePayload: Codable {
     let activity_id: Int?
     let details: String?
     let activity_details: ActivityDetails?
+    
+    private enum CodingKeys: String, CodingKey {
+        case time_start, time_end, activity_id, details, activity_details
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(time_start, forKey: .time_start)
+        try container.encode(time_end, forKey: .time_end)
+        try container.encode(activity_id, forKey: .activity_id)
+        try container.encode(details, forKey: .details)
+        try container.encode(activity_details, forKey: .activity_details)
+    }
+    
 }

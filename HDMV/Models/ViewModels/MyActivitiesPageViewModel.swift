@@ -37,29 +37,6 @@ class MyActivitiesPageViewModel: ObservableObject {
         fetchCatalogueData()
     }
     
-    private func fetchTripLegs() {
-        guard let context = modelContext else { return }
-        
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: selectedDate)
-        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-        
-        let predicate = #Predicate<TripLeg> {
-            $0.time_start >= startOfDay && $0.time_start < endOfDay
-        }
-        
-        do {
-            let descriptor = FetchDescriptor<TripLeg>(
-                predicate: predicate,
-                sortBy: [SortDescriptor(\.time_start)]
-            )
-            self.tripLegs = try context.fetch(descriptor)
-        } catch {
-            print("Failed to fetch trip legs: \(error)")
-        }
-    }
-    
-    
     private func fetchCatalogueData() {
         guard let context = modelContext else { return }
         do {
@@ -73,6 +50,38 @@ class MyActivitiesPageViewModel: ObservableObject {
             print("Failed to fetch catalogue data: \(error)")
         }
     }
+    
+    func fetchLocalDataForSelectedDate() {
+        guard let context = modelContext else { return }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        
+        do {
+            let instancePredicate = #Predicate<ActivityInstance> {
+                $0.time_start >= startOfDay && $0.time_start < endOfDay
+            }
+            let instanceDescriptor = FetchDescriptor<ActivityInstance>(
+                predicate: instancePredicate,
+                sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+            )
+            self.instances = try context.fetch(instanceDescriptor)
+            
+            let tripLegPredicate = #Predicate<TripLeg> {
+                $0.time_start >= startOfDay && $0.time_start < endOfDay
+            }
+            let tripLegDescriptor = FetchDescriptor<TripLeg>(
+                predicate: tripLegPredicate,
+                sortBy: [SortDescriptor(\.time_start)]
+            )
+            self.tripLegs = try context.fetch(tripLegDescriptor)
+            
+        } catch {
+            print("Failed to fetch local data for date \(selectedDate): \(error)")
+        }
+    }
+
     
     // MARK: Transmitted data
     
@@ -123,7 +132,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         isLoading = true
         await syncActivityInstances()
         await syncTripLegs()
-        
+        fetchLocalDataForSelectedDate()
         isLoading = false
     }
     
@@ -161,8 +170,6 @@ class MyActivitiesPageViewModel: ObservableObject {
             
             try context.save()
             
-            let refreshedDescriptor = FetchDescriptor<ActivityInstance>(predicate: predicate, sortBy: [SortDescriptor(\.time_start, order: .reverse)])
-            self.instances = try context.fetch(refreshedDescriptor)
         } catch {
             print("Error during instance sync: \(error)")
         }
@@ -207,20 +214,14 @@ class MyActivitiesPageViewModel: ObservableObject {
             }
             
             try context.save()
-            
-            let refreshedDescriptor = FetchDescriptor<TripLeg>(
-                predicate: predicate,
-                sortBy: [SortDescriptor(\.time_start)]
-            )
-            self.tripLegs = try context.fetch(refreshedDescriptor)
-            
+        
         } catch {
             print("Error during trip leg sync: \(error)")
         }
     }
     
     
-    func syncChanges() async {
+    func uploadLocalChanges() async {
         guard let context = modelContext else { return }
         
         let instancesToSync = self.instances.filter { $0.syncStatus != .synced }
@@ -236,6 +237,11 @@ class MyActivitiesPageViewModel: ObservableObject {
                     await self.sync(instance: instance, in: context)
                 }
             }
+        }
+        
+        try? context.save()
+        
+        await withTaskGroup(of: Void.self) { group in
             for trip in tripsToSync {
                 group.addTask {
                     await self.sync(tripLeg: trip, in: context)
@@ -246,6 +252,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         try? context.save()
         isLoading = false
     }
+
     
     private func sync(instance: ActivityInstance, in context: ModelContext) async {
         let payload = ActivityInstancePayload(
