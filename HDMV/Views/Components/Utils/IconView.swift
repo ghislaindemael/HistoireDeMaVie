@@ -9,7 +9,7 @@ import SwiftUI
 
 struct IconView: View {
     let iconString: String
-    var size: CGFloat = 20
+    var size: CGFloat = 25
     var tint: Color = .primary
     
     private enum IconType {

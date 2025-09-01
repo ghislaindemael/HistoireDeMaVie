@@ -21,29 +21,59 @@ class ActivitiesPageViewModel: ObservableObject {
         activityTree.flatMap { $0.flattened() }
     }
     
+    /// Checks if there are any activities that need to be synced with the server.
+    var hasLocalChanges: Bool {
+        return allActivities.contains(where: { $0.syncStatus != .synced })
+    }
+    
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchFromCache()
-        if activityTree.isEmpty {
-            Task { await fetchFromServer() }
-        }
     }
     
     // MARK: - Data Fetching and Management
     
-    func fetchFromServer() async {
-        self.isLoading = true
-        defer { self.isLoading = false }
+    func syncWithServer() async {
         
+        guard let context = modelContext else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+    
         do {
-            let activityDtos = try await activitiesService.fetchActivities()
-            let activities = activityDtos.map { Activity(fromDto: $0) }
+            let onlineActivities = try await activitiesService.fetchActivities()
+            let onlineDict = Dictionary(uniqueKeysWithValues: onlineActivities.map { ($0.id, $0) })
+            
+            let descriptor = FetchDescriptor<Activity>()
+            let localActivities = try context.fetch(descriptor)
+            let localDict = Dictionary(uniqueKeysWithValues: localActivities.map { ($0.id, $0) })
+            
+            for dto in onlineActivities {
+                if let localActivity = localDict[dto.id] {
+                    if localActivity.syncStatus == .synced {
+                        localActivity.update(fromDto: dto)
+                    }
+                } else {
+                    context.insert(Activity(fromDto: dto))
+                }
+            }
+            
+            for localActivity in localActivities {
+                if onlineDict[localActivity.id] == nil && localActivity.syncStatus == .synced {
+                    context.delete(localActivity)
+                }
+            }
+            
+            try context.save()
+            
+            let refreshedDescriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
+            let activities = try context.fetch(refreshedDescriptor)
             self.activityTree = Activity.buildTree(from: activities)
-            await cacheAllActivities(from: activities)
         } catch {
             print("Failed to fetch activities from server: \(error)")
         }
+        
     }
     
     private func fetchFromCache() {
@@ -57,116 +87,96 @@ class ActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    // Renamed for clarity
-    private func cacheAllActivities(from activities: [Activity]) async {
-        guard let context = modelContext else { return }
-        
+
+    
+    // MARK: Synchronization
+    
+    private func syncActivity(activity: Activity, in context: ModelContext) async {
+        let payload = activity.toPayload()
         do {
-            try context.delete(model: Activity.self)
-            
-            for activity in activities where activity.cache {
-                context.insert(activity)
+            if activity.id < 0 {
+                let temporaryId = activity.id
+                let newDTO = try await self.activitiesService.createActivity(payload: payload)
+                if let activityToUpdate = try context.fetch(FetchDescriptor<Activity>()).first(where: { $0.id == temporaryId }) {
+                    activityToUpdate.id = newDTO.id
+                    activityToUpdate.syncStatus = SyncStatus.synced
+                }
+            } else {
+                _ = try await self.activitiesService.updateActivity(id: activity.id, payload: payload)
             }
-            try context.save()
+            activity.syncStatus = .synced
         } catch {
-            print("Failed to cache activities: \(error)")
+            activity.syncStatus = .failed
+            print("Failed to sync activity \(activity.name): \(error).")
         }
     }
     
-    func cacheCurrentActivities() async {
-        await cacheAllActivities(from: self.allActivities)
-    }
-    
-    // MARK: - CRUD Actions
-    
-    func createActivity(payload: NewActivityPayload) async {
+    /// Uploads all activities marked as `.local` or `.failed` to the server.
+    func syncLocalChanges() async {
+        guard let context = modelContext else { return }
         isLoading = true
         defer { isLoading = false }
         
         do {
-            _ = try await activitiesService.createActivity(payload: payload)
-            await fetchFromServer()
-        } catch {
-            print("❌ Create error: \(error)")
-        }
-    }
-        
-    func archiveActivity(_ activity: Activity) async {
-        do {
-            try await activitiesService.archiveActivity(for: activity)
-            await fetchFromServer()
-        } catch {
-            print("❌ Archive error: \(error)")
-        }
-    }
-    
-    func unarchiveActivity(_ activity: Activity) async {
-        do {
-            try await activitiesService.unarchiveActivity(for: activity)
-            await fetchFromServer()
-        } catch {
-            print("❌ Unarchive error: \(error)")
-        }
-    }
-    
-    // MARK: - Granular Cache Updates
-    
-    /// **NEW**: A private helper to update a specific branch in the SwiftData cache.
-    /// It deletes all existing records for the branch and re-inserts only those marked for caching.
-    private func updateCache(forBranch startingActivity: Activity) async {
-        guard let context = modelContext else { return }
-        
-        let branchActivities = startingActivity.flattened()
-        let branchIDs = branchActivities.map { $0.id }
-        
-        let predicate = #Predicate<Activity> { activity in
-            branchIDs.contains(activity.id)
-        }
-        
-        do {
-            try context.delete(model: Activity.self, where: predicate)
+            let allActivitiesInDB = try context.fetch(FetchDescriptor<Activity>())
             
-            for activity in branchActivities where activity.cache {
-                context.insert(activity)
+            let activitiesToSync = allActivitiesInDB.filter {
+                $0.syncStatus == .local || $0.syncStatus == .failed
+            }
+            
+            guard !activitiesToSync.isEmpty else {
+                print("✅ No local activity changes to sync.")
+                return
+            }
+            
+            print("⏳ Syncing \(activitiesToSync.count) activities...")
+            
+            await withTaskGroup(of: Void.self) { group in
+                for activity in activitiesToSync {
+                    group.addTask {
+                        await self.syncActivity(activity: activity, in: context)
+                    }
+                }
             }
             
             try context.save()
-            print("✅ Successfully updated cache for branch: \(startingActivity.name)")
-        } catch {
-            print("❌ Failed to perform branch update on cache: \(error)")
-        }
-    }
-    
-
-    func toggleCache(for activity: Activity) async {
-        let newCacheState = !activity.cache
-        
-        if !newCacheState {
-            setCacheState(for: activity, to: false)
-        } else {
-            activity.cache = newCacheState
-        }
-        
-        do {
-            try await activitiesService.updateCacheStatus(for: activity)
+            print("✅ Sync complete. Refreshing from server...")
+            await syncWithServer()
             
-            await cacheAllActivities(from: allActivities)
         } catch {
-            print("❌ Failed to update cache status in DB. Reverting change. Error: \(error)")
-            setCacheState(for: activity, to: !newCacheState)
+            print("❌ Failed to fetch activities for syncing: \(error)")
         }
     }
     
-    private func setCacheState(for activity: Activity, to state: Bool) {
-        // If we are turning caching OFF, we must turn it off for all children.
-        // If we are turning it ON, we only turn it on for the selected activity.
-        if !state {
-            activity.cache = false
-            for child in activity.children {
-                setCacheState(for: child, to: false)
-            }
-        } else {
-            activity.cache = true
+    // MARK: Computed data
+    
+    func generateTempID() -> Int {
+        let minID =
+            activityTree.flatMap { $0.flattened() }
+                .map(\.id).filter { $0 < 0 }.min() ?? 0
+        return minID - 1
+    }
+    
+    // MARK: User Actions
+    
+    func createLocalActivity() {
+        guard let context = modelContext else { return }
+        let newActivity =
+        Activity(
+            id: generateTempID(),
+            name: "",
+            slug: "",
+            icon: "",
+            permissions: [],
+            syncStatus: .local
+        )
+        
+        context.insert(newActivity)
+        do {
+            try context.save()
+            self.activityTree.insert(newActivity, at: 0)
+        } catch {
+            print("Failed to create interaction: \(error)")
         }
     }
 }

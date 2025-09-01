@@ -23,10 +23,10 @@ struct MyActivitiesPage: View {
                 .navigationTitle("My Activities")
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
+                    hasLocalChanges: viewModel.hasLocalChanges,
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    addNowAction: { viewModel.createNewInstanceInCache() },
-                    addAtNoonAction: { viewModel.createNewInstanceAtNoonInCache() },
-                    hasLocalChanges: viewModel.hasLocalChanges
+                    singleTapAction: { viewModel.createNewInstanceInCache() },
+                    longPressAction: { viewModel.createNewInstanceAtNoonInCache() },
                 )
                 .task(id: viewModel.selectedDate) {
                     viewModel.fetchLocalDataForSelectedDate()

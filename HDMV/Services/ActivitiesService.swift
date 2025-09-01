@@ -34,11 +34,23 @@ class ActivitiesService: ActivitiesServiceProtocol {
             .value
     }
     
-    func createActivity(payload: NewActivityPayload) async throws -> ActivityDTO {
+    func createActivity(payload: ActivityPayload) async throws -> ActivityDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         return try await supabaseClient
             .from(TABLE_NAME)
             .insert(payload, returning: .representation)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+    
+    func updateActivity(id: Int, payload: ActivityPayload) async throws -> ActivityDTO {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        return try await supabaseClient
+            .from(TABLE_NAME)
+            .update(payload, returning: .representation)
+            .eq("id", value: id)
             .select()
             .single()
             .execute()

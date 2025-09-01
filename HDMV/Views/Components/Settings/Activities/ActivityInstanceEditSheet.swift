@@ -38,7 +38,7 @@ struct ActivityInstanceDetailSheet: View {
                     specializedDetailsSection(for: activity)
                 }
                 
-                if selectedActivity?.generate_trips == true {
+                if selectedActivity?.canCreateTripLegs == true {
                     tripLegsSection
                     if !viewModel.unassignedTripLegs().isEmpty {
                         claimTripLegsSection

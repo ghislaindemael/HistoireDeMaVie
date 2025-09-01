@@ -37,10 +37,10 @@ struct PeopleInteractionsPage: View {
                 .navigationTitle("People Interactions")
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
+                    hasLocalChanges: viewModel.hasLocalChanges,
                     syncAction: { await viewModel.syncChanges() },
-                    addNowAction: { viewModel.createNewInteractionInCache() },
-                    addAtNoonAction: { viewModel.createNewInteractionAtNoonInCache() },
-                    hasLocalChanges: viewModel.hasLocalChanges
+                    singleTapAction: { viewModel.createNewInteractionInCache() },
+                    longPressAction: { viewModel.createNewInteractionAtNoonInCache() },
                 )
                 .task(id: viewModel.selectedDate) {
                     await viewModel.syncWithServer()

@@ -11,9 +11,6 @@ import SwiftUI
 struct SyncStatusIndicator: View {
     let status: SyncStatus
     
-    /// Creates a sync status indicator that can also be a button.
-    /// - Parameters:
-    ///   - status: The SyncStatus to display.
     init(status: SyncStatus) {
         self.status = status
     }
@@ -21,27 +18,22 @@ struct SyncStatusIndicator: View {
     var body: some View {
         switch status {
             case .synced:
-                Image(systemName: "checkmark.icloud.fill")
-                    .foregroundStyle(.green)
+                IconView(iconString: "checkmark.icloud.fill", tint: .green)
                 
             case .syncing:
-                ProgressView()
-                    .foregroundStyle(.yellow)
+                IconView(iconString: "arrow.trianglehead.2.clockwise.rotate.90.icloud.fill", tint: .orange)
                 
             case .local:
-                Image(systemName: "xmark.icloud.fill")
-                    .foregroundStyle(.orange)
-            
+                IconView(iconString: "xmark.icloud.fill", tint: .orange)
+                
             case .failed:
-                Image(systemName: "exclamationmark.icloud.fill")
-                    .foregroundStyle(.red)
+                IconView(iconString: "exclamationmark.icloud.fill", tint: .red)
+                
             case .toDelete:
-                Image(systemName: "xmark.icloud.fill")
-                    .foregroundStyle(.red)
+                IconView(iconString: "xmark.icloud.fill", tint: .red)
+                
             case .undef:
-                Image(systemName: "xmark.icloud.fill")
-                    .foregroundStyle(.primary)
-                    
+                IconView(iconString: "xmark.icloud.fill", tint: .gray)
         }
     }
 }

@@ -11,14 +11,15 @@ import SwiftUI
 struct LogPageToolbar: ViewModifier {
     /// An async closure for the "Refresh" action.
     let refreshAction: () async -> Void
-    /// An async closure for the "Save" (sync) action.
-    let syncAction: () async -> Void
-    /// A closure for the single-tap "Add Now" action.
-    let addNowAction: () -> Void
-    /// A closure for the long-press "Add at Noon" action.
-    let addAtNoonAction: () -> Void
     /// A boolean to determine if the "Save" button should be shown.
     let hasLocalChanges: Bool
+    /// An async closure for the "Save" (sync) action.
+    let syncAction: () async -> Void
+    /// A closure for the single-tap action.
+    let singleTapAction: () -> Void
+    /// A closure for the long-press action.
+    let longPressAction: () -> Void
+
 
     func body(content: Content) -> some View {
         content
@@ -32,7 +33,7 @@ struct LogPageToolbar: ViewModifier {
                         
                         if hasLocalChanges {
                             Button(action: { Task { await syncAction() } }) {
-                                Label("Save Local Changes", systemImage: "icloud.and.arrow.up")
+                                Label("Sync local changes", systemImage: "icloud.and.arrow.up")
                             }
                         }
                     } label: {
@@ -47,10 +48,10 @@ struct LogPageToolbar: ViewModifier {
                         Image(systemName: "plus")
                     }
                     .simultaneousGesture(LongPressGesture().onEnded { _ in
-                        addAtNoonAction()
+                        longPressAction()
                     })
                     .simultaneousGesture(TapGesture().onEnded {
-                        addNowAction()
+                        singleTapAction()
                     })
                 }
             }
@@ -62,18 +63,18 @@ extension View {
     /// Applies a standard toolbar for the My Activities page.
     func logPageToolbar(
         refreshAction: @escaping () async -> Void,
+        hasLocalChanges: Bool,
         syncAction: @escaping () async -> Void,
-        addNowAction: @escaping () -> Void,
-        addAtNoonAction: @escaping () -> Void,
-        hasLocalChanges: Bool
+        singleTapAction: @escaping () -> Void,
+        longPressAction: @escaping () -> Void,
     ) -> some View {
         self.modifier(
             LogPageToolbar(
                 refreshAction: refreshAction,
+                hasLocalChanges: hasLocalChanges,
                 syncAction: syncAction,
-                addNowAction: addNowAction,
-                addAtNoonAction: addAtNoonAction,
-                hasLocalChanges: hasLocalChanges
+                singleTapAction: singleTapAction,
+                longPressAction: longPressAction
             )
         )
     }

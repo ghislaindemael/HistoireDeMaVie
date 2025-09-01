@@ -21,7 +21,7 @@ protocol ActivitiesServiceProtocol {
     /// - Parameter payload: A `NewActivityPayload` containing the data for the new activity.
     /// - Returns: The created `ActivityDTO` as returned by the server.
     /// - Throws: An error if the creation operation fails.
-    func createActivity(payload: NewActivityPayload) async throws -> ActivityDTO
+    func createActivity(payload: ActivityPayload) async throws -> ActivityDTO
     
     /// Updates the cache status of a specific activity.
     /// - Parameter activity: The activity to update.

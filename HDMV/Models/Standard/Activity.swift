@@ -9,19 +9,28 @@ import Foundation
 import SwiftData
 
 @Model
-final class Activity: Identifiable, Hashable {
+final class Activity: Identifiable, Hashable, SyncableModel {
     @Attribute(.unique) var id: Int
     var name: String
     var slug: String
     var parent_id: Int?
     var icon: String
     var type: ActivityType?
-    var generate_trips: Bool = false
-    var cache: Bool
-    var archived: Bool
+    var permissions: [String] = []
+    var selectable: Bool = true
+    var cache: Bool = true
+    var archived: Bool = false
+    var syncStatus: SyncStatus = SyncStatus.undef
 
-    // Used to build the tree structure in memory after fetching.
     @Transient var children: [Activity] = []
+    
+    var canCreateTripLegs: Bool {
+        permissions.contains("trips")
+    }
+    
+    var canCreateInteractions: Bool {
+        permissions.contains("people")
+    }
     
     init(
         id: Int,
@@ -30,9 +39,10 @@ final class Activity: Identifiable, Hashable {
         parent_id: Int? = nil,
         icon: String,
         type: ActivityType? = nil,
-        generate_trips: Bool = false,
+        permissions: [String] = [],
         cache: Bool = true,
-        archived: Bool = false
+        archived: Bool = false,
+        syncStatus: SyncStatus = .undef
     ) {
         self.id = id
         self.name = name
@@ -40,13 +50,14 @@ final class Activity: Identifiable, Hashable {
         self.parent_id = parent_id
         self.icon = icon
         self.type = type
-        self.generate_trips = generate_trips
+        self.permissions = permissions
         self.cache = cache
         self.archived = archived
+        self.syncStatus = syncStatus
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, slug, cache, archived, parent_id, icon, type, generate_trips
+        case id, name, slug, cache, archived, parent_id, icon, type, permissions, selectable
     }
     
     init(fromDto dto: ActivityDTO) {
@@ -56,9 +67,11 @@ final class Activity: Identifiable, Hashable {
         self.parent_id = dto.parent_id
         self.icon = dto.icon
         self.type = dto.type
-        self.generate_trips = dto.generate_trips
+        self.permissions = dto.permissions
+        self.selectable = dto.selectable
         self.cache = dto.cache
         self.archived = dto.archived
+        self.syncStatus = SyncStatus.synced
     }
     
     // MARK: - Tree Building Logic
@@ -104,6 +117,34 @@ final class Activity: Identifiable, Hashable {
         return self.children.isEmpty ? nil : self.children
     }
     
+    func update(fromDto dto: ActivityDTO) {
+        self.name = dto.name
+        self.slug = dto.slug
+        self.parent_id = dto.parent_id
+        self.icon = dto.icon
+        self.type = dto.type
+        self.permissions = dto.permissions
+        self.selectable = dto.selectable
+        self.cache = dto.cache
+        self.archived = dto.archived
+        self.syncStatus = .synced
+    }
+    
+    /// Creates a data transfer object (payload) from the model instance.
+    func toPayload() -> ActivityPayload {
+        return ActivityPayload(
+            name: self.name,
+            slug: self.slug,
+            parent_id: self.parent_id,
+            icon: self.icon,
+            type: self.type,
+            permissions: self.permissions,
+            selectable: self.selectable,
+            cache: self.cache,
+            archived: self.archived
+        )
+    }
+    
 }
 
 // MARK: - Data Transfer Objects (DTOs)
@@ -116,17 +157,21 @@ struct ActivityDTO: Codable {
     let parent_id: Int?
     let icon: String
     let type: ActivityType?
-    let generate_trips: Bool
+    let permissions: [String]
+    let selectable: Bool
     let cache: Bool
     let archived: Bool
 }
 
 /// A DTO for the payload required to create a new activity.
-struct NewActivityPayload: Codable {
+struct ActivityPayload: Codable {
     let name: String
     let slug: String
     let parent_id: Int?
     let icon: String
     let type: ActivityType?
-    let generate_trips: Bool
+    let permissions: [String]
+    let selectable: Bool
+    let cache: Bool
+    let archived: Bool
 }

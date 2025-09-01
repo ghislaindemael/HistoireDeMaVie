@@ -11,38 +11,35 @@ import SwiftUI
 struct ActivitiesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = ActivitiesPageViewModel()
-    @State private var isShowingAddSheet = false
+    @State private var activityToEdit: Activity?
     
     var body: some View {
         NavigationStack {
             List {
                 OutlineGroup(viewModel.activityTree, children: \.optionalChildren) { activity in
-                    HStack{
+                    Button(action: {
+                        activityToEdit = activity
+                    }) {
                         ActivityRowView(activity: activity)
-                        Spacer()
-                        Toggle("", isOn: Binding(
-                            get: { activity.cache },
-                            set: { _ in
-                                Task {
-                                    await viewModel.toggleCache(for: activity)
-                                }
-                            }
-                        ))
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .navigationTitle("Activities")
-            .standardConfigPageToolbar(
-                refreshAction: { await viewModel.fetchFromServer() },
-                cacheAction: { Task { await viewModel.cacheCurrentActivities() } },
-                isShowingAddSheet: $isShowingAddSheet
+            .logPageToolbar(
+                refreshAction: { await viewModel.syncWithServer() },
+                hasLocalChanges: viewModel.hasLocalChanges,
+                syncAction: { await viewModel.syncLocalChanges() },
+                singleTapAction: { viewModel.createLocalActivity() },
+                longPressAction: {}
             )
-            .sheet(isPresented: $isShowingAddSheet) {
-                NewActivitySheet(viewModel: viewModel)
+            .sheet(item: $activityToEdit) { activity in
+                ActivityDetailSheet(activity: activity, viewModel: viewModel)
             }
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
+            .syncingOverlay(viewModel.isLoading)
         }
     }
 }

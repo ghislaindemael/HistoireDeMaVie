@@ -53,7 +53,7 @@ struct ActivityInstanceRowView: View {
             }
             .padding(.vertical, 4)
             
-            if activity?.generate_trips == true {
+            if activity?.canCreateTripLegs == true {
                 tripLegsSection
                     .padding(.leading, 30)
                 
