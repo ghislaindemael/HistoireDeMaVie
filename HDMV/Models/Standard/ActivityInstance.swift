@@ -16,6 +16,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
     var time_end: Date?
     var activity_id: Int?
     var details: String?
+    var percentage: Int?
     var activity_details: Data?
     var syncStatus: SyncStatus = SyncStatus.undef
 
@@ -26,6 +27,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
         time_end: Date? = nil,
         activity_id: Int? = nil,
         details: String? = nil,
+        percentage: Int? = nil,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
     ) {
@@ -34,6 +36,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
         self.time_end = time_end
         self.activity_id = activity_id
         self.details = details
+        self.percentage = percentage
         self.syncStatus = syncStatus
         self.decodedActivityDetails = activity_details
     }
@@ -47,6 +50,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
             time_end: dto.time_end,
             activity_id: dto.activity_id,
             details: dto.details,
+            percentage: dto.percentage,
             syncStatus: .synced
         )
         self.decodedActivityDetails = dto.activity_details
@@ -68,6 +72,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
         self.time_end = dto.time_end
         self.activity_id = dto.activity_id
         self.details = dto.details
+        self.percentage = dto.percentage
         self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
@@ -80,6 +85,7 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
             time_end: \(String(describing: time_end)),
             activity_id: \(String(describing: activity_id)),
             details: \(String(describing: details)),
+            percentage: \(percentage ?? 100)% 
             syncStatus: \(syncStatus),
             activityDetails: \(activity_details?.debugDescription ?? "nil")        
         )
@@ -118,6 +124,19 @@ final class ActivityInstance : SyncableModel, TimableModel, CustomStringConverti
         .cornerRadius(10)
     }
     
+    /// Creates a data transfer object (payload) from the model instance.
+    func toPayload() -> ActivityInstancePayload {
+        return ActivityInstancePayload(
+            time_start: self.time_start,
+            time_end: self.time_end,
+            activity_id: self.activity_id,
+            details: self.details,
+            percentage: self.percentage,
+            activity_details: self.decodedActivityDetails
+        )
+    }
+    
+    
 }
 
 struct ActivityInstanceDTO: Codable, Identifiable {
@@ -126,6 +145,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let time_end: Date?
     let activity_id: Int?
     let details: String?
+    let percentage: Int?
     let activity_details: ActivityDetails?
 
 }
@@ -136,10 +156,11 @@ struct ActivityInstancePayload: Codable {
     let time_end: Date?
     let activity_id: Int?
     let details: String?
+    let percentage: Int?
     let activity_details: ActivityDetails?
     
     private enum CodingKeys: String, CodingKey {
-        case time_start, time_end, activity_id, details, activity_details
+        case time_start, time_end, activity_id, details, percentage, activity_details
     }
     
     func encode(to encoder: Encoder) throws {
@@ -148,6 +169,7 @@ struct ActivityInstancePayload: Codable {
         try container.encode(time_end, forKey: .time_end)
         try container.encode(activity_id, forKey: .activity_id)
         try container.encode(details, forKey: .details)
+        try container.encode(percentage, forKey: .percentage)
         try container.encode(activity_details, forKey: .activity_details)
     }
     

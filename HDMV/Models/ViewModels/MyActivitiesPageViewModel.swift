@@ -255,11 +255,8 @@ class MyActivitiesPageViewModel: ObservableObject {
 
     
     private func sync(instance: ActivityInstance, in context: ModelContext) async {
-        let payload = ActivityInstancePayload(
-            time_start: instance.time_start, time_end: instance.time_end,
-            activity_id: instance.activity_id, details: instance.details,
-            activity_details: instance.decodedActivityDetails
-        )
+        let payload = instance.toPayload()
+        
         do {
             if instance.id < 0 {
                 let temporaryId = instance.id

@@ -23,14 +23,12 @@ struct ActivityInstanceRowView: View {
     var hasActiveLeg: Bool {
         tripLegs.contains { $0.time_end == nil }
     }
-
-        
+    
+    
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
                 IconView(iconString: activity?.icon ?? "questionmark.circle")
-                    .font(.title2)
-                    .frame(width: 30)
                 
                 VStack(alignment: .leading) {
                     Text(activity?.name ?? "Unassigned Activity")
@@ -46,50 +44,57 @@ struct ActivityInstanceRowView: View {
                     }
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    if let percentage = instance.percentage {
+                        GradientPercentageBarView(percentage: Double(percentage))
+                            .frame(height: 8)
+                            .padding(.leading, 4)
+                    }
                 }
-                
                 Spacer()
                 SyncStatusIndicator(status: instance.syncStatus)
             }
-            .padding(.vertical, 4)
-            
-            if activity?.canCreateTripLegs == true {
-                tripLegsSection
-                    .padding(.leading, 30)
-                
-                if instance.time_end == nil && !hasActiveLeg {
-                    StartItemButton(title: "Start trip leg") {
-                        onStartTripLeg(instance.id)
-                    }
-                }
-            }
             
         }
+        .padding(.vertical, 4)
+        
+        if activity?.canCreateTripLegs == true {
+            tripLegsSection
+                .padding(.leading, 30)
+            
+            if instance.time_end == nil && !hasActiveLeg {
+                StartItemButton(title: "Start trip leg") {
+                    onStartTripLeg(instance.id)
+                }
+            }
+        }
+        
     }
-    
-    @ViewBuilder
-    private var tripLegsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(tripLegs) { leg in
-                Button(action: { onEditTripLeg(leg) }) {
-                    VStack{
-                        TripLegRowView(
-                            tripLeg: leg,
-                            vehicle: tripLegsVehicles.first(where: {$0.id == leg.vehicle_id}),
-                            places: tripLegsPlaces
-                        )
-                        if leg.time_end == nil {
-                            EndItemButton(title: "End Trip Leg") {
-                                onEndTripLeg(leg)
-                            }
+
+
+
+@ViewBuilder
+private var tripLegsSection: some View {
+    VStack(alignment: .leading, spacing: 10) {
+        ForEach(tripLegs) { leg in
+            Button(action: { onEditTripLeg(leg) }) {
+                VStack{
+                    TripLegRowView(
+                        tripLeg: leg,
+                        vehicle: tripLegsVehicles.first(where: {$0.id == leg.vehicle_id}),
+                        places: tripLegsPlaces
+                    )
+                    if leg.time_end == nil {
+                        EndItemButton(title: "End Trip Leg") {
+                            onEndTripLeg(leg)
                         }
                     }
                 }
-                .buttonStyle(.plain)
             }
-            
-            
+            .buttonStyle(.plain)
         }
+        
+        
     }
 }
 
+}

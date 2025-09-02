@@ -101,6 +101,11 @@ struct ActivityInstanceDetailSheet: View {
                 set: { instance.details = $0.isEmpty ? nil : $0 }
             ))
             .lineLimit(3...)
+            Toggle("Set percentage?", isOn: showPercentageBinding)
+            
+            if instance.percentage != nil {
+                Slider(value: percentageBinding, in: 0...100, step: 1)
+            }
         }
     }
     
@@ -159,6 +164,31 @@ struct ActivityInstanceDetailSheet: View {
                 EmptyView()
         }
     }
+    
+    /// A binding to control the visibility of the percentage slider.
+    /// It's 'on' if the percentage is not nil, and 'off' if it is.
+    private var showPercentageBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: { instance.percentage != nil },
+            set: { isOn in
+                if isOn {
+                    instance.percentage = instance.percentage ?? 100
+                } else {
+                    instance.percentage = nil
+                }
+            }
+        )
+    }
+    
+    /// A binding that safely converts the model's `Int?` to a `Double` for the Slider.
+    private var percentageBinding: Binding<Double> {
+        Binding<Double>(
+            get: { Double(instance.percentage ?? 100) },
+            set: { instance.percentage = Int($0) }
+        )
+    }
+    
+    
 }
 
 // MARK: - Hierarchical Activity Selector View

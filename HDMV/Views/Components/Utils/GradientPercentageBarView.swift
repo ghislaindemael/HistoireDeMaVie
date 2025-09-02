@@ -9,10 +9,9 @@
 import SwiftUI
 
 struct GradientPercentageBarView: View {
-    let percentage: Double // 0...100
+    let percentage: Double
     
     private let gradientColors = Gradient(colors: [
-        .black,
         .red,
         .orange,
         .yellow,
