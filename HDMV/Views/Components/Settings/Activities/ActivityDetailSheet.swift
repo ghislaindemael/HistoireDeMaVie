@@ -9,6 +9,18 @@
 import SwiftUI
 import SwiftData
 
+struct PermissionOption: Identifiable {
+    let id: String
+    let label: String
+}
+
+let availablePermissions: [PermissionOption] = [
+    .init(id: "trips", label: "Can create Trip Legs"),
+    .init(id: "people", label: "Can create Interactions"),
+    .init(id: "place", label: "Can attach Place")
+]
+
+
 struct ActivityDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -56,9 +68,11 @@ struct ActivityDetailSheet: View {
                 }
                 
                 Section("Permissions") {
-                    Toggle("Can create Trip Legs", isOn: canCreateTripsBinding)
-                    Toggle("Can create Interactions", isOn: canCreatePeopleBinding)
+                    ForEach(availablePermissions) { option in
+                        Toggle(option.label, isOn: activity.binding(for: option.id))
+                    }
                 }
+
                 
                 Section("Usage") {
                     Toggle("Selectable", isOn: $activity.selectable)
@@ -88,37 +102,7 @@ struct ActivityDetailSheet: View {
         
     }
     
-    /// Custom binding for the 'trips' permission.
-    private var canCreateTripsBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: { self.activity.permissions.contains("trips") },
-            set: { isOn in
-                if isOn {
-                    if !self.activity.permissions.contains("trips") {
-                        self.activity.permissions.append("trips")
-                    }
-                } else {
-                    self.activity.permissions.removeAll { $0 == "trips" }
-                }
-            }
-        )
-    }
     
-    /// Custom binding for the 'people' permission.
-    private var canCreatePeopleBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: { self.activity.permissions.contains("people") },
-            set: { isOn in
-                if isOn {
-                    if !self.activity.permissions.contains("people") {
-                        self.activity.permissions.append("people")
-                    }
-                } else {
-                    self.activity.permissions.removeAll { $0 == "people" }
-                }
-            }
-        )
-    }
 }
 
 

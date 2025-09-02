@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Activity: Identifiable, Hashable, SyncableModel {
@@ -174,4 +175,21 @@ struct ActivityPayload: Codable {
     let selectable: Bool
     let cache: Bool
     let archived: Bool
+}
+
+extension Activity {
+    func binding(for permission: String) -> Binding<Bool> {
+        Binding<Bool>(
+            get: { self.permissions.contains(permission) },
+            set: { isOn in
+                if isOn {
+                    if !self.permissions.contains(permission) {
+                        self.permissions.append(permission)
+                    }
+                } else {
+                    self.permissions.removeAll { $0 == permission }
+                }
+            }
+        )
+    }
 }

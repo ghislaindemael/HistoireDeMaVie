@@ -34,7 +34,7 @@ struct ActivityInstanceDetailSheet: View {
             Form {
                 basicsSection
                 detailsSection
-                if let activity = selectedActivity, activity.type != .generic {
+                if let activity = selectedActivity {
                     specializedDetailsSection(for: activity)
                 }
                 
@@ -111,7 +111,29 @@ struct ActivityInstanceDetailSheet: View {
     
     private func specializedDetailsSection(for activity: Activity) -> some View {
         Section(header: Text("Activity Details")) {
-            specializedDetailsView(for: activity)
+            VStack {
+                switch activity.type {
+                    case .meal:
+                        MealDetailsEditView(metadata: $instance.decodedActivityDetails)
+                    case .reading:
+                        //ReadingDetailsEditView(metadata: $instance.decodedActivityDetails)
+                        EmptyView()
+                    case .trip:
+                        //TripDetailsEditView(metadata: $instance.decodedActivityDetails)
+                        EmptyView()
+                    case .generic, .none:
+                        EmptyView()
+                }
+                
+                if activity.permissions.contains("place") {
+                    PlaceDetailsEditView(
+                        metadata: $instance.decodedActivityDetails,
+                        activityType: activity.type ?? .generic,
+                        cities: viewModel.cities,
+                        places: viewModel.places
+                    )
+                }
+            }
         }
     }
     
@@ -148,22 +170,7 @@ struct ActivityInstanceDetailSheet: View {
         }
     }
     
-    
-    
-    @ViewBuilder
-    private func specializedDetailsView(for activity: Activity) -> some View {
-        switch activity.type {
-            case .meal:
-                MealDetailsEditView(metadata: $instance.decodedActivityDetails)
-            case .reading:
-                Text("Reading details editor")
-            case .generic:
-                Text("Additional details")
-                .frame(minHeight: 100)
-            default:
-                EmptyView()
-        }
-    }
+
     
     /// A binding to control the visibility of the percentage slider.
     /// It's 'on' if the percentage is not nil, and 'off' if it is.
