@@ -31,6 +31,32 @@ class ActivityInstanceService {
             .value
     }
     
+    /// A flexible function to fetch instances from the server based on a date range and an optional activity ID.
+    func fetchActivityInstances(
+        activityId: Int?,
+        startDate: Date,
+        endDate: Date
+    ) async throws -> [ActivityInstanceDTO] {
+        guard let supabaseClient = supabaseClient else { return [] }
+        
+        let formatter = ISO8601DateFormatter()
+        
+        var query = supabaseClient
+            .from(TABLE_NAME)
+            .select()
+            .gte("time_start", value: formatter.string(from: startDate))
+            .lt("time_start", value: formatter.string(from: endDate))
+        
+        if let activityId = activityId {
+            query = query.eq("activity_id", value: activityId)
+        }
+        
+        return try await query
+            .order("time_start", ascending: false)
+            .execute()
+            .value
+    }
+    
     func createActivityInstance(_ payload: ActivityInstancePayload) async throws -> ActivityInstanceDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         return try await supabaseClient

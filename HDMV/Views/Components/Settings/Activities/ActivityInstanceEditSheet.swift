@@ -198,32 +198,4 @@ struct ActivityInstanceDetailSheet: View {
     
 }
 
-// MARK: - Hierarchical Activity Selector View
-private struct ActivitySelectorView: View {
-    @Environment(\.dismiss) private var dismiss
-    let activityTree: [Activity]
-    @Binding var selectedActivityId: Int?
-    
-    var body: some View {
-        List {
-            Button("None") {
-                selectedActivityId = nil
-                dismiss()
-            }
-            
-            OutlineGroup(activityTree, children: \.optionalChildren) { activity in
-                Button(action: {
-                    selectedActivityId = activity.id
-                    dismiss()
-                }) {
-                    HStack {
-                        IconView(iconString: activity.icon)
-                        Text(activity.name)
-                    }
-                    .foregroundStyle(.primary)
-                }
-            }
-        }
-        .navigationTitle("Select an Activity")
-    }
-}
+

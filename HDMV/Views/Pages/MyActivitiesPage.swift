@@ -28,16 +28,7 @@ struct MyActivitiesPage: View {
                     singleTapAction: { viewModel.createNewInstanceInCache() },
                     longPressAction: { viewModel.createNewInstanceAtNoonInCache() },
                 )
-                .task(id: viewModel.selectedDate) {
-                    viewModel.fetchLocalDataForSelectedDate()
-                }
-                .onAppear {
-                    if let navDate = appNavigator.selectedDate {
-                        viewModel.selectedDate = navDate
-                        appNavigator.selectedDate = nil
-                    }
-                    viewModel.setup(modelContext: modelContext)
-                }
+                .onAppear(perform: onAppear)
                 .sheet(item: $instanceToEdit) { instance in
                     ActivityInstanceDetailSheet(
                         instance: instance,
@@ -53,14 +44,18 @@ struct MyActivitiesPage: View {
                     )
                 }
                 .syncingOverlay(viewModel.isLoading)
+                .onChange(of: viewModel.filterMode) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.selectedDate) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterActivityId) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterStartDate) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterEndDate) { viewModel.fetchInstances() }
             
         }
     }
     
     private var mainListView: some View {
         VStack(spacing: 12) {
-            DatePicker("Select Date", selection: $viewModel.selectedDate, displayedComponents: .date)
-                .padding(.horizontal)
+            FilterControlView(viewModel: viewModel)
             
             List {
                 ForEach($viewModel.instances) { $instance in
@@ -102,5 +97,14 @@ struct MyActivitiesPage: View {
             }
             
         }
+    }
+    
+    private func onAppear() {
+        if let navDate = appNavigator.selectedDate {
+            viewModel.selectedDate = navDate
+            appNavigator.selectedDate = nil
+        }
+        viewModel.setup(modelContext: modelContext)
+        viewModel.fetchInstances()
     }
 }

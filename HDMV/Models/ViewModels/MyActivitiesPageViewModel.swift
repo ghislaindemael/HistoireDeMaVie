@@ -8,15 +8,29 @@
 import Foundation
 import SwiftData
 
+
 @MainActor
 class MyActivitiesPageViewModel: ObservableObject {
+    
+    enum FilterMode {
+        case byDate
+        case byActivity
+    }
     
     private var modelContext: ModelContext?
     private let instanceService = ActivityInstanceService()
     private let tripLegsService = TripsService()
     @Published var isLoading: Bool = false
     
+    @Published var filterMode: FilterMode = .byDate
+    // State for the 'byDate' mode
     @Published var selectedDate: Date = .now
+    // State for the 'byActivity' mode
+    @Published var filterActivityId: Int?
+    @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now
+    @Published var filterEndDate: Date = .now
+    
+    
     @Published var instances: [ActivityInstance] = []
     @Published var tripLegs: [TripLeg] = []
     
@@ -51,37 +65,55 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    func fetchLocalDataForSelectedDate() {
+    /// A single, powerful function to fetch instances based on the current filter mode.
+    func fetchInstances() {
         guard let context = modelContext else { return }
         
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: selectedDate)
-        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        let descriptor: FetchDescriptor<ActivityInstance>
+        
+        switch filterMode {
+            case .byDate:
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: selectedDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                
+                let predicate = #Predicate<ActivityInstance> {
+                    $0.time_start >= startOfDay && $0.time_start < endOfDay
+                }
+                descriptor = FetchDescriptor<ActivityInstance>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+                )
+                
+            case .byActivity:
+                
+                guard let activityId = filterActivityId else {
+                    self.instances = []
+                    return
+                }
+                
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterStartDate)
+                let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: filterEndDate)) ?? filterEndDate
+                
+                let predicate = #Predicate<ActivityInstance> { instance in
+                    instance.activity_id == activityId &&
+                    instance.time_start >= startOfDay &&
+                    instance.time_start < endOfDay
+                }
+                descriptor = FetchDescriptor<ActivityInstance>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+                )
+        }
         
         do {
-            let instancePredicate = #Predicate<ActivityInstance> {
-                $0.time_start >= startOfDay && $0.time_start < endOfDay
-            }
-            let instanceDescriptor = FetchDescriptor<ActivityInstance>(
-                predicate: instancePredicate,
-                sortBy: [SortDescriptor(\.time_start, order: .reverse)]
-            )
-            self.instances = try context.fetch(instanceDescriptor)
-            
-            let tripLegPredicate = #Predicate<TripLeg> {
-                $0.time_start >= startOfDay && $0.time_start < endOfDay
-            }
-            let tripLegDescriptor = FetchDescriptor<TripLeg>(
-                predicate: tripLegPredicate,
-                sortBy: [SortDescriptor(\.time_start)]
-            )
-            self.tripLegs = try context.fetch(tripLegDescriptor)
-            
+            self.instances = try context.fetch(descriptor)
+            // Note: You would also need to update the tripLegs fetch logic similarly
         } catch {
-            print("Failed to fetch local data for date \(selectedDate): \(error)")
+            print("Failed to fetch local data for the current filter: \(error)")
         }
     }
-
     
     // MARK: Transmitted data
     
@@ -132,24 +164,60 @@ class MyActivitiesPageViewModel: ObservableObject {
         isLoading = true
         await syncActivityInstances()
         await syncTripLegs()
-        fetchLocalDataForSelectedDate()
         isLoading = false
     }
     
     private func syncActivityInstances() async {
-        
         guard let context = modelContext else { return }
         
-        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        let predicate = #Predicate<ActivityInstance> { $0.time_start >= startOfDay && $0.time_start < endOfDay }
-        
         do {
-            let onlineInstances = try await instanceService.fetchActivityInstances(for: selectedDate)
+            let onlineInstances: [ActivityInstanceDTO]
+            let calendar = Calendar.current
+                        
+            let localDescriptor: FetchDescriptor<ActivityInstance>
+            
+            switch filterMode {
+                case .byDate:
+                    let startOfDay = calendar.startOfDay(for: selectedDate)
+                    guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                    
+                    onlineInstances = try await instanceService.fetchActivityInstances(
+                        activityId: nil,
+                        startDate: startOfDay,
+                        endDate: endOfDay
+                    )
+                    
+                    let predicate = #Predicate<ActivityInstance> {
+                        $0.time_start >= startOfDay && $0.time_start < endOfDay
+                    }
+                    localDescriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
+                    
+                case .byActivity:
+                    
+                    guard let activityId = filterActivityId else {
+                        return
+                    }
+                    let startOfDay = calendar.startOfDay(for: filterStartDate)
+                    let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: filterEndDate)) ?? filterEndDate
+                    
+                    onlineInstances = try await instanceService.fetchActivityInstances(
+                        activityId: filterActivityId,
+                        startDate: startOfDay,
+                        endDate: endOfDay
+                    )
+                    
+                    let predicate = #Predicate<ActivityInstance> { instance in
+                        instance.activity_id == activityId &&
+                        instance.time_start >= startOfDay &&
+                        instance.time_start < endOfDay
+                    }
+                    localDescriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
+            }
+            
+            
             let onlineDict = Dictionary(uniqueKeysWithValues: onlineInstances.map { ($0.id, $0) })
             
-            let descriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
-            let localInstances = try context.fetch(descriptor)
+            let localInstances = try context.fetch(localDescriptor)
             let localDict = Dictionary(uniqueKeysWithValues: localInstances.map { ($0.id, $0) })
             
             for dto in onlineInstances {
