@@ -122,7 +122,8 @@ struct PeopleInteractionsPage: View {
         VStack(spacing: 8) {
             PersonInteractionRowView(
                 interaction: interaction,
-                person: viewModel.people.first(where: { $0.id == interaction.person_id })
+                person: viewModel.people.first(where: { $0.id == interaction.person_id }),
+                activity: nil
             )
             .contentShape(Rectangle())
             .onTapGesture {

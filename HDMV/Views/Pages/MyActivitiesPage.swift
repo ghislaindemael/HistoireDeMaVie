@@ -16,6 +16,7 @@ struct MyActivitiesPage: View {
     
     @State private var instanceToEdit: ActivityInstance?
     @State private var tripLegToEdit: TripLeg?
+    @State private var interactionToEdit: PersonInteraction?
     
     var body: some View {
         NavigationStack {
@@ -25,8 +26,8 @@ struct MyActivitiesPage: View {
                     refreshAction: { await viewModel.syncWithServer() },
                     hasLocalChanges: viewModel.hasLocalChanges,
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    singleTapAction: { viewModel.createNewInstanceInCache() },
-                    longPressAction: { viewModel.createNewInstanceAtNoonInCache() },
+                    singleTapAction: { viewModel.createActivtiyInstance() },
+                    longPressAction: { viewModel.createActivityInstanceForDate() },
                 )
                 .onAppear(perform: onAppear)
                 .sheet(item: $instanceToEdit) { instance in
@@ -73,13 +74,23 @@ struct MyActivitiesPage: View {
                             tripLegsVehicles: instanceVehicles,
                             tripLegsPlaces: instancePlaces,
                             onStartTripLeg: { parentId in
-                                viewModel.createNewTripLegInCache(parent_id: parentId)
+                                viewModel.createTripLeg(parent_id: parentId)
                             },
                             onEditTripLeg: { leg in
                                 self.tripLegToEdit = leg
                             },
                             onEndTripLeg: { leg in
                                 viewModel.endTripLeg(leg: leg)
+                            },
+                            onStartInteraction: { parentId in
+                                viewModel.createInteraction(parent_id: parentId)
+                            },
+                            onEditInteraction: { interaction in
+                                self.interactionToEdit = interaction
+                            },
+                            onEndInteraction: { interaction in
+                                viewModel.endInteraction(interaction: interaction)
+                                
                             }
                         )
                         .contentShape(Rectangle())

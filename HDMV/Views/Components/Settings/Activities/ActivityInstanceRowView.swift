@@ -19,11 +19,13 @@ struct ActivityInstanceRowView: View {
     let onStartTripLeg: (Int) -> Void
     let onEditTripLeg: (TripLeg) -> Void
     let onEndTripLeg: (TripLeg) -> Void
+    let onStartInteraction: (Int) -> Void
+    let onEditInteraction: (PersonInteraction) -> Void
+    let onEndInteraction: (PersonInteraction) -> Void
     
     var hasActiveLeg: Bool {
         tripLegs.contains { $0.time_end == nil }
     }
-    
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -57,15 +59,25 @@ struct ActivityInstanceRowView: View {
         }
         .padding(.vertical, 4)
         
+        if let act = activity, instance.time_end == nil,
+            act.canCreateTripLegs == true || act.canCreateInteractions ==  true {
+            HStack {
+                if !hasActiveLeg {
+                    StartItemButton(title: "Start trip leg") {
+                        onStartTripLeg(instance.id)
+                    }
+                }
+                StartItemButton(title: "Start interaction") {
+                    onStartInteraction(instance.id)
+                }
+            }
+        }
+        
         if activity?.canCreateTripLegs == true {
             tripLegsSection
                 .padding(.leading, 30)
             
-            if instance.time_end == nil && !hasActiveLeg {
-                StartItemButton(title: "Start trip leg") {
-                    onStartTripLeg(instance.id)
-                }
-            }
+            
         }
         
     }

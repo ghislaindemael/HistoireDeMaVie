@@ -76,7 +76,7 @@ struct PersonInteractionEditSheet: View {
             Toggle("In Person", isOn: $interaction.in_person)
             
             Slider(value: Binding(
-                get: { Double(interaction.percentage) },
+                get: { Double(interaction.percentage ?? 100) },
                 set: { interaction.percentage = Int($0) }
             ), in: 0...100, step: 1)
             TextEditor(text: Binding(

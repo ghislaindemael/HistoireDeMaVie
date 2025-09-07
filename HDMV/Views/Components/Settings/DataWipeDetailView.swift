@@ -185,7 +185,11 @@ struct DataWipeDetailView: View {
                 )
             case let interaction as PersonInteraction:
                 return AnyView(
-                    PersonInteractionRowView(interaction: interaction, person: nil)
+                    PersonInteractionRowView(
+                        interaction: interaction,
+                        person: nil,
+                        activity: nil
+                    )
                 )
             case let tripleg as TripLeg:
                 return AnyView(

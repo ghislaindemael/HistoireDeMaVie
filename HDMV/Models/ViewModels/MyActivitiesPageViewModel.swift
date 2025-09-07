@@ -33,17 +33,19 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     @Published var instances: [ActivityInstance] = []
     @Published var tripLegs: [TripLeg] = []
+    @Published var interactions: [PersonInteraction] = []
     
     @Published var activityTree: [Activity] = []
     @Published var vehicles: [Vehicle] = []
     @Published var cities: [City] = []
     @Published var places: [Place] = []
     @Published var vehicleTypes: [VehicleType] = []
+    @Published var people: [Person] = []
     
     var hasLocalChanges: Bool {
-        let instancesChanged = instances.contains { $0.syncStatus != .synced }
-        let tripsChanged = tripLegs.contains { $0.syncStatus != .synced }
-        return instancesChanged || tripsChanged
+        return instances.contains { $0.syncStatus != .synced }
+            || tripLegs.contains { $0.syncStatus != .synced }
+            || interactions.contains { $0.syncStatus != .synced}
     }
     
     func setup(modelContext: ModelContext) {
@@ -60,6 +62,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             self.vehicleTypes = try context.fetch(FetchDescriptor<VehicleType>())
             let descriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
             self.activityTree = Activity.buildTree(from: try context.fetch(descriptor))
+            self.people = try context.fetch(FetchDescriptor<Person>(sortBy: [SortDescriptor(\.familyName), SortDescriptor(\.name)]))
         } catch {
             print("Failed to fetch catalogue data: \(error)")
         }
@@ -109,7 +112,6 @@ class MyActivitiesPageViewModel: ObservableObject {
         
         do {
             self.instances = try context.fetch(descriptor)
-            // Note: You would also need to update the tripLegs fetch logic similarly
         } catch {
             print("Failed to fetch local data for the current filter: \(error)")
         }
@@ -387,7 +389,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     // MARK: - Local Cache Creation
     
-    func createNewTripLegInCache(parent_id: Int) {
+    func createTripLeg(parent_id: Int) {
         guard let context = modelContext else { return }
         let newLeg = TripLeg(
             id: Int.random(in: -999999 ... -1),
@@ -410,7 +412,33 @@ class MyActivitiesPageViewModel: ObservableObject {
             leg.syncStatus = .local
             try context.save()
         } catch {
-            print("Failed to end trip.")
+            print("Failed to end trip: \(error)")
+        }
+    }
+        
+    func createActivtiyInstance() {
+        guard let context = modelContext else { return }
+        let newInstance = ActivityInstance(id: Int.random(in: -999999 ... -1), time_start: .now, syncStatus: .local)
+        context.insert(newInstance)
+        do {
+            try context.save()
+            self.instances.insert(newInstance, at: 0)
+        } catch {
+            print("Failed to save new instance: \(error)")
+        }
+    }
+    
+    func createActivityInstanceForDate() {
+        guard let context = modelContext else { return }
+        let noonOnSelectedDate = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDate) ?? selectedDate
+        let newInstance = ActivityInstance(id: Int.random(in: -999999 ... -1), time_start: noonOnSelectedDate, syncStatus: .local)
+        context.insert(newInstance)
+        do {
+            try context.save()
+            self.instances.append(newInstance)
+            self.instances.sort { $0.time_start > $1.time_start }
+        } catch {
+            print("Failed to save new instance at noon: \(error)")
         }
     }
     
@@ -425,29 +453,30 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    func createNewInstanceInCache() {
+    func createInteraction(parent_id: Int) {
         guard let context = modelContext else { return }
-        let newInstance = ActivityInstance(id: Int.random(in: -999999 ... -1), time_start: .now, syncStatus: .local)
-        context.insert(newInstance)
+        let newInteraction = PersonInteraction(
+            id: Int.random(in: -999999 ... -1),
+            time_start: .now,
+            parent_activity_id: parent_id
+        )
+        context.insert(newInteraction)
         do {
             try context.save()
-            self.instances.insert(newInstance, at: 0)
+            self.interactions.append(newInteraction)
         } catch {
-            print("Failed to save new instance: \(error)")
+            print("Failed to create interaction: \(error)")
         }
     }
     
-    func createNewInstanceAtNoonInCache() {
+    func endInteraction(interaction: PersonInteraction){
         guard let context = modelContext else { return }
-        let noonOnSelectedDate = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDate) ?? selectedDate
-        let newInstance = ActivityInstance(id: Int.random(in: -999999 ... -1), time_start: noonOnSelectedDate, syncStatus: .local)
-        context.insert(newInstance)
         do {
+            interaction.time_end = .now
+            interaction.syncStatus = .local
             try context.save()
-            self.instances.append(newInstance)
-            self.instances.sort { $0.time_start > $1.time_start }
         } catch {
-            print("Failed to save new instance at noon: \(error)")
+            print("Failed to end interaction: \(error)")
         }
     }
     

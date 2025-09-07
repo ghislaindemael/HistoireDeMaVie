@@ -16,7 +16,7 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     private var modelContext: ModelContext?
     private let interactionService = PeopleInteractionsService()
     @Published var isLoading: Bool = false
-
+    
     @Published var selectedDate: Date = .now
     @Published var interactions: [PersonInteraction] = []
     
@@ -32,6 +32,36 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     }
     
     // MARK: - Data Fetching
+    
+    private func fetchLocalInteractions() -> [PersonInteraction] {
+        guard let context = modelContext else { return [] }
+        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
+        guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else { return [] }
+        let distantPast = Date.distantPast
+        let distantFuture = Date.distantFuture
+        
+        do {
+            let standalonePredicate = #Predicate<PersonInteraction> {
+                $0.parent_activity_id == nil
+            }
+            
+            let dateRangePredicate = #Predicate<PersonInteraction> {
+                ($0.time_start ?? distantPast) >= startOfDay &&
+                ($0.time_start ?? distantFuture) < endOfDay
+            }
+            
+            let compoundPredicate = #Predicate<PersonInteraction> {
+                standalonePredicate.evaluate($0) && dateRangePredicate.evaluate($0)
+            }
+            
+            let descriptor = FetchDescriptor<PersonInteraction>(predicate: compoundPredicate)
+            
+            return try context.fetch(descriptor)
+        } catch {
+            print("Error during interaction fetch: \(error)")
+            return []
+        }
+    }
         
     private func fetchCatalogueData() {
         guard let context = modelContext else { return }
@@ -63,45 +93,47 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     }
     
     private func syncInteractions() async {
-        
         guard let context = modelContext else { return }
         
-        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        let predicate = #Predicate<PersonInteraction> { $0.time_start >= startOfDay && $0.time_start < endOfDay }
-        
         do {
+            let localInteractions = fetchLocalInteractions()
             let onlineInteractions = try await interactionService.fetchInteractions(for: selectedDate)
-            let onlineDict = Dictionary(uniqueKeysWithValues: onlineInteractions.map { ($0.id, $0) })
             
-            let descriptor = FetchDescriptor<PersonInteraction>(predicate: predicate)
-            let localInteractions = try context.fetch(descriptor)
+            let onlineDict = Dictionary(uniqueKeysWithValues: onlineInteractions.map { ($0.id, $0) })
             let localDict = Dictionary(uniqueKeysWithValues: localInteractions.map { ($0.id, $0) })
             
-            for dto in onlineInteractions {
-                if let localInteraction = localDict[dto.id] {
+            let onlineIDs = Set(onlineDict.keys)
+            let localIDs = Set(localDict.keys)
+            
+            let idsToDelete = localIDs.subtracting(onlineIDs)
+            for id in idsToDelete {
+                if let interactionToDelete = localDict[id], interactionToDelete.syncStatus == .synced {
+                    context.delete(interactionToDelete)
+                }
+            }
+            
+            for onlineInteraction in onlineInteractions {
+                if let localInteraction = localDict[onlineInteraction.id] {
                     if localInteraction.syncStatus == .synced {
-                        localInteraction.update(fromDto: dto)
+                        localInteraction.update(fromDto: onlineInteraction)
                     }
                 } else {
-                    context.insert(PersonInteraction(fromDto: dto))
+                    context.insert(PersonInteraction(fromDto: onlineInteraction))
                 }
             }
             
-            for localInteraction in localInteractions {
-                if onlineDict[localInteraction.id] == nil && localInteraction.syncStatus == .synced {
-                    context.delete(localInteraction)
-                }
+            if context.hasChanges {
+                try context.save()
             }
             
-            try context.save()
+            self.interactions = fetchLocalInteractions()
+            sortInteractions()
             
-            let refreshedDescriptor = FetchDescriptor<PersonInteraction>(predicate: predicate, sortBy: [SortDescriptor(\.time_start, order: .reverse)])
-            self.interactions = try context.fetch(refreshedDescriptor)
         } catch {
-            print("Error during instance sync: \(error)")
+            print("Error during interaction sync: \(error)")
         }
     }
+
     
     func syncChanges() async {
         guard let context = modelContext else { return }
@@ -125,6 +157,7 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     }
     
     private func sync(interaction: PersonInteraction, in context: ModelContext) async {
+        guard interaction.isValid() else { return }
         let payload = PersonInteractionPayload(from: interaction)
         do {
             if interaction.id < 0 {
@@ -206,9 +239,45 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         do {
             try context.save()
             self.interactions.append(newInteraction)
-            self.interactions.sort { $0.time_start > $1.time_start }
+            sortInteractions()
         } catch {
             print("Failed to save new interaction at noon: \(error)")
+        }
+    }
+    
+    /// Sorts the local `interactions` array, handling both standalone and activity-linked items.
+    private func sortInteractions() {
+        guard let context = modelContext else { return }
+        
+        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        do {
+            let activityPredicate = #Predicate<ActivityInstance> {
+                $0.time_start >= startOfDay && $0.time_start < endOfDay
+            }
+            let activitiesForDay = try context.fetch(FetchDescriptor(predicate: activityPredicate))
+            let activityDict = Dictionary(uniqueKeysWithValues: activitiesForDay.map { ($0.id, $0) })
+                        
+            self.interactions.sort { lhs, rhs in
+                func effectiveTime(for interaction: PersonInteraction) -> Date? {
+                    if let startTime = interaction.time_start {
+                        return startTime
+                    }
+                    if let parentId = interaction.parent_activity_id,
+                       let parentActivity = activityDict[parentId] {
+                        return parentActivity.time_start
+                    }
+                    return nil
+                }
+                
+                guard let lhsTime = effectiveTime(for: lhs) else { return false }
+                guard let rhsTime = effectiveTime(for: rhs) else { return true }
+                
+                return lhsTime > rhsTime
+            }
+        } catch {
+            print("Failed to fetch activities for sorting: \(error)")
         }
     }
         

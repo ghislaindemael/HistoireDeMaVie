@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class ActivityInstance : SyncableModel, TimableModel, CustomStringConvertible {
+final class ActivityInstance : SyncableModel, CustomStringConvertible {
     @Attribute(.unique) var id: Int
     var time_start: Date
     var time_end: Date?

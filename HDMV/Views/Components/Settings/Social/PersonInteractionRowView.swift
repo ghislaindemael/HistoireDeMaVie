@@ -11,6 +11,7 @@ import SwiftData
 struct PersonInteractionRowView: View {
     let interaction: PersonInteraction
     let person: Person?
+    let activity: ActivityInstance?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,27 +34,42 @@ struct PersonInteractionRowView: View {
                             .foregroundColor(.red)
                     }
                 }
-
+                
                 Spacer()
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
             HStack {
-                Text(DateFormatter.timeOnly.string(from: interaction.time_start))
+                let startInfo = interaction.effectiveStart(activity: activity)
+                if let start = startInfo.date {
+                    Text(DateFormatter.timeOnly.string(from: start))
+                        .fontWeight(startInfo.overridden ? .bold : .regular)
+                } else {
+                    Text("—").italic().foregroundColor(.secondary)
+                }
+                
                 Image(systemName: "arrow.right")
-                if let time_end = interaction.time_end {
-                    Text(DateFormatter.timeOnly.string(from: time_end))
+                
+                let endInfo = interaction.effectiveEnd(activity: activity)
+                if let end = endInfo.date {
+                    Text(DateFormatter.timeOnly.string(from: end))
+                        .fontWeight(endInfo.overridden ? .bold : .regular)
+                } else {
+                    Text("—").italic().foregroundColor(.secondary)
                 }
             }
+            
             HStack {
                 if interaction.in_person {
                     Image(systemName: "person.2")
                 } else {
                     Image(systemName: "phone")
                 }
-                GradientPercentageBarView(percentage: Double(interaction.percentage))
-                    .frame(height: 8)
-                    .padding(.leading, 4)
+                GradientPercentageBarView(
+                    percentage: Double(interaction.percentage ?? 100)
+                )
+                .frame(height: 8)
+                .padding(.leading, 4)
             }
             if let details = interaction.details, !details.isEmpty {
                 Text(details)
