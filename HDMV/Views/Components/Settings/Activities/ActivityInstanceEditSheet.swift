@@ -14,7 +14,8 @@ struct ActivityInstanceDetailSheet: View {
     
     @ObservedObject var viewModel: MyActivitiesPageViewModel
     
-    @Bindable var instance: ActivityInstance
+    let instance: ActivityInstance
+    @State private var editor: ActivityInstanceEditor
     
     @State private var showEndTime: Bool
     @State private var tripLegToEdit: TripLeg?
@@ -26,6 +27,7 @@ struct ActivityInstanceDetailSheet: View {
     init(instance: ActivityInstance, viewModel: MyActivitiesPageViewModel) {
         self.instance = instance
         self.viewModel = viewModel
+        _editor = State(initialValue: ActivityInstanceEditor(from: instance))
         _showEndTime = State(initialValue: instance.time_end != nil)
     }
     
@@ -38,7 +40,7 @@ struct ActivityInstanceDetailSheet: View {
                     specializedDetailsSection(for: activity)
                 }
                 
-                if selectedActivity?.canCreateTripLegs == true {
+                if selectedActivity?.can(.create_trip_legs) == true {
                     tripLegsSection
                     if !viewModel.unassignedTripLegs().isEmpty {
                         claimTripLegsSection
@@ -56,6 +58,7 @@ struct ActivityInstanceDetailSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar(isFormValid: true) {
+                instance.update(from: editor)
                 instance.syncStatus = .local
                 if !showEndTime {
                     instance.time_end = nil
@@ -72,7 +75,7 @@ struct ActivityInstanceDetailSheet: View {
         Section("Basics") {
             NavigationLink(destination: ActivitySelectorView(
                 activityTree: viewModel.activityTree,
-                selectedActivityId: $instance.activity_id
+                selectedActivityId: $editor.activity_id
             )) {
                 HStack {
                     Text("Select Activity")
@@ -83,12 +86,12 @@ struct ActivityInstanceDetailSheet: View {
                     }
                 }
             }
-            FullTimePicker(label: "Start Time", selection: $instance.time_start)
+            FullTimePicker(label: "Start Time", selection: $editor.time_start)
             Toggle("End Time?", isOn: $showEndTime)
             if showEndTime {
                 FullTimePicker(label: "End Time", selection: Binding(
-                    get: { instance.time_end ?? Date() },
-                    set: { instance.time_end = $0 }
+                    get: { editor.time_end ?? Date() },
+                    set: { editor.time_end = $0 }
                 ))
             }
         }
@@ -97,13 +100,13 @@ struct ActivityInstanceDetailSheet: View {
     private var detailsSection: some View {
         Section("Details") {
             TextEditor(text: Binding(
-                get: { instance.details ?? "" },
-                set: { instance.details = $0.isEmpty ? nil : $0 }
+                get: { editor.details ?? "" },
+                set: { editor.details = $0.isEmpty ? nil : $0 }
             ))
             .lineLimit(3...)
             Toggle("Set percentage?", isOn: showPercentageBinding)
             
-            if instance.percentage != nil {
+            if editor.percentage != nil {
                 Slider(value: percentageBinding, in: 0...100, step: 1)
             }
         }
@@ -114,7 +117,7 @@ struct ActivityInstanceDetailSheet: View {
             VStack {
                 switch activity.type {
                     case .meal:
-                        MealDetailsEditView(metadata: $instance.decodedActivityDetails)
+                        MealDetailsEditView(metadata: $editor.decodedActivityDetails)
                     case .reading:
                         //ReadingDetailsEditView(metadata: $instance.decodedActivityDetails)
                         EmptyView()
@@ -127,7 +130,7 @@ struct ActivityInstanceDetailSheet: View {
                 
                 if activity.permissions.contains("place") {
                     PlaceDetailsEditView(
-                        metadata: $instance.decodedActivityDetails,
+                        metadata: $editor.decodedActivityDetails,
                         activityType: activity.type ?? .generic,
                         cities: viewModel.cities,
                         places: viewModel.places
@@ -176,12 +179,12 @@ struct ActivityInstanceDetailSheet: View {
     /// It's 'on' if the percentage is not nil, and 'off' if it is.
     private var showPercentageBinding: Binding<Bool> {
         Binding<Bool>(
-            get: { instance.percentage != nil },
+            get: { editor.percentage != nil },
             set: { isOn in
                 if isOn {
-                    instance.percentage = instance.percentage ?? 100
+                    editor.percentage = editor.percentage ?? 100
                 } else {
-                    instance.percentage = nil
+                    editor.percentage = nil
                 }
             }
         )
@@ -190,8 +193,8 @@ struct ActivityInstanceDetailSheet: View {
     /// A binding that safely converts the model's `Int?` to a `Double` for the Slider.
     private var percentageBinding: Binding<Double> {
         Binding<Double>(
-            get: { Double(instance.percentage ?? 100) },
-            set: { instance.percentage = Int($0) }
+            get: { Double(editor.percentage ?? 100) },
+            set: { editor.percentage = Int($0) }
         )
     }
     

@@ -14,7 +14,7 @@ final class Vehicle: Identifiable {
     var type: Int
     var city_id: Int?
     var label: String = ""
-    var cache: Bool
+    var cache: Bool = true
     
     @Transient var city: City?
     

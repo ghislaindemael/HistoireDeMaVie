@@ -185,11 +185,7 @@ struct DataWipeDetailView: View {
                 )
             case let interaction as PersonInteraction:
                 return AnyView(
-                    PersonInteractionRowView(
-                        interaction: interaction,
-                        person: nil,
-                        activity: nil
-                    )
+                    interaction.debugView
                 )
             case let tripleg as TripLeg:
                 return AnyView(
@@ -219,6 +215,15 @@ struct DataWipeDetailView: View {
         if let instance = item as? ActivityInstance {
             appNavigator.selectedDate = instance.time_start
             appNavigator.selectedTab = .activities
+            dismiss()
+        }
+        if let interaction = item as? PersonInteraction {
+            appNavigator.selectedDate = interaction.time_start
+            if interaction.parent_activity_id != nil {
+                appNavigator.selectedTab = .activities
+            } else {
+                appNavigator.selectedTab = .interactions
+            }
             dismiss()
         }
     }

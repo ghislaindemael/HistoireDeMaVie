@@ -77,6 +77,15 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
         self.syncStatus = .synced
     }
     
+    func update(from editor: ActivityInstanceEditor) {
+        self.activity_id = editor.activity_id
+        self.time_start = editor.time_start
+        self.time_end = editor.time_end
+        self.details = editor.details
+        self.percentage = editor.percentage
+        self.decodedActivityDetails = editor.decodedActivityDetails
+    }
+    
     var description: String {
         """
         ActivityInstance(
@@ -92,38 +101,6 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
         """
     }
     
-    var debugView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
-
-                Spacer()
-                SyncStatusIndicator(status: syncStatus)
-            }
-        
-            if let time_end {
-                Text("End: \(time_end.formatted(date: .abbreviated, time: .shortened))")
-            } else {
-                Text("End: In Progress")
-            }
-            
-            if let activity_id {
-                Text("Activity ID: \(activity_id)")
-            } else {
-                Text("Activity: Unset")
-                    .bold()
-                    .foregroundStyle(.orange)
-                
-            }
-            
-            Text("Details: \(details ?? "N/A")")
-            
-        }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
-    }
-    
     /// Creates a data transfer object (payload) from the model instance.
     func toPayload() -> ActivityInstancePayload {
         return ActivityInstancePayload(
@@ -134,6 +111,10 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
             percentage: self.percentage,
             activity_details: self.decodedActivityDetails
         )
+    }
+    
+    func isValid() -> Bool {
+        return activity_id != nil
     }
     
     
@@ -172,5 +153,23 @@ struct ActivityInstancePayload: Codable {
         try container.encode(percentage, forKey: .percentage)
         try container.encode(activity_details, forKey: .activity_details)
     }
+}
+
+struct ActivityInstanceEditor {
+    var activity_id: Int?
+    var time_start: Date
+    var time_end: Date?
+    var details: String?
+    var percentage: Int?
+    var decodedActivityDetails: ActivityDetails?
     
+    /// Initializes an editor from an existing ActivityInstance.
+    init(from instance: ActivityInstance) {
+        self.activity_id = instance.activity_id
+        self.time_start = instance.time_start
+        self.time_end = instance.time_end
+        self.details = instance.details
+        self.percentage = instance.percentage
+        self.decodedActivityDetails = instance.decodedActivityDetails
+    }
 }

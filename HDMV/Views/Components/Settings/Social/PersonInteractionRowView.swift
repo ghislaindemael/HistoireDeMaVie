@@ -55,7 +55,7 @@ struct PersonInteractionRowView: View {
                     Text(DateFormatter.timeOnly.string(from: end))
                         .fontWeight(endInfo.overridden ? .bold : .regular)
                 } else {
-                    Text("—").italic().foregroundColor(.secondary)
+                    Text("—").foregroundColor(.secondary)
                 }
             }
             

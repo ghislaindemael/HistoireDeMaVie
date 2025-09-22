@@ -10,4 +10,6 @@ import SwiftData
 
 protocol SyncableModel: PersistentModel {
     var syncStatus: SyncStatus { get set }
+    
+    func isValid() -> Bool
 }

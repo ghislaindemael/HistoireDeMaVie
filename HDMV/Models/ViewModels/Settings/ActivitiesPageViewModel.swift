@@ -167,7 +167,6 @@ class ActivitiesPageViewModel: ObservableObject {
             name: "",
             slug: "",
             icon: "",
-            permissions: [],
             syncStatus: .local
         )
         

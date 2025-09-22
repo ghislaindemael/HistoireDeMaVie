@@ -10,26 +10,26 @@ import SwiftUI
 struct MealDetailsEditView: View {
     @Binding var metadata: ActivityDetails?
     
-    private var mealContent: Binding<String> {
-        Binding<String>(
+    private var mealDetailsBinding: Binding<MealDetails> {
+        Binding<MealDetails>(
             get: {
-                metadata?.meal?.mealContent ?? ""
+                return metadata?.meal ?? MealDetails()
             },
-            set: { newValue in
+            set: { newMealDetails in
+                
                 if metadata == nil {
                     metadata = ActivityDetails(type: .meal)
                 }
-                if metadata?.meal == nil {
-                    metadata?.meal = MealDetails(mealContent: newValue)
-                } else {
-                    metadata?.meal?.mealContent = newValue
-                }
+                
+                metadata?.meal = newMealDetails
             }
         )
     }
     
     var body: some View {
-        TextField("Meal Content", text: mealContent)
-            .lineLimit(3...)
+        ForEach(CourseType.allCases) { course in
+            TextField(course.rawValue, text: mealDetailsBinding[course], axis: .vertical)
+                .lineLimit(1...3)
+        }
     }
 }

@@ -79,9 +79,11 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: selectedDate)
                 guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                let future = Date.distantFuture
                 
                 let predicate = #Predicate<ActivityInstance> {
-                    $0.time_start >= startOfDay && $0.time_start < endOfDay
+                    $0.time_start < endOfDay &&
+                    ($0.time_end ?? future) > startOfDay
                 }
                 descriptor = FetchDescriptor<ActivityInstance>(
                     predicate: predicate,
@@ -98,11 +100,12 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: filterStartDate)
                 let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: filterEndDate)) ?? filterEndDate
+                let future = Date.distantFuture
                 
                 let predicate = #Predicate<ActivityInstance> { instance in
                     instance.activity_id == activityId &&
-                    instance.time_start >= startOfDay &&
-                    instance.time_start < endOfDay
+                    instance.time_start < endOfDay &&
+                    (instance.time_end ?? future) > startOfDay
                 }
                 descriptor = FetchDescriptor<ActivityInstance>(
                     predicate: predicate,

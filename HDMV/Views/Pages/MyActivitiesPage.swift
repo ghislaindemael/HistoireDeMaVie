@@ -22,6 +22,8 @@ struct MyActivitiesPage: View {
         NavigationStack {
             mainListView
                 .navigationTitle("My Activities")
+                .onAppear(perform: onAppear)
+                .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
                     hasLocalChanges: viewModel.hasLocalChanges,
@@ -29,7 +31,11 @@ struct MyActivitiesPage: View {
                     singleTapAction: { viewModel.createActivtiyInstance() },
                     longPressAction: { viewModel.createActivityInstanceForDate() },
                 )
-                .onAppear(perform: onAppear)
+                .onChange(of: viewModel.filterMode) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.selectedDate) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterActivityId) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterStartDate) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterEndDate) { viewModel.fetchInstances() }
                 .sheet(item: $instanceToEdit) { instance in
                     ActivityInstanceDetailSheet(
                         instance: instance,
@@ -44,13 +50,6 @@ struct MyActivitiesPage: View {
                         places: viewModel.places
                     )
                 }
-                .syncingOverlay(viewModel.isLoading)
-                .onChange(of: viewModel.filterMode) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.selectedDate) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterActivityId) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterStartDate) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterEndDate) { viewModel.fetchInstances() }
-            
         }
     }
     
@@ -73,6 +72,7 @@ struct MyActivitiesPage: View {
                             tripLegs: instanceTripLegs,
                             tripLegsVehicles: instanceVehicles,
                             tripLegsPlaces: instancePlaces,
+                            selectedDate: viewModel.selectedDate,
                             onStartTripLeg: { parentId in
                                 viewModel.createTripLeg(parent_id: parentId)
                             },

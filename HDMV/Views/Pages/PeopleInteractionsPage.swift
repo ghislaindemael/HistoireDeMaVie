@@ -10,10 +10,23 @@ import SwiftData
 
 struct PeopleInteractionsPage: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var appNavigator: AppNavigator
+    
     @StateObject private var viewModel = PeopleInteractionsPageViewModel()
     
     @State private var interactionToEdit: PersonInteraction? = nil
     @State private var deletingInteraction: PersonInteraction? = nil
+    
+    // MARK: Setup
+    
+    private func onAppear() {
+        if let navDate = appNavigator.selectedDate {
+            viewModel.selectedDate = navDate
+            appNavigator.selectedDate = nil
+        }
+        viewModel.setup(modelContext: modelContext)
+        viewModel.fetchInteractions()
+    }
     
     // MARK: - Filtering State
     @State private var selectedPersonId: Int? = nil
@@ -35,6 +48,8 @@ struct PeopleInteractionsPage: View {
         NavigationStack {
             interactionsListView
                 .navigationTitle("People Interactions")
+                .onAppear(perform: onAppear)
+                .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
                     hasLocalChanges: viewModel.hasLocalChanges,
@@ -42,18 +57,7 @@ struct PeopleInteractionsPage: View {
                     singleTapAction: { viewModel.createNewInteractionInCache() },
                     longPressAction: { viewModel.createNewInteractionAtNoonInCache() },
                 )
-                .task(id: viewModel.selectedDate) {
-                    await viewModel.syncWithServer()
-                }
-                .onAppear {
-                    viewModel.setup(modelContext: modelContext)
-                }
-                .overlay {
-                    if viewModel.isLoading {
-                        ProgressView("Loading...")
-                            .padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                    }
-                }
+                .onChange(of: viewModel.selectedDate) { viewModel.fetchInteractions() }
                 .sheet(item: $interactionToEdit) { interaction in
                     PersonInteractionEditSheet(
                         interaction: interaction,

@@ -6,10 +6,6 @@
 //
 
 // MARK: The JSON objects
-struct MealDetails: Codable {
-    var mealContent: String
-}
-
 struct ReadingDetails: Codable {
     var book_id: Int
     var pageCount: Int

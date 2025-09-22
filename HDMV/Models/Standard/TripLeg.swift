@@ -92,6 +92,13 @@ final class TripLeg : CustomStringConvertible, SyncableModel {
         )
         """
     }
+    
+    func isValid() -> Bool {
+        if parent_id == nil {
+            return false
+        }
+        return true
+    }
 }
 
 

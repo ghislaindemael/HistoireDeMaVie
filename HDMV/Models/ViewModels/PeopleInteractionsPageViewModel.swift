@@ -33,6 +33,10 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     
     // MARK: - Data Fetching
     
+    func fetchInteractions() {
+        self.interactions = fetchLocalInteractions()
+    }
+    
     private func fetchLocalInteractions() -> [PersonInteraction] {
         guard let context = modelContext else { return [] }
         let startOfDay = Calendar.current.startOfDay(for: selectedDate)

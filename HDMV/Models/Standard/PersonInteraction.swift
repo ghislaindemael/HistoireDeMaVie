@@ -10,7 +10,7 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class PersonInteraction: Equatable, Identifiable {
+final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     @Attribute(.unique) var id: Int
     var time_start: Date?
     var time_end: Date?

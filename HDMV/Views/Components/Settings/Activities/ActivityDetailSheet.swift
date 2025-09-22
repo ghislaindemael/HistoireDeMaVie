@@ -9,18 +9,6 @@
 import SwiftUI
 import SwiftData
 
-struct PermissionOption: Identifiable {
-    let id: String
-    let label: String
-}
-
-let availablePermissions: [PermissionOption] = [
-    .init(id: "trips", label: "Can create Trip Legs"),
-    .init(id: "people", label: "Can create Interactions"),
-    .init(id: "place", label: "Can attach Place")
-]
-
-
 struct ActivityDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -67,10 +55,25 @@ struct ActivityDetailSheet: View {
                     }
                 }
                 
-                Section("Permissions") {
-                    ForEach(availablePermissions) { option in
-                        Toggle(option.label, isOn: activity.binding(for: option.id))
+                Section("Capabilities") {
+                    ForEach(ActivityCapability.allCases) { capability in
+                        VStack(alignment: .leading) {
+                            Toggle(capability.label, isOn: Binding(
+                                get: { activity.hasCapability(capability) },
+                                set: { _ in activity.toggleCapability(capability) }
+                            ))
+                            
+                            if activity.hasCapability(capability) {
+                                Toggle("Mark as Required", isOn: Binding(
+                                    get: { activity.isRequired(capability) },
+                                    set: { _ in activity.toggleRequired(capability) }
+                                ))
+                                .padding(.leading, 10)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                        }
                     }
+                    .animation(.default, value: activity.allowedCapabilities)
                 }
 
                 
