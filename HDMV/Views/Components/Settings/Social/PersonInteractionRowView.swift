@@ -10,47 +10,29 @@ import SwiftData
 
 struct PersonInteractionRowView: View {
     let interaction: PersonInteraction
-    let person: Person?
-    let activity: ActivityInstance?
+    let instance: ActivityInstance?
+    let onEnd: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                HStack {
-                    Image(systemName: "person")
-                        .foregroundColor(
-                            person != nil ? .primary :
-                                (interaction.person_id > 0 ? .orange : .red)
-                        )
-                    if let person = person {
-                        Text(person.fullName)
-                    } else if interaction.person_id > 0 {
-                        Text("\(interaction.person_id): Uncached Person")
-                            .italic()
-                            .foregroundColor(.orange)
-                    } else {
-                        Text("Person not set")
-                            .bold()
-                            .foregroundColor(.red)
-                    }
-                }
-                
+                PersonDisplayView(personId: interaction.person_id)
                 Spacer()
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
             HStack {
-                let startInfo = interaction.effectiveStart(activity: activity)
+                let startInfo = interaction.effectiveStart(instance: instance)
                 if let start = startInfo.date {
                     Text(DateFormatter.timeOnly.string(from: start))
                         .fontWeight(startInfo.overridden ? .bold : .regular)
                 } else {
-                    Text("—").italic().foregroundColor(.secondary)
+                    Text("—").foregroundColor(.secondary)
                 }
                 
                 Image(systemName: "arrow.right")
                 
-                let endInfo = interaction.effectiveEnd(activity: activity)
+                let endInfo = interaction.effectiveEnd(instance: instance)
                 if let end = endInfo.date {
                     Text(DateFormatter.timeOnly.string(from: end))
                         .fontWeight(endInfo.overridden ? .bold : .regular)
@@ -81,6 +63,9 @@ struct PersonInteractionRowView: View {
                     )
                     .foregroundColor(Color.primary)
                     .font(.body)
+            }
+            if interaction.time_end == nil {
+                EndItemButton(title: "End Interaction", action: onEnd)
             }
             
         }

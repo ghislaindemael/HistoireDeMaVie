@@ -36,38 +36,39 @@ class MyActivitiesPageViewModel: ObservableObject {
     @Published var interactions: [PersonInteraction] = []
     
     @Published var activityTree: [Activity] = []
-    @Published var vehicles: [Vehicle] = []
-    @Published var cities: [City] = []
-    @Published var places: [Place] = []
-    @Published var vehicleTypes: [VehicleType] = []
-    @Published var people: [Person] = []
     
     var hasLocalChanges: Bool {
         return instances.contains { $0.syncStatus != .synced }
-            || tripLegs.contains { $0.syncStatus != .synced }
-            || interactions.contains { $0.syncStatus != .synced}
+        || tripLegs.contains { $0.syncStatus != .synced }
+        || interactions.contains { $0.syncStatus != .synced}
     }
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        fetchCatalogueData()
+        fetchActivities()
     }
     
-    private func fetchCatalogueData() {
+    private func fetchActivities() {
         guard let context = modelContext else { return }
         do {
-            self.vehicles = try context.fetch(FetchDescriptor<Vehicle>(sortBy: [SortDescriptor(\.name)]))
-            self.cities = try context.fetch(FetchDescriptor<City>(sortBy: [SortDescriptor(\.rank), SortDescriptor(\.name)]))
-            self.places = try context.fetch(FetchDescriptor<Place>(sortBy: [SortDescriptor(\.name)]))
-            self.vehicleTypes = try context.fetch(FetchDescriptor<VehicleType>())
             let descriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
             self.activityTree = Activity.buildTree(from: try context.fetch(descriptor))
-            self.people = try context.fetch(FetchDescriptor<Person>(sortBy: [SortDescriptor(\.familyName), SortDescriptor(\.name)]))
         } catch {
             print("Failed to fetch catalogue data: \(error)")
         }
     }
     
+    private func fetchData() {
+        fetchActivities()
+        fetchDailyData()
+    }
+    
+    func fetchDailyData() {
+        fetchInstances()
+        fetchTripLegs()
+        // fetchInteractions()
+    }
+ 
     /// A single, powerful function to fetch instances based on the current filter mode.
     func fetchInstances() {
         guard let context = modelContext else { return }
@@ -116,16 +117,38 @@ class MyActivitiesPageViewModel: ObservableObject {
         do {
             self.instances = try context.fetch(descriptor)
         } catch {
-            print("Failed to fetch local data for the current filter: \(error)")
+            print("Failed to fetch activity instances: \(error)")
+        }
+    }
+    
+    func fetchTripLegs() {
+        guard let context = modelContext else { return }
+        
+        let descriptor: FetchDescriptor<TripLeg>
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        let future = Date.distantFuture
+        
+        let predicate = #Predicate<TripLeg> {
+            $0.time_start < endOfDay &&
+            ($0.time_end ?? future) > startOfDay
+        }
+        descriptor = FetchDescriptor<TripLeg>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+        )
+        
+        do {
+            self.tripLegs = try context.fetch(descriptor)
+            print("Fetched \(self.tripLegs.count) trip legs")
+        } catch {
+            print("Failed to fetch trip legs: \(error)")
         }
     }
     
     // MARK: Transmitted data
-    
-    func findVehicle(by id: Int?) -> Vehicle? {
-        guard let id = id else { return nil }
-        return vehicles.first { $0.id == id }
-    }
     
     /// Helper function to find an activity by its ID in the tree.
     func findActivity(by id: Int?) -> Activity? {
@@ -137,30 +160,8 @@ class MyActivitiesPageViewModel: ObservableObject {
         return self.tripLegs.filter { $0.parent_id == instanceId }
     }
     
-    func tripsVehicles(for tripLegs: [TripLeg]) -> [Vehicle] {
-        let vehicleIds = Set(tripLegs.compactMap { $0.vehicle_id })
-        return self.vehicles.filter { vehicleIds.contains($0.id) }
-    }
-    
-    func tripsPlaces(for tripLegs: [TripLeg]) -> [Place] {
-        let startPlaceIds = tripLegs.compactMap { $0.place_start_id }
-        let endPlaceIds = tripLegs.compactMap { $0.place_end_id }
-        let allPlaceIds = Set(startPlaceIds + endPlaceIds)
-        return self.places.filter { allPlaceIds.contains($0.id) }
-    }
-    
-    func findPlace(by id: Int?) -> Place? {
-        guard let id = id else { return nil }
-        return places.first { $0.id == id }
-    }
-    
-    func tripsVehicleTypes(for vehicles: [Vehicle]) -> [VehicleType] {
-        let typeIds = Set(vehicles.map { $0.type })
-        return self.vehicleTypes.filter { typeIds.contains($0.id) }
-    }
-    
-    func unassignedTripLegs() -> [TripLeg] {
-        return self.tripLegs.filter { $0.parent_id == nil || $0.parent_id! < 0}
+    func interactions(for id: Int) -> [PersonInteraction] {
+        return interactions.filter { $0.parent_activity_id == id }
     }
     
     // MARK: - Core Synchronization Logic
@@ -297,8 +298,8 @@ class MyActivitiesPageViewModel: ObservableObject {
     func uploadLocalChanges() async {
         guard let context = modelContext else { return }
         
-        let instancesToSync = self.instances.filter { $0.syncStatus != .synced }
-        let tripsToSync = self.tripLegs.filter { $0.syncStatus != .synced }
+        let instancesToSync = self.instances.filter { $0.syncStatus != .synced && $0.isValid() }
+        let tripsToSync = self.tripLegs.filter { $0.syncStatus != .synced && $0.isValid()}
         
         guard !instancesToSync.isEmpty || !tripsToSync.isEmpty else { return }
         
@@ -369,12 +370,11 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     
     private func sync(tripLeg: TripLeg, in context: ModelContext) async {
-        let payload = TripLegPayload(
-            parent_id: tripLeg.parent_id, time_start: tripLeg.time_start,
-            time_end: tripLeg.time_end, vehicle_id: tripLeg.vehicle_id,
-            place_start_id: tripLeg.place_start_id, place_end_id: tripLeg.place_end_id,
-            am_driver: tripLeg.am_driver, path_str: tripLeg.path_str, details: tripLeg.details
-        )
+        guard let payload = TripLegPayload(from: tripLeg) else {
+            print("-> TripLeg \(tripLeg.id) is incomplete. Cannot sync.")
+            tripLeg.syncStatus = .failed
+            return
+        }
         
         do {
             if tripLeg.id < 0 {

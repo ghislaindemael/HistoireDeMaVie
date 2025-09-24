@@ -94,7 +94,12 @@ final class TripLeg : CustomStringConvertible, SyncableModel {
     }
     
     func isValid() -> Bool {
-        if parent_id == nil {
+        guard parent_id != nil,
+              place_start_id != nil,
+              place_end_id != nil,
+              vehicle_id != nil,
+              //time_start != nil,
+              time_end != nil else {
             return false
         }
         return true
@@ -116,13 +121,27 @@ struct TripLegDTO: Codable, Sendable {
 }
 
 struct TripLegPayload: Codable {
-    var parent_id: Int?
+    var parent_id: Int
     var time_start: Date
-    var time_end: Date?
-    var vehicle_id: Int?
-    var place_start_id: Int?
-    var place_end_id: Int?
+    var time_end: Date
+    var vehicle_id: Int
+    var place_start_id: Int
+    var place_end_id: Int
     var am_driver: Bool
     var path_str: String?
     var details: String?
+    
+    init?(from tripLeg: TripLeg) {
+        guard tripLeg.isValid() else { return nil }
+        
+        self.parent_id = tripLeg.parent_id!
+        self.time_start = tripLeg.time_start
+        self.time_end = tripLeg.time_end!
+        self.vehicle_id = tripLeg.vehicle_id!
+        self.place_start_id = tripLeg.place_start_id!
+        self.place_end_id = tripLeg.place_end_id!
+        self.am_driver = tripLeg.am_driver
+        self.path_str = tripLeg.path_str
+        self.details = tripLeg.details
+    }
 }

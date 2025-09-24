@@ -11,11 +11,11 @@ import SwiftData
 struct ActivityInstanceRowView: View {
     @Environment(\.modelContext) private var modelContext
     
+    @Query private var activities: [Activity]
+    
     let instance: ActivityInstance
-    let activity: Activity?
     let tripLegs: [TripLeg]
-    let tripLegsVehicles: [Vehicle]
-    let tripLegsPlaces: [Place]
+    var interactions: [PersonInteraction]? = nil
     let selectedDate: Date
     let onStartTripLeg: (Int) -> Void
     let onEditTripLeg: (TripLeg) -> Void
@@ -23,6 +23,40 @@ struct ActivityInstanceRowView: View {
     let onStartInteraction: (Int) -> Void
     let onEditInteraction: (PersonInteraction) -> Void
     let onEndInteraction: (PersonInteraction) -> Void
+    
+    private var activity: Activity? {
+        activities.first
+    }
+    
+    init(
+        instance: ActivityInstance,
+        tripLegs: [TripLeg],
+        interactions: [PersonInteraction]? = nil,
+        selectedDate: Date,
+        onStartTripLeg: @escaping (Int) -> Void,
+        onEditTripLeg: @escaping (TripLeg) -> Void,
+        onEndTripLeg: @escaping (TripLeg) -> Void,
+        onStartInteraction: @escaping (Int) -> Void,
+        onEditInteraction: @escaping (PersonInteraction) -> Void,
+        onEndInteraction: @escaping (PersonInteraction) -> Void
+    ) {
+        self.instance = instance
+        if let id = instance.activity_id {
+            _activities = Query(filter: #Predicate { $0.id == id })
+        } else {
+            _activities = Query(filter: #Predicate { _ in false })
+        }
+                
+        self.tripLegs = tripLegs
+        self.interactions = interactions
+        self.selectedDate = selectedDate
+        self.onStartTripLeg = onStartTripLeg
+        self.onEditTripLeg = onEditTripLeg
+        self.onEndTripLeg = onEndTripLeg
+        self.onStartInteraction = onStartInteraction
+        self.onEditInteraction = onEditInteraction
+        self.onEndInteraction = onEndInteraction
+    }
     
     var hasActiveLeg: Bool {
         tripLegs.contains { $0.time_end == nil }
@@ -33,35 +67,13 @@ struct ActivityInstanceRowView: View {
             
             basicsSection
             detailsSection
-            
-            
-            if let act = activity,
-               instance.time_end == nil,
-               act.can(.create_trip_legs),
-               act.can(.create_interactions)
-            {
-                HStack {
-                    if act.can(.create_trip_legs) {
-                        StartItemButton(title: "Start trip leg") {
-                            onStartTripLeg(instance.id)
-                        }
-                        .disabled(hasActiveLeg)
-                    }
-                    if act.can(.create_interactions) {
-                        StartItemButton(title: "Start interaction") {
-                            onStartInteraction(instance.id)
-                        }
-                    }
-                }
-            }
-            
+                        
             if activity?.can(.create_trip_legs) == true {
                 tripLegsSection
-                    .padding(.leading, 30)
             }
             
             if activity?.can(.create_interactions) == true {
-                
+                peopleInteractionsSection
             }
         }
         
@@ -76,7 +88,7 @@ struct ActivityInstanceRowView: View {
             VStack(alignment: .leading) {
                 HStack() {
                     IconView(
-                        iconString: activity?.icon ?? "x.circle",
+                        iconString: activity?.icon ?? "questionmark.circle",
                         size: 30,
                         tint: instance.activity_id == nil ? .red : .primary,
                     )
@@ -112,16 +124,9 @@ struct ActivityInstanceRowView: View {
                 
             }
             .padding(.vertical, 4)
-            HStack(spacing: 2) {
-                if !instance.isValid() {
-                    IconView(
-                        iconString: "exclamationmark.triangle.fill",
-                        tint: .yellow
-                    )
-                }
-                SyncStatusIndicator(status: instance.syncStatus)
-            }
-            .padding([.top, .trailing], 0)
+            
+            SyncStatusIndicator(status: instance.syncStatus)
+                .padding([.top, .trailing], 0)
         }
         .frame(maxWidth: .infinity)
     }
@@ -156,29 +161,55 @@ struct ActivityInstanceRowView: View {
     
     @ViewBuilder
     private var tripLegsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading) {
             ForEach(tripLegs) { leg in
                 Button(action: { onEditTripLeg(leg) }) {
-                    VStack{
-                        TripLegRowView(
-                            tripLeg: leg,
-                            vehicle: tripLegsVehicles.first(where: {$0.id == leg.vehicle_id}),
-                            places: tripLegsPlaces
-                        )
-                        if leg.time_end == nil {
-                            EndItemButton(title: "End Trip Leg") {
-                                onEndTripLeg(leg)
-                            }
-                        }
-                    }
+                    TripLegRowView(
+                        tripLeg: leg,
+                        isSmall: true,
+                        onEnd: {
+                            onEndTripLeg(leg)
+                        },
+                    )
                 }
                 .buttonStyle(.plain)
             }
-        }
+            StartItemButton(title: "Start trip leg") {
+                onStartTripLeg(instance.id)
+            }
+            .disabled(hasActiveLeg)
+        }.padding(0)
     }
     
     @ViewBuilder
+    private var peopleInteractionsSection: some View {
+        if let interactions, !interactions.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(interactions) { interaction in
+                    Button(action: { onEditInteraction(interaction) }) {
+                        PersonInteractionRowView(
+                            interaction: interaction,
+                            instance: nil,
+                            onEnd: {
+                                onEndInteraction(interaction)
+                            }
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                StartItemButton(title: "Start interaction") {
+                    onStartInteraction(instance.id)
+                }
+            }
+        } else {
+            EmptyView()
+        }
+    }
+
+    
+    @ViewBuilder
     private var mealContentText: some View {
+        
         let displayText = instance.decodedActivityDetails?.meal?.displayText ?? "Meal not logged."
         let isMissingRequiredDetails = activity!.must(.log_food) && instance.decodedActivityDetails?.meal == nil
 
@@ -208,6 +239,80 @@ struct ActivityInstanceRowView: View {
 
 // MARK: - Preview
 
+struct InstanceSection: View {
+    let title: String
+    let instance: ActivityInstance
+    let interactions: [PersonInteraction]?
+    let people: [Person]?
+    
+    @Environment(\.modelContext) private var modelContext
+    
+    // Fetch trip legs for this instance
+    private var tripLegs: [TripLeg] {
+        let instanceId = instance.id
+        let descriptor = FetchDescriptor<TripLeg>(
+            predicate: #Predicate { $0.parent_id == instanceId },
+            sortBy: [SortDescriptor(\.time_start)]
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+
+    private var vehicles: [Vehicle] {
+        let vehicleIds = tripLegs.compactMap { $0.vehicle_id }
+        guard !vehicleIds.isEmpty else { return [] }
+        
+        let descriptor = FetchDescriptor<Vehicle>(
+            predicate: #Predicate { vehicleIds.contains($0.id) }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+    
+    private var places: [Place] {
+        let placeIds = tripLegs
+            .flatMap { [$0.place_start_id, $0.place_end_id] }
+            .compactMap { $0 }
+        guard !placeIds.isEmpty else { return [] }
+        
+        let descriptor = FetchDescriptor<Place>(
+            predicate: #Predicate { placeIds.contains($0.id) }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    
+    init(
+        title: String,
+        instance: ActivityInstance,
+        interactions: [PersonInteraction]? = nil,
+        people: [Person]? = nil
+    ) {
+        self.title = title
+        self.instance = instance
+        self.interactions = interactions
+        self.people = people
+    }
+    
+    var body: some View {
+        Section(title) {
+            ActivityInstanceRowView(
+                instance: instance,
+                tripLegs: tripLegs,
+                interactions: interactions,
+                selectedDate: .now,
+                onStartTripLeg: { _ in },
+                onEditTripLeg: { _ in },
+                onEndTripLeg: { _ in },
+                onStartInteraction: { _ in },
+                onEditInteraction: { _ in },
+                onEndInteraction: { _ in }
+            )
+        }
+    }
+}
+
+
+
 struct PreviewWrapperView: View {
     @Query private var instances: [ActivityInstance]
     @Query private var activities: [Activity]
@@ -217,49 +322,29 @@ struct PreviewWrapperView: View {
     
     var body: some View {
         List {
-            if let inProgressInstance = instances.first(where: { $0.id == 1 }) {
-                Section("In Progress") {
-                    ActivityInstanceRowView(
-                        instance: inProgressInstance,
-                        activity: activities.first(where: { $0.id == inProgressInstance.activity_id }),
-                        tripLegs: tripLegs.filter { $0.parent_id == inProgressInstance.id },
-                        tripLegsVehicles: vehicles,
-                        tripLegsPlaces: places,
-                        selectedDate: .now,
-                        onStartTripLeg: { _ in }, onEditTripLeg: { _ in }, onEndTripLeg: { _ in },
-                        onStartInteraction: { _ in }, onEditInteraction: { _ in }, onEndInteraction: { _ in }
-                    )
-                }
+            if let inProgress = instances.first(where: { $0.id == 1 }) {
+                InstanceSection(
+                    title: "In Progress",
+                    instance: inProgress,
+                )
             }
-            
-            if let completedInstance = instances.first(where: { $0.id == 2 }) {
-                Section("Completed") {
-                    ActivityInstanceRowView(
-                        instance: completedInstance,
-                        activity: activities.first(where: { $0.id == completedInstance.activity_id }),
-                        tripLegs: [],
-                        tripLegsVehicles: [],
-                        tripLegsPlaces: [],
-                        selectedDate: .now,
-                        onStartTripLeg: { _ in }, onEditTripLeg: { _ in }, onEndTripLeg: { _ in },
-                        onStartInteraction: { _ in }, onEditInteraction: { _ in }, onEndInteraction: { _ in }
-                    )
-                }
+            if let completed = instances.first(where: { $0.id == 2 }) {
+                InstanceSection(
+                    title: "Completed",
+                    instance: completed,
+                )
             }
-            
-            if let unassignedInstance = instances.first(where: { $0.id == 3 }) {
-                Section("Unassigned") {
-                    ActivityInstanceRowView(
-                        instance: unassignedInstance,
-                        activity: nil,
-                        tripLegs: [],
-                        tripLegsVehicles: [],
-                        tripLegsPlaces: [],
-                        selectedDate: .now,
-                        onStartTripLeg: { _ in }, onEditTripLeg: { _ in }, onEndTripLeg: { _ in },
-                        onStartInteraction: { _ in }, onEditInteraction: { _ in }, onEndInteraction: { _ in }
-                    )
-                }
+            if let unassigned = instances.first(where: { $0.id == 3 }) {
+                InstanceSection(
+                    title: "Unassigned",
+                    instance: unassigned,
+                )
+            }
+            if let trip = instances.first(where: { $0.id == 4 }) {
+                InstanceSection(
+                    title: "Trip",
+                    instance: trip,
+                )
             }
             
         }
@@ -283,7 +368,12 @@ struct PreviewWrapperView: View {
         let place2 = Place(id: 102, name: "Client Site A", city_id: 2, city_name: "Lausanne")
         let place3 = Place(id: 103, name: "Warehouse", city_id: 3, city_name: "Zurich")
         
-        let vehicle1 = Vehicle(id: 201, name: "Van-01", type: 2)
+        let vehicle1 = Vehicle(
+            id: 201,
+            name: "Van-01",
+            type: 1,
+            label: "🚙 Viano"
+        )
         
         let workActivity = Activity(
             id: 1,
@@ -298,6 +388,14 @@ struct PreviewWrapperView: View {
             icon: "fork.knife"
         )
         
+        let travelActivity = Activity(
+            id: 3,
+            name: "Travel",
+            slug: "travel",
+            icon: "point.bottomleft.forward.to.point.topright.scurvepath.fill",
+            allowedCapabilities: [.create_trip_legs]
+        )
+        
         let inProgressInstance = ActivityInstance(
             id: 1,
             time_start: .now.addingTimeInterval(-3600),
@@ -307,6 +405,7 @@ struct PreviewWrapperView: View {
             syncStatus: .syncing
         )
         
+        
         let completedInstance = ActivityInstance(
             id: 2,
             time_start: .now.addingTimeInterval(-10800),
@@ -314,28 +413,6 @@ struct PreviewWrapperView: View {
             activity_id: lunchActivity.id,
             percentage: 100,
             syncStatus: .synced
-        )
-        
-        let completedLeg = TripLeg(
-            id: 301,
-            parent_id: inProgressInstance.id,
-            time_start: .now.addingTimeInterval(-3500),
-            time_end: .now.addingTimeInterval(-1800),
-            vehicle_id: vehicle1.id,
-            place_start_id: place1.id,
-            place_end_id: place2.id,
-            syncStatus: .synced
-        )
-        
-        let inProgressLeg = TripLeg(
-            id: 302,
-            parent_id: inProgressInstance.id,
-            time_start: .now.addingTimeInterval(-900),
-            time_end: nil,
-            vehicle_id: vehicle1.id,
-            place_start_id: place2.id,
-            place_end_id: nil,
-            syncStatus: .syncing
         )
         
         let unassignedInstance = ActivityInstance(
@@ -347,10 +424,51 @@ struct PreviewWrapperView: View {
             syncStatus: .local
         )
         
+        let travelInstance = ActivityInstance(
+            id: 4,
+            time_start: .now,
+            time_end: nil,
+            activity_id: travelActivity.id,
+            percentage: 50,
+            syncStatus: .local
+        )
+        
+        let completedLeg = TripLeg(
+            id: 301,
+            parent_id: travelInstance.id,
+            time_start: .now.addingTimeInterval(-3500),
+            time_end: .now.addingTimeInterval(-1800),
+            vehicle_id: nil,
+            place_start_id: place1.id,
+            place_end_id: place2.id,
+            syncStatus: .synced
+        )
+        
+        let inProgressLeg = TripLeg(
+            id: 302,
+            parent_id: inProgressInstance.id,
+            time_start: .now.addingTimeInterval(-900),
+            time_end: nil,
+            vehicle_id: nil,
+            place_start_id: place2.id,
+            place_end_id: nil,
+            syncStatus: .syncing
+        )
+        
+        
         [place1, place2, place3].forEach { context.insert($0) }
         context.insert(vehicle1)
-        [workActivity, lunchActivity].forEach { context.insert($0) }
-        [inProgressInstance, completedInstance, unassignedInstance].forEach { context.insert($0) }
+        [
+            workActivity,
+            lunchActivity,
+            travelActivity
+        ].forEach { context.insert($0) }
+        [
+            inProgressInstance,
+            completedInstance,
+            unassignedInstance,
+            travelInstance
+        ].forEach { context.insert($0) }
         [completedLeg, inProgressLeg].forEach { context.insert($0) }
         
     }

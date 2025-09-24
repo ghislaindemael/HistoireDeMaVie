@@ -10,7 +10,8 @@ import SwiftUI
 extension ActivityInstance {
     
     var debugView: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("ID: \(id)")
             HStack {
                 Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
                 
@@ -29,14 +30,21 @@ extension ActivityInstance {
             } else {
                 Text("Activity: Unset")
                     .bold()
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.red)
                 
             }
             
+            Text("Percentage: \(percentage ?? 100)%")
+            
             Text("Details: \(details ?? "N/A")")
             
+            if decodedActivityDetails != nil {
+                Text("Activity Details:")
+                Text(decodedActivityDetails.debugDescription)
+            }
+            
+            
         }
-        .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
     }

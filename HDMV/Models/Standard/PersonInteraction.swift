@@ -73,24 +73,24 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     
     // MARK: - Computed properties
     
-    func effectiveStart(activity: ActivityInstance?) -> (date: Date?, overridden: Bool) {
-        guard let activity else {
+    func effectiveStart(instance: ActivityInstance?) -> (date: Date?, overridden: Bool) {
+        guard let instance else {
             return (time_start, false)
         }
         if let time_start {
             return (time_start, true)
         }
-        return (activity.time_start, false)
+        return (instance.time_start, false)
     }
     
-    func effectiveEnd(activity: ActivityInstance?) -> (date: Date?, overridden: Bool) {
-        guard let activity else {
+    func effectiveEnd(instance: ActivityInstance?) -> (date: Date?, overridden: Bool) {
+        guard let instance else {
             return (time_end, false)
         }
         if let time_end {
             return (time_end, true)
         }
-        return (activity.time_end, false)
+        return (instance.time_end, false)
     }
     
     var isStandalone: Bool {

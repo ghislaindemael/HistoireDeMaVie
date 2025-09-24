@@ -26,11 +26,12 @@ final class Vehicle: Identifiable {
         case city_id
     }
     
-    init(id: Int, name: String, type: Int, city_id: Int? = nil, cache: Bool = true) {
+    init(id: Int, name: String, type: Int, city_id: Int? = nil, label: String = "", cache: Bool = true) {
         self.id = id
         self.name = name
         self.type = type
         self.city_id = city_id
+        self.label = label
         self.cache = cache
     }
     

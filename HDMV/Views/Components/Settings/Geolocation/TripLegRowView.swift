@@ -10,110 +10,73 @@ import SwiftUI
 import SwiftData
 
 struct TripLegRowView: View {
-
-    let isSmall: Bool = true
     let tripLeg: TripLeg
-    let vehicle: Vehicle?
-    let places: [Place]
-    
-    private var startPlace: Place? {
-        places.first { $0.id == tripLeg.place_start_id }
+    let onEnd: (() -> Void)?
+    private let isSmall: Bool
+
+    init(tripLeg: TripLeg, isSmall: Bool = true, onEnd: (() -> Void)? = nil) {
+        self.tripLeg = tripLeg
+        self.onEnd = onEnd
+        self.isSmall = isSmall
+
     }
-    
-    private var endPlace: Place? {
-        places.first { $0.id == tripLeg.place_end_id }
-    }
-    
+        
     var body: some View {
-        if isSmall {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    Text(String(vehicle?.label.prefix(1) ?? "(?)"))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    HStack {
-                        if startPlace != nil {
-                            Text(startPlace!.city_name)
-                        } else if tripLeg.place_start_id != nil {
-                            Text("Uncached")
-                                .foregroundStyle(.orange)
+        VStack {
+            if isSmall {
+                VStack(alignment: .leading) {
+                    HStack(spacing: 10) {
+                        VehicleDisplayView(vehicleId: tripLeg.vehicle_id, isSmall: isSmall)
+                        
+                        HStack {
+                            PlaceDisplayView(placeId: tripLeg.place_start_id, isSmall: isSmall)
+                            Image(systemName: "arrow.right").padding(.leading, 2)
+                            PlaceDisplayView(placeId: tripLeg.place_end_id, isSmall: isSmall)
                             
-                        } else {
-                            Text("Not set")
-                                .foregroundStyle(.red)
-                                .fontWeight(.semibold)
                         }
-                        
-                        Image(systemName: "arrow.right")
-                            .padding(.leading, 2)
-                        
-                        if tripLeg.time_end == nil {
-                            BlinkingDotsView()
-                        } else if endPlace != nil {
-                            Text(endPlace!.city_name)
-                        } else if tripLeg.place_end_id != nil {
-                            Text("Uncached")
-                                .foregroundStyle(.orange)
-                        } else {
-                            Text("Not set")
-                                .foregroundStyle(.red)
-                                .fontWeight(.semibold)
+                        Spacer()
+                        SyncStatusIndicator(status: tripLeg.syncStatus)
+                    }
+                    DateRangeDisplayView(
+                        startDate: tripLeg.time_start,
+                        endDate: tripLeg.time_end
+                    )
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) {
+                        VehicleDisplayView(vehicleId: tripLeg.vehicle_id)
+                        HStack {
+                            PlaceDisplayView(placeId: tripLeg.place_start_id, isSmall: isSmall)
+                            Image(systemName: "arrow.right").padding(.leading, 2)
+                            PlaceDisplayView(placeId: tripLeg.place_end_id, isSmall: isSmall)
                         }
+                        Spacer()
+                        SyncStatusIndicator(status: tripLeg.syncStatus)
                     }
-                    Spacer()
-                    SyncStatusIndicator(status: tripLeg.syncStatus)
-                }
-                HStack {
-                    Text(tripLeg.time_start, style: .time)
-                    Image(systemName: "arrow.right")
-                    if let endTime = tripLeg.time_end {
-                        Text(endTime, style: .time)
-                    } else {
-                        BlinkingDotsView()
-                    }
-                    Spacer()
-                }
-                
-            }
-        } else {
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    Text(vehicle?.label ?? "(?) No Vehicle")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Spacer()
-                    SyncStatusIndicator(status: tripLeg.syncStatus)
-                }
-                HStack {
-                    Text(tripLeg.time_start, style: .time)
-                        .font(.headline)
-                    
-                    Image(systemName: "arrow.right")
-                    
-                    if let endTime = tripLeg.time_end {
-                        Text(endTime, style: .time)
-                            .font(.headline)
-                    } else {
-                        BlinkingDotsView()
-                    }
-                    Spacer()
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(startPlace?.localName ?? "Unknown Start")
-                    HStack {
-                        Image(systemName: "arrow.turn.down.right")
-                            .padding(.leading, 2)
-                        
-                        Text(endPlace?.localName ?? (tripLeg.time_end == nil ? "Not set" : "Unknown End"))
+                    HStack(spacing: 4) {
+                        PlaceDisplayView(placeId: tripLeg.place_start_id)
+                        Image(systemName: "arrow.turn.down.right").padding(.leading, 2)
+                        PlaceDisplayView(placeId: tripLeg.place_end_id)
                         
                     }
+                    .padding(.leading, 4)
                 }
-                .padding(.leading, 4)
-                
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            if tripLeg.time_end == nil, let onEnd = onEnd {
+                EndItemButton(title: "End Trip Leg") {
+                    onEnd()
+                }
+            }
         }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondaryBackgroundColor)
+        )
     }
+    
 }
+
+

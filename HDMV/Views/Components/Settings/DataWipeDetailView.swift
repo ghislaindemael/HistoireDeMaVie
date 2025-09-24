@@ -95,7 +95,9 @@ struct DataWipeDetailView: View {
                     items = results
                     count = results.count
                 case is ActivityInstance.Type:
-                    let descriptor = FetchDescriptor<ActivityInstance>()
+                    let descriptor = FetchDescriptor<ActivityInstance>(
+                        sortBy: [SortDescriptor(\ActivityInstance.time_start, order: .reverse)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -190,9 +192,7 @@ struct DataWipeDetailView: View {
             case let tripleg as TripLeg:
                 return AnyView(
                     TripLegRowView(
-                        tripLeg: tripleg,
-                        vehicle: nil,
-                        places: []
+                        tripLeg: tripleg
                     )
                 )
             default:

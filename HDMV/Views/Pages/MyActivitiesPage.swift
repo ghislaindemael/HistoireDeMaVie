@@ -18,6 +18,15 @@ struct MyActivitiesPage: View {
     @State private var tripLegToEdit: TripLeg?
     @State private var interactionToEdit: PersonInteraction?
     
+    private func onAppear() {
+        if let navDate = appNavigator.selectedDate {
+            viewModel.selectedDate = navDate
+            appNavigator.selectedDate = nil
+        }
+        viewModel.setup(modelContext: modelContext)
+        viewModel.fetchDailyData()
+    }
+    
     var body: some View {
         NavigationStack {
             mainListView
@@ -31,11 +40,11 @@ struct MyActivitiesPage: View {
                     singleTapAction: { viewModel.createActivtiyInstance() },
                     longPressAction: { viewModel.createActivityInstanceForDate() },
                 )
-                .onChange(of: viewModel.filterMode) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.selectedDate) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterActivityId) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterStartDate) { viewModel.fetchInstances() }
-                .onChange(of: viewModel.filterEndDate) { viewModel.fetchInstances() }
+                .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.selectedDate) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterActivityId) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
                 .sheet(item: $instanceToEdit) { instance in
                     ActivityInstanceDetailSheet(
                         instance: instance,
@@ -43,12 +52,7 @@ struct MyActivitiesPage: View {
                     )
                 }
                 .sheet(item: $tripLegToEdit) { leg in
-                    TripLegDetailSheet(
-                        tripLeg: leg,
-                        vehicles: viewModel.vehicles,
-                        cities: viewModel.cities,
-                        places: viewModel.places
-                    )
+                    TripLegDetailSheet(tripLeg: leg,)
                 }
         }
     }
@@ -60,18 +64,16 @@ struct MyActivitiesPage: View {
             List {
                 ForEach($viewModel.instances) { $instance in
                     VStack {
-                        let activity = viewModel.findActivity(by: instance.activity_id)
                         let instanceTripLegs = viewModel.tripLegs(for: instance.id)
-                        let instanceVehicles = viewModel.tripsVehicles(for: instanceTripLegs)
-                        let instancePlaces = viewModel.tripsPlaces(for: instanceTripLegs)
+                        let instanceInteractions = viewModel.interactions(for: instance.id)
+                        
                         let hasActiveLegs = instanceTripLegs.contains { $0.time_end == nil }
+                        let hasActiveInteractions = instanceInteractions.contains { $0.time_end == nil }
                         
                         ActivityInstanceRowView(
                             instance: instance,
-                            activity: activity,
                             tripLegs: instanceTripLegs,
-                            tripLegsVehicles: instanceVehicles,
-                            tripLegsPlaces: instancePlaces,
+                            interactions: instanceInteractions,
                             selectedDate: viewModel.selectedDate,
                             onStartTripLeg: { parentId in
                                 viewModel.createTripLeg(parent_id: parentId)
@@ -97,7 +99,10 @@ struct MyActivitiesPage: View {
                         .onTapGesture {
                             instanceToEdit = instance
                         }
-                        if instance.time_end == nil && !hasActiveLegs {
+                        if instance.time_end == nil
+                            && !hasActiveLegs
+                            && !hasActiveInteractions
+                        {
                             EndItemButton(title: "End Activity") {
                                 viewModel.endActivityInstance(instance: instance)
                             }
@@ -110,12 +115,5 @@ struct MyActivitiesPage: View {
         }
     }
     
-    private func onAppear() {
-        if let navDate = appNavigator.selectedDate {
-            viewModel.selectedDate = navDate
-            appNavigator.selectedDate = nil
-        }
-        viewModel.setup(modelContext: modelContext)
-        viewModel.fetchInstances()
-    }
+    
 }

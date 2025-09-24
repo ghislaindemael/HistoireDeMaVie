@@ -24,7 +24,7 @@ struct PlaceDetailsEditView: View {
             get: { metadata?.place?.placeId },
             set: { newPlaceId in
                 if metadata == nil {
-                    metadata = ActivityDetails(type: activityType)
+                    metadata = ActivityDetails()
                 }
                 if metadata?.place == nil {
                     metadata?.place = PlaceDetails()

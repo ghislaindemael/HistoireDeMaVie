@@ -21,7 +21,7 @@ struct SyncStatusIndicator: View {
                 IconView(iconString: "checkmark.icloud.fill", tint: .green)
                 
             case .syncing:
-                IconView(iconString: "arrow.trianglehead.2.clockwise.rotate.90.icloud.fill", tint: .orange)
+                IconView(iconString: "arrow.trianglehead.2.clockwise.rotate.90.icloud.fill", tint: .blue)
                 
             case .local:
                 IconView(iconString: "xmark.icloud.fill", tint: .orange)

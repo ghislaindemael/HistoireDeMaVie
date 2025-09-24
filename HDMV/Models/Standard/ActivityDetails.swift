@@ -11,10 +11,6 @@ struct ReadingDetails: Codable {
     var pageCount: Int
 }
 
-struct TripDetails: Codable {
-    
-}
-
 struct PlaceDetails: Codable {
     var placeId: Int?
 }
@@ -22,11 +18,8 @@ struct PlaceDetails: Codable {
 // MARK: The handler
 
 struct ActivityDetails: Codable {
-    var type: ActivityType
     var meal: MealDetails?
     var reading: ReadingDetails?
-    var trip: TripDetails?
-    
     var place: PlaceDetails?
 }
 

@@ -17,7 +17,6 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     var parent_id: Int?
     var icon: String
     var type: ActivityType?
-    var permissions: [String] = []
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
     var selectable: Bool = true

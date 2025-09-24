@@ -18,7 +18,7 @@ struct MealDetailsEditView: View {
             set: { newMealDetails in
                 
                 if metadata == nil {
-                    metadata = ActivityDetails(type: .meal)
+                    metadata = ActivityDetails()
                 }
                 
                 metadata?.meal = newMealDetails

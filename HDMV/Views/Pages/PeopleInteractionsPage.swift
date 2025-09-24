@@ -126,17 +126,14 @@ struct PeopleInteractionsPage: View {
         VStack(spacing: 8) {
             PersonInteractionRowView(
                 interaction: interaction,
-                person: viewModel.people.first(where: { $0.id == interaction.person_id }),
-                activity: nil
+                instance: nil,
+                onEnd: {
+                    viewModel.endPersonInteraction(interaction: interaction)
+                }
             )
             .contentShape(Rectangle())
             .onTapGesture {
                 interactionToEdit = interaction
-            }
-            if interaction.time_end == nil {
-                EndItemButton(title: "End Interaction") {
-                    viewModel.endPersonInteraction(interaction: interaction)
-                }
             }
         }
     }

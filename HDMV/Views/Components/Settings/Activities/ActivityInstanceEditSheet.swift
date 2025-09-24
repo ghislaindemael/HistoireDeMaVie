@@ -42,18 +42,14 @@ struct ActivityInstanceDetailSheet: View {
                 
                 if selectedActivity?.can(.create_trip_legs) == true {
                     tripLegsSection
-                    if !viewModel.unassignedTripLegs().isEmpty {
-                        claimTripLegsSection
-                    }
+                    claimTripLegsSection
+                    
                 }
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
             .sheet(item: $tripLegToEdit) { leg in
                 TripLegDetailSheet(
                     tripLeg: leg,
-                    vehicles: viewModel.vehicles,
-                    cities: viewModel.cities,
-                    places: viewModel.places
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -115,25 +111,24 @@ struct ActivityInstanceDetailSheet: View {
     private func specializedDetailsSection(for activity: Activity) -> some View {
         Section(header: Text("Activity Details")) {
             VStack {
-                switch activity.type {
-                    case .meal:
-                        MealDetailsEditView(metadata: $editor.decodedActivityDetails)
-                    case .reading:
-                        //ReadingDetailsEditView(metadata: $instance.decodedActivityDetails)
-                        EmptyView()
-                    case .trip:
-                        //TripDetailsEditView(metadata: $instance.decodedActivityDetails)
-                        EmptyView()
-                    case .generic, .none:
-                        EmptyView()
+                if activity.can(.log_food) {
+                    MealDetailsEditView(metadata: $editor.decodedActivityDetails)
                 }
                 
-                if activity.permissions.contains("place") {
-                    PlaceDetailsEditView(
-                        metadata: $editor.decodedActivityDetails,
-                        activityType: activity.type ?? .generic,
-                        cities: viewModel.cities,
-                        places: viewModel.places
+                if activity.can(.link_place) {
+                    PlaceSelectorView(
+                        selectedPlaceId: Binding(
+                            get: { editor.decodedActivityDetails?.place?.placeId },
+                            set: { newValue in
+                                if editor.decodedActivityDetails == nil {
+                                    editor.decodedActivityDetails = ActivityDetails()
+                                }
+                                if editor.decodedActivityDetails?.place == nil {
+                                    editor.decodedActivityDetails?.place = PlaceDetails()
+                                }
+                                editor.decodedActivityDetails?.place?.placeId = newValue
+                            }
+                        )
                     )
                 }
             }
@@ -142,15 +137,13 @@ struct ActivityInstanceDetailSheet: View {
     
     private var tripLegsSection: some View {
         Section("Trip Legs") {
-            ForEach(viewModel.tripLegs(for: instance.id)) { leg in
-                let instanceTripLegs = viewModel.tripLegs(for: instance.id)
-                let instancePlaces = viewModel.tripsPlaces(for: instanceTripLegs)
-                
+            ForEach(viewModel.tripLegs(for: instance.id)) { leg in                
                 Button(action: { tripLegToEdit = leg }) {
                     TripLegRowView(
                         tripLeg: leg,
-                        vehicle: viewModel.findVehicle(by: leg.vehicle_id),
-                        places: instancePlaces
+                        onEnd: {
+                            viewModel.endTripLeg(leg: leg)
+                        }
                     )
                 }
             }
@@ -161,13 +154,9 @@ struct ActivityInstanceDetailSheet: View {
     
     private var claimTripLegsSection: some View {
         Section("Claim trip legs"){
-            ForEach(viewModel.unassignedTripLegs()) { leg in
+            ForEach(viewModel.tripLegs) { leg in
                 Button(action: { viewModel.claim(tripLeg: leg, for: instance) }) {
-                    TripLegRowView(
-                        tripLeg: leg,
-                        vehicle: viewModel.findVehicle(by: leg.vehicle_id),
-                        places: viewModel.tripsPlaces(for: [leg])
-                    )
+                    TripLegRowView(tripLeg: leg)
                 }
             }
         }
