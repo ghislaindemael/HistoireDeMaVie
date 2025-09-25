@@ -10,10 +10,22 @@ import SwiftData
 
 struct PersonInteractionRowView: View {
     let interaction: PersonInteraction
-    let instance: ActivityInstance?
     let onEnd: () -> Void
     
     var body: some View {
+        content
+            .if(!interaction.isStandalone) { view in
+                view
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.secondaryBackgroundColor)
+                    )
+            }
+    }
+    
+    @ViewBuilder
+    private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 PersonDisplayView(personId: interaction.person_id)
@@ -21,27 +33,14 @@ struct PersonInteractionRowView: View {
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
-            HStack {
-                let startInfo = interaction.effectiveStart(instance: instance)
-                if let start = startInfo.date {
-                    Text(DateFormatter.timeOnly.string(from: start))
-                        .fontWeight(startInfo.overridden ? .bold : .regular)
-                } else {
-                    Text("—").foregroundColor(.secondary)
-                }
-                
-                Image(systemName: "arrow.right")
-                
-                let endInfo = interaction.effectiveEnd(instance: instance)
-                if let end = endInfo.date {
-                    Text(DateFormatter.timeOnly.string(from: end))
-                        .fontWeight(endInfo.overridden ? .bold : .regular)
-                } else {
-                    Text("—").foregroundColor(.secondary)
-                }
-            }
+            DateRangeDisplayView(startDate: interaction.time_start, endDate: interaction.time_end)
             
             HStack {
+                if interaction.timed == false {
+                    Image(systemName: "clock")
+                        .foregroundStyle(.red)
+                        .bold()
+                }
                 if interaction.in_person {
                     Image(systemName: "person.2")
                 } else {
@@ -67,8 +66,6 @@ struct PersonInteractionRowView: View {
             if interaction.time_end == nil {
                 EndItemButton(title: "End Interaction", action: onEnd)
             }
-            
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

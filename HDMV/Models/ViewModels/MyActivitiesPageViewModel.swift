@@ -37,12 +37,6 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     @Published var activityTree: [Activity] = []
     
-    var hasLocalChanges: Bool {
-        return instances.contains { $0.syncStatus != .synced }
-        || tripLegs.contains { $0.syncStatus != .synced }
-        || interactions.contains { $0.syncStatus != .synced}
-    }
-    
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchActivities()
@@ -66,7 +60,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     func fetchDailyData() {
         fetchInstances()
         fetchTripLegs()
-        // fetchInteractions()
+        fetchInteractions()
     }
  
     /// A single, powerful function to fetch instances based on the current filter mode.
@@ -145,6 +139,33 @@ class MyActivitiesPageViewModel: ObservableObject {
             print("Fetched \(self.tripLegs.count) trip legs")
         } catch {
             print("Failed to fetch trip legs: \(error)")
+        }
+    }
+    
+    func fetchInteractions() {
+        guard let context = modelContext else { return }
+        
+        let descriptor: FetchDescriptor<PersonInteraction>
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+        let future = Date.distantFuture
+        
+        
+        let predicate = #Predicate<PersonInteraction> {
+            $0.time_start < endOfDay &&
+            ($0.time_end ?? future) > startOfDay
+        }
+        descriptor = FetchDescriptor<PersonInteraction>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+        )
+        
+        do {
+            self.interactions = try context.fetch(descriptor)
+        } catch {
+            print("Failed to fetch interactions: \(error)")
         }
     }
     
@@ -358,17 +379,6 @@ class MyActivitiesPageViewModel: ObservableObject {
         try? context.save()
     }
     
-    func claim(tripLeg: TripLeg, for instance: ActivityInstance) {
-        guard let context = modelContext else { return }
-        
-        if let legToUpdate = self.tripLegs.first(where: { $0.id == tripLeg.id }) {
-            legToUpdate.parent_id = instance.id
-            legToUpdate.syncStatus = .local
-            try? context.save()
-        }
-    }
-    
-    
     private func sync(tripLeg: TripLeg, in context: ModelContext) async {
         guard let payload = TripLegPayload(from: tripLeg) else {
             print("-> TripLeg \(tripLeg.id) is incomplete. Cannot sync.")
@@ -416,6 +426,16 @@ class MyActivitiesPageViewModel: ObservableObject {
             try context.save()
         } catch {
             print("Failed to end trip: \(error)")
+        }
+    }
+    
+    func claim(tripLeg: TripLeg, for instance: ActivityInstance) {
+        guard let context = modelContext else { return }
+        
+        if let legToUpdate = self.tripLegs.first(where: { $0.id == tripLeg.id }) {
+            legToUpdate.parent_id = instance.id
+            legToUpdate.syncStatus = .local
+            try? context.save()
         }
     }
         
@@ -480,6 +500,16 @@ class MyActivitiesPageViewModel: ObservableObject {
             try context.save()
         } catch {
             print("Failed to end interaction: \(error)")
+        }
+    }
+    
+    func claim(interaction: PersonInteraction, for instance: ActivityInstance) {
+        guard let context = modelContext else { return }
+        
+        if let intToUpdate = self.interactions.first(where: { $0.id == interaction.id }) {
+            intToUpdate.parent_activity_id = instance.id
+            intToUpdate.syncStatus = .local
+            try? context.save()
         }
     }
     

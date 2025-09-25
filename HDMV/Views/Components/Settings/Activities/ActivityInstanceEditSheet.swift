@@ -43,7 +43,11 @@ struct ActivityInstanceDetailSheet: View {
                 if selectedActivity?.can(.create_trip_legs) == true {
                     tripLegsSection
                     claimTripLegsSection
-                    
+                }
+                
+                if selectedActivity?.can(.create_interactions) == true {
+                    peopleInteractionsSection
+                    claimInteractionsSection
                 }
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
@@ -157,6 +161,36 @@ struct ActivityInstanceDetailSheet: View {
             ForEach(viewModel.tripLegs) { leg in
                 Button(action: { viewModel.claim(tripLeg: leg, for: instance) }) {
                     TripLegRowView(tripLeg: leg)
+                }
+            }
+        }
+    }
+    
+    private var peopleInteractionsSection: some View {
+        Section("Trip Legs") {
+            ForEach(viewModel.tripLegs(for: instance.id)) { leg in
+                Button(action: { tripLegToEdit = leg }) {
+                    TripLegRowView(
+                        tripLeg: leg,
+                        onEnd: {
+                            viewModel.endTripLeg(leg: leg)
+                        }
+                    )
+                }
+            }
+            
+        }
+        
+    }
+    
+    private var claimInteractionsSection: some View {
+        Section("Claim interactions"){
+            ForEach(viewModel.interactions) { interaction in
+                Button(action: { viewModel.claim(interaction: interaction, for: instance) }) {
+                    PersonInteractionRowView(
+                        interaction: interaction,
+                        onEnd: {}
+                    )
                 }
             }
         }

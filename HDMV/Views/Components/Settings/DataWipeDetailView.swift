@@ -107,7 +107,9 @@ struct DataWipeDetailView: View {
                     items = results
                     count = results.count
                 case is TripLeg.Type:
-                    let descriptor = FetchDescriptor<TripLeg>()
+                    let descriptor = FetchDescriptor<TripLeg>(
+                        sortBy: [SortDescriptor(\TripLeg.time_start, order: .reverse)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -127,7 +129,9 @@ struct DataWipeDetailView: View {
                     items = results
                     count = results.count
                 case is PersonInteraction.Type:
-                    let descriptor = FetchDescriptor<PersonInteraction>()
+                    let descriptor = FetchDescriptor<PersonInteraction>(
+                        sortBy: [SortDescriptor(\PersonInteraction.time_start, order: .reverse)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -224,6 +228,11 @@ struct DataWipeDetailView: View {
             } else {
                 appNavigator.selectedTab = .interactions
             }
+            dismiss()
+        }
+        if let leg = item as? TripLeg {
+            appNavigator.selectedDate = leg.time_start
+            appNavigator.selectedTab = .activities
             dismiss()
         }
     }

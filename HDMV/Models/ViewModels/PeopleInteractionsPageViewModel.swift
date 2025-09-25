@@ -39,27 +39,24 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     
     private func fetchLocalInteractions() -> [PersonInteraction] {
         guard let context = modelContext else { return [] }
-        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else { return [] }
-        let distantPast = Date.distantPast
-        let distantFuture = Date.distantFuture
+
         
         do {
-            let standalonePredicate = #Predicate<PersonInteraction> {
-                $0.parent_activity_id == nil
+
+            let calendar = Calendar.current
+            let startOfDay = calendar.startOfDay(for: selectedDate)
+            guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return [] }
+            let future = Date.distantFuture
+            
+            let predicate = #Predicate<PersonInteraction> {
+                $0.time_start < endOfDay &&
+                ($0.time_end ?? future) > startOfDay
             }
-            
-            let dateRangePredicate = #Predicate<PersonInteraction> {
-                ($0.time_start ?? distantPast) >= startOfDay &&
-                ($0.time_start ?? distantFuture) < endOfDay
-            }
-            
-            let compoundPredicate = #Predicate<PersonInteraction> {
-                standalonePredicate.evaluate($0) && dateRangePredicate.evaluate($0)
-            }
-            
-            let descriptor = FetchDescriptor<PersonInteraction>(predicate: compoundPredicate)
-            
+            let descriptor = FetchDescriptor<PersonInteraction>(
+                predicate: predicate,
+                sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+            )
+                        
             return try context.fetch(descriptor)
         } catch {
             print("Error during interaction fetch: \(error)")
@@ -251,37 +248,8 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     
     /// Sorts the local `interactions` array, handling both standalone and activity-linked items.
     private func sortInteractions() {
-        guard let context = modelContext else { return }
-        
-        let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        
-        do {
-            let activityPredicate = #Predicate<ActivityInstance> {
-                $0.time_start >= startOfDay && $0.time_start < endOfDay
-            }
-            let activitiesForDay = try context.fetch(FetchDescriptor(predicate: activityPredicate))
-            let activityDict = Dictionary(uniqueKeysWithValues: activitiesForDay.map { ($0.id, $0) })
-                        
-            self.interactions.sort { lhs, rhs in
-                func effectiveTime(for interaction: PersonInteraction) -> Date? {
-                    if let startTime = interaction.time_start {
-                        return startTime
-                    }
-                    if let parentId = interaction.parent_activity_id,
-                       let parentActivity = activityDict[parentId] {
-                        return parentActivity.time_start
-                    }
-                    return nil
-                }
-                
-                guard let lhsTime = effectiveTime(for: lhs) else { return false }
-                guard let rhsTime = effectiveTime(for: rhs) else { return true }
-                
-                return lhsTime > rhsTime
-            }
-        } catch {
-            print("Failed to fetch activities for sorting: \(error)")
+        self.interactions.sort {
+            ($0.time_start) < ($1.time_start)
         }
     }
         

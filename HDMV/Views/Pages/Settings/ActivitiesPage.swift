@@ -28,7 +28,6 @@ struct ActivitiesPage: View {
             .navigationTitle("Activities")
             .logPageToolbar(
                 refreshAction: { await viewModel.syncWithServer() },
-                hasLocalChanges: viewModel.hasLocalChanges,
                 syncAction: { await viewModel.syncLocalChanges() },
                 singleTapAction: { viewModel.createLocalActivity() },
                 longPressAction: {}

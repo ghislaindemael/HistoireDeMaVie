@@ -10,12 +10,13 @@ import SwiftData
 
 struct ActivityInstanceRowView: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject var settings = SettingsStore.shared
     
     @Query private var activities: [Activity]
     
     let instance: ActivityInstance
     let tripLegs: [TripLeg]
-    var interactions: [PersonInteraction]? = nil
+    var interactions: [PersonInteraction]
     let selectedDate: Date
     let onStartTripLeg: (Int) -> Void
     let onEditTripLeg: (TripLeg) -> Void
@@ -31,7 +32,7 @@ struct ActivityInstanceRowView: View {
     init(
         instance: ActivityInstance,
         tripLegs: [TripLeg],
-        interactions: [PersonInteraction]? = nil,
+        interactions: [PersonInteraction],
         selectedDate: Date,
         onStartTripLeg: @escaping (Int) -> Void,
         onEditTripLeg: @escaping (TripLeg) -> Void,
@@ -174,35 +175,35 @@ struct ActivityInstanceRowView: View {
                 }
                 .buttonStyle(.plain)
             }
-            StartItemButton(title: "Start trip leg") {
-                onStartTripLeg(instance.id)
+            if (instance.time_end == nil && !hasActiveLeg) || settings.planningMode {
+                StartItemButton(title: "Start trip leg") {
+                    onStartTripLeg(instance.id)
+                }
             }
-            .disabled(hasActiveLeg)
         }.padding(0)
     }
     
     @ViewBuilder
     private var peopleInteractionsSection: some View {
-        if let interactions, !interactions.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(interactions) { interaction in
-                    Button(action: { onEditInteraction(interaction) }) {
-                        PersonInteractionRowView(
-                            interaction: interaction,
-                            instance: nil,
-                            onEnd: {
-                                onEndInteraction(interaction)
-                            }
-                        )
-                    }
-                    .buttonStyle(.plain)
+        
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(interactions) { interaction in
+                Button(action: { onEditInteraction(interaction) }) {
+                    PersonInteractionRowView(
+                        interaction: interaction,
+                        onEnd: {
+                            onEndInteraction(interaction)
+                        }
+                    )
                 }
+                .buttonStyle(.plain)
+            }
+            if instance.time_end == nil || settings.planningMode {
                 StartItemButton(title: "Start interaction") {
                     onStartInteraction(instance.id)
                 }
             }
-        } else {
-            EmptyView()
+            
         }
     }
 
@@ -242,8 +243,6 @@ struct ActivityInstanceRowView: View {
 struct InstanceSection: View {
     let title: String
     let instance: ActivityInstance
-    let interactions: [PersonInteraction]?
-    let people: [Person]?
     
     @Environment(\.modelContext) private var modelContext
     
@@ -279,18 +278,23 @@ struct InstanceSection: View {
         )
         return (try? modelContext.fetch(descriptor)) ?? []
     }
+    
+    private var interactions: [PersonInteraction] {
+        let instanceId = instance.id
+        let descriptor = FetchDescriptor<PersonInteraction>(
+            predicate: #Predicate { $0.parent_activity_id == instanceId },
+            sortBy: [SortDescriptor(\.time_start)]
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
 
     
     init(
         title: String,
         instance: ActivityInstance,
-        interactions: [PersonInteraction]? = nil,
-        people: [Person]? = nil
     ) {
         self.title = title
         self.instance = instance
-        self.interactions = interactions
-        self.people = people
     }
     
     var body: some View {
@@ -325,7 +329,7 @@ struct PreviewWrapperView: View {
             if let inProgress = instances.first(where: { $0.id == 1 }) {
                 InstanceSection(
                     title: "In Progress",
-                    instance: inProgress,
+                    instance: inProgress
                 )
             }
             if let completed = instances.first(where: { $0.id == 2 }) {

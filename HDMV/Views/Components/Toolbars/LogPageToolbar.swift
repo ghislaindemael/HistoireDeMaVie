@@ -11,14 +11,14 @@ import SwiftUI
 struct LogPageToolbar: ViewModifier {
     /// An async closure for the "Refresh" action.
     let refreshAction: () async -> Void
-    /// A boolean to determine if the "Save" button should be shown.
-    let hasLocalChanges: Bool
     /// An async closure for the "Save" (sync) action.
     let syncAction: () async -> Void
     /// A closure for the single-tap action.
     let singleTapAction: () -> Void
     /// A closure for the long-press action.
     let longPressAction: () -> Void
+    
+    @ObservedObject private var settings = SettingsStore.shared
 
 
     func body(content: Content) -> some View {
@@ -31,9 +31,18 @@ struct LogPageToolbar: ViewModifier {
                             Label("Refresh from Server", systemImage: "icloud.and.arrow.down")
                         }
                         
-                        if hasLocalChanges {
-                            Button(action: { Task { await syncAction() } }) {
-                                Label("Sync local changes", systemImage: "icloud.and.arrow.up")
+                        Button(action: { Task { await syncAction() } }) {
+                            Label("Sync local changes", systemImage: "icloud.and.arrow.up")
+                        }
+                        
+                        Button(action: {
+                            settings.planningMode.toggle()
+                        }) {
+                            Label {
+                                Text("Planning Mode")
+                                    .fontWeight(settings.planningMode ? .bold : .regular)
+                            } icon: {
+                                Image(systemName: "calendar")
                             }
                         }
                     } label: {
@@ -63,7 +72,6 @@ extension View {
     /// Applies a standard toolbar for the My Activities page.
     func logPageToolbar(
         refreshAction: @escaping () async -> Void,
-        hasLocalChanges: Bool,
         syncAction: @escaping () async -> Void,
         singleTapAction: @escaping () -> Void,
         longPressAction: @escaping () -> Void,
@@ -71,7 +79,6 @@ extension View {
         self.modifier(
             LogPageToolbar(
                 refreshAction: refreshAction,
-                hasLocalChanges: hasLocalChanges,
                 syncAction: syncAction,
                 singleTapAction: singleTapAction,
                 longPressAction: longPressAction

@@ -15,14 +15,15 @@ struct HDMVApp: App {
             Activity.self,
             ActivityInstance.self,
             AgendaEntry.self,
-            VehicleType.self,
-            Vehicle.self,
             Country.self,
             City.self,
+            Path.self,
             Place.self,
-            TripLeg.self,
             Person.self,
-            PersonInteraction.self
+            PersonInteraction.self,
+            TripLeg.self,
+            Vehicle.self,
+            VehicleType.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

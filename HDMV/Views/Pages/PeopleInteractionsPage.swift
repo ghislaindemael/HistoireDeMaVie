@@ -35,7 +35,7 @@ struct PeopleInteractionsPage: View {
         
     private var filteredInteractions: [PersonInteraction] {
         viewModel.interactions.filter { interaction in
-            let isAssigned = interaction.person_id > 0
+            let isAssigned = interaction.person_id != nil
             
             if isAssigned {
                 return selectedPersonId == nil || interaction.person_id == selectedPersonId
@@ -52,17 +52,13 @@ struct PeopleInteractionsPage: View {
                 .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
-                    hasLocalChanges: viewModel.hasLocalChanges,
                     syncAction: { await viewModel.syncChanges() },
                     singleTapAction: { viewModel.createNewInteractionInCache() },
                     longPressAction: { viewModel.createNewInteractionAtNoonInCache() },
                 )
                 .onChange(of: viewModel.selectedDate) { viewModel.fetchInteractions() }
                 .sheet(item: $interactionToEdit) { interaction in
-                    PersonInteractionEditSheet(
-                        interaction: interaction,
-                        viewModel: viewModel
-                    )
+                    PersonInteractionEditSheet(interaction: interaction)
                 }
         }
         .alert("Delete Interaction?", isPresented: .constant(deletingInteraction != nil), presenting: deletingInteraction) { interaction in
@@ -89,7 +85,16 @@ struct PeopleInteractionsPage: View {
             filteringControls
             List {
                 ForEach(filteredInteractions) { interaction in
-                    viewForRow(for: interaction )
+                    PersonInteractionRowView(
+                        interaction: interaction,
+                        onEnd: {
+                            viewModel.endPersonInteraction(interaction: interaction)
+                        }
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        interactionToEdit = interaction
+                    }
                 }
                 .onDelete(perform: delete)
                 
@@ -122,21 +127,6 @@ struct PeopleInteractionsPage: View {
         .padding(.bottom, 4)
     }
     
-    private func viewForRow(for interaction: PersonInteraction) -> some View {
-        VStack(spacing: 8) {
-            PersonInteractionRowView(
-                interaction: interaction,
-                instance: nil,
-                onEnd: {
-                    viewModel.endPersonInteraction(interaction: interaction)
-                }
-            )
-            .contentShape(Rectangle())
-            .onTapGesture {
-                interactionToEdit = interaction
-            }
-        }
-    }
     
     private func deleteInteraction(_ interaction: PersonInteraction) {
         viewModel.deleteInteraction(interaction)

@@ -40,15 +40,7 @@ struct VehiclesPage: View {
             .sheet(isPresented: $isShowingCreateSheet) {
                 NewVehicleSheet(viewModel: viewModel)
             }
-            .overlay {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .primary))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black.opacity(0.2))
-                }
-            }
+            .syncingOverlay(viewModel.isLoading)
         }
     }
     

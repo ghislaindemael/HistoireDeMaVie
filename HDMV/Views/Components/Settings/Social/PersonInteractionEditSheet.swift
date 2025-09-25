@@ -11,18 +11,14 @@ struct PersonInteractionEditSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    @ObservedObject var viewModel: PeopleInteractionsPageViewModel
-    
     @Bindable var interaction: PersonInteraction
     
     @State private var showEndTime: Bool
 
     init(
         interaction: PersonInteraction,
-        viewModel: PeopleInteractionsPageViewModel
     ) {
         self.interaction = interaction
-        self.viewModel = viewModel
         _showEndTime = State(initialValue: interaction.time_end != nil)
     }
     
@@ -54,12 +50,8 @@ struct PersonInteractionEditSheet: View {
     
     private var basicsSection: some View {
         Section("Basics") {
-            Picker("Person", selection: $interaction.person_id) {
-                Text("Please select a person").tag(0)
-                ForEach(viewModel.people, id: \.id) { person in
-                    Text(person.fullName).tag(person.id)
-                }
-            }
+             
+            PersonSelectorView(selectedPersonId: $interaction.person_id)
             FullTimePicker(label: "Start Time", selection: $interaction.time_start)
             Toggle("End Time?", isOn: $showEndTime)
             if showEndTime {
@@ -68,12 +60,14 @@ struct PersonInteractionEditSheet: View {
                     set: { interaction.time_end = $0 }
                 ))
             }
+            
         }
     }
     
     private var detailsSection: some View {
         Section("Details") {
             Toggle("In Person", isOn: $interaction.in_person)
+            Toggle("Timed", isOn: $interaction.timed)
             
             Slider(value: Binding(
                 get: { Double(interaction.percentage ?? 100) },

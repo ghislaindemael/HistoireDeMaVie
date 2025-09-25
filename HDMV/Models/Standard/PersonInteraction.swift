@@ -12,21 +12,21 @@ import SwiftData
 @Model
 final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     @Attribute(.unique) var id: Int
-    var time_start: Date?
+    var time_start: Date
     var time_end: Date?
     var parent_activity_id: Int?
-    var person_id: Int
+    var person_id: Int?
     var timed: Bool = true
-    var in_person: Bool
+    var in_person: Bool = true
     var details: String?
     var percentage: Int?
     var syncStatus: SyncStatus = SyncStatus.undef
     
     init(id: Int,
-         time_start: Date? = nil,
+         time_start: Date = .now,
          time_end: Date? = nil,
          parent_activity_id: Int? = nil,
-         person_id: Int = -1,
+         person_id: Int? = nil,
          timed: Bool = true,
          in_person: Bool = true,
          details: String? = nil,
@@ -73,26 +73,6 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     
     // MARK: - Computed properties
     
-    func effectiveStart(instance: ActivityInstance?) -> (date: Date?, overridden: Bool) {
-        guard let instance else {
-            return (time_start, false)
-        }
-        if let time_start {
-            return (time_start, true)
-        }
-        return (instance.time_start, false)
-    }
-    
-    func effectiveEnd(instance: ActivityInstance?) -> (date: Date?, overridden: Bool) {
-        guard let instance else {
-            return (time_end, false)
-        }
-        if let time_end {
-            return (time_end, true)
-        }
-        return (instance.time_end, false)
-    }
-    
     var isStandalone: Bool {
         parent_activity_id == nil
     }
@@ -101,12 +81,9 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     /// An interaction needs to have a person linked, and either be attached to an activity instance
     /// or have it's own start time
     func isValid() -> Bool {
-        guard self.person_id > 0 else { return false }
-        if isStandalone {
-            return time_start != nil
-        } else {
-            return parent_activity_id != nil
-        }
+        guard self.person_id != nil else { return false }
+        
+        return time_end != nil
     }
     
 }
@@ -115,7 +92,7 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
 
 struct PersonInteractionDTO: Codable, Identifiable, Sendable {
     var id: Int
-    var time_start: Date?
+    var time_start: Date
     var time_end: Date?
     var parent_activity_id: Int?
     var person_id: Int
@@ -130,7 +107,7 @@ struct PersonInteractionPayload: Encodable {
     var time_start: Date?
     var time_end: Date?
     var parent_activity_id: Int?
-    var person_id: Int
+    var person_id: Int?
     var timed: Bool
     var in_person: Bool
     var details: String?

@@ -21,13 +21,13 @@ struct ConfigPageLinksComponent: View {
     @State private var isExpanded: Bool = false
     
     private let configPages: [ConfigPageLink] = [
+        ConfigPageLink(title: "Activities", destination: AnyView(ActivitiesPage())),
         ConfigPageLink(title: "Countries", destination: AnyView(CountriesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
         ConfigPageLink(title: "People", destination: AnyView(PeoplePage())),
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
         ConfigPageLink(title: "VehicleTypes", destination: AnyView(VehicleTypesPage())),
-        ConfigPageLink(title: "Activities", destination: AnyView(ActivitiesPage())),
         
     ]
     

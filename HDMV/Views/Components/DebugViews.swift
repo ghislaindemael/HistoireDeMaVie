@@ -55,12 +55,7 @@ extension PersonInteraction {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                if let time_start {
-                    Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
-                } else {
-                    Text("Start: Unknown")
-                }
-                
+                Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")                
                 Spacer()
                 SyncStatusIndicator(status: syncStatus)
             }
@@ -77,8 +72,8 @@ extension PersonInteraction {
                 Text("Independent interaction")
             }
             
-            if person_id > 0  {
-                Text("Person ID: \(person_id)")
+            if let pid = person_id  {
+                Text("Person ID: \(pid)")
             } else {
                 Text("Person: Unset")
                     .bold()

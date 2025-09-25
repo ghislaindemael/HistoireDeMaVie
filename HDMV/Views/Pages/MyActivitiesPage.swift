@@ -35,7 +35,6 @@ struct MyActivitiesPage: View {
                 .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
-                    hasLocalChanges: viewModel.hasLocalChanges,
                     syncAction: { await viewModel.uploadLocalChanges() },
                     singleTapAction: { viewModel.createActivtiyInstance() },
                     longPressAction: { viewModel.createActivityInstanceForDate() },
@@ -52,7 +51,10 @@ struct MyActivitiesPage: View {
                     )
                 }
                 .sheet(item: $tripLegToEdit) { leg in
-                    TripLegDetailSheet(tripLeg: leg,)
+                    TripLegDetailSheet(tripLeg: leg)
+                }
+                .sheet(item: $interactionToEdit) { interaction in
+                    PersonInteractionEditSheet(interaction: interaction)
                 }
         }
     }
