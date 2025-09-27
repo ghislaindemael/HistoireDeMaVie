@@ -39,7 +39,7 @@ struct StandardSheetToolbar: ViewModifier {
 extension View {
     /// Adds a standard Cancel/Done toolbar for model creation sheets.
     func standardSheetToolbar(
-        isFormValid: Bool,
+        isFormValid: Bool = true,
         onDone: @escaping () async -> Void
     ) -> some View {
         self.modifier(

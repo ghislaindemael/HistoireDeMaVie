@@ -11,7 +11,7 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class TripLeg : CustomStringConvertible, SyncableModel {
+final class TripLeg: Identifiable, SyncableModel {
     @Attribute(.unique) var id: Int
     
     var parent_id: Int?
@@ -22,6 +22,7 @@ final class TripLeg : CustomStringConvertible, SyncableModel {
     var place_end_id: Int?
     var am_driver: Bool
     var path_str: String?
+    var path_ids: [Int] = []
     var details: String?
     var syncStatus: SyncStatus = SyncStatus.undef
     
@@ -59,6 +60,7 @@ final class TripLeg : CustomStringConvertible, SyncableModel {
         self.place_end_id = dto.place_end_id
         self.am_driver = dto.am_driver
         self.path_str = dto.path_str
+        self.path_ids = dto.path_ids
         self.details = dto.details
         self.syncStatus = SyncStatus.synced
     }
@@ -71,26 +73,9 @@ final class TripLeg : CustomStringConvertible, SyncableModel {
         self.place_end_id = dto.place_end_id
         self.am_driver = dto.am_driver
         self.path_str = dto.path_str
+        self.path_ids = dto.path_ids
         self.details = dto.details
         self.syncStatus = .synced
-    }
-    
-    var description: String {
-        """
-        TripLeg(
-            id: \(id),
-            parent_id: \(parent_id ?? -1),
-            time_start: \(time_start),
-            time_end: \(String(describing: time_end)),
-            vehicle_id: \(String(describing: vehicle_id)),
-            place_start_id: \(String(describing: place_start_id)),
-            place_end_id: \(String(describing: place_end_id)),
-            am_driver: \(am_driver),
-            path_str: \(String(describing: path_str)),
-            details: \(String(describing: details)),
-            syncStatus: \(syncStatus)
-        )
-        """
     }
     
     func isValid() -> Bool {
@@ -117,6 +102,7 @@ struct TripLegDTO: Codable, Sendable {
     var place_end_id: Int?
     var am_driver: Bool
     var path_str: String?
+    var path_ids: [Int]
     var details: String?
 }
 
@@ -129,6 +115,7 @@ struct TripLegPayload: Codable {
     var place_end_id: Int
     var am_driver: Bool
     var path_str: String?
+    var path_ids: [Int]
     var details: String?
     
     init?(from tripLeg: TripLeg) {
@@ -142,6 +129,46 @@ struct TripLegPayload: Codable {
         self.place_end_id = tripLeg.place_end_id!
         self.am_driver = tripLeg.am_driver
         self.path_str = tripLeg.path_str
+        self.path_ids = tripLeg.path_ids
         self.details = tripLeg.details
     }
+}
+
+struct TripLegEditor {
+    var parent_id: Int?
+    var time_start: Date
+    var time_end: Date?
+    var vehicle_id: Int?
+    var place_start_id: Int?
+    var place_end_id: Int?
+    var am_driver: Bool
+    var details: String?
+    var path_ids: [Int]
+        
+    /// Initializes the editor with data from an existing TripLeg.
+    init(tripLeg: TripLeg) {
+        self.time_start = tripLeg.time_start
+        self.time_end = tripLeg.time_end
+        self.vehicle_id = tripLeg.vehicle_id
+        self.place_start_id = tripLeg.place_start_id
+        self.place_end_id = tripLeg.place_end_id
+        self.am_driver = tripLeg.am_driver
+        self.details = tripLeg.details
+        self.parent_id = tripLeg.parent_id
+        self.path_ids = tripLeg.path_ids
+    }
+    
+    /// Applies the changes from the editor back to the original TripLeg model.
+    func apply(to tripLeg: TripLeg) {
+        tripLeg.time_start = self.time_start
+        tripLeg.time_end = self.time_end
+        tripLeg.vehicle_id = self.vehicle_id
+        tripLeg.place_start_id = self.place_start_id
+        tripLeg.place_end_id = self.place_end_id
+        tripLeg.am_driver = self.am_driver
+        tripLeg.details = self.details
+        tripLeg.path_ids = self.path_ids
+        tripLeg.syncStatus = .local
+    }
+
 }

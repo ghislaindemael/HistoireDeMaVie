@@ -118,6 +118,11 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
+                case is Path.Type:
+                    let descriptor = FetchDescriptor<Path>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 case is Place.Type:
                     let descriptor = FetchDescriptor<Place>()
                     let results = try modelContext.fetch(descriptor)
@@ -162,9 +167,7 @@ struct DataWipeDetailView: View {
     private func describeView(for item: any PersistentModel) -> AnyView {
         switch item {
             case let instance as ActivityInstance:
-                return AnyView(
-                    instance.debugView
-                )
+                return AnyView(instance.debugView)
             case let activity as Activity:
                 return AnyView(
                     ActivityRowView(activity: activity)
@@ -181,6 +184,8 @@ struct DataWipeDetailView: View {
                 return AnyView(
                     Text(city.name)
                 )
+            case let path as Path:
+                return AnyView(path.debugView)
             case let place as Place:
                 return AnyView(
                     Text(place.localName)

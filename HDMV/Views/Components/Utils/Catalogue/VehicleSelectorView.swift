@@ -18,16 +18,15 @@ struct VehicleSelectorView: View {
     @Query(sort: [SortDescriptor(\Vehicle.name)]) 
     private var vehicles: [Vehicle]
     
-    // Derived state
     private var isCarSelected: Bool {
         guard let vehicleId = selectedVehicleId,
               let vehicle = vehicles.first(where: { $0.id == vehicleId }) 
         else { return false }
-        return vehicle.type == 1 // Assuming type 1 = Car
+        return vehicle.type == 1
     }
     
     var body: some View {
-        Section(header: Text("Vehicle")) {
+        VStack {
             Picker("Vehicle", selection: $selectedVehicleId) {
                 Text("None").tag(nil as Int?)
                 ForEach(vehicles) { vehicle in

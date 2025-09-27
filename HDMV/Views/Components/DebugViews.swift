@@ -51,6 +51,19 @@ extension ActivityInstance {
     
 }
 
+extension Path {
+    var debugView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ID: \(id)")
+            Text("Name: \(name ?? "Unset")")
+            Text("Details: \(details ?? "Unset")")
+            Text("Start place id: \(place_start_id ?? -1)")
+            Text("End place id: \(place_end_id ?? -1)")
+            Text("Distance: \(distance ?? 0)")
+        }
+    }
+}
+
 extension PersonInteraction {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {

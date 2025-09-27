@@ -36,8 +36,10 @@ struct PlaceSelectorView: View {
     
     // MARK: - Body
     var body: some View {
-        Section("Place") {
-            summaryView
+        VStack {
+            if selectedPlaceId != nil && initialPlace == nil {
+                uncachedPlaceView
+            }
             cityPicker
             if displayCityId != nil {
                 placePicker
@@ -48,12 +50,13 @@ struct PlaceSelectorView: View {
     }
     
     // MARK: - Subviews
-    private var summaryView: some View {
+    private var uncachedPlaceView: some View {
         HStack {
             Text("Selected")
             Spacer()
-            Text(initialPlace?.localName ?? "Not Selected")
-                .foregroundStyle(initialPlace == nil ? .secondary : .primary)
+            Text("Uncached")
+                .bold()
+                .foregroundStyle(.orange)
         }
     }
     

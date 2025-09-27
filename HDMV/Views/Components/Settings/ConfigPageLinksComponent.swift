@@ -24,6 +24,7 @@ struct ConfigPageLinksComponent: View {
         ConfigPageLink(title: "Activities", destination: AnyView(ActivitiesPage())),
         ConfigPageLink(title: "Countries", destination: AnyView(CountriesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
+        ConfigPageLink(title: "Paths", destination: AnyView(PathsPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
         ConfigPageLink(title: "People", destination: AnyView(PeoplePage())),
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),

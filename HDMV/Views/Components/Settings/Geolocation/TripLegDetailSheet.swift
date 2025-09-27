@@ -12,15 +12,22 @@ struct TripLegDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    @Bindable var tripLeg: TripLeg
+    private var tripLeg: TripLeg
         
     @State private var selectedStartCityId: Int?
     @State private var selectedEndCityId: Int?
     @State private var showEndTime: Bool
     
+    @State private var editor: TripLegEditor
+    
+    @State private var isShowingPathSelector = false
+    
+    @Query(filter: #Predicate<Path> { $0.cache == true }) private var allPaths: [Path]
+    
     init(tripLeg: TripLeg) {
         self.tripLeg = tripLeg
         _showEndTime = State(initialValue: tripLeg.time_end != nil)
+        _editor = State(initialValue: TripLegEditor(tripLeg: tripLeg))
     }
     
     var body: some View {
@@ -29,28 +36,28 @@ struct TripLegDetailSheet: View {
                 timeSection
                 vehicleSection
                 
-                Section(header: Text("Start Place")) {
-                    PlaceSelectorView(selectedPlaceId: $tripLeg.place_start_id)
+                Section("Start Place") {
+                    PlaceSelectorView(selectedPlaceId: $editor.place_start_id)
                 }
-                Section(header: Text("End Place")) {
-                    PlaceSelectorView(selectedPlaceId: $tripLeg.place_end_id)
+                Section("End Place") {
+                    PlaceSelectorView(selectedPlaceId: $editor.place_end_id)
                 }
-                
+                pathSection
                 detailsSection
             }
             .navigationTitle("Trip Leg Details")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+            .standardSheetToolbar(
+                onDone: {
+                    editor.apply(to: tripLeg)
+                    tripLeg.syncStatus = .local
+                    try? modelContext.save()
+                    dismiss()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        tripLeg.syncStatus = .local
-                        if !showEndTime {
-                            tripLeg.time_end = nil
-                        }
-                        try? modelContext.save()
-                        dismiss()
+            )
+            .sheet(isPresented: $isShowingPathSelector) {
+                PathSelectorSheet { selectedPathId in
+                    if !editor.path_ids.contains(selectedPathId) {
+                        editor.path_ids.append(selectedPathId)
                     }
                 }
             }
@@ -61,7 +68,7 @@ struct TripLegDetailSheet: View {
     
     private var timeSection: some View {
         Section(header: Text("Time")) {
-            FullTimePicker(label: "Start Time", selection: $tripLeg.time_start)
+            FullTimePicker(label: "Start Time", selection: $editor.time_start)
             Toggle("End Time?", isOn: $showEndTime)
             if showEndTime {
                 FullTimePicker(label: "End Time", selection: Binding(
@@ -73,11 +80,25 @@ struct TripLegDetailSheet: View {
     }
     
     private var vehicleSection: some View {
-        Section(header: Text("Vehicle")) {
+        Section("Vehicle") {
             VehicleSelectorView(
-                selectedVehicleId: $tripLeg.vehicle_id,
-                amDriver: $tripLeg.am_driver
+                selectedVehicleId: $editor.vehicle_id,
+                amDriver: $editor.am_driver
             )
+        }
+    }
+    
+    private var pathSection: some View {
+        Section(header: Text("Paths")) {
+            ForEach(editor.path_ids, id: \.self) { pathId in
+                PathDisplayView(pathId: pathId)
+            }
+            .onMove(perform: { editor.path_ids.move(fromOffsets: $0, toOffset: $1) })
+            .onDelete(perform: { editor.path_ids.remove(atOffsets: $0) })
+            
+            Button(action: { isShowingPathSelector = true }) {
+                Label("Add Path", systemImage: "plus.circle.fill")
+            }
         }
     }
         
@@ -90,6 +111,7 @@ struct TripLegDetailSheet: View {
             .frame(minHeight: 100)
         }
     }
+    
     
     
 }

@@ -73,7 +73,6 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         
         self.allowedCapabilities = dto.allowed_capabilities.compactMap { ActivityCapability(rawValue: $0) }
         self.requiredCapabilities = dto.required_capabilities.compactMap { ActivityCapability(rawValue: $0) }
-        
     }
     
     // MARK: - Tree Building Logic
