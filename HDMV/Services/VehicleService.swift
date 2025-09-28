@@ -12,7 +12,6 @@ class VehicleService {
     private let settings = SettingsStore.shared
     
     private let VEHICLES_TABLE_NAME: String = "data_vehicles"
-    private let VEHICLE_TYPES_TABLE_NAME: String = "data_vehicle_types"
     
     // MARK: Vehicles
     
@@ -58,39 +57,6 @@ class VehicleService {
             .from(VEHICLES_TABLE_NAME)
             .delete()
             .eq("id", value: id)
-            .execute()
-    }
-    
-
-    // MARK: Vehicle types
-    
-    func fetchVehicleTypes() async throws -> [VehicleTypeDTO] {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        let response: [VehicleTypeDTO] = try await supabaseClient
-            .from(VEHICLE_TYPES_TABLE_NAME)
-            .select()
-            .execute()
-            .value
-        return response
-    }
-    
-    func createVehicleType(payload: NewVehicleTypePayload) async throws -> VehicleTypeDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        return try await supabaseClient
-            .from(VEHICLE_TYPES_TABLE_NAME)
-            .insert(payload, returning: .representation)
-            .select()
-            .single()
-            .execute()
-            .value
-    }
-    
-    func updateCache(forVehicleType vehicleType: VehicleType) async throws {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        try await supabaseClient
-            .from(VEHICLE_TYPES_TABLE_NAME)
-            .update(["cache": vehicleType.cache])
-            .eq("id", value: vehicleType.id)
             .execute()
     }
     

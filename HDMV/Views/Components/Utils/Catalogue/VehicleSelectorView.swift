@@ -22,7 +22,7 @@ struct VehicleSelectorView: View {
         guard let vehicleId = selectedVehicleId,
               let vehicle = vehicles.first(where: { $0.id == vehicleId }) 
         else { return false }
-        return vehicle.type == 1
+        return vehicle.type == .car
     }
     
     var body: some View {

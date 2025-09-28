@@ -16,7 +16,7 @@ struct NewVehicleSheet: View {
     @State private var payload: NewVehiclePayload = NewVehiclePayload()
     
     private var isFormValid: Bool {
-        !payload.name.isEmpty && (payload.type > 1)
+        !payload.name.isEmpty
     }
         
     var body: some View {
@@ -27,7 +27,7 @@ struct NewVehicleSheet: View {
                     
                     Picker("Vehicle Type", selection: $payload.type) {
                         Text("Select a type").tag(nil as VehicleType?)
-                        ForEach(viewModel.vehicleTypes) { type in
+                        ForEach(VehicleType.allCases, id: \.self ) { type in
                             Text(type.name).tag(type as VehicleType?)
                         }
                     }

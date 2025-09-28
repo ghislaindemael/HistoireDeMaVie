@@ -140,6 +140,11 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
+                case is Vehicle.Type:
+                    let descriptor = FetchDescriptor<Vehicle>()
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 default:
                     print("Warning: Unhandled model type in fetchItems: \(modelType)")
                     items = []

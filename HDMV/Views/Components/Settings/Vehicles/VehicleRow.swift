@@ -37,6 +37,6 @@ struct VehicleRow: View {
 }
 
 #Preview {
-    let vehicle = Vehicle(id: 1, name: "Test", type: 1, cache: true)
+    let vehicle = Vehicle(id: 1, name: "Test", type: .car)
     VehicleRow(vehicle: vehicle, onCacheToggle: {})
 }

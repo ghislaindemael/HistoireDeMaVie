@@ -23,6 +23,7 @@ struct DataManagementComponent: View {
         Person.self,
         PersonInteraction.self,
         TripLeg.self,
+        Vehicle.self
     ]
     
     init(expanded: Bool = false) {

@@ -8,55 +8,77 @@
 import Foundation
 import SwiftData
 
-@Model
-final class VehicleType {
-    @Attribute(.unique) var id: Int
-    var slug: String
-    var name: String
-    var icon: String
-    var cache: Bool = true
+enum VehicleType: String, CaseIterable, Codable {
+    // The rawValue is now the lowercase slug, perfect for DB storage.
+    case funiculaire = "funiculaire"
+    case coach = "coach"
+    case boat = "boat"
+    case plane = "plane"
+    case bus = "bus"
+    case feet = "feet"
+    case car = "car"
+    case train = "train"
+    case tram = "tram"
+    case metro = "metro"
+    case bike = "bike"
+    case ski = "ski"
+    case snowboard = "snowboard"
+    case sled = "sled"
+    case tractor = "tractor"
+    case skateboard = "skateboard"
+    case scooter = "scooter"
+    case cablecar = "cablecar"
+    case skilift = "skilift"
     
-    enum CodingKeys: String, CodingKey {
-        case id, slug, name, icon, cache
+    var name: String {
+        switch self {
+            case .funiculaire: return "Funiculaire"
+            case .coach: return "Car"
+            case .boat: return "Bateau"
+            case .plane: return "Avion"
+            case .bus: return "Bus"
+            case .feet: return "Feet"
+            case .car: return "Voiture"
+            case .train: return "Train"
+            case .tram: return "Tram"
+            case .metro: return "Métro"
+            case .bike: return "Vélo"
+            case .ski: return "Ski"
+            case .snowboard: return "Snowboard"
+            case .sled: return "Luge"
+            case .tractor: return "Tracteur"
+            case .skateboard: return "Skateboard"
+            case .scooter: return "Trottinette"
+            case .cablecar: return "Télécabine"
+            case .skilift: return "Télésiège"
+        }
     }
     
-    init(id: Int, slug: String, name: String, icon: String) {
-        self.id = id
-        self.slug = slug
-        self.name = name
-        self.icon = icon
-        self.cache = cache
-    }
-    
-    init(fromDto dto: VehicleTypeDTO){
-        self.id = dto.id
-        self.slug = dto.slug
-        self.name = dto.name
-        self.icon = dto.icon
-        self.cache = dto.cache
+    var icon: String {
+        switch self {
+            case .funiculaire: return "🚇"
+            case .coach: return "🚐"
+            case .boat: return "🚢"
+            case .plane: return "🛩️"
+            case .bus: return "🚌"
+            case .feet: return "👣"
+            case .car: return "🚙"
+            case .train: return "🚂"
+            case .tram: return "🚈"
+            case .metro: return "🚇"
+            case .bike: return "🚲"
+            case .ski: return "🎿"
+            case .snowboard: return "🏂"
+            case .sled: return "🛷"
+            case .tractor: return "🚜"
+            case .skateboard: return "🛹"
+            case .scooter: return "🛴"
+            case .cablecar: return "🚠"
+            case .skilift: return "🚡"
+        }
     }
     
     var label: String {
         return "\(self.icon) \(self.name)"
     }
-    
 }
-
-struct VehicleTypeDTO: Codable, Identifiable, Sendable {
-    let id: Int
-    let slug: String
-    let name: String
-    let icon: String
-    let cache: Bool
-    
-    enum CodingKeys: String, CodingKey {
-        case id, slug, name, icon, cache
-    }
-}
-
-struct NewVehicleTypePayload: Encodable {
-    var slug: String = ""
-    var name: String = ""
-    var icon: String = ""
-}
-

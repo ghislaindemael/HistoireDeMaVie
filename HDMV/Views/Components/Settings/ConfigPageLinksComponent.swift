@@ -27,9 +27,7 @@ struct ConfigPageLinksComponent: View {
         ConfigPageLink(title: "Paths", destination: AnyView(PathsPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
         ConfigPageLink(title: "People", destination: AnyView(PeoplePage())),
-        ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
-        ConfigPageLink(title: "VehicleTypes", destination: AnyView(VehicleTypesPage())),
-        
+        ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage()))
     ]
     
     init(expanded: Bool = false) {
@@ -82,5 +80,5 @@ struct ConfigPageLinksComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [Vehicle.self, VehicleType.self])
+    .modelContainer(for: [Vehicle.self])
 }

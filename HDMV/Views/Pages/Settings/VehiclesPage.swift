@@ -19,7 +19,7 @@ struct VehiclesPage: View {
     
     private var filteredVehicles: [Vehicle] {
         guard let selectedType = selectedVehicleType else { return viewModel.vehicles }
-        return viewModel.vehicles.filter { $0.type == selectedType.id }
+        return viewModel.vehicles.filter { $0.type == selectedType }
     }
     
     var body: some View {
@@ -48,7 +48,7 @@ struct VehiclesPage: View {
         Section(header: Text("Filter")) {
             Picker("Vehicle Type", selection: $selectedVehicleType) {
                 Text("All Types").tag(nil as VehicleType?)
-                ForEach(viewModel.vehicleTypes) { type in
+                ForEach(VehicleType.allCases, id: \.self) { type in
                     Text(type.label).tag(type as VehicleType?)
                 }
             }
@@ -80,23 +80,18 @@ struct VehiclesPage: View {
 
 #Preview {
     let container: ModelContainer = {
-        let schema = Schema([Vehicle.self, VehicleType.self])
+        let schema = Schema([Vehicle.self])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         
         do {
             let container = try ModelContainer(for: schema, configurations: [configuration])
             
-            let carType = VehicleType(id: 1, slug: "car", name: "Car", icon: "car.fill")
-            let bikeType = VehicleType(id: 2, slug: "bicycle", name: "Bicycle", icon: "bicycle")
-            
-            let vehicle1 = Vehicle(id: 101, name: "Le Viano", type: carType.id, city_id: 12)
-            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", type: bikeType.id)
-            let vehicle3 = Vehicle(id: 104, name: "La Defender", type: carType.id)
+            let vehicle1 = Vehicle(id: 101, name: "Le Viano", type: .car, city_id: 12)
+            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", type: .bike)
+            let vehicle3 = Vehicle(id: 104, name: "La Defender", type: .car)
             
             
             let context = container.mainContext
-            context.insert(carType)
-            context.insert(bikeType)
             
             context.insert(vehicle1)
             context.insert(vehicle2)

@@ -375,7 +375,7 @@ struct PreviewWrapperView: View {
         let vehicle1 = Vehicle(
             id: 201,
             name: "Van-01",
-            type: 1,
+            type: .car,
             label: "🚙 Viano"
         )
         

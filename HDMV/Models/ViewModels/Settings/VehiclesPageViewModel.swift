@@ -39,8 +39,6 @@ class VehiclesPageViewModel: ObservableObject {
             self.vehicles = vehicleDtos.map { dto in
                 let vehicle = Vehicle(fromDto: dto)
                 
-                let icon = vehicleTypes.first { $0.id == vehicle.type }?.icon ?? "(?)"
-                
                 let cityName = cities.first { $0.id == vehicle.city_id }?.name
                 let cityLabel: String
                 if let cityName = cityName, !cityName.isEmpty {
@@ -52,9 +50,9 @@ class VehiclesPageViewModel: ObservableObject {
                 }
                 
                 if cityLabel.isEmpty {
-                    vehicle.label = "\(icon) - \(vehicle.name)"
+                    vehicle.label = "\(vehicle.type.icon) - \(vehicle.name)"
                 } else {
-                    vehicle.label = "\(icon) - \(cityLabel) - \(vehicle.name)"
+                    vehicle.label = "\(vehicle.type.icon) - \(cityLabel) - \(vehicle.name)"
                 }
                 
                 return vehicle
@@ -71,21 +69,19 @@ class VehiclesPageViewModel: ObservableObject {
         
         do {
             let vehicleDescriptor = FetchDescriptor<Vehicle>(sortBy: [
-                SortDescriptor(\.type),
+                SortDescriptor(\.typeSlug),
                 SortDescriptor(\.name)
             ])
             let fetchedVehicles = try context.fetch(vehicleDescriptor)
 
             self.vehicles = fetchedVehicles.sorted { v1, v2 in
                 if v1.type != v2.type {
-                    return v1.type < v2.type
+                    return v1.typeSlug < v2.typeSlug
                 } else {
                     return v1.name < v2.name
                 }
             }
             
-            let typeDescriptor = FetchDescriptor<VehicleType>(sortBy: [SortDescriptor(\.name)])
-            self.vehicleTypes = try context.fetch(typeDescriptor)
             
             let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.name)])
             self.cities = try context.fetch(cityDescriptor)
