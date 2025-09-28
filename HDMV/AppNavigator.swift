@@ -7,15 +7,6 @@
 
 import SwiftUI
 
-/// An enum representing the main tabs of the app for type-safe navigation.
-enum Tab {
-    case home
-    case interactions
-    case activities
-    case agenda
-    case settings
-}
-
 /// A shared object to coordinate navigation between different parts of the app.
 class AppNavigator: ObservableObject {
     /// The currently selected tab. The TabView will be bound to this.

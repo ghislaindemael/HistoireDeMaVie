@@ -5,27 +5,12 @@ struct AppView: View {
     @EnvironmentObject var appNavigator: AppNavigator
     
     var body: some View {
-        TabView(selection: $appNavigator.selectedTab) {
+        VStack(spacing: 0) {
+            appNavigator.selectedTab.page
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            HomePage()
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(Tab.home)
-            
-            PeopleInteractionsPage()
-                .tabItem { Label("Interactions", systemImage: "person.2.fill") }
-                .tag(Tab.interactions)
-            
-            MyActivitiesPage()
-                .tabItem { Label("Activities", systemImage: "flowchart") }
-                .tag(Tab.activities)
-            
-            AgendaPage()
-                .tabItem { Label("Agenda", systemImage: "pencil.and.list.clipboard") }
-                .tag(Tab.agenda)
-            
-            SettingsPage()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(Tab.settings)
+            SlidingTabBar(selectedTab: $appNavigator.selectedTab)
         }
+        .ignoresSafeArea(.keyboard)
     }
 }
