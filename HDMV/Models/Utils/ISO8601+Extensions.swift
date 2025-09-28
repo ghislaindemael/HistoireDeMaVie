@@ -10,6 +10,7 @@ import Foundation
 extension ISO8601DateFormatter {
     static let justDate: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
+        formatter.timeZone = TimeZone.current
         formatter.formatOptions = [.withFullDate]
         return formatter
     }()
