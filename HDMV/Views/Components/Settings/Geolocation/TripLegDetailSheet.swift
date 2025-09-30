@@ -56,9 +56,7 @@ struct TripLegDetailSheet: View {
             )
             .sheet(isPresented: $isShowingPathSelector) {
                 PathSelectorSheet { selectedPathId in
-                    if !editor.path_ids.contains(selectedPathId) {
-                        editor.path_ids.append(selectedPathId)
-                    }
+                    editor.path_id = selectedPathId
                 }
             }
         }
@@ -90,18 +88,14 @@ struct TripLegDetailSheet: View {
     
     private var pathSection: some View {
         Section(header: Text("Paths")) {
-            ForEach(editor.path_ids, id: \.self) { pathId in
-                PathDisplayView(pathId: pathId)
-            }
-            .onMove(perform: { editor.path_ids.move(fromOffsets: $0, toOffset: $1) })
-            .onDelete(perform: { editor.path_ids.remove(atOffsets: $0) })
-            
+            PathDisplayView(pathId: editor.path_id)
+
             Button(action: { isShowingPathSelector = true }) {
-                Label("Add Path", systemImage: "plus.circle.fill")
+                Label("Select path", systemImage: "plus.circle.fill")
             }
         }
     }
-        
+            
     private var detailsSection: some View {
         Section(header: Text("Details")) {
             TextEditor(text: Binding(

@@ -22,7 +22,7 @@ final class TripLeg: Identifiable, SyncableModel {
     var place_end_id: Int?
     var am_driver: Bool
     var path_str: String?
-    var path_ids: [Int] = []
+    var path_id: Int?
     var details: String?
     var syncStatus: SyncStatus = SyncStatus.undef
     
@@ -35,6 +35,7 @@ final class TripLeg: Identifiable, SyncableModel {
          place_end_id: Int? = nil,
          am_driver: Bool = false,
          path_str: String? = nil,
+         path_id: Int? = nil,
          details: String? = nil,
          syncStatus: SyncStatus = .local) {
         self.id = id
@@ -46,6 +47,7 @@ final class TripLeg: Identifiable, SyncableModel {
         self.place_end_id = place_end_id
         self.am_driver = am_driver
         self.path_str = path_str
+        self.path_id = path_id
         self.details = details
         self.syncStatus = syncStatus
     }
@@ -60,7 +62,7 @@ final class TripLeg: Identifiable, SyncableModel {
         self.place_end_id = dto.place_end_id
         self.am_driver = dto.am_driver
         self.path_str = dto.path_str
-        self.path_ids = dto.path_ids
+        self.path_id = dto.path_id
         self.details = dto.details
         self.syncStatus = SyncStatus.synced
     }
@@ -73,7 +75,7 @@ final class TripLeg: Identifiable, SyncableModel {
         self.place_end_id = dto.place_end_id
         self.am_driver = dto.am_driver
         self.path_str = dto.path_str
-        self.path_ids = dto.path_ids
+        self.path_id = dto.path_id
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -83,6 +85,7 @@ final class TripLeg: Identifiable, SyncableModel {
               place_start_id != nil,
               place_end_id != nil,
               vehicle_id != nil,
+              //path_id != nil,
               //time_start != nil,
               time_end != nil else {
             return false
@@ -102,7 +105,7 @@ struct TripLegDTO: Codable, Sendable {
     var place_end_id: Int?
     var am_driver: Bool
     var path_str: String?
-    var path_ids: [Int]
+    var path_id: Int?
     var details: String?
 }
 
@@ -115,7 +118,7 @@ struct TripLegPayload: Codable {
     var place_end_id: Int
     var am_driver: Bool
     var path_str: String?
-    var path_ids: [Int]
+    var path_id: Int?
     var details: String?
     
     init?(from tripLeg: TripLeg) {
@@ -129,7 +132,7 @@ struct TripLegPayload: Codable {
         self.place_end_id = tripLeg.place_end_id!
         self.am_driver = tripLeg.am_driver
         self.path_str = tripLeg.path_str
-        self.path_ids = tripLeg.path_ids
+        self.path_id = tripLeg.path_id
         self.details = tripLeg.details
     }
 }
@@ -143,7 +146,7 @@ struct TripLegEditor {
     var place_end_id: Int?
     var am_driver: Bool
     var details: String?
-    var path_ids: [Int]
+    var path_id: Int?
         
     /// Initializes the editor with data from an existing TripLeg.
     init(tripLeg: TripLeg) {
@@ -155,7 +158,7 @@ struct TripLegEditor {
         self.am_driver = tripLeg.am_driver
         self.details = tripLeg.details
         self.parent_id = tripLeg.parent_id
-        self.path_ids = tripLeg.path_ids
+        self.path_id = tripLeg.path_id
     }
     
     /// Applies the changes from the editor back to the original TripLeg model.
@@ -167,7 +170,7 @@ struct TripLegEditor {
         tripLeg.place_end_id = self.place_end_id
         tripLeg.am_driver = self.am_driver
         tripLeg.details = self.details
-        tripLeg.path_ids = self.path_ids
+        tripLeg.path_id = self.path_id
         tripLeg.syncStatus = .local
     }
 
