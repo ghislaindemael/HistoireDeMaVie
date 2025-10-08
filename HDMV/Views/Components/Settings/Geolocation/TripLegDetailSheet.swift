@@ -99,8 +99,8 @@ struct TripLegDetailSheet: View {
     private var detailsSection: some View {
         Section(header: Text("Details")) {
             TextEditor(text: Binding(
-                get: { tripLeg.details ?? "" },
-                set: { tripLeg.details = $0.isEmpty ? nil : $0 }
+                get: { editor.details ?? "" },
+                set: { editor.details = $0.isEmpty ? nil : $0 }
             ))
             .frame(minHeight: 100)
         }

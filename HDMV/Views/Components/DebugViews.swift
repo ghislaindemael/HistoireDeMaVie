@@ -59,7 +59,6 @@ extension Path {
             Text("Details: \(details ?? "Unset")")
             Text("Start place id: \(place_start_id ?? -1)")
             Text("End place id: \(place_end_id ?? -1)")
-            Text("Distance: \(distance ?? 0)")
         }
     }
 }

@@ -14,8 +14,9 @@ class PathsPageViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
     private let tripsService = TripsService()
+    private var gpxParser = GPXParserService()
+    private let storageService = StorageService()
     
-
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
@@ -143,4 +144,7 @@ class PathsPageViewModel: ObservableObject {
             print("Failed to create path: \(error)")
         }
     }
+    
+    
+
 }

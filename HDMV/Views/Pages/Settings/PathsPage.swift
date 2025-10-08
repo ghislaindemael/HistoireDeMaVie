@@ -60,7 +60,7 @@ struct PathsPage: View {
                 longPressAction: {}
             )
             .sheet(item: $pathToEdit) { path in
-                PathDetailSheet(path: path)
+                PathDetailSheet(path: path, modelContext: modelContext)
             }
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
