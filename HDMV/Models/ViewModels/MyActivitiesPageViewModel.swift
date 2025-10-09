@@ -18,6 +18,9 @@ class MyActivitiesPageViewModel: ObservableObject {
     }
     
     private var modelContext: ModelContext?
+    private var activityInstanceSyncer: ActivityInstanceSyncer?
+    private var tripLegSyncer: TripLegSyncer?
+    //private var interactionSyncer: PersonInteractionSyncer?
     private let instanceService = ActivityInstanceService()
     private let tripLegsService = TripsService()
     @Published var isLoading: Bool = false
@@ -39,6 +42,9 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
+        self.tripLegSyncer = TripLegSyncer(modelContext: modelContext)
+        // self.interactionSyncer = PersonInteractionSyncer(modelContext: modelContext)
         fetchActivities()
     }
     
@@ -187,218 +193,58 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     // MARK: - Core Synchronization Logic
     
+    /// Performs a full two-way sync. Ideal for the 'refresh' button or for backfilling old dates.
+    /// It pushes local changes first to prevent conflicts, then pulls all remote changes.
     func syncWithServer() async {
+        guard let activityInstanceSyncer = activityInstanceSyncer,
+              let tripLegSyncer = tripLegSyncer else { return }
+        
+        print("⏳ Starting full two-way sync...")
         isLoading = true
-        await syncActivityInstances()
-        await syncTripLegs()
-        isLoading = false
-    }
-    
-    private func syncActivityInstances() async {
-        guard let context = modelContext else { return }
+        defer { isLoading = false }
         
         do {
-            let onlineInstances: [ActivityInstanceDTO]
-            let calendar = Calendar.current
-                        
-            let localDescriptor: FetchDescriptor<ActivityInstance>
+            try await activityInstanceSyncer.sync()
+            try await tripLegSyncer.sync()
             
-            switch filterMode {
-                case .byDate:
-                    let startOfDay = calendar.startOfDay(for: selectedDate)
-                    guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-                    
-                    onlineInstances = try await instanceService.fetchActivityInstances(
-                        activityId: nil,
-                        startDate: startOfDay,
-                        endDate: endOfDay
-                    )
-                    
-                    let predicate = #Predicate<ActivityInstance> {
-                        $0.time_start >= startOfDay && $0.time_start < endOfDay
-                    }
-                    localDescriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
-                    
-                case .byActivity:
-                    
-                    guard let activityId = filterActivityId else {
-                        return
-                    }
-                    let startOfDay = calendar.startOfDay(for: filterStartDate)
-                    let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: filterEndDate)) ?? filterEndDate
-                    
-                    onlineInstances = try await instanceService.fetchActivityInstances(
-                        activityId: filterActivityId,
-                        startDate: startOfDay,
-                        endDate: endOfDay
-                    )
-                    
-                    let predicate = #Predicate<ActivityInstance> { instance in
-                        instance.activity_id == activityId &&
-                        instance.time_start >= startOfDay &&
-                        instance.time_start < endOfDay
-                    }
-                    localDescriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
-            }
-            
-            
-            let onlineDict = Dictionary(uniqueKeysWithValues: onlineInstances.map { ($0.id, $0) })
-            
-            let localInstances = try context.fetch(localDescriptor)
-            let localDict = Dictionary(uniqueKeysWithValues: localInstances.map { ($0.id, $0) })
-            
-            for dto in onlineInstances {
-                if let localInstance = localDict[dto.id] {
-                    if localInstance.syncStatus == .synced {
-                        localInstance.update(fromDto: dto)
-                    }
-                } else {
-                    context.insert(ActivityInstance(fromDto: dto))
-                }
-            }
-            
-            for localInstance in localInstances {
-                if onlineDict[localInstance.id] == nil && localInstance.syncStatus == .synced {
-                    context.delete(localInstance)
-                }
-            }
-            
-            try context.save()
-            
+            fetchData()
+            print("✅ Full sync completed.")
         } catch {
-            print("Error during instance sync: \(error)")
+            print("❌ A full sync error occurred: \(error)")
         }
     }
     
-    private func syncTripLegs() async {
-        guard let context = modelContext else { return }
-        
-        do {
-            let onlineTripLegs = try await tripLegsService.fetchTripLegs(for: selectedDate)
-            let onlineDict = Dictionary(uniqueKeysWithValues: onlineTripLegs.map { ($0.id, $0) })
-            
-            let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-            let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-            
-            let predicate = #Predicate<TripLeg> { trip in
-                trip.time_start >= startOfDay && trip.time_start < endOfDay
-            }
-            let descriptor = FetchDescriptor<TripLeg>(predicate: predicate)
-            let localTripLegs = try context.fetch(descriptor)
-            let localDict = Dictionary(uniqueKeysWithValues: localTripLegs.map { ($0.id, $0) })
-            
-            for dto in onlineTripLegs {
-                if let localLeg = localDict[dto.id] {
-                    switch localLeg.syncStatus {
-                        case .synced:
-                            localLeg.update(fromDto: dto)
-                        case .local:
-                            break
-                        default:
-                            break
-                    }
-                } else {
-                    context.insert(TripLeg(fromDto: dto))
-                }
-            }
-            
-            for localLeg in localTripLegs {
-                if onlineDict[localLeg.id] == nil && localLeg.syncStatus == .synced {
-                    context.delete(localLeg)
-                }
-            }
-            
-            try context.save()
-        
-        } catch {
-            print("Error during trip leg sync: \(error)")
-        }
-    }
-    
-    
+    /// Performs a push-only operation to upload local creations, updates, and deletions.
+    /// Ideal for the 'sync local changes' button.
     func uploadLocalChanges() async {
-        guard let context = modelContext else { return }
+        guard let activityInstanceSyncer = activityInstanceSyncer,
+              let tripLegSyncer = tripLegSyncer else { return }
         
-        let instancesToSync = self.instances.filter { $0.syncStatus != .synced && $0.isValid() }
-        let tripsToSync = self.tripLegs.filter { $0.syncStatus != .synced && $0.isValid()}
-        
-        guard !instancesToSync.isEmpty || !tripsToSync.isEmpty else { return }
-        
+        print("⏳ Uploading local changes...")
         isLoading = true
-        
-        await withTaskGroup(of: Void.self) { group in
-            for instance in instancesToSync {
-                group.addTask {
-                    await self.sync(instance: instance, in: context)
-                }
-            }
-        }
-        
-        try? context.save()
-        
-        await withTaskGroup(of: Void.self) { group in
-            for trip in tripsToSync {
-                group.addTask {
-                    await self.sync(tripLeg: trip, in: context)
-                }
-            }
-        }
-        
-        try? context.save()
-        isLoading = false
-    }
-
-    
-    private func sync(instance: ActivityInstance, in context: ModelContext) async {
-        let payload = instance.toPayload()
+        defer { isLoading = false }
         
         do {
-            if instance.id < 0 {
-                let temporaryId = instance.id
-                let newDTO = try await self.instanceService.createActivityInstance(payload)
-                instance.id = newDTO.id
-                
-                updateTripLegsParentId(from: temporaryId, to: newDTO.id)
-                
-            } else {
-                _ = try await self.instanceService.updateActivityInstance(id: instance.id, payload: payload)
-            }
-            instance.syncStatus = .synced
+            
+            let instanceIdMap = try await activityInstanceSyncer.pushChanges()
+            
+            try await activityInstanceSyncer.updateChildrenWithNewParentIDs(instanceIdMap)
+            
+            try await tripLegSyncer.updateChildrenWithNewParentIDs(instanceIdMap)
+            _ = try await tripLegSyncer.pushChanges()
+            
+            // try await interactionSyncer.updateChildrenWithNewParentIDs(idMap)
+            // try await interactionSyncer.pushChanges()
+            
+            fetchData()
+            print("✅ Local changes uploaded successfully.")
+            
         } catch {
-            instance.syncStatus = .failed
-            print("Failed to sync instance \(instance.id): \(error).")
+            print("❌ An error occurred while uploading local changes: \(error)")
         }
     }
     
-    private func updateTripLegsParentId(from oldId: Int, to newId: Int) {
-        guard let context = modelContext else { return }
-        let children = self.tripLegs.filter { $0.parent_id == oldId }
-        for child in children {
-            child.parent_id = newId
-        }
-        try? context.save()
-    }
     
-    private func sync(tripLeg: TripLeg, in context: ModelContext) async {
-        guard let payload = TripLegPayload(from: tripLeg) else {
-            print("-> TripLeg \(tripLeg.id) is incomplete. Cannot sync.")
-            tripLeg.syncStatus = .failed
-            return
-        }
-        
-        do {
-            if tripLeg.id < 0 {
-                let newDTO = try await self.tripLegsService.createTrip(payload)
-                tripLeg.id = newDTO.id
-            } else {
-                _ = try await self.tripLegsService.updateTrip(id: tripLeg.id, payload: payload)
-            }
-            tripLeg.syncStatus = .synced
-        } catch {
-            print("-> ERROR: Failed to sync trip leg \(tripLeg.id): \(error). Marking as failed.")
-            tripLeg.syncStatus = .failed
-        }
-    }
     
     // MARK: - Local Cache Creation
     

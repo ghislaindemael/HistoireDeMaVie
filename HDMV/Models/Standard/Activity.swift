@@ -11,6 +11,9 @@ import SwiftUI
 
 @Model
 final class Activity: Identifiable, Hashable, SyncableModel {
+    
+    typealias Payload = ActivityPayload
+    
     @Attribute(.unique) var id: Int
     var name: String
     var slug: String
@@ -22,7 +25,7 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     var selectable: Bool = true
     var cache: Bool = true
     var archived: Bool = false
-    var syncStatus: SyncStatus = SyncStatus.undef
+    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
     @Transient var children: [Activity] = []
     

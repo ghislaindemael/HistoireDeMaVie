@@ -9,6 +9,9 @@ import SwiftData
 
 @Model
 final class Path: SyncableModel {
+    
+    typealias Payload = PathPayload
+    
     @Attribute(.unique) var id: Int
     var name: String?
     var details: String?
@@ -19,7 +22,7 @@ final class Path: SyncableModel {
     var path_ids: [Int]?
     var cache: Bool = true
     var archived: Bool = false
-    var syncStatus: SyncStatus = SyncStatus.undef
+    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
     init(id: Int = Int.random(in: -999999 ... -1),
          name: String? = nil,

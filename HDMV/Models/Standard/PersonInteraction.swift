@@ -11,6 +11,9 @@ import SwiftData
 // MARK: - SwiftData Model
 @Model
 final class PersonInteraction: Equatable, Identifiable, SyncableModel {
+    
+    typealias Payload = PersonInteractionPayload
+    
     @Attribute(.unique) var id: Int
     var time_start: Date
     var time_end: Date?
@@ -20,8 +23,8 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     var in_person: Bool = true
     var details: String?
     var percentage: Int?
-    var syncStatus: SyncStatus = SyncStatus.undef
-    
+    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+
     init(id: Int,
          time_start: Date = .now,
          time_end: Date? = nil,

@@ -57,6 +57,7 @@ struct MyActivitiesPage: View {
                     PersonInteractionEditSheet(interaction: interaction)
                 }
         }
+        .environmentObject(viewModel)
     }
     
     private var mainListView: some View {
@@ -64,56 +65,18 @@ struct MyActivitiesPage: View {
             FilterControlView(viewModel: viewModel)
             
             List {
-                ForEach($viewModel.instances) { $instance in
-                    VStack {
-                        let instanceTripLegs = viewModel.tripLegs(for: instance.id)
-                        let instanceInteractions = viewModel.interactions(for: instance.id)
-                        
-                        let hasActiveLegs = instanceTripLegs.contains { $0.time_end == nil }
-                        let hasActiveInteractions = instanceInteractions.contains { $0.time_end == nil }
-                        
-                        ActivityInstanceRowView(
-                            instance: instance,
-                            tripLegs: instanceTripLegs,
-                            interactions: instanceInteractions,
-                            selectedDate: viewModel.selectedDate,
-                            onStartTripLeg: { parentId in
-                                viewModel.createTripLeg(parent_id: parentId)
-                            },
-                            onEditTripLeg: { leg in
-                                self.tripLegToEdit = leg
-                            },
-                            onEndTripLeg: { leg in
-                                viewModel.endTripLeg(leg: leg)
-                            },
-                            onStartInteraction: { parentId in
-                                viewModel.createInteraction(parent_id: parentId)
-                            },
-                            onEditInteraction: { interaction in
-                                self.interactionToEdit = interaction
-                            },
-                            onEndInteraction: { interaction in
-                                viewModel.endInteraction(interaction: interaction)
-                                
-                            }
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            instanceToEdit = instance
-                        }
-                        if instance.time_end == nil
-                            && !hasActiveLegs
-                            && !hasActiveInteractions
-                        {
-                            EndItemButton(title: "End Activity") {
-                                viewModel.endActivityInstance(instance: instance)
-                            }
-                        }
-                    }
-                    
+                let topLevelInstances = viewModel.instances.filter { $0.parent == nil }
+                
+                ForEach(topLevelInstances) { instance in
+                    ActivityHierarchyView(
+                        instance: instance,
+                        level: 0,
+                        instanceToEdit: $instanceToEdit,
+                        tripLegToEdit: $tripLegToEdit,
+                        interactionToEdit: $interactionToEdit
+                    )
                 }
             }
-            
         }
     }
     

@@ -14,4 +14,8 @@ enum SyncStatus: String, Codable, Sendable {
     case failed     // The last attempt to save the object to Supabase failed.
     case toDelete
     case undef
+    
+    static func safeInit(_ rawValue: String) -> SyncStatus {
+        return SyncStatus(rawValue: rawValue) ?? .undef
+    }
 }

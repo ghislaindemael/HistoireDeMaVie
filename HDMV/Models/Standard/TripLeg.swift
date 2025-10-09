@@ -12,6 +12,9 @@ import SwiftData
 // MARK: - SwiftData Model
 @Model
 final class TripLeg: Identifiable, SyncableModel {
+    
+    typealias Payload = TripLegPayload
+    
     @Attribute(.unique) var id: Int
     
     var parent_id: Int?
@@ -24,8 +27,8 @@ final class TripLeg: Identifiable, SyncableModel {
     var path_str: String?
     var path_id: Int?
     var details: String?
-    var syncStatus: SyncStatus = SyncStatus.undef
-    
+    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+
     init(id: Int = Int.random(in: 1...999999),
          parent_id: Int? = nil,
          time_start: Date,
@@ -92,10 +95,11 @@ final class TripLeg: Identifiable, SyncableModel {
         }
         return true
     }
+    
 }
 
 
-struct TripLegDTO: Codable, Sendable {
+struct TripLegDTO: Identifiable, Codable, Sendable {
     var id: Int
     var parent_id: Int?
     var time_start: Date
@@ -109,7 +113,10 @@ struct TripLegDTO: Codable, Sendable {
     var details: String?
 }
 
-struct TripLegPayload: Codable {
+struct TripLegPayload: Codable, InitializableWithModel {
+    
+    typealias Model = TripLeg
+    
     var parent_id: Int
     var time_start: Date
     var time_end: Date
@@ -122,7 +129,10 @@ struct TripLegPayload: Codable {
     var details: String?
     
     init?(from tripLeg: TripLeg) {
-        guard tripLeg.isValid() else { return nil }
+        guard tripLeg.isValid() else {
+            print("-> TripLeg \(tripLeg.id) is invalid.")
+            return nil
+        }
         
         self.parent_id = tripLeg.parent_id!
         self.time_start = tripLeg.time_start

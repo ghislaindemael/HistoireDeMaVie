@@ -10,15 +10,21 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class ActivityInstance : SyncableModel, CustomStringConvertible {
+final class ActivityInstance: SyncableModel {
+    
+    typealias Payload = ActivityInstancePayload
+    
     @Attribute(.unique) var id: Int
     var time_start: Date
     var time_end: Date?
     var activity_id: Int?
+    var parent: ActivityInstance?
+    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parent)
+    var children: [ActivityInstance]? = []
     var details: String?
     var percentage: Int?
     var activity_details: Data?
-    var syncStatus: SyncStatus = SyncStatus.undef
+    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
 
     init(
@@ -26,6 +32,7 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
         time_start: Date,
         time_end: Date? = nil,
         activity_id: Int? = nil,
+        parent: ActivityInstance? = nil,
         details: String? = nil,
         percentage: Int? = nil,
         activity_details: ActivityDetails? = nil,
@@ -35,25 +42,11 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
         self.time_start = time_start
         self.time_end = time_end
         self.activity_id = activity_id
+        self.parent = parent
         self.details = details
         self.percentage = percentage
         self.syncStatus = syncStatus
         self.decodedActivityDetails = activity_details
-    }
-    
-    convenience init(
-        fromDto dto: ActivityInstanceDTO
-    ){
-        self.init(
-            id: dto.id,
-            time_start: dto.time_start,
-            time_end: dto.time_end,
-            activity_id: dto.activity_id,
-            details: dto.details,
-            percentage: dto.percentage,
-            syncStatus: .synced
-        )
-        self.decodedActivityDetails = dto.activity_details
     }
     
     var decodedActivityDetails: ActivityDetails? {
@@ -78,45 +71,18 @@ final class ActivityInstance : SyncableModel, CustomStringConvertible {
     }
     
     func update(from editor: ActivityInstanceEditor) {
-        self.activity_id = editor.activity_id
         self.time_start = editor.time_start
         self.time_end = editor.time_end
+        self.activity_id = editor.activity_id
+        self.parent = editor.parent
         self.details = editor.details
         self.percentage = editor.percentage
         self.decodedActivityDetails = editor.decodedActivityDetails
     }
-    
-    var description: String {
-        """
-        ActivityInstance(
-            id: \(id),
-            time_start: \(time_start),
-            time_end: \(String(describing: time_end)),
-            activity_id: \(String(describing: activity_id)),
-            details: \(String(describing: details)),
-            percentage: \(percentage ?? 100)% 
-            syncStatus: \(syncStatus),
-            activityDetails: \(activity_details?.debugDescription ?? "nil")        
-        )
-        """
-    }
-    
-    /// Creates a data transfer object (payload) from the model instance.
-    func toPayload() -> ActivityInstancePayload {
-        return ActivityInstancePayload(
-            time_start: self.time_start,
-            time_end: self.time_end,
-            activity_id: self.activity_id,
-            details: self.details,
-            percentage: self.percentage,
-            activity_details: self.decodedActivityDetails
-        )
-    }
-    
+        
     func isValid() -> Bool {
         return activity_id != nil
     }
-    
     
 }
 
@@ -125,6 +91,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let time_start: Date
     let time_end: Date?
     let activity_id: Int?
+    let parent_instance_id: Int?
     let details: String?
     let percentage: Int?
     let activity_details: ActivityDetails?
@@ -132,42 +99,49 @@ struct ActivityInstanceDTO: Codable, Identifiable {
 }
 
 
-struct ActivityInstancePayload: Codable {
+struct ActivityInstancePayload: Codable, InitializableWithModel {
+    
+    typealias Model = ActivityInstance
+    
     let time_start: Date
     let time_end: Date?
     let activity_id: Int?
+    let parent_instance_id: Int?
     let details: String?
     let percentage: Int?
     let activity_details: ActivityDetails?
-    
-    private enum CodingKeys: String, CodingKey {
-        case time_start, time_end, activity_id, details, percentage, activity_details
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(time_start, forKey: .time_start)
-        try container.encode(time_end, forKey: .time_end)
-        try container.encode(activity_id, forKey: .activity_id)
-        try container.encode(details, forKey: .details)
-        try container.encode(percentage, forKey: .percentage)
-        try container.encode(activity_details, forKey: .activity_details)
+
+    init?(from instance: ActivityInstance) {
+        guard instance.isValid() else {
+            print("-> ActivityInstance \(instance.id) is invalid.")
+            return nil
+        }
+        
+        self.time_start = instance.time_start
+        self.time_end = instance.time_end
+        self.activity_id = instance.activity_id
+        self.parent_instance_id = instance.parent?.id
+        self.details = instance.details
+        self.percentage = instance.percentage
+        self.activity_details = instance.decodedActivityDetails
     }
 }
 
 struct ActivityInstanceEditor {
-    var activity_id: Int?
     var time_start: Date
     var time_end: Date?
+    var activity_id: Int?
+    var parent: ActivityInstance?
     var details: String?
     var percentage: Int?
     var decodedActivityDetails: ActivityDetails?
     
     /// Initializes an editor from an existing ActivityInstance.
     init(from instance: ActivityInstance) {
-        self.activity_id = instance.activity_id
         self.time_start = instance.time_start
         self.time_end = instance.time_end
+        self.activity_id = instance.activity_id
+        self.parent = instance.parent 
         self.details = instance.details
         self.percentage = instance.percentage
         self.decodedActivityDetails = instance.decodedActivityDetails
