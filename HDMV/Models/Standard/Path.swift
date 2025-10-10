@@ -79,8 +79,8 @@ final class Path: SyncableModel {
     func isValid() -> Bool {
         guard name != nil,
               place_start_id != nil,
-              place_end_id != nil,
-              (metrics != nil || path_ids != nil)
+              place_end_id != nil//,
+              //(metrics != nil || path_ids != nil)
             else {
                 return false
             }

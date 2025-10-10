@@ -11,55 +11,118 @@ import SwiftData
 
 struct PathSelectorSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
-    @Query(sort: \Path.name) private var paths: [Path]
-    @Query(sort: \City.name) private var cities: [City]
-    @Query private var places: [Place]
-    
-    @State private var selectedCity: City? = nil
-    
+    let startPlaceId: Int?
+    let endPlaceId: Int?
     let onPathSelected: (Int) -> Void
     
-    private var filteredPaths: [Path] {
-        guard let selectedCity = selectedCity else { return paths }
-        let placeIDsInCity = places.filter { $0.city_id == selectedCity.id }.map { $0.id }
-        let placeIDSet = Set(placeIDsInCity)
-        return paths.filter { path in
-            guard let startID = path.place_start_id, let endID = path.place_end_id else { return false }
-            return placeIDSet.contains(startID) || placeIDSet.contains(endID)
-        }
+    @State private var exactMatches: [Path] = []
+    @State private var partialMatches: [Path] = []
+    @State private var otherPaths: [Path] = []
+    
+    @State private var showAllPaths = false
+    
+    init(
+        startPlaceId: Int? = nil,
+        endPlaceId: Int? = nil,
+        onPathSelected: @escaping (Int) -> Void
+    ) {
+        self.startPlaceId = startPlaceId
+        self.endPlaceId = endPlaceId
+        self.onPathSelected = onPathSelected
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section("Filter") {
-                    Picker("City", selection: $selectedCity) {
-                        Text("All Cities").tag(nil as City?)
-                        ForEach(cities) { city in
-                            Text(city.name).tag(city as City?)
+                if !exactMatches.isEmpty {
+                    Section("Exact Matches") {
+                        ForEach(exactMatches) { path in
+                            pathRow(for: path)
                         }
                     }
                 }
                 
-                Section("Paths") {
-                    ForEach(filteredPaths) { path in
-                        Button(action: {
-                            onPathSelected(path.id)
-                            dismiss()
-                        }) {
-                            PathRowView(path: path)
+                
+                if !partialMatches.isEmpty {
+                    Section("Partial Matches") {
+                        ForEach(partialMatches) { path in
+                            pathRow(for: path)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                
+                Section {
+                    Toggle("Show All Other Cached Paths", isOn: $showAllPaths)
+                    if showAllPaths {
+                        ForEach(otherPaths) { path in
+                            pathRow(for: path)
+                        }
+                    }
+                }
+                
+                
             }
             .navigationTitle("Select a Path")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onAppear {
+                fetchInitialPaths()
+            }
+            .onChange(of: showAllPaths) {
+                if showAllPaths && otherPaths.isEmpty {
+                    fetchOtherPaths()
+                }
+            }
         }
+    }
+    
+    // MARK: - Data Fetching Methods
+    
+    private func fetchInitialPaths() {
+        guard let startId = startPlaceId, let endId = endPlaceId else { return }
+        
+        
+        let predicate = #Predicate<Path> { $0.cache == true }
+        let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Path.name)])
+        guard let cachedPaths = try? modelContext.fetch(descriptor) else { return }
+        
+        self.exactMatches = cachedPaths.filter { $0.place_start_id == startId && $0.place_end_id == endId }
+        
+        let exactMatchIds = Set(self.exactMatches.map { $0.id })
+        self.partialMatches = cachedPaths.filter { path in
+            guard !exactMatchIds.contains(path.id) else { return false }
+            return path.place_start_id == startId || path.place_end_id == endId
+        }
+        
+    }
+    
+    private func fetchOtherPaths() {
+        let predicate = #Predicate<Path> { $0.cache == true }
+        let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Path.name)])
+        guard let cachedPaths = try? modelContext.fetch(descriptor) else { return }
+        
+        var displayedIds = Set(partialMatches.map { $0.id })
+        let exactMatchIds = Set(exactMatches.map { $0.id })
+        displayedIds.formUnion(exactMatchIds)
+        
+        self.otherPaths = cachedPaths.filter { !displayedIds.contains($0.id) }
+    }
+    
+    /// A helper view builder to avoid repeating the button/row code.
+    @ViewBuilder
+    private func pathRow(for path: Path) -> some View {
+        Button(action: {
+            onPathSelected(path.id)
+            dismiss()
+        }) {
+            PathRowView(path: path)
+        }
+        .buttonStyle(.plain)
     }
 }

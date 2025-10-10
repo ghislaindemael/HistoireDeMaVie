@@ -44,14 +44,19 @@ struct MyActivitiesPage: View {
                 .onChange(of: viewModel.filterActivityId) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
-                .sheet(item: $instanceToEdit) { instance in
+                .sheet(item: $instanceToEdit,
+                       onDismiss: {viewModel.fetchDailyData()}
+                ) { instance in
                     ActivityInstanceDetailSheet(
                         instance: instance,
                         viewModel: viewModel,
                     )
                 }
                 .sheet(item: $tripLegToEdit) { leg in
-                    TripLegDetailSheet(tripLeg: leg)
+                    TripLegDetailSheet(
+                        tripLeg: leg,
+                        modelContext: modelContext
+                    )
                 }
                 .sheet(item: $interactionToEdit) { interaction in
                     PersonInteractionEditSheet(interaction: interaction)
@@ -64,18 +69,22 @@ struct MyActivitiesPage: View {
         VStack(spacing: 12) {
             FilterControlView(viewModel: viewModel)
             
-            List {
-                let topLevelInstances = viewModel.instances.filter { $0.parent == nil }
-                
-                ForEach(topLevelInstances) { instance in
-                    ActivityHierarchyView(
-                        instance: instance,
-                        level: 0,
-                        instanceToEdit: $instanceToEdit,
-                        tripLegToEdit: $tripLegToEdit,
-                        interactionToEdit: $interactionToEdit
-                    )
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    let topLevelInstances = viewModel.instances.filter { $0.parent == nil }
+                    
+                    ForEach(topLevelInstances) { instance in
+                        ActivityHierarchyView(
+                            instance: instance,
+                            level: 0,
+                            instanceToEdit: $instanceToEdit,
+                            tripLegToEdit: $tripLegToEdit,
+                            interactionToEdit: $interactionToEdit
+                        )
+                        .padding(.bottom, 8)
+                    }
                 }
+                .padding(.horizontal)
             }
         }
     }

@@ -91,6 +91,15 @@ class PathDetailSheetViewModel: ObservableObject {
             }
         }
     }
+    
+    func addPathSegment(pathId: Int) {
+        if editor.path_ids == nil {
+            editor.path_ids = []
+        }
+        if !(editor.path_ids?.contains(pathId) ?? false) {
+            editor.path_ids?.append(pathId)
+        }
+    }
 
     func onDone() {
         editor.apply(to: path)

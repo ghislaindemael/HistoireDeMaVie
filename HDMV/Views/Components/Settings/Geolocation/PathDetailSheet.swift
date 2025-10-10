@@ -65,14 +65,11 @@ struct PathDetailSheet: View {
                 viewModel.onDone()
             }
             .sheet(isPresented: $isShowingPathSelector) {
-                PathSelectorSheet { selectedPathId in
-                    if viewModel.editor.path_ids == nil {
-                        viewModel.editor.path_ids = []
-                    }
-                    if !viewModel.editor.path_ids!.contains(selectedPathId) {
-                        viewModel.editor.path_ids!.append(selectedPathId)
-                    }
-                }
+                PathSelectorSheet(
+                    startPlaceId: path.place_start_id,
+                    endPlaceId: path.place_end_id,
+                    onPathSelected: viewModel.addPathSegment
+                )
             }
             .fileImporter(
                 isPresented: $isShowingGpxFileImporter,

@@ -359,5 +359,47 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
+    func reparent(instanceId: Int, toNewParentInstanceId newParentInstanceId: Int) {
+        print("--- [Debug] Attempting to reparent instance '\(instanceId)' onto '\(newParentInstanceId)' ---")
+        
+        guard let context = modelContext else {
+            print("❌ [Debug] FAILED: modelContext is nil.")
+            return
+        }
+        
+        guard instanceId != newParentInstanceId else {
+            print("⚠️ [Debug] SKIPPED: Attempted to drop an instance onto itself.")
+            return
+        }
+        
+        let childInstanceToMove = instances.first { $0.id == instanceId }
+        let newParentInstance = instances.first { $0.id == newParentInstanceId }
+        
+        guard let childInstanceToMove = childInstanceToMove, let newParentInstance = newParentInstance else {
+            print("❌ [Debug] FAILED: Could not find instances in local data.")
+            return
+        }
+        
+        var parentIterator = newParentInstance.parent
+        while parentIterator != nil {
+            if parentIterator?.id == childInstanceToMove.id {
+                print("❌ [Debug] FAILED: Circular dependency detected!")
+                return
+            }
+            parentIterator = parentIterator?.parent
+        }
+        
+        print("✅ [Debug] Re-parenting instance '\(childInstanceToMove.id)' to '\(newParentInstance.id)'.")
+        childInstanceToMove.parent = newParentInstance
+        childInstanceToMove.syncStatus = .local
+        
+        do {
+            try context.save()
+            print("✅ [Debug] Save successful.")
+            fetchDailyData()
+        } catch {
+            print("❌ [Debug] FAILED to save re-parenting change: \(error)")
+        }
+    }
     
 }

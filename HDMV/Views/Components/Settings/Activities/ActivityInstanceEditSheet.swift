@@ -40,6 +40,15 @@ struct ActivityInstanceDetailSheet: View {
                     specializedDetailsSection(for: activity)
                 }
                 
+                
+                Section("Hierarchy") {
+                    if editor.parent != nil {
+                        Button("Remove from Parent", role: .destructive) {
+                            editor.parent = nil
+                        }
+                    }
+                }
+                
                 if selectedActivity?.can(.create_trip_legs) == true {
                     tripLegsSection
                     claimTripLegsSection
@@ -54,10 +63,11 @@ struct ActivityInstanceDetailSheet: View {
             .sheet(item: $tripLegToEdit) { leg in
                 TripLegDetailSheet(
                     tripLeg: leg,
+                    modelContext: modelContext
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .standardSheetToolbar(isFormValid: true) {
+            .standardSheetToolbar() {
                 instance.update(from: editor)
                 instance.syncStatus = .local
                 if !showEndTime {
