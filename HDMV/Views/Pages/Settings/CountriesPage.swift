@@ -12,7 +12,7 @@ struct CountriesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = CountriesPageViewModel()
     
-    @State private var isShowingAddSheet = false
+    @State private var countryToEdit: Country?
     
     var body: some View {
         NavigationStack {
@@ -29,7 +29,7 @@ struct CountriesPage: View {
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .sheet(isPresented: $isShowingAddSheet) {
+            .sheet(item: $countryToEdit) { country in
                 //TODO: Add country editor sheet
             }
         }

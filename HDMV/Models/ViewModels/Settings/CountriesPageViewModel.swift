@@ -12,7 +12,7 @@ import SwiftData
 class CountriesPageViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
-    private var countriesSyncer: CountriesSyncer?
+    private var countriesSyncer: CountrySyncer?
 
     @Published var isLoading = false
     @Published var countries: [Country] = []
@@ -22,13 +22,13 @@ class CountriesPageViewModel: ObservableObject {
             
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        self.countriesSyncer = CountriesSyncer(modelContext: modelContext)
-        fetchCountries()
+        self.countriesSyncer = CountrySyncer(modelContext: modelContext)
+        fetchFromCache()
     }
     
     // MARK: - Data Loading and Caching
     
-    func fetchCountries() {
+    func fetchFromCache() {
         guard let context = modelContext else { return }
         let descriptor = FetchDescriptor<Country>()
         do {
@@ -47,7 +47,7 @@ class CountriesPageViewModel: ObservableObject {
         }
         do {
             try await syncer.pullChanges()
-            fetchCountries()
+            fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
@@ -63,7 +63,7 @@ class CountriesPageViewModel: ObservableObject {
         do {
             _ = try await syncer.pushChanges()
             // TODO: For cleancode, add City update for first country sync
-            fetchCountries()
+            fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }

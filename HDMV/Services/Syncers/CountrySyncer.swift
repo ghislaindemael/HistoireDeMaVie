@@ -11,7 +11,7 @@ import SwiftData
 
 
 @MainActor
-final class CountriesSyncer: BaseSyncer<Country, CountryDTO, CountryPayload> {
+final class CountrySyncer: BaseSyncer<Country, CountryDTO, CountryPayload> {
     
     private let countriesService = CountriesService()
     private let settings: SettingsStore = SettingsStore.shared

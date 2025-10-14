@@ -27,9 +27,7 @@ struct HDMVApp: App {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            print(container.schema)
-            
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])            
             //try DatabaseMigrator.migrateAllSyncableModels(container: container)
 
             return container
@@ -44,6 +42,10 @@ struct HDMVApp: App {
     var body: some Scene {
         WindowGroup {
             AppView()
+                .onAppear {
+                    RelationResolver.setContext(HDMVApp.sharedModelContainer.mainContext)
+
+                }
         }
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)

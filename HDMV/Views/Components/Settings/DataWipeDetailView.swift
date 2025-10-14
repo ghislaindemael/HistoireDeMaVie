@@ -187,7 +187,7 @@ struct DataWipeDetailView: View {
                 )
             case let city as City:
                 return AnyView(
-                    Text(city.name)
+                    Text(city.name ?? "Name unset, ID: \(city.id)")
                 )
             case let path as Path:
                 return AnyView(path.debugView)

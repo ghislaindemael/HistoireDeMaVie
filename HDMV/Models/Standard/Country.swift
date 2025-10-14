@@ -9,49 +9,39 @@
 import Foundation
 import SwiftData
 
-@available(iOS 26.0, macOS 26.0, *)
+import Foundation
+import SwiftData
+
 @Model
 final class Country: CatalogueModel {
+    var rid: Int?
+    var slug: String?
+    var name: String?
+    var cache: Bool = true
+    var archived: Bool = false
+    var syncStatusRaw: String = SyncStatus.local.rawValue
     
     typealias Payload = CountryPayload
     
-    var slug: String?
-    var name: String?
-    
-    // MARK: - Initializers
-    
-    required init(
-        rid: Int? = nil,
-        slug: String? = nil,
-        name: String? = nil,
-        cache: Bool = true,
-        archived: Bool = false,
-        syncStatus: SyncStatus = .local
-    ) {
+    init(slug: String? = nil, name: String? = nil, rid: Int? = nil, cache: Bool = true, archived: Bool = false, syncStatus: SyncStatus = .local) {
         self.slug = slug
         self.name = name
-        
-        super.init(
-            rid: rid,
-            cache: cache,
-            archived: archived,
-            syncStatusRaw: syncStatus.rawValue
-        )
+        self.rid = rid
+        self.cache = cache
+        self.archived = archived
+        self.syncStatusRaw = syncStatus.rawValue
+    }
+    
+    func isValid() -> Bool {
+        guard let slug = slug, !slug.isEmpty,
+              let name = name, !name.isEmpty else {
+            return false
+        }
+        return true
     }
     
     convenience init(fromDto dto: CountryDTO) {
-        self.init(
-            rid: dto.id,
-            slug: dto.slug,
-            name: dto.name,
-            cache: dto.cache,
-            archived: dto.archived,
-            syncStatus: .synced
-        )
-    }
-    
-    override func isValid() -> Bool {
-        return name != nil && slug != nil
+        self.init(slug: dto.slug, name: dto.name, rid: dto.id, cache: dto.cache, archived: dto.archived, syncStatus: .synced)
     }
     
     func update(fromDto dto: CountryDTO) {
@@ -60,45 +50,37 @@ final class Country: CatalogueModel {
         self.name = dto.name
         self.cache = dto.cache
         self.archived = dto.archived
-        self.syncStatus = .synced
+        self.syncStatusRaw = SyncStatus.synced.rawValue
     }
 }
 
-
 struct CountryDTO: Codable, Identifiable, Sendable {
-    
     var id: Int
     var slug: String
     var name: String
     var cache: Bool = true
     var archived: Bool = false
+    
 }
 
 struct CountryPayload: Codable, InitializableWithModel {
-    
     typealias Model = Country
-    
     var slug: String
     var name: String
     var cache: Bool
     var archived: Bool
     
     init?(from country: Country) {
-        guard country.isValid(),
-              let name = country.name,
-              let slug = country.slug
-        else { return nil }
-        
-        self.name = name
-        self.slug = slug
+        guard country.isValid() else { return nil }
+        self.slug = country.slug!
+        self.name = country.name!
         self.cache = country.cache
         self.archived = country.archived
     }
 }
 
 struct CountryEditor: CachableModel {
-    
-    var rid: Int? = nil
+    var rid: Int?
     var slug: String?
     var name: String?
     var cache: Bool
@@ -110,16 +92,13 @@ struct CountryEditor: CachableModel {
         self.name = country.name
         self.cache = country.cache
         self.archived = country.archived
-
     }
     
     func apply(to country: Country) {
         country.rid = self.rid
-        country.slug = self.slug
-        country.name = self.name
+        country.slug = self.slug ?? country.slug
+        country.name = self.name ?? country.name
         country.cache = self.cache
         country.archived = self.archived
     }
-    
 }
-
