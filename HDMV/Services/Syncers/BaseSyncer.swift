@@ -15,19 +15,18 @@ import SwiftData
 @MainActor
 class BaseSyncer<Model, DTO, Payload>
 where
-    Model:SyncableModel & PersistentModel,
+    Model: SyncableModel & Identifiable & PersistentModel,
     DTO: Codable & Identifiable,
-    Payload: Codable & InitializableWithModel,
-    Model.ID == Int,
     DTO.ID == Int,
+    Payload: Codable & InitializableWithModel,
     Payload.Model == Model
 {
     
     private enum SyncTaskResult {
-        case created(tempId: Int, newDTO: DTO)
-        case updated(id: Int)
-        case failed(id: Int, error: Error)
-        case skipped(id: Int)
+        case created(id: PersistentIdentifier, newDTO: DTO)
+        case updated(id: PersistentIdentifier)
+        case failed(id: PersistentIdentifier, error: Error)
+        case skipped(id: PersistentIdentifier)
     }
     
     let modelContext: ModelContext
@@ -38,8 +37,7 @@ where
     
     /// The main entry point for a full two-way sync.
     final func sync() async throws {
-        let idMap = try await pushChanges()
-        try await updateChildrenWithNewParentIDs(idMap)
+        try await pushChanges()
         try await pullChanges()
     }
     
@@ -47,94 +45,53 @@ where
     
     /// Pushes local creations, updates, and deletions to the server.
     /// Returns a dictionary mapping temporary local IDs to permanent server IDs.
-    func pushChanges() async throws -> [Int: Int] {
+    func pushChanges() async throws -> Void {
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
         let itemsToSync = localItems + failedItems
         
-        guard !itemsToSync.isEmpty else {
-            return [:]
-        }
+        guard !itemsToSync.isEmpty else { return }
         
-        let taskResults = await withTaskGroup(of: SyncTaskResult.self, returning: [SyncTaskResult].self) { group in
+        await withTaskGroup(of: Void.self) { group in
             for item in itemsToSync {
                 group.addTask {
                     guard let payload = Payload(from: item) else {
-                        return .skipped(id: item.id)
+                        print("Skipping item with UUID: \(item.id)")
+                        item.syncStatus = .failed
+                        return
                     }
                     
                     do {
-                        if item.id < 0 {
+                        if item.rid == nil {
                             let newDTO = try await self.createOnServer(payload: payload)
-                            return .created(tempId: item.id, newDTO: newDTO)
+                            item.rid = newDTO.id
+                            item.syncStatus = .synced
                         } else {
-                            _ = try await self.updateOnServer(id: item.id, payload: payload)
-                            return .updated(id: item.id)
+                            _ = try await self.updateOnServer(rid: item.rid!, payload: payload)
+                            item.syncStatus = .synced
                         }
                     } catch {
-                        return .failed(id: item.id, error: error)
+                        item.syncStatus = .failed
+                        print("❌ Failed to sync item \(item.id): \(error)")
                     }
                 }
-            }
-            
-            var results: [SyncTaskResult] = []
-            for await result in group {
-                results.append(result)
-            }
-            return results
-        }
-        
-        var temporaryToPermanentIdMap = [Int: Int]()
-        
-        let itemsDict = Dictionary(uniqueKeysWithValues: itemsToSync.map { ($0.id, $0) })
-        
-        for result in taskResults {
-            switch result {
-                case .created(let tempId, let newDTO):
-                    if let item = itemsDict[tempId] {
-                        item.id = newDTO.id
-                        item.syncStatus = .synced
-                        temporaryToPermanentIdMap[tempId] = newDTO.id
-                    }
-                    
-                case .updated(let id):
-                    if let item = itemsDict[id] {
-                        item.syncStatus = .synced
-                    }
-                    
-                case .failed(let id, let error):
-                    if let item = itemsDict[id] {
-                        item.syncStatus = .failed
-                    }
-                    print("❌ Failed to sync item \(id): \(error)")
-                    
-                case .skipped(let id):
-                    print("- Skipped syncing invalid item \(id)")
             }
         }
         
         try modelContext.save()
-        return temporaryToPermanentIdMap
     }
     
     
     // MARK: - Pull Logic (Server -> Local)
     
-    func pullChanges() async throws {
-        // Implement your 'pull' logic in subclasses
-    }
-    
+    func pullChanges() async throws { fatalError("Subclasses must implement")}
+
     // MARK: - Abstract Methods for Subclasses to Implement
     
-    /// This method will be overridden by subclasses to update any children
-    /// that were pointing to a temporary parent ID.
-    func updateChildrenWithNewParentIDs(_ idMap: [Int: Int]) async throws {
-        // Default implementation does nothing.
-    }
-    
+    /// This method will be overridden by subclasses to update any children that were pointing to a local parent.
     func createOnServer(payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
-    func updateOnServer(id: Model.ID, payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
-    func deleteFromServer(_ id: Model.ID) async throws { fatalError("Subclasses must implement") }
+    func updateOnServer(rid: Int, payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
+    func deleteFromServer(_ rid: Int) async throws { fatalError("Subclasses must implement") }
     
     // MARK: - Helpers
     

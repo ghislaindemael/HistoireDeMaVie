@@ -11,7 +11,7 @@ import SwiftData
 struct TempIDGenerator {
     
     static func generate<T>(for model: T.Type, in context: ModelContext) -> Int
-    where T: PersistentModel, T: Identifiable, T.ID == Int {
+    where T: PersistentModel & Identifiable, T.ID == Int {
         
         do {
             var descriptor = FetchDescriptor<T>()

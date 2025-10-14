@@ -10,7 +10,6 @@ import SwiftData
 
 struct CountriesPage: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var settings: SettingsStore
     @StateObject private var viewModel = CountriesPageViewModel()
     
     @State private var isShowingAddSheet = false
@@ -21,46 +20,27 @@ struct CountriesPage: View {
                 countriesList
             }
             .navigationTitle("Countries")
-            .standardConfigPageToolbar(
-                refreshAction: viewModel.fetchFromServer,
-                cacheAction: viewModel.cacheCountries,
-                isShowingAddSheet: $isShowingAddSheet
+            .logPageToolbar(
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
+                singleTapAction: { viewModel.createCountry() },
+                longPressAction: {}
             )
             .onAppear {
-                viewModel.setup(modelContext: modelContext, settings: settings)
+                viewModel.setup(modelContext: modelContext)
             }
             .sheet(isPresented: $isShowingAddSheet) {
-                NewCountrySheet(viewModel: viewModel)
+                //TODO: Add country editor sheet
             }
         }
     }
     
     @ViewBuilder
     private var countriesList: some View {
-        Section() {
+        Section("Countries") {
             ForEach(viewModel.countries) { country in
-                CountryRowView(
-                    country: country,
-                    onCacheToggle: {
-                        viewModel.updateCache(for: country)
-                    }
-                )
-                .swipeActions {
-                    if country.archived {
-                        Button(action: {
-                            viewModel.unarchiveCountry(for: country)
-                        }) {
-                            Label("Un-archive", systemImage: "archivebox.fill")
-                        }
-                        .tint(.green)
-                    } else {
-                        Button(role: .destructive, action: {
-                            viewModel.archiveCountry(for: country)
-                        }) {
-                            Label("Archive", systemImage: "archivebox.fill")
-                        }
-                    }
-                }
+                CountryRowView(country: country)
+                
             }
         }
     }
@@ -74,7 +54,7 @@ struct CountriesPage: View {
         do {
             let container = try ModelContainer(for: schema, configurations: [config])
             
-            let switzerland = Country(id: 1, slug: "ch", name: "Switzerland")
+            let switzerland = Country(slug: "ch", name: "Switzerland")
             container.mainContext.insert(switzerland)
             return container
         } catch {

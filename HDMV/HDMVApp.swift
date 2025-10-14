@@ -28,6 +28,7 @@ struct HDMVApp: App {
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            print(container.schema)
             
             //try DatabaseMigrator.migrateAllSyncableModels(container: container)
 
