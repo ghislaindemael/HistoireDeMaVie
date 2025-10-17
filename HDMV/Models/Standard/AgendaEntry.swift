@@ -12,7 +12,7 @@ import SwiftData
 // The SwiftData Model for storing an agenda entry locally
 @Model
 final class AgendaEntry: Identifiable {
-    @Attribute(.unique) var date: String // YYYY-MM-DD format will be the unique ID
+    @Attribute(.unique) var date: String
     var daySummary: String
     var mood: Int
     var moodComments: String

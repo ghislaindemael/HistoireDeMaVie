@@ -16,7 +16,6 @@ class CitiesPageViewModel: ObservableObject {
     private var citySyncer: CitySyncer?
     
     @Published var isLoading = false
-    @Published var countries: [Country] = []
     @Published var cities: [City] = []
     @Published var filteredCities: [City] = []
 
@@ -26,7 +25,6 @@ class CitiesPageViewModel: ObservableObject {
         }
     }
     
-    
     // MARK: Initialization
     
     func setup(modelContext: ModelContext) {
@@ -34,7 +32,6 @@ class CitiesPageViewModel: ObservableObject {
         self.citySyncer = CitySyncer(modelContext: modelContext)
         fetchFromCache()
     }
-    
     
     // MARK: - Data Loading and Caching
     
@@ -44,13 +41,6 @@ class CitiesPageViewModel: ObservableObject {
         do {
             let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.name)])
             self.cities = try context.fetch(cityDescriptor)
-            
-            let countryDescriptor = FetchDescriptor<Country>(
-                predicate: #Predicate { $0.cache == true },
-                sortBy: [SortDescriptor(\.name)]
-            )
-            self.countries = try context.fetch(countryDescriptor)
-            
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
@@ -75,7 +65,7 @@ class CitiesPageViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         guard let syncer = citySyncer else {
-            print("⚠️ [CCitiesPageViewModel] countriesSyncer is nil")
+            print("⚠️ [CitiesPageViewModel] countriesSyncer is nil")
             return
         }
         do {
@@ -91,7 +81,7 @@ class CitiesPageViewModel: ObservableObject {
         if let selectedCountry = selectedCountry {
             self.filteredCities = cities.filter { $0.countryRid == selectedCountry.rid }
         } else {
-            self.filteredCities = cities
+            self.filteredCities = cities.filter { $0.countryRid == nil }
         }
     }
     
@@ -100,18 +90,13 @@ class CitiesPageViewModel: ObservableObject {
         
     func createCity() {
         guard let context = modelContext else { return }
+        
         let newCity = City(syncStatus: .local)
+        newCity.relCountry = selectedCountry
+        
         context.insert(newCity)
-        
         cities.append(newCity)
-        
-        if let selectedCountry = selectedCountry {
-            if newCity.countryRid == selectedCountry.rid {
-                filteredCities.append(newCity)
-            }
-        } else {
-            filteredCities.append(newCity)
-        }
+        filteredCities.append(newCity)
         
         do {
             try context.save()

@@ -12,8 +12,13 @@ struct CitiesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = CitiesPageViewModel()
     
+    @Query(FetchDescriptor<Country>(
+        predicate: #Predicate { $0.cache == true },
+        sortBy: [SortDescriptor(\.name)]))
+    private var countries: [Country]
+    
     @State private var cityToEdit: City?
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -41,7 +46,7 @@ struct CitiesPage: View {
         Section("Country Filter") {
             Picker("Country", selection: $viewModel.selectedCountry) {
                 Text("Select").tag(nil as Country?)
-                ForEach(viewModel.countries) { country in
+                ForEach(countries) { country in
                     Text(country.name!).tag(country as Country?)
                 }
             }
@@ -53,7 +58,7 @@ struct CitiesPage: View {
         Section("Cities") {
             ForEach(viewModel.filteredCities) { city in
                 CityRowView(city: city)
-
+                
             }
         }
     }
@@ -74,7 +79,7 @@ struct CitiesPage: View {
             container.mainContext.insert(City(slug: "geneva", name: "Geneva", countryRid: 1))
             container.mainContext.insert(City(slug: "aubonne", name: "Aubonne-Pizy-Montherod", countryRid: 1, archived: true))
             container.mainContext.insert(City(slug: "lausanne", name: "Lausanne", countryRid: 1))
-
+            
             return container
         } catch {
             fatalError("Failed to create container: \(error)")

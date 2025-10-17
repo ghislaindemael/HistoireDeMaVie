@@ -8,25 +8,25 @@
 
 import SwiftUI
 
-struct PlaceRowView: View {
+struct VehicleRowView: View {
     
-    let place: Place
+    let vehicle: Vehicle
     
     var body: some View {
         VStack{
             HStack {
-                if let name = place.name {
-                    Text(name)
+                if vehicle.type != .unset {
+                    Text(vehicle.label)
                 } else {
                     Text("Unset")
                         .bold()
                         .foregroundStyle(.red)
                 }
                 Spacer()
-                if !place.cache {
+                if !vehicle.cache {
                     IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
                 }
-                SyncStatusIndicator(status: place.syncStatus)
+                SyncStatusIndicator(status: vehicle.syncStatus)
             }
         }
     }

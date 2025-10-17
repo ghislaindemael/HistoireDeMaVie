@@ -24,7 +24,7 @@ struct PlaceDisplayView: View {
         self.isSmall = isSmall
         
         if let id = placeId, id > 0 {
-            _places = Query(filter: #Predicate { $0.id == id })
+            _places = Query(filter: #Predicate { $0.rid == id })
         } else {
             _places = Query(filter: #Predicate { _ in false })
         }
@@ -32,12 +32,17 @@ struct PlaceDisplayView: View {
     
     var body: some View {
         if let place = place {
-            Text(isSmall ? place.city_name : place.localName)
-            
+            if isSmall {
+                Text(place.city?.name ?? "—")
+                    .foregroundStyle(.secondary)
+            } else {
+                let cityName = place.city?.name ?? "—"
+                let placeName = place.name ?? "Unnamed"
+                Text("\(cityName) – \(placeName)")
+            }
         } else if let id = placeId, id > 0 {
             Text("Uncached")
                 .foregroundStyle(.orange)
-            
         } else {
             Text("Unset")
                 .foregroundStyle(.red)

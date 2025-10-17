@@ -14,15 +14,18 @@ final class City: CatalogueModel {
     var rid: Int?
     var slug: String?
     var name: String?
+    var countryRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var relCountry: Country? {
+        didSet {
+            self.countryRid = relCountry.rid
+        }
+    }
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
     typealias Payload = CityPayload
-    
-    // MARK: - Hybrid relationship
-    @Relationship var relCountry: Country?
-    var countryRid: Int?
     
     var country: Country? {
         get {
@@ -33,15 +36,14 @@ final class City: CatalogueModel {
         }
         set {
             relCountry = newValue
-            countryRid = newValue?.rid
         }
     }
     
     // MARK: - Initializer
     init(
+        rid: Int? = nil,
         slug: String? = nil,
         name: String? = nil,
-        rid: Int? = nil,
         countryRid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,
@@ -59,9 +61,9 @@ final class City: CatalogueModel {
     // MARK: - Convenience from DTO
     convenience init(fromDto dto: CityDTO) {
         self.init(
+            rid: dto.id,
             slug: dto.slug,
             name: dto.name,
-            rid: dto.id,
             countryRid: dto.country_id,
             cache: dto.cache,
             archived: dto.archived,
@@ -87,7 +89,6 @@ final class City: CatalogueModel {
         return relCountry != nil
     }
 }
-
 
 struct CityDTO: Codable, Identifiable, Sendable {
     var id: Int

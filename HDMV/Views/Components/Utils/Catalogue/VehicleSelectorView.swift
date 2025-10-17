@@ -12,25 +12,25 @@ import SwiftData
 struct VehicleSelectorView: View {
     @Environment(\.modelContext) private var modelContext
     
-    @Binding var selectedVehicleId: Int?
+    @Binding var selectedVehicle: Vehicle?
     @Binding var amDriver: Bool
     
-    @Query(sort: [SortDescriptor(\Vehicle.name)]) 
+    @Query(FetchDescriptor<Vehicle>(
+        predicate: #Predicate { $0.cache == true && $0.name != nil },
+            sortBy: [SortDescriptor(\.name)]))
     private var vehicles: [Vehicle]
     
     private var isCarSelected: Bool {
-        guard let vehicleId = selectedVehicleId,
-              let vehicle = vehicles.first(where: { $0.id == vehicleId }) 
-        else { return false }
+        guard let vehicle = selectedVehicle else { return false }
         return vehicle.type == .car
     }
     
     var body: some View {
         VStack {
-            Picker("Vehicle", selection: $selectedVehicleId) {
-                Text("None").tag(nil as Int?)
+            Picker("Vehicle", selection: $selectedVehicle) {
+                Text("None").tag(nil as Vehicle?)
                 ForEach(vehicles) { vehicle in
-                    Text(vehicle.name).tag(vehicle.id as Int?)
+                    Text(vehicle.name!).tag(vehicle as Vehicle?)
                 }
             }
             if isCarSelected {

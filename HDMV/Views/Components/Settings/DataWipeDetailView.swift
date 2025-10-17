@@ -192,9 +192,7 @@ struct DataWipeDetailView: View {
             case let path as Path:
                 return AnyView(path.debugView)
             case let place as Place:
-                return AnyView(
-                    Text(place.localName)
-                )
+                return AnyView(place.debugView)
             case let person as Person:
                 return AnyView(
                     Text(person.fullName)
@@ -233,7 +231,7 @@ struct DataWipeDetailView: View {
         }
         if let interaction = item as? PersonInteraction {
             appNavigator.selectedDate = interaction.time_start
-            if interaction.parent_activity_id != nil {
+            if interaction.parentInstanceRid != nil {
                 appNavigator.selectedTab = .activities
             } else {
                 appNavigator.selectedTab = .interactions

@@ -9,9 +9,12 @@
 import SwiftData
 
 protocol SyncableModel: AnyObject {
+    associatedtype DTO
     associatedtype Payload
     var rid: Int? { get set }
     var syncStatusRaw: String { get set }
+    init(fromDto dto: DTO)
+    func update(fromDto dto: DTO)
     func isValid() -> Bool
 }
 

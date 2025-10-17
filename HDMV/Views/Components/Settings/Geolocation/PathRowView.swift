@@ -24,10 +24,10 @@ struct PathRowView: View {
                 Spacer()
                 SyncStatusIndicator(status: path.syncStatus)
             }
-            PlaceDisplayView(placeId: path.place_start_id)
+            PlaceDisplayView(placeId: path.placeStart?.rid)
             HStack {
                 Image(systemName: "arrow.turn.down.right")
-                PlaceDisplayView(placeId: path.place_end_id)
+                PlaceDisplayView(placeId: path.placeEnd?.rid)
             }
             if let details = path.details {
                 Text(details)

@@ -15,7 +15,6 @@
 		158A5A962DF7495800D003C2 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A952DF7495800D003C2 /* Storage */; };
 		158A5A992DF749F000D003C2 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A982DF749F000D003C2 /* Supabase */; };
 		158A5A9C2DF74A7400D003C2 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A9B2DF74A7400D003C2 /* KeychainAccess */; };
-		158A5AB12DF7555600D003C2 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 158A5AB02DF7554D00D003C2 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,11 +38,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		15C870562EA198AE007ED4DF /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 15635EB02DF62DA900DE97E5 /* Resources */;
+			membershipExceptions = (
+				Models/Protocols/Models/LogModel.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		15635EB42DF62DA900DE97E5 /* HDMV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				158A5AC42DF75A1F00D003C2 /* Exceptions for "HDMV" folder in "HDMV" target */,
+				15C870562EA198AE007ED4DF /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */,
 			);
 			explicitFileTypes = {
 				Config/Debug.xconfig = text.xcconfig;
@@ -195,7 +205,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				158A5AB12DF7555600D003C2 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

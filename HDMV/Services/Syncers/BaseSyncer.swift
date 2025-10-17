@@ -17,6 +17,7 @@ class BaseSyncer<Model, DTO, Payload>
 where
     Model: SyncableModel & Identifiable & PersistentModel,
     DTO: Codable & Identifiable,
+    DTO == Model.DTO,
     DTO.ID == Int,
     Payload: Codable & InitializableWithModel,
     Payload.Model == Model
@@ -41,7 +42,7 @@ where
         try await pullChanges()
     }
     
-    // MARK: - Push Logic (Local -> Server)
+    // MARK: - Sync Logic
     
     /// Pushes local creations, updates, and deletions to the server.
     /// Returns a dictionary mapping temporary local IDs to permanent server IDs.
@@ -57,7 +58,6 @@ where
                 group.addTask {
                     guard let payload = Payload(from: item) else {
                         print("Skipping item with UUID: \(item.id)")
-                        item.syncStatus = .failed
                         return
                     }
                     
@@ -65,11 +65,10 @@ where
                         if item.rid == nil {
                             let newDTO = try await self.createOnServer(payload: payload)
                             item.rid = newDTO.id
-                            item.syncStatus = .synced
                         } else {
                             _ = try await self.updateOnServer(rid: item.rid!, payload: payload)
-                            item.syncStatus = .synced
                         }
+                        item.syncStatus = .synced
                     } catch {
                         item.syncStatus = .failed
                         print("❌ Failed to sync item \(item.id): \(error)")
@@ -81,19 +80,56 @@ where
         try modelContext.save()
     }
     
+    @MainActor
+    final func pullChanges() async throws {
+        let dtos = try await fetchRemoteModels()
+        let serverRids = Set(dtos.map { $0.id })
+        
+        let localModels = try modelContext.fetch(FetchDescriptor<Model>())
+        let modelsWithRid = localModels.filter { $0.rid != nil }
+        
+        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in
+            return first
+        })
+        let localRids = Set(localCache.keys)
+        
+        for dto in dtos {
+            if let existingModel = localCache[dto.id] {
+                guard existingModel.syncStatus == .synced else {
+                    continue
+                }
+                existingModel.update(fromDto: dto)
+            } else {
+                let newModel = Model(fromDto: dto)
+                modelContext.insert(newModel)
+            }
+        }
+        
+        let ridsToDelete = localRids.subtracting(serverRids)
+        for rid in ridsToDelete {
+            if let modelToDelete = localCache[rid] {
+                
+                if modelToDelete.syncStatus == .synced {
+                    modelContext.delete(modelToDelete)
+                }
+            }
+        }
+        try modelContext.save()
+    }
     
-    // MARK: - Pull Logic (Server -> Local)
     
-    func pullChanges() async throws { fatalError("Subclasses must implement")}
+    
 
     // MARK: - Abstract Methods for Subclasses to Implement
     
-    /// This method will be overridden by subclasses to update any children that were pointing to a local parent.
+    func fetchRemoteModels() async throws -> [DTO] { fatalError("Subclasses must implement fetchRemoteModels()") }
     func createOnServer(payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func updateOnServer(rid: Int, payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func deleteFromServer(_ rid: Int) async throws { fatalError("Subclasses must implement") }
-    
+    func resolveDependencies(for model: Model) throws {}
     // MARK: - Helpers
+    
+    
     
     private func fetchLocalModels(with status: SyncStatus) throws -> [Model] {
         let predicate = #Predicate<Model> { $0.syncStatusRaw == status.rawValue }

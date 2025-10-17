@@ -12,61 +12,62 @@ struct PlacesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PlacesPageViewModel()
     
-    @State private var isShowingAddSheet = false
+    @Query(FetchDescriptor<City>(
+        predicate: #Predicate { $0.cache == true && $0.name != nil },
+        sortBy: [SortDescriptor(\.name)]))
+    private var cities: [City]
     
+    @State private var placeToEdit: Place?
+
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Filter by City")) {
-                    // The Picker is now bound to the ViewModel's selectedCity property
-                    Picker("Select City", selection: $viewModel.selectedCity) {
-                        Text("Select a City...").tag(nil as City?)
-                        ForEach(viewModel.cities) { city in
-                            Text(city.name).tag(city as City?)
-                        }
-                    }
-                }
-                
-                if viewModel.selectedCity != nil {
-                    Section(header: Text(viewModel.selectedCity?.name ?? "Places")) {
-                        ForEach(viewModel.filteredPlaces) { place in
-                            PlaceRowView(place: place) {
-                                viewModel.toggleCache(for: place)
-                            }
-                        }
-                        .onDelete(perform: deletePlace)
-                    }
-                } else {
-                    Section {
-                        Text("Please select a city to view its places.")
-                    }
-                }
+                cityFilter
+                placesList
             }
             .navigationTitle("Places")
-            .standardConfigPageToolbar(
-                refreshAction: {
-                    await viewModel.refreshDataFromServer()
-                },
-                cacheAction: {
-                    viewModel.cachePlacesForSelectedCity()
-                },
-                isShowingAddSheet: $isShowingAddSheet
+            .logPageToolbar(
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
+                singleTapAction: { viewModel.createPlace() },
+                longPressAction: {}
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .sheet(isPresented: $isShowingAddSheet) {
-                NewPlaceSheet(viewModel: viewModel, city: viewModel.selectedCity)
+            .sheet(item: $placeToEdit) { place in
+                PlaceDetailSheet(place: place, modelContext: modelContext)
             }
         }
     }
     
-    private func deletePlace(at offsets: IndexSet) {
-        for index in offsets {
-            let placeToArchive = viewModel.filteredPlaces[index]
-            viewModel.archivePlace(for: placeToArchive)
+    
+    @ViewBuilder
+    private var cityFilter: some View {
+        Section("City Filter") {
+            Picker("City", selection: $viewModel.selectedCity) {
+                Text("Select").tag(nil as City?)
+                ForEach(cities) { city in
+                    Text(city.name!).tag(city as City?)
+                }
+            }
         }
     }
+    
+    @ViewBuilder
+    private var placesList: some View {
+        Section("Places") {
+            ForEach(viewModel.filteredPlaces) { place in
+                Button(action: {
+                    placeToEdit = place
+                }) {
+                    PlaceRowView(place: place)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+    
 }
 
 #Preview {
@@ -77,16 +78,16 @@ struct PlacesPage: View {
             let container = try ModelContainer(for: schema, configurations: [config])
             let context = container.mainContext
             
-            let switzerland = Country(id: 1, slug: "ch", name: "Switzerland")
+            let switzerland = Country(slug: "ch", name: "Switzerland")
             context.insert(switzerland)
             
-            let geneva = City(id: 10, slug: "geneva", name: "Geneva", rank: 2, country_id: 1)
-            let zurich = City(id: 11, slug: "zurich", name: "Zürich", rank: 1, country_id: 1)
+            let geneva = City(rid: 10, slug: "geneva", name: "Geneva", countryRid: 1)
+            let zurich = City(rid: 11, slug: "zurich", name: "Zürich", countryRid: 1)
             context.insert(geneva)
             context.insert(zurich)
             
-            context.insert(Place(id: 100, name: "Jet d'Eau", city_id: 10))
-            context.insert(Place(id: 101, name: "CERN", city_id: 10))
+            context.insert(Place(rid: 100, name: "Jet d'Eau", cityRid: 10))
+            context.insert(Place(rid: 101, name: "CERN", cityRid: 10))
             
             return container
         } catch { fatalError("Failed to create container: \(error)") }

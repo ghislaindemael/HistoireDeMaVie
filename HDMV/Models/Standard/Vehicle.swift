@@ -8,69 +8,167 @@ import Foundation
 import SwiftData
 
 @Model
-final class Vehicle: Identifiable {
-    @Attribute(.unique) var id: Int
-    var name: String
-    var typeSlug: String
-    var type: VehicleType {
-        get { VehicleType(rawValue: typeSlug) ?? .car }
-        set { typeSlug = newValue.rawValue }
+final class Vehicle: CatalogueModel {
+    @Attribute(.unique) var rid: Int?
+    var name: String?
+    var typeSlug: String?
+    var type: VehicleType? {
+        get { VehicleType(rawValue: typeSlug ?? "unset") ?? .unset }
+        set { if let unwrappedType = newValue {
+            typeSlug = unwrappedType.rawValue
+        } else {
+            typeSlug = nil
+        } }
     }
-    var city_id: Int?
+    var cityRid: Int?
+    @Relationship
+    var relCity: City? {
+        didSet {
+            self.cityRid = relCity.rid
+        }
+    }
     var label: String = ""
     var cache: Bool = true
+    var archived: Bool = false
+    var syncStatusRaw: String = SyncStatus.local.rawValue
     
-    @Transient var city: City?
+    typealias DTO = VehicleDTO
+    typealias Payload = VehiclePayload
     
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case cache
-        case typeSlug = "type"
-        case city_id
+    var city: City? {
+        get {
+            if let city = relCity { return city }
+            guard let rid = cityRid, let ctx = RelationResolver.context else { return nil }
+            let descriptor = FetchDescriptor<City>(predicate: #Predicate { $0.rid == rid })
+            return try? ctx.fetch(descriptor).first
+        }
+        set {
+            relCity = newValue
+            if newValue?.rid != cityRid {
+                cityRid = newValue?.rid
+            }
+        }
     }
     
-    init(id: Int, name: String, typeSlug: String , city_id: Int? = nil, label: String = "") {
-        self.id = id
+    init(rid: Int? = nil,
+         name: String? = nil,
+         typeSlug: String? = nil,
+         type: VehicleType? = nil,
+         cityRid: Int? = nil,
+         relCity: City? = nil,
+         cache: Bool = true,
+         archived: Bool = false,
+         syncStatus: SyncStatus = .local) {
+        self.rid = rid
         self.name = name
         self.typeSlug = typeSlug
-        self.city_id = city_id
-        self.label = label
+        self.type = type
+        self.cityRid = cityRid
+        self.relCity = relCity
         self.cache = cache
+        self.archived = archived
+        self.syncStatusRaw = syncStatus.rawValue
     }
     
-    init(id: Int, name: String, type: VehicleType, city_id: Int? = nil, label: String = "") {
-        self.id = id
-        self.name = name
-        self.typeSlug = type.rawValue
-        self.city_id = city_id
+    convenience init(fromDto dto: VehicleDTO) {
+        self.init(
+            rid: dto.id,
+            name: dto.name,
+            typeSlug: dto.type_slug,
+            cityRid: dto.city_id,
+            cache: dto.cache,
+            archived: dto.archived,
+            syncStatus: SyncStatus.synced
+        )
     }
     
-    init(fromDto dto: VehicleDTO) {
-        self.id = dto.id
+    func update(fromDto dto: VehicleDTO) {
+        self.rid = dto.id
         self.name = dto.name
-        self.typeSlug = dto.typeSlug
-        self.city_id = dto.city_id
+        self.typeSlug = dto.type_slug
+        self.cityRid = dto.city_id
         self.cache = dto.cache
+        self.archived = dto.archived
+        self.syncStatusRaw = SyncStatus.synced.rawValue
+    }
+    
+    func isValid() -> Bool {
+        return name != nil && cityRid != nil && typeSlug != nil
     }
 }
 
+
+// MARK: - DTOs for Network
 struct VehicleDTO: Codable, Identifiable, Sendable {
     var id: Int
     var name: String
-    var typeSlug: String
-    var city_id: Int?
+    var type_slug: String
+    var city_id: Int
     var cache: Bool
+    var archived: Bool
+}
 
-    enum CodingKeys: String, CodingKey {
-        case id, name, city_id, cache
-        case typeSlug = "type"
+struct VehiclePayload: Codable, InitializableWithModel {
+    
+    typealias Model = Vehicle
+    var name: String
+    var type_slug: String
+    var city_id: Int
+    var cache: Bool
+    var archived: Bool
+    
+    init?(from vehicle: Vehicle) {
+        guard vehicle.isValid(),
+              let name = vehicle.name,
+              let typeSlug = vehicle.typeSlug,
+              let cityRid = vehicle.city?.rid ?? vehicle.cityRid else {
+            return nil
+        }
+        self.name = name
+        self.type_slug = typeSlug
+        self.city_id = cityRid
+        self.cache = vehicle.cache
+        self.archived = vehicle.archived
     }
 }
 
-struct NewVehiclePayload: Encodable {
-    var name: String = ""
-    var type: VehicleType = .car
-    var city_id: Int? = nil
+struct VehicleEditor: CachableModel {
+    var rid: Int?
+    var name: String?
+    var typeSlug: String?
+    var type: VehicleType {
+        get { VehicleType(rawValue: typeSlug ?? "unset") ?? .unset}
+        set { typeSlug = newValue.rawValue }
+    }
+    var cityRid: Int?
+    var city: City?
+    var cache: Bool
+    var archived: Bool
+    
+    init(from vehicle: Vehicle) {
+        self.rid = vehicle.rid
+        self.name = vehicle.name
+        self.typeSlug = vehicle.typeSlug
+        self.cityRid = vehicle.cityRid
+        self.city = vehicle.city
+        self.cache = vehicle.cache
+        self.archived = vehicle.archived
+    }
+    
+    func apply(to vehicle: Vehicle) {
+        vehicle.rid = self.rid
+        vehicle.name = name
+        vehicle.typeSlug = self.typeSlug
+        vehicle.type = self.type
+        
+        if let selectedCity = self.city {
+            vehicle.relCity = selectedCity
+            vehicle.cityRid = selectedCity.rid
+        } else {
+            vehicle.cityRid = self.cityRid
+        }
+        
+        vehicle.cache = self.cache
+        vehicle.archived = self.archived
+    }
 }
-

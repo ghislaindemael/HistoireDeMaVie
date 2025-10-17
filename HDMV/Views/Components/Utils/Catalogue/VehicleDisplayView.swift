@@ -12,14 +12,14 @@ struct VehicleDisplayView: View {
     
     @Query private var vehicles: [Vehicle]
     
-    let vehicleId: Int?
+    let vehicleRid: Int?
     
-    init(vehicleId: Int?, isSmall: Bool = false) {
-        self.vehicleId = vehicleId
+    init(vehicleRid: Int?, isSmall: Bool = false) {
+        self.vehicleRid = vehicleRid
         self.isSmall = isSmall
         
-        if let id = vehicleId {
-            _vehicles = Query(filter: #Predicate { $0.id == id })
+        if let id = vehicleRid {
+            _vehicles = Query(filter: #Predicate { $0.rid == id })
         } else {
             _vehicles = Query(filter: #Predicate { _ in false })
         }
@@ -31,7 +31,7 @@ struct VehicleDisplayView: View {
         
     var body: some View {
         if isSmall {
-            if vehicleId == nil {
+            if vehicleRid == nil {
                 IconView(iconString: "questionmark.circle", size: 20, tint: .red)
             } else if vehicle == nil {
                 IconView(iconString: "questionmark.circle", size: 20, tint: .orange)
@@ -43,7 +43,7 @@ struct VehicleDisplayView: View {
             }
         } else {
             HStack(spacing: 4) {
-                if vehicleId == nil {
+                if vehicleRid == nil {
                     IconView(iconString: "questionmark.circle", size: 20, tint: .red)
                     Text("Unset")
                         .bold()

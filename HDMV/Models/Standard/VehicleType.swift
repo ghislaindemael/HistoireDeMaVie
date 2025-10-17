@@ -9,7 +9,6 @@ import Foundation
 import SwiftData
 
 enum VehicleType: String, CaseIterable, Codable {
-    // The rawValue is now the lowercase slug, perfect for DB storage.
     case funiculaire = "funiculaire"
     case coach = "coach"
     case boat = "boat"
@@ -29,6 +28,7 @@ enum VehicleType: String, CaseIterable, Codable {
     case scooter = "scooter"
     case cablecar = "cablecar"
     case skilift = "skilift"
+    case unset = "unset"
     
     var name: String {
         switch self {
@@ -51,6 +51,7 @@ enum VehicleType: String, CaseIterable, Codable {
             case .scooter: return "Trottinette"
             case .cablecar: return "Télécabine"
             case .skilift: return "Télésiège"
+            case .unset: return "Unset"
         }
     }
     
@@ -75,6 +76,7 @@ enum VehicleType: String, CaseIterable, Codable {
             case .scooter: return "🛴"
             case .cablecar: return "🚠"
             case .skilift: return "🚡"
+            case .unset: return "❌"
         }
     }
     

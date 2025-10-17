@@ -12,41 +12,33 @@ struct VehiclesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject var viewModel = VehiclesPageViewModel()
     
-    @State private var isShowingCreateSheet = false
-    @State private var selectedVehicleType: VehicleType?
-    
-    init() {}
-    
-    private var filteredVehicles: [Vehicle] {
-        guard let selectedType = selectedVehicleType else { return viewModel.vehicles }
-        return viewModel.vehicles.filter { $0.type == selectedType }
-    }
+    @State private var vehicleToEdit: Vehicle?
     
     var body: some View {
         NavigationStack {
             Form {
-                vehicleFilterSection
-                vehicleListSection
+                typeFilter
+                vehiclesList
             }
             .navigationTitle("Vehicles")
-            .standardConfigPageToolbar(
-                refreshAction: viewModel.fetchFromServer,
-                cacheAction: viewModel.cacheVehicles,
-                isShowingAddSheet: $isShowingCreateSheet
+            .logPageToolbar(
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
+                singleTapAction: { viewModel.createVehicle() },
+                longPressAction: {}
             )
-            .task {
+            .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .sheet(isPresented: $isShowingCreateSheet) {
-                NewVehicleSheet(viewModel: viewModel)
+            .sheet(item: $vehicleToEdit) { vehicle in
+                VehicleDetailSheet(vehicle: vehicle, modelContext: modelContext)
             }
-            .syncingOverlay(viewModel.isLoading)
         }
     }
     
-    private var vehicleFilterSection: some View {
+    private var typeFilter: some View {
         Section(header: Text("Filter")) {
-            Picker("Vehicle Type", selection: $selectedVehicleType) {
+            Picker("Vehicle Type", selection: $viewModel.selectedType) {
                 Text("All Types").tag(nil as VehicleType?)
                 ForEach(VehicleType.allCases, id: \.self) { type in
                     Text(type.label).tag(type as VehicleType?)
@@ -55,27 +47,20 @@ struct VehiclesPage: View {
         }
     }
     
-    private var vehicleListSection: some View {
-        Section(header: Text(selectedVehicleType?.name ?? "All Vehicles")) {
-            ForEach(filteredVehicles) { vehicle in
-                VehicleRow(
-                    vehicle: vehicle,
-                    onCacheToggle: {
-                        viewModel.toggleCache(for: vehicle)
-                    }
-                )
+    @ViewBuilder
+    private var vehiclesList: some View {
+        Section("Vehicles") {
+            ForEach(viewModel.filteredVehicles) { vehicle in
+                Button(action: {
+                    vehicleToEdit = vehicle
+                }) {
+                    VehicleRowView(vehicle: vehicle)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
-
-
     
-    private func deleteVehicles(at offsets: IndexSet) {
-        for index in offsets {
-            let vehicle = filteredVehicles[index]
-            viewModel.delete(vehicle: vehicle)
-        }
-    }
 }
 
 #Preview {
@@ -86,9 +71,9 @@ struct VehiclesPage: View {
         do {
             let container = try ModelContainer(for: schema, configurations: [configuration])
             
-            let vehicle1 = Vehicle(id: 101, name: "Le Viano", type: .car, city_id: 12)
-            let vehicle2 = Vehicle(id: 102, name: "Le BTwin", type: .bike)
-            let vehicle3 = Vehicle(id: 104, name: "La Defender", type: .car)
+            let vehicle1 = Vehicle(rid: 101, name: "Le Viano", type: .car, cityRid: 12)
+            let vehicle2 = Vehicle(rid: 102, name: "Le BTwin", type: .bike)
+            let vehicle3 = Vehicle(rid: 104, name: "La Defender", type: .car)
             
             
             let context = container.mainContext

@@ -29,25 +29,19 @@ struct PathDetailSheet: View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: Binding(
-                        get: { viewModel.editor.name ?? "" },
-                        set: { viewModel.editor.name = $0 }
-                    ))
-                    TextField("Details", text: Binding(
-                        get: { viewModel.editor.details ?? "" },
-                        set: { viewModel.editor.details = $0 }
-                    ))
+                    TextField("Name", text: $viewModel.editor.name.orEmpty())
+                    TextField("Details", text: $viewModel.editor.details.orEmpty())
                 }
                 Section("Start place"){
-                    PlaceSelectorView(selectedPlaceId: Binding(
-                        get: { viewModel.editor.place_start_id },
-                        set: { viewModel.editor.place_start_id = $0 }
+                    PlaceSelectorView(selectedPlace: Binding(
+                        get: { viewModel.editor.placeStart },
+                        set: { viewModel.editor.placeStart = $0 }
                     ))
                 }
                 Section("End place"){
-                    PlaceSelectorView(selectedPlaceId: Binding(
-                        get: { viewModel.editor.place_end_id },
-                        set: { viewModel.editor.place_end_id = $0 }
+                    PlaceSelectorView(selectedPlace: Binding(
+                        get: { viewModel.editor.placeEnd},
+                        set: { viewModel.editor.placeEnd = $0 }
                     ))
                 }
                 pathSection
@@ -66,8 +60,8 @@ struct PathDetailSheet: View {
             }
             .sheet(isPresented: $isShowingPathSelector) {
                 PathSelectorSheet(
-                    startPlaceId: path.place_start_id,
-                    endPlaceId: path.place_end_id,
+                    startPlaceId: path.placeStart?.rid,
+                    endPlaceId: path.placeEnd?.rid,
                     onPathSelected: viewModel.addPathSegment
                 )
             }

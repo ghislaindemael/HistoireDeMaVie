@@ -1,159 +1,105 @@
 //
-//  VehicleViewModel.swift
+//  PlacesPageViewModel.swift
 //  HDMV
 //
-//  Created by Ghislain Demael on 19.06.2025.
+//  Created by Ghislain Demael on 20.06.2025.
 //
 
 import Foundation
 import SwiftData
-import Combine
 
 @MainActor
 class VehiclesPageViewModel: ObservableObject {
-    @Published var vehicles: [Vehicle] = []
-    @Published var vehicleTypes: [VehicleType] = []
-    @Published var isLoading = false
-    @Published var cities: [City] = []
-
     
-    private let vehicleService = VehicleService()
     private var modelContext: ModelContext?
-
+    private var vehicleSyncer: VehicleSyncer?
+    
+    @Published var isLoading = false
+    @Published private var vehicles: [Vehicle] = []
+    @Published var filteredVehicles: [Vehicle] = []
+    
+    @Published var selectedType: VehicleType? {
+        didSet {
+            updateFilteredVehicles()
+        }
+    }
+    
+    // MARK: Initialization
+    
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        
+        self.vehicleSyncer = VehicleSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
     // MARK: - Data Loading and Caching
     
-    /// Fetches the latest data from Supabase, clears the local cache, and saves the new data.
-    func fetchFromServer() async {
-        self.isLoading = true
-        defer { self.isLoading = false }
-        
-        do {
-            let vehicleDtos = try await vehicleService.fetchVehicles()
-            
-            self.vehicles = vehicleDtos.map { dto in
-                let vehicle = Vehicle(fromDto: dto)
-                
-                let cityName = cities.first { $0.id == vehicle.city_id }?.name
-                let cityLabel: String
-                if let cityName = cityName, !cityName.isEmpty {
-                    cityLabel = cityName
-                } else if let cityId = vehicle.city_id {
-                    cityLabel = "City \(cityId)"
-                } else {
-                    cityLabel = ""
-                }
-                
-                if cityLabel.isEmpty {
-                    vehicle.label = "\(vehicle.type.icon) - \(vehicle.name)"
-                } else {
-                    vehicle.label = "\(vehicle.type.icon) - \(cityLabel) - \(vehicle.name)"
-                }
-                
-                return vehicle
-            }
-            
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
-    }
-    
-    /// Loads the @Published arrays from the local SwiftData cache.
     private func fetchFromCache() {
         guard let context = modelContext else { return }
         
         do {
-            let vehicleDescriptor = FetchDescriptor<Vehicle>(sortBy: [
-                SortDescriptor(\.typeSlug),
-                SortDescriptor(\.name)
-            ])
-            let fetchedVehicles = try context.fetch(vehicleDescriptor)
-
-            self.vehicles = fetchedVehicles.sorted { v1, v2 in
-                if v1.type != v2.type {
-                    return v1.typeSlug < v2.typeSlug
-                } else {
-                    return v1.name < v2.name
-                }
-            }
-            
-            
-            let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.name)])
-            self.cities = try context.fetch(cityDescriptor)
+            let descriptor = FetchDescriptor<Vehicle>(sortBy: [SortDescriptor(\.name)])
+            self.vehicles = try context.fetch(descriptor)
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
     }
     
-    func cacheVehicles() {
-        guard let context = modelContext else {
-            print("Cannot cache: model context is missing.")
+    func refreshFromServer() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = vehicleSyncer else {
+            print("⚠️ [VehiclesPageViewModel] Syncer is nil")
             return
         }
+        do {
+            try await syncer.pullChanges()
+            fetchFromCache()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
+    func uploadLocalChanges() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = vehicleSyncer else {
+            print("⚠️ [VehiclesPageViewModel] countriesSyncer is nil")
+            return
+        }
+        do {
+            _ = try await syncer.pushChanges()
+            // TODO: For cleancode, add Trip Leg update on Vehicle Sync
+            fetchFromCache()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
+    private func updateFilteredVehicles() {
+        if let selectedType = selectedType {
+            self.filteredVehicles = vehicles.filter { $0.type == selectedType }
+        } else {
+            self.filteredVehicles = vehicles
+        }
+    }
+    
+    // MARK: - User Actions
+    
+    func createVehicle() {
+        guard let context = modelContext else { return }
+        let newVehicle = Vehicle(type: selectedType, syncStatus: .local)
+        context.insert(newVehicle)
+        vehicles.append(newVehicle)
+        filteredVehicles.append(newVehicle)
         
         do {
-            try context.delete(model: Vehicle.self)
-            for vehicle in self.vehicles.filter({ $0.cache }) {
-                context.insert(vehicle)
-            }
             try context.save()
         } catch {
-            print("Failed to perform targeted cache for vehicletypes: \(error)")
+            print("Failed to create Vehicle: \(error)")
         }
     }
     
-    
-    // MARK: - Write-Through CRUD Operations
 
     
-    /// Creates a vehicle remotely and updates the local state.
-    func createVehicle(payload: NewVehiclePayload) async {
-        do {
-            let createdDTO = try await vehicleService.createVehicle(payload: payload)
-            let createdVehicle = Vehicle(fromDto: createdDTO)
-            self.vehicles.append(createdVehicle)
-        } catch {
-            print("Failed to create vehicle: \(error)")
-        }
-    }
-    
-    /// Toggles cache status with an optimistic update.
-    func toggleCache(for vehicle: Vehicle) {
-        guard let context = modelContext else { return }
-                
-        Task {
-            do {
-                print("Toggling cache to \(vehicle.cache)")
-                try await vehicleService.updateCache(forVehicle: vehicle)
-                try context.save()
-            } catch {
-                print("Failed to update favorite status on server: \(error). Reverting UI.")
-                vehicle.cache.toggle()
-            }
-        }
-    }
-
-    /// Deletes a vehicle with an optimistic update.
-    func delete(vehicle: Vehicle) {
-        guard let context = modelContext, let index = vehicles.firstIndex(where: { $0.id == vehicle.id }) else { return }
-        
-        let deletedVehicle = vehicles.remove(at: index)
-        
-        Task {
-            do {
-                try await vehicleService.deleteVehicle(id: deletedVehicle.id)
-                context.delete(deletedVehicle)
-                try context.save()
-            } catch {
-                print("Failed to delete vehicle on server: \(error). Reverting UI.")
-                vehicles.insert(deletedVehicle, at: index)
-            }
-        }
-    }
-
 }
