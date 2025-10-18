@@ -35,7 +35,7 @@ struct PersonInteractionEditSheet: View {
             }
             .navigationTitle("Edit Interaction")
             .navigationBarTitleDisplayMode(.inline)
-            .standardSheetToolbar(isFormValid: true) {
+            .standardSheetToolbar() {
                 interaction.syncStatus = .local
                 if !showEndTime {
                     interaction.time_end = nil

@@ -1,17 +1,18 @@
-var sortedChildren: [any LogModel] {
-        // Create a single array to hold all child types
-        var allChildren: [any LogModel] = []
-        
-        if let childActivities = self.childActivities {
-            allChildren.append(contentsOf: childActivities)
-        }
-        if let tripLegs = self.tripLegs {
-            allChildren.append(contentsOf: tripLegs)
-        }
-        if let interactions = self.interactions {
-            allChildren.append(contentsOf: interactions)
-        }
-        
-        // Sort the unified array by start time
-        return allChildren.sorted(by: { $0.time_start < $1.time_start })
-    }
+//
+//  LogModel.swift
+//  HDMV
+//
+//  Created by Ghislain Demael on 16.10.2025.
+//
+
+import Foundation
+import SwiftData
+
+protocol LogModel: Identifiable {
+    var id: PersistentIdentifier { get }
+    var time_start: Date { get }
+}
+
+extension ActivityInstance: LogModel {}
+extension TripLeg: LogModel {}
+extension PersonInteraction: LogModel {}

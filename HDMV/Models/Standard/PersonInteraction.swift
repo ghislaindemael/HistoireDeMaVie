@@ -10,25 +10,32 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class PersonInteraction: Equatable, Identifiable, SyncableModel {
-    
-    typealias Payload = PersonInteractionPayload
-    
-    @Attribute(.unique) var id: Int
+final class PersonInteraction: Equatable, SyncableModel {
+        
+    @Attribute(.unique) var rid: Int?
     var time_start: Date
     var time_end: Date?
-    var parent_activity_id: Int?
+    var parentInstanceRid: Int?
+    var parentInstance: ActivityInstance? {
+        didSet {
+            parentInstanceRid = parentInstance.rid
+        }
+    }
     var person_id: Int?
     var timed: Bool = true
     var in_person: Bool = true
     var details: String?
     var percentage: Int?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+    
+    typealias DTO = PersonInteractionDTO
+    typealias Payload = PersonInteractionPayload
 
-    init(id: Int,
+    init(rid: Int? = nil,
          time_start: Date = .now,
          time_end: Date? = nil,
-         parent_activity_id: Int? = nil,
+         parentInstance: ActivityInstance? = nil,
+         parentInstanceRid: Int? = nil,
          person_id: Int? = nil,
          timed: Bool = true,
          in_person: Bool = true,
@@ -36,10 +43,11 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
          percentage: Int? = nil,
          syncStatus: SyncStatus = .local
     ) {
-        self.id = id
+        self.rid = rid
         self.time_start = time_start
         self.time_end = time_end
-        self.parent_activity_id = parent_activity_id
+        self.parentInstance = parentInstance
+        self.parentInstanceRid = parentInstanceRid
         self.person_id = person_id
         self.timed = timed
         self.in_person = in_person
@@ -50,10 +58,10 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     
     convenience init(fromDto dto: PersonInteractionDTO) {
         self.init(
-            id: dto.id,
+            rid: dto.id,
             time_start: dto.time_start,
             time_end: dto.time_end,
-            parent_activity_id: dto.parent_activity_id,
+            parentInstanceRid: dto.parent_activity_id,
             person_id: dto.person_id,
             timed: dto.timed,
             in_person: dto.in_person,
@@ -66,7 +74,7 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     func update(fromDto dto: PersonInteractionDTO) {
         self.time_start = dto.time_start
         self.time_end = dto.time_end
-        self.parent_activity_id = dto.parent_activity_id
+        self.parentInstanceRid = dto.parent_activity_id
         self.person_id = dto.person_id
         self.timed = dto.timed
         self.in_person = dto.in_person
@@ -77,7 +85,7 @@ final class PersonInteraction: Equatable, Identifiable, SyncableModel {
     // MARK: - Computed properties
     
     var isStandalone: Bool {
-        parent_activity_id == nil
+        parentInstance == nil
     }
     
     /// Checks if the interaction is valid for syncing.
@@ -106,10 +114,13 @@ struct PersonInteractionDTO: Codable, Identifiable, Sendable {
 }
 
 
-struct PersonInteractionPayload: Encodable {
+struct PersonInteractionPayload: Codable, InitializableWithModel {
+    
+    typealias Model = PersonInteraction
+    
     var time_start: Date?
     var time_end: Date?
-    var parent_activity_id: Int?
+    var parent_instance_id: Int?
     var person_id: Int?
     var timed: Bool
     var in_person: Bool
@@ -121,7 +132,7 @@ struct PersonInteractionPayload: Encodable {
     init(from interaction: PersonInteraction) {
         self.time_start = interaction.time_start
         self.time_end = interaction.time_end
-        self.parent_activity_id = interaction.parent_activity_id
+        self.parent_instance_id = interaction.parentInstanceRid
         self.person_id = interaction.person_id
         self.timed = interaction.timed
         self.in_person = interaction.in_person

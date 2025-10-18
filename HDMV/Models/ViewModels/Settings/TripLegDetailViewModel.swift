@@ -25,8 +25,8 @@ class TripLegDetailViewModel: ObservableObject {
         self.showEndTime = tripLeg.time_end != nil
     }
 
-    func selectPath(pathId: Int) {
-        editor.path_id = pathId
+    func selectPath(path: Path) {
+        editor.path = path
     }
 
     func onDone(completion: @escaping () -> Void) {

@@ -159,7 +159,7 @@ struct PeopleInteractionsPage: View {
             context.insert(matthieuD)
             
             let interaction1 = PersonInteraction(
-                id: 201,
+                rid: 201,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: .now.addingTimeInterval(-720),
                 person_id: 1,
@@ -169,7 +169,7 @@ struct PeopleInteractionsPage: View {
             )
             
             let interaction2 = PersonInteraction(
-                id: 202,
+                rid: 202,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: nil,
                 person_id: 2,

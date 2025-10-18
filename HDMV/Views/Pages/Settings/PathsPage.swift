@@ -15,7 +15,6 @@ struct PathsPage: View {
     
     @Query(sort: \Path.name) private var paths: [Path]
     
-    
     @Query(sort: \City.name) private var cities: [City]
     @Query private var places: [Place]
     
@@ -32,13 +31,13 @@ struct PathsPage: View {
         }
         
         let placeIDsInCity = places
-            .filter { $0.city_id == selectedCity.id }
+            .filter { $0.cityRid == selectedCity.rid }
             .map { $0.id }
         
         let placeIDSet = Set(placeIDsInCity)
         
         return paths.filter { path in
-            guard let startID = path.place_start_id, let endID = path.place_end_id else {
+            guard let startID = path.placeStart?.id, let endID = path.placeEnd?.id else {
                 return false
             }
             return placeIDSet.contains(startID) || placeIDSet.contains(endID)
@@ -76,7 +75,7 @@ struct PathsPage: View {
                 Text("All Cities").tag(nil as City?)
                 
                 ForEach(cities) { city in
-                    Text(city.name).tag(city as City?)
+                    Text(city.name!).tag(city as City?)
                 }
             }
         }

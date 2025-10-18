@@ -13,8 +13,8 @@ struct ActivityRowView: View {
     
     var body: some View {
         HStack {
-            IconView(iconString: activity.icon)
-            Text(activity.name)
+            IconView(iconString: activity.icon ?? "")
+            Text(activity.name ?? "Unset")
             Spacer()
             if !activity.cache {
                 IconView(iconString: "iphone.gen1.slash", tint: .red)

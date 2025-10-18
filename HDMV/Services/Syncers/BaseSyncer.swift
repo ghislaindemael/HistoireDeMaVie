@@ -6,7 +6,7 @@
 //
 
 
-// BaseSyncer.swift (New File)
+// BaseSyncer.swift
 import Foundation
 import SwiftData
 
@@ -45,7 +45,6 @@ where
     // MARK: - Sync Logic
     
     /// Pushes local creations, updates, and deletions to the server.
-    /// Returns a dictionary mapping temporary local IDs to permanent server IDs.
     func pushChanges() async throws -> Void {
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
@@ -56,22 +55,39 @@ where
         await withTaskGroup(of: Void.self) { group in
             for item in itemsToSync {
                 group.addTask {
-                    guard let payload = Payload(from: item) else {
-                        print("Skipping item with UUID: \(item.id)")
-                        return
-                    }
+                    guard let payload = Payload(from: item) else { return }
                     
                     do {
                         if item.rid == nil {
                             let newDTO = try await self.createOnServer(payload: payload)
-                            item.rid = newDTO.id
+                            await MainActor.run {
+                                item.rid = newDTO.id
+                                item.syncStatus = .synced
+                                do {
+                                    try self.resolveDependencies(for: item)
+                                } catch {
+                                    print("❌ Failed to resolve dependencies for \(item.id): \(error)")
+                                }
+                            }
+
                         } else {
                             _ = try await self.updateOnServer(rid: item.rid!, payload: payload)
+                            await MainActor.run {
+                                item.syncStatus = .synced
+                                
+                                //do {
+                                //  try self.resolveDependencies(for: item)
+                                //} catch {
+                                //  print("❌ Failed to resolve dependencies for \(item.id): \(error)")
+                                //}
+                            }
                         }
                         item.syncStatus = .synced
                     } catch {
-                        item.syncStatus = .failed
-                        print("❌ Failed to sync item \(item.id): \(error)")
+                        await MainActor.run {
+                            item.syncStatus = .failed
+                            print("❌ Failed to sync item \(item.id): \(error)")
+                        }
                     }
                 }
             }

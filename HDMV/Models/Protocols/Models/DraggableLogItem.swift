@@ -1,13 +1,20 @@
+//
+//  DraggableLogItem.swift
+//  HDMV
+//
+//  Created by Ghislain Demael on 17.10.2025.
+//
+
+
 import Foundation
 import SwiftData
+import SwiftUI
 
-// A universal, Codable payload for any draggable item in your hierarchy.
 enum DraggableLogItem: Codable, Transferable {
     case activity(PersistentIdentifier)
     case tripLeg(PersistentIdentifier)
     case interaction(PersistentIdentifier)
     
-    // This tells the system how to handle the drag-and-drop data.
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .data)
     }

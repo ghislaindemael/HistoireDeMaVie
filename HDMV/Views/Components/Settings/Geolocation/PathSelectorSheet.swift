@@ -15,7 +15,7 @@ struct PathSelectorSheet: View {
     
     let startPlaceId: Int?
     let endPlaceId: Int?
-    let onPathSelected: (Int) -> Void
+    let onPathSelected: (Path) -> Void
     
     @State private var exactMatches: [Path] = []
     @State private var partialMatches: [Path] = []
@@ -26,7 +26,7 @@ struct PathSelectorSheet: View {
     init(
         startPlaceId: Int? = nil,
         endPlaceId: Int? = nil,
-        onPathSelected: @escaping (Int) -> Void
+        onPathSelected: @escaping (Path) -> Void
     ) {
         self.startPlaceId = startPlaceId
         self.endPlaceId = endPlaceId
@@ -87,19 +87,17 @@ struct PathSelectorSheet: View {
     private func fetchInitialPaths() {
         guard let startId = startPlaceId, let endId = endPlaceId else { return }
         
-        
         let predicate = #Predicate<Path> { $0.cache == true }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Path.name)])
         guard let cachedPaths = try? modelContext.fetch(descriptor) else { return }
         
-        self.exactMatches = cachedPaths.filter { $0.place_start_id == startId && $0.place_end_id == endId }
+        self.exactMatches = cachedPaths.filter { $0.placeStart?.rid == startId && $0.placeEnd?.rid == endId }
         
         let exactMatchIds = Set(self.exactMatches.map { $0.id })
         self.partialMatches = cachedPaths.filter { path in
             guard !exactMatchIds.contains(path.id) else { return false }
-            return path.place_start_id == startId || path.place_end_id == endId
+            return path.placeStart?.rid == startId || path.placeEnd?.rid == endId
         }
-        
     }
     
     private func fetchOtherPaths() {
@@ -118,7 +116,7 @@ struct PathSelectorSheet: View {
     @ViewBuilder
     private func pathRow(for path: Path) -> some View {
         Button(action: {
-            onPathSelected(path.id)
+            onPathSelected(path)
             dismiss()
         }) {
             PathRowView(path: path)

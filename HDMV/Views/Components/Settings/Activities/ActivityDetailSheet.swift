@@ -13,44 +13,42 @@ struct ActivityDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    /// Use @Bindable to allow direct two-way editing of the model object.
-    @Bindable var activity: Activity
-        
-    /// Pass the viewModel to get the list of possible parent activities.
-    @ObservedObject var viewModel: ActivitiesPageViewModel
+    @StateObject private var viewModel: ActivityDetailSheetViewModel
     
-    private var parentName: String {
-        if let parentId = activity.parent_id,
-           let parent = viewModel.allActivities.first(where: { $0.id == parentId }) {
-            return parent.name
-        }
-        return "Top Level"
+    let activity: Activity
+    @Query var activityTree: [Activity]
+
+    
+    init(activity: Activity, modelContext: ModelContext) {
+        self.activity = activity
+        _viewModel = StateObject(wrappedValue: ActivityDetailSheetViewModel(activity: activity, modelContext: modelContext))
+        let predicate = #Predicate<Activity> { $0.parent == nil }
+        _activityTree = Query(filter: predicate, sort: \.name)
     }
     
+        
     var body: some View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: $activity.name)
-                    TextField("Slug", text: $activity.slug)
+                    TextField("Name", text: $viewModel.editor.name.orEmpty())
+                    TextField("Slug", text: $viewModel.editor.slug.orEmpty())
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                     HStack {
-                        TextField("Icon", text: $activity.icon)
+                        TextField("Icon", text: $viewModel.editor.icon.orEmpty())
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                         Spacer()
-                        IconView(iconString: activity.icon)
+                        IconView(iconString: activity.icon ?? "")
                     }
                     NavigationLink(destination: ParentActivitySelector(
-                        activities: viewModel.activityTree,
-                        selectedParentId: $activity.parent_id)
+                        activities: activityTree,
+                        selectedParent: $viewModel.editor.parent)
                     ) {
                         HStack {
-                            Text("Parent")
+                            Text("Parent Activity")
                             Spacer()
-                            Text(parentName)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -78,15 +76,15 @@ struct ActivityDetailSheet: View {
 
                 
                 Section("Usage") {
-                    Toggle("Selectable", isOn: $activity.selectable)
-                    Toggle("Cached", isOn: $activity.cache)
-                    Toggle("Archived", isOn: $activity.archived)
+                    Toggle("Selectable", isOn: $viewModel.editor.selectable)
+                    Toggle("Cached", isOn: $viewModel.editor.cache)
+                    Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
                 
             }
             .navigationTitle("Edit Activity")
             .navigationBarTitleDisplayMode(.inline)
-            .standardSheetToolbar(isFormValid: !activity.name.isEmpty) {
+            .standardSheetToolbar() {
                 await onDone()
             }
         }
@@ -98,7 +96,7 @@ struct ActivityDetailSheet: View {
         
         do {
             try modelContext.save()
-            print("✅ Activity '\(activity.name)' saved to context.")
+            print("✅ Activity '\(activity.name ?? "TOSET")' saved to context.")
         } catch {
             print("❌ Failed to save activity to context: \(error)")
         }

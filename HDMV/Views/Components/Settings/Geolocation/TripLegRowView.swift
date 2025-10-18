@@ -26,12 +26,12 @@ struct TripLegRowView: View {
             if isSmall {
                 VStack(alignment: .leading) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleId: tripLeg.vehicle_id, isSmall: isSmall)
+                        VehicleDisplayView(vehicleRid: tripLeg.vehicle?.rid, isSmall: isSmall)
                         
                         HStack {
-                            PlaceDisplayView(placeId: tripLeg.place_start_id, isSmall: isSmall)
+                            PlaceDisplayView(placeId: tripLeg.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: tripLeg.place_end_id, isSmall: isSmall)
+                            PlaceDisplayView(placeId: tripLeg.placeEnd?.rid, isSmall: isSmall)
                             
                         }
                         Spacer()
@@ -45,22 +45,15 @@ struct TripLegRowView: View {
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleId: tripLeg.vehicle_id)
+                        VehicleDisplayView(vehicleRid: tripLeg.vehicle?.rid)
                         HStack {
-                            PlaceDisplayView(placeId: tripLeg.place_start_id, isSmall: isSmall)
+                            PlaceDisplayView(placeId: tripLeg.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: tripLeg.place_end_id, isSmall: isSmall)
+                            PlaceDisplayView(placeId: tripLeg.placeEnd?.rid, isSmall: isSmall)
                         }
                         Spacer()
                         SyncStatusIndicator(status: tripLeg.syncStatus)
                     }
-                    HStack(spacing: 4) {
-                        PlaceDisplayView(placeId: tripLeg.place_start_id)
-                        Image(systemName: "arrow.turn.down.right").padding(.leading, 2)
-                        PlaceDisplayView(placeId: tripLeg.place_end_id)
-                        
-                    }
-                    .padding(.leading, 4)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

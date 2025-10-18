@@ -19,9 +19,10 @@ struct ActivityInstanceDetailSheet: View {
     
     @State private var showEndTime: Bool
     @State private var tripLegToEdit: TripLeg?
+    @State private var interactionToEdit: PersonInteraction?
     
     private var selectedActivity: Activity? {
-        viewModel.findActivity(by: instance.activity_id)
+        editor.activity
     }
     
     init(instance: ActivityInstance, viewModel: MyActivitiesPageViewModel) {
@@ -36,10 +37,9 @@ struct ActivityInstanceDetailSheet: View {
             Form {
                 basicsSection
                 detailsSection
-                if let activity = selectedActivity {
-                    specializedDetailsSection(for: activity)
+                if let activity = selectedActivity, activity.canLogDetails() {
+                    specializedDetailsSection
                 }
-                
                 
                 Section("Hierarchy") {
                     if editor.parent != nil {
@@ -48,16 +48,7 @@ struct ActivityInstanceDetailSheet: View {
                         }
                     }
                 }
-                
-                if selectedActivity?.can(.create_trip_legs) == true {
-                    tripLegsSection
-                    claimTripLegsSection
-                }
-                
-                if selectedActivity?.can(.create_interactions) == true {
-                    peopleInteractionsSection
-                    claimInteractionsSection
-                }
+
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
             .sheet(item: $tripLegToEdit) { leg in
@@ -68,8 +59,8 @@ struct ActivityInstanceDetailSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
-                instance.update(from: editor)
-                instance.syncStatus = .local
+                editor.apply(to: instance)
+                instance.markAsModified()
                 if !showEndTime {
                     instance.time_end = nil
                 }
@@ -84,14 +75,13 @@ struct ActivityInstanceDetailSheet: View {
     private var basicsSection: some View {
         Section("Basics") {
             NavigationLink(destination: ActivitySelectorView(
-                activityTree: viewModel.activityTree,
-                selectedActivityId: $editor.activity_id
+                selectedActivity: $editor.activity
             )) {
                 HStack {
                     Text("Select Activity")
                     Spacer()
                     if let activity = selectedActivity {
-                        Text(activity.name)
+                        Text(activity.name ?? "TOSET")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -114,120 +104,50 @@ struct ActivityInstanceDetailSheet: View {
                 set: { editor.details = $0.isEmpty ? nil : $0 }
             ))
             .lineLimit(3...)
-            Toggle("Set percentage?", isOn: showPercentageBinding)
-            
-            if editor.percentage != nil {
-                Slider(value: percentageBinding, in: 0...100, step: 1)
-            }
-        }
-    }
-    
-    private func specializedDetailsSection(for activity: Activity) -> some View {
-        Section(header: Text("Activity Details")) {
-            VStack {
-                if activity.can(.log_food) {
-                    MealDetailsEditView(metadata: $editor.decodedActivityDetails)
-                }
-                
-                if activity.can(.link_place) {
-                    PlaceSelectorView(
-                        selectedPlaceId: Binding(
-                            get: { editor.decodedActivityDetails?.place?.placeId },
-                            set: { newValue in
-                                if editor.decodedActivityDetails == nil {
-                                    editor.decodedActivityDetails = ActivityDetails()
-                                }
-                                if editor.decodedActivityDetails?.place == nil {
-                                    editor.decodedActivityDetails?.place = PlaceDetails()
-                                }
-                                editor.decodedActivityDetails?.place?.placeId = newValue
-                            }
-                        )
-                    )
-                }
-            }
-        }
-    }
-    
-    private var tripLegsSection: some View {
-        Section("Trip Legs") {
-            ForEach(viewModel.tripLegs(for: instance.id)) { leg in                
-                Button(action: { tripLegToEdit = leg }) {
-                    TripLegRowView(
-                        tripLeg: leg,
-                        onEnd: {
-                            viewModel.endTripLeg(leg: leg)
-                        }
-                    )
-                }
-            }
-            
-        }
-        
-    }
-    
-    private var claimTripLegsSection: some View {
-        Section("Claim trip legs"){
-            ForEach(viewModel.tripLegs) { leg in
-                Button(action: { viewModel.claim(tripLeg: leg, for: instance) }) {
-                    TripLegRowView(tripLeg: leg)
-                }
-            }
-        }
-    }
-    
-    private var peopleInteractionsSection: some View {
-        Section("Trip Legs") {
-            ForEach(viewModel.tripLegs(for: instance.id)) { leg in
-                Button(action: { tripLegToEdit = leg }) {
-                    TripLegRowView(
-                        tripLeg: leg,
-                        onEnd: {
-                            viewModel.endTripLeg(leg: leg)
-                        }
-                    )
-                }
-            }
-            
-        }
-        
-    }
-    
-    private var claimInteractionsSection: some View {
-        Section("Claim interactions"){
-            ForEach(viewModel.interactions) { interaction in
-                Button(action: { viewModel.claim(interaction: interaction, for: instance) }) {
-                    PersonInteractionRowView(
-                        interaction: interaction,
-                        onEnd: {}
-                    )
-                }
-            }
-        }
-    }
-    
+            Slider(value: percentageBinding, in: 0...100, step: 1)
+                .tint(percentageBinding.wrappedValue == 100 ? .gray : .accentColor)
 
-    
-    /// A binding to control the visibility of the percentage slider.
-    /// It's 'on' if the percentage is not nil, and 'off' if it is.
-    private var showPercentageBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: { editor.percentage != nil },
-            set: { isOn in
-                if isOn {
-                    editor.percentage = editor.percentage ?? 100
-                } else {
-                    editor.percentage = nil
-                }
-            }
-        )
+        }
     }
+    
+    @ViewBuilder
+    private var specializedDetailsSection: some View {
+        
+        VStack {
+            if selectedActivity!.can(.log_food) {
+                MealDetailsEditView(metadata: $editor.decodedActivityDetails)
+            }
+            
+            if selectedActivity!.can(.link_place) {
+                PlaceSelectorView(selectedPlace: detailsPlaceBinding)
+            }
+        }
+    }
+
     
     /// A binding that safely converts the model's `Int?` to a `Double` for the Slider.
     private var percentageBinding: Binding<Double> {
         Binding<Double>(
-            get: { Double(editor.percentage ?? 100) },
+            get: { Double(editor.percentage) },
             set: { editor.percentage = Int($0) }
+        )
+    }
+    
+    private var detailsPlaceBinding: Binding<Place?> {
+        Binding<Place?>(
+            get: {
+                editor.decodedActivityDetails?.place?.place
+            },
+            set: { newPlace in
+                if editor.decodedActivityDetails == nil {
+                    editor.decodedActivityDetails = ActivityDetails()
+                }
+                if editor.decodedActivityDetails?.place == nil {
+                    editor.decodedActivityDetails?.place = PlaceDetails()
+                }
+                editor.decodedActivityDetails?.place?.place = newPlace
+                editor.decodedActivityDetails?.place?.placeId = newPlace?.rid
+            }
         )
     }
     

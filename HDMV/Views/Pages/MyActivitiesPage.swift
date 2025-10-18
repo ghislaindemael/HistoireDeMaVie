@@ -20,7 +20,7 @@ struct MyActivitiesPage: View {
     
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
-            viewModel.selectedDate = navDate
+            viewModel.filterDate = navDate
             appNavigator.selectedDate = nil
         }
         viewModel.setup(modelContext: modelContext)
@@ -40,8 +40,8 @@ struct MyActivitiesPage: View {
                     longPressAction: { viewModel.createActivityInstanceForDate() },
                 )
                 .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.selectedDate) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.filterActivityId) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterDate) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterActivity) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
                 .sheet(item: $instanceToEdit,

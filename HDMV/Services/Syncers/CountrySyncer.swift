@@ -16,6 +16,10 @@ final class CountrySyncer: BaseSyncer<Country, CountryDTO, CountryPayload> {
     private let countriesService = CountriesService()
     private let settings: SettingsStore = SettingsStore.shared
         
+    override func fetchRemoteModels() async throws -> [CountryDTO] {
+        return try await countriesService.fetchCountries(includeArchived: settings.includeArchived)
+    }
+    
     override func createOnServer(payload: CountryPayload) async throws -> CountryDTO {
         return try await countriesService.createCountry(payload: payload)
     }

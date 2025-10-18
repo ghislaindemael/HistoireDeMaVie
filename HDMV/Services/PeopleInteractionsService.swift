@@ -42,7 +42,7 @@ class PeopleInteractionsService {
             .value
     }
     
-    func updatePersonInteraction(id: Int, payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+    func updateInteraction(id: Int, payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
         return try await supabaseClient
             .from(TABLE_NAME)

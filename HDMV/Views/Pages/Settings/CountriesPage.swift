@@ -40,7 +40,6 @@ struct CountriesPage: View {
         Section("Countries") {
             ForEach(viewModel.countries) { country in
                 CountryRowView(country: country)
-                
             }
         }
     }

@@ -21,49 +21,49 @@ struct FilterControlView: View {
     }
     
     
+    private var byDateTab: some View {
+        VStack {
+            DatePicker(
+                "Select Date",
+                selection: $viewModel.filterDate,
+                displayedComponents: .date
+            )
+            .padding()
+        }
+        .tag(MyActivitiesPageViewModel.FilterMode.byDate)
+    }
+    
+    private var byActivityTab: some View {
+        VStack {
+            DatePicker("From", selection: $viewModel.filterStartDate, displayedComponents: .date)
+            DatePicker("To", selection: $viewModel.filterEndDate, displayedComponents: .date)
+            
+            HStack {
+                Text("Activity")
+                Spacer()
+                NavigationLink {
+                    ActivitySelectorView(selectedActivity: $viewModel.filterActivity)
+                } label: {
+                    Text(viewModel.filterActivity?.name ?? "Select one")
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+        .tag(MyActivitiesPageViewModel.FilterMode.byActivity)
+    }
     var body: some View {
         TabView(selection: $viewModel.filterMode) {
-            // MARK: - Date Filter View
-            
-            DatePicker("Select Date", selection: $viewModel.selectedDate, displayedComponents: .date)
-            
-                .padding()
-                .tag(MyActivitiesPageViewModel.FilterMode.byDate)
-            
-            // MARK: - Activity Filter View
-            VStack {
-                DatePicker("From", selection: $viewModel.filterStartDate, displayedComponents: .date)
-                DatePicker("To", selection: $viewModel.filterEndDate, displayedComponents: .date)
-                
-                HStack {
-                    Text("Activity")
-                    Spacer()
-                    NavigationLink {
-                        ActivitySelectorView(
-                            activityTree: viewModel.activityTree,
-                            selectedActivityId: $viewModel.filterActivityId
-                        )
-                    } label: {
-                        
-                        Text(viewModel.findActivity(by: viewModel.filterActivityId)?.name ?? "Select one")
-                            .foregroundStyle(.secondary)
-                            .padding(8)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(8)
-                        
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding()
-            .tag(MyActivitiesPageViewModel.FilterMode.byActivity)
-            
+            byDateTab
+            byActivityTab
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: currentTabViewHeight)
-        .animation(.easeInOut(duration: 0.25), value: viewModel.filterMode)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.filterMode)
         
     }
-    
-    
 }

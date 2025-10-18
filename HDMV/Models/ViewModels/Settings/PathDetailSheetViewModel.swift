@@ -6,7 +6,6 @@
 //
 
 
-// PathDetailViewModel.swift (Create this new file)
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
@@ -92,12 +91,12 @@ class PathDetailSheetViewModel: ObservableObject {
         }
     }
     
-    func addPathSegment(pathId: Int) {
+    func addPathSegment(path: Path) {
         if editor.path_ids == nil {
             editor.path_ids = []
         }
-        if !(editor.path_ids?.contains(pathId) ?? false) {
-            editor.path_ids?.append(pathId)
+        if !(editor.path_ids?.contains(path.id) ?? false) {
+            editor.path_ids?.append(path.id)
         }
     }
 

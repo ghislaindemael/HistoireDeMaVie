@@ -38,22 +38,11 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		15C870562EA198AE007ED4DF /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 15635EB02DF62DA900DE97E5 /* Resources */;
-			membershipExceptions = (
-				Models/Protocols/Models/LogModel.swift,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		15635EB42DF62DA900DE97E5 /* HDMV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				158A5AC42DF75A1F00D003C2 /* Exceptions for "HDMV" folder in "HDMV" target */,
-				15C870562EA198AE007ED4DF /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */,
 			);
 			explicitFileTypes = {
 				Config/Debug.xconfig = text.xcconfig;

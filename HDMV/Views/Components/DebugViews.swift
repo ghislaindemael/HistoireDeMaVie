@@ -11,7 +11,13 @@ extension ActivityInstance {
     
     var debugView: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("ID: \(id)")
+            if let rid = rid {
+                Text("Remote ID: \(rid)")
+            } else {
+                Text("Unsynced")
+                    .bold()
+                    .foregroundStyle(.orange)
+            }
             HStack {
                 Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
                 
@@ -25,8 +31,8 @@ extension ActivityInstance {
                 Text("End: In Progress")
             }
             
-            if let activity_id {
-                Text("Activity ID: \(activity_id)")
+            if let activityRid {
+                Text("Activity RID: \(activityRid)")
             } else {
                 Text("Activity: Unset")
                     .bold()
@@ -34,7 +40,7 @@ extension ActivityInstance {
                 
             }
             
-            Text("Percentage: \(percentage ?? 100)%")
+            Text("Percentage: \(percentage)%")
             
             Text("Details: \(details ?? "N/A")")
             
@@ -57,8 +63,8 @@ extension Path {
             Text("ID: \(id)")
             Text("Name: \(name ?? "Unset")")
             Text("Details: \(details ?? "Unset")")
-            Text("Start place id: \(place_start_id ?? -1)")
-            Text("End place id: \(place_end_id ?? -1)")
+            Text("Start place id: \(placeStart?.rid ?? -1)")
+            Text("End place id: \(placeEnd?.rid ?? -1)")
         }
     }
 }
@@ -78,8 +84,8 @@ extension PersonInteraction {
                 Text("End: In Progress")
             }
             
-            if let parent_id = parent_activity_id {
-                Text("Parent activity ID: \(parent_id)")
+            if let parent_id = parentInstanceRid {
+                Text("Parent instance ID: \(parent_id)")
             } else {
                 Text("Independent interaction")
             }
@@ -99,5 +105,20 @@ extension PersonInteraction {
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
+    }
+}
+
+extension Place {
+    var debugView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let rid {
+                Text(verbatim: "RID: \(rid)")
+            } else {
+                Text("RID: –")
+                    .foregroundStyle(.secondary)
+            }
+            Text("Name: \(name ?? "Unset")")
+            Text("City rid: \(city?.rid ?? -1)")
+        }
     }
 }

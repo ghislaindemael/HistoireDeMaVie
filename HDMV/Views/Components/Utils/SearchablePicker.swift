@@ -46,8 +46,3 @@ struct SearchablePicker<T: Identifiable & Hashable>: View where T: CustomStringC
     }
 }
 
-extension Place: CustomStringConvertible {
-    public var description: String {
-        return name
-    }
-}

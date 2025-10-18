@@ -27,10 +27,10 @@ struct TripLegDetailSheet: View {
                 vehicleSection
                 
                 Section("Start Place") {
-                    PlaceSelectorView(selectedPlaceId: $viewModel.editor.place_start_id)
+                    PlaceSelectorView(selectedPlace: $viewModel.editor.placeStart)
                 }
                 Section("End Place") {
-                    PlaceSelectorView(selectedPlaceId: $viewModel.editor.place_end_id)
+                    PlaceSelectorView(selectedPlace: $viewModel.editor.placeEnd)
                 }
                 pathSection
                 detailsSection
@@ -43,8 +43,8 @@ struct TripLegDetailSheet: View {
             })
             .sheet(isPresented: $viewModel.isShowingPathSelector) {
                 PathSelectorSheet(
-                    startPlaceId: viewModel.editor.place_start_id,
-                    endPlaceId: viewModel.editor.place_end_id,
+                    startPlaceId: viewModel.editor.placeStart?.rid,
+                    endPlaceId: viewModel.editor.placeEnd?.rid,
                     onPathSelected: viewModel.selectPath
                 )
             }
@@ -69,7 +69,7 @@ struct TripLegDetailSheet: View {
     private var vehicleSection: some View {
         Section("Vehicle") {
             VehicleSelectorView(
-                selectedVehicleId: $viewModel.editor.vehicle_id,
+                selectedVehicle: $viewModel.editor.vehicle,
                 amDriver: $viewModel.editor.am_driver
             )
         }
@@ -77,7 +77,7 @@ struct TripLegDetailSheet: View {
     
     private var pathSection: some View {
         Section(header: Text("Path")) {
-            PathDisplayView(pathId: viewModel.editor.path_id)
+            PathDisplayView(path: viewModel.editor.path)
             
             Button(action: { viewModel.isShowingPathSelector = true }) {
                 Label("Select path", systemImage: "plus.circle.fill")

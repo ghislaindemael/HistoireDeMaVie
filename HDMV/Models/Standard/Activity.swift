@@ -14,41 +14,42 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     
     typealias Payload = ActivityPayload
     
-    @Attribute(.unique) var id: Int
-    var name: String
-    var slug: String
-    var parent_id: Int?
-    var icon: String
-    var type: ActivityType?
+    var rid: Int?
+    var name: String?
+    var slug: String?
+    var parentRid: Int?
+    var parent: Activity? {
+        didSet {
+            parentRid = parent?.rid
+        }
+    }
+    @Relationship(deleteRule: .nullify, inverse: \Activity.parent)
+    var children: [Activity]? = []
+    var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
     var selectable: Bool = true
     var cache: Bool = true
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
-
-    @Transient var children: [Activity] = []
     
-
     init(
-        id: Int,
-        name: String,
-        slug: String,
-        parent_id: Int? = nil,
-        icon: String,
-        type: ActivityType? = nil,
+        rid: Int? = nil,
+        name: String? = nil,
+        slug: String? = nil,
+        parentRid: Int? = nil,
+        icon: String? = nil,
         allowedCapabilities: [ActivityCapability] = [],
         requiredCapabilities: [ActivityCapability] = [],
         cache: Bool = true,
         archived: Bool = false,
         syncStatus: SyncStatus = .undef
     ) {
-        self.id = id
+        self.rid = rid
         self.name = name
         self.slug = slug
-        self.parent_id = parent_id
+        self.parentRid = parentRid
         self.icon = icon
-        self.type = type
         self.allowedCapabilities = allowedCapabilities
         self.requiredCapabilities = requiredCapabilities
         self.cache = cache
@@ -63,12 +64,11 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     }
     
     init(fromDto dto: ActivityDTO) {
-        self.id = dto.id
+        self.rid = dto.id
         self.name = dto.name
         self.slug = dto.slug
-        self.parent_id = dto.parent_id
+        self.parentRid = dto.parent_id
         self.icon = dto.icon
-        self.type = dto.type
         self.selectable = dto.selectable
         self.cache = dto.cache
         self.archived = dto.archived
@@ -78,55 +78,21 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         self.requiredCapabilities = dto.required_capabilities.compactMap { ActivityCapability(rawValue: $0) }
     }
     
-    // MARK: - Tree Building Logic
+    // MARK: - Activity Tree
     
-    /// Takes a flat array of activities and organizes them into a tree structure.
-    /// - Parameter activities: A flat array fetched from the server or cache.
-    /// - Returns: An array of the root-level activities, each with its children populated.
-    static func buildTree(from activities: [Activity]) -> [Activity] {
-        var lookup = [Int: Activity]()
-        for activity in activities {
-            lookup[activity.id] = activity
-            activity.children = []
-        }
-        
-        var rootNodes: [Activity] = []
-        
-        for activity in activities {
-            if let parent_id = activity.parent_id, let parent = lookup[parent_id] {
-                parent.children.append(activity)
-            } else {
-                rootNodes.append(activity)
-            }
-        }
-        
-        for activity in activities {
-            activity.children.sort { $0.name < $1.name }
-        }
-        
-        return rootNodes.sorted { $0.name < $1.name }
+    static func fetchActivityTree(from context: ModelContext) -> [Activity] {
+        let predicate = #Predicate<Activity> { $0.parent == nil }
+        let sortDescriptor = SortDescriptor(\Activity.name)
+        let descriptor = FetchDescriptor<Activity>(predicate: predicate, sortBy: [sortDescriptor])
+        return (try? context.fetch(descriptor)) ?? []
     }
-    
-    func flattened() -> [Activity] {
-        var result = [self]
-        
-        for child in children {
-            result.append(contentsOf: child.flattened())
-        }
-        
-        return result
-    }
-    
-    var optionalChildren: [Activity]? {
-        return self.children.isEmpty ? nil : self.children
-    }
+
     
     func update(fromDto dto: ActivityDTO) {
         self.name = dto.name
         self.slug = dto.slug
-        self.parent_id = dto.parent_id
+        self.parentRid = dto.parent_id
         self.icon = dto.icon
-        self.type = dto.type
         self.selectable = dto.selectable
         self.cache = dto.cache
         self.archived = dto.archived
@@ -136,81 +102,114 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         self.requiredCapabilities = dto.required_capabilities.compactMap { ActivityCapability(rawValue: $0) }
         
     }
-    
-    /// Creates a data transfer object (payload) from the model instance.
-    func toPayload() -> ActivityPayload {
-        return ActivityPayload(
-            name: self.name,
-            slug: self.slug,
-            parent_id: self.parent_id,
-            icon: self.icon,
-            type: self.type,
-            allowed_capabilities: self.allowedCapabilities.map { $0.rawValue },
-            required_capabilities: self.requiredCapabilities.map { $0.rawValue },
-            selectable: self.selectable,
-            cache: self.cache,
-            archived: self.archived
-        )
+        
+    func isValid() -> Bool {
+        return name != nil && slug != nil
     }
     
-    func isValid() -> Bool {
-        return true
+    func canLogDetails() -> Bool {
+        return allowedCapabilities.count >= 1
+    }
+    
+    var hasUnsyncedChanges: Bool {
+        if self.syncStatus != .synced {
+            return true
+        }
+        return self.children?.contains(where: { $0.hasUnsyncedChanges }) ?? false
     }
     
 }
 
 // MARK: - Data Transfer Objects (DTOs)
 
-/// A DTO representing the structure of an activity from the JSON API.
-struct ActivityDTO: Codable {
+struct ActivityDTO: Codable, Identifiable {
     let id: Int
     let name: String
     let slug: String
     let parent_id: Int?
     let icon: String
-    let type: ActivityType?
     let allowed_capabilities: [String]
     let required_capabilities: [String]
     let selectable: Bool
     let cache: Bool
     let archived: Bool
     
-    private enum CodingKeys: String, CodingKey {
-        case id, name, slug, parent_id, icon, type, selectable, cache, archived
-        case allowed_capabilities, required_capabilities
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        id = try container.decode(Int.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        slug = try container.decode(String.self, forKey: .slug)
-        parent_id = try container.decodeIfPresent(Int.self, forKey: .parent_id)
-        icon = try container.decode(String.self, forKey: .icon)
-        type = try container.decodeIfPresent(ActivityType.self, forKey: .type)
-        selectable = try container.decode(Bool.self, forKey: .selectable)
-        cache = try container.decode(Bool.self, forKey: .cache)
-        archived = try container.decode(Bool.self, forKey: .archived)
-        
-        allowed_capabilities = try container.decodeIfPresent([String].self, forKey: .allowed_capabilities) ?? []
-        required_capabilities = try container.decodeIfPresent([String].self, forKey: .required_capabilities) ?? []
-    }
-    
 }
 
-/// A DTO for the payload required to create a new activity.
-struct ActivityPayload: Codable {
+struct ActivityPayload: Codable, InitializableWithModel {
     let name: String
     let slug: String
     let parent_id: Int?
-    let icon: String
-    let type: ActivityType?
+    let icon: String?
     let allowed_capabilities: [String]
     let required_capabilities: [String]
     let selectable: Bool
     let cache: Bool
     let archived: Bool
+    
+    typealias Model = Activity
+    
+    init?(from activity: Activity) {
+        guard activity.isValid(),
+              let name = activity.name,
+              let slug = activity.slug
+        else { return nil }
+        
+        self.name = name
+        self.slug = slug
+        self.parent_id = activity.parentRid
+        self.icon = activity.icon
+        self.allowed_capabilities = activity.allowedCapabilities.map { $0.rawValue }
+        self.required_capabilities = activity.requiredCapabilities.map { $0.rawValue }
+        self.selectable = activity.selectable
+        self.cache = activity.cache
+        self.archived = activity.archived
+    }
 }
 
 
+struct ActivityEditor: CachableModel {
+    var name: String?
+    var slug: String?
+    var parentRid: Int?
+    var parent: Activity?
+    var icon: String?
+    var allowedCapabilities: [ActivityCapability] = []
+    var requiredCapabilities: [ActivityCapability] = []
+    var selectable: Bool = true
+    var cache: Bool = true
+    var archived: Bool = false
+    
+    init(from activity: Activity) {
+        self.name = activity.name
+        self.slug = activity.slug
+        self.parentRid = activity.rid
+        self.parent = activity.parent
+        self.icon = activity.icon
+        self.allowedCapabilities = activity.allowedCapabilities
+        self.requiredCapabilities = activity.requiredCapabilities
+        self.selectable = activity.selectable
+        self.cache = activity.cache
+        self.archived = activity.archived
+    }
+    
+    func apply(to activity: Activity) {
+        activity.name = self.name
+        activity.slug = self.slug
+        activity.parentRid = self.parentRid
+        activity.parent = self.parent
+        activity.icon = self.icon
+        activity.allowedCapabilities = self.allowedCapabilities
+        activity.requiredCapabilities = self.requiredCapabilities
+        activity.selectable = self.selectable
+        activity.cache = self.cache
+        activity.archived = self.archived
+    }
+}
+
+
+extension Activity: Equatable {
+    static func == (lhs: Activity, rhs: Activity) -> Bool {
+        lhs.id == rhs.id
+    }
+}

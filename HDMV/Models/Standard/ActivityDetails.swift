@@ -13,6 +13,16 @@ struct ReadingDetails: Codable {
 
 struct PlaceDetails: Codable {
     var placeId: Int?
+    var place: Place?
+    
+    enum CodingKeys: String, CodingKey {
+        case placeId
+        // place is intentionally skipped
+    }
+    
+    mutating func removeFields() {
+        self.place = nil
+    }
 }
 
 // MARK: The handler
@@ -21,6 +31,10 @@ struct ActivityDetails: Codable {
     var meal: MealDetails?
     var reading: ReadingDetails?
     var place: PlaceDetails?
+    
+    mutating func removeFields() {
+        place?.removeFields()
+    }
 }
 
 

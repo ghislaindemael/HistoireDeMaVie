@@ -35,22 +35,12 @@ struct ActivityHierarchyView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    let instanceTripLegs = viewModel.tripLegs(for: instance.id)
-                    let instanceInteractions = viewModel.interactions(for: instance.id)
-                    let hasActiveLegs = instanceTripLegs.contains { $0.time_end == nil }
-                    let hasActiveInteractions = instanceInteractions.contains { $0.time_end == nil }
+                    let hasActiveLegs = instance.tripLegs?.contains { $0.time_end == nil } ?? false
+                    let hasActiveInteractions = instance.interactions?.contains { $0.time_end == nil } ?? false
                     
                     ActivityInstanceRowView(
                         instance: instance,
-                        tripLegs: instanceTripLegs,
-                        interactions: instanceInteractions,
-                        selectedDate: viewModel.selectedDate,
-                        onStartTripLeg: { parentId in viewModel.createTripLeg(parent_id: parentId) },
-                        onEditTripLeg: { leg in self.tripLegToEdit = leg },
-                        onEndTripLeg: { leg in viewModel.endTripLeg(leg: leg) },
-                        onStartInteraction: { parentId in viewModel.createInteraction(parent_id: parentId) },
-                        onEditInteraction: { interaction in self.interactionToEdit = interaction },
-                        onEndInteraction: { interaction in viewModel.endInteraction(interaction: interaction) }
+                        selectedDate: viewModel.filterDate
                     )
                     
                     if instance.time_end == nil && !hasActiveLegs && !hasActiveInteractions {
@@ -68,26 +58,43 @@ struct ActivityHierarchyView: View {
             .padding(.vertical, 8)
             .background(isDropTargeted ? Color.accentColor.opacity(0.2) : Color.clear)
             .cornerRadius(8)
-            .draggable(DraggableActivityInstanceID(id: instance.id))
-            .dropDestination(for: DraggableActivityInstanceID.self) { items, location in
+            .dropDestination(for: DraggableLogItem.self) { items, location in
                 guard let droppedItem = items.first else { return false }
-                viewModel.reparent(instanceId: droppedItem.id, toNewParentInstanceId: instance.id)
+                viewModel.reparent(draggedItem: droppedItem, to: instance)
                 return true
             } isTargeted: { isTargeted in
                 self.isDropTargeted = isTargeted
             }
             
-            if let children = instance.children, !children.isEmpty {
-                ForEach(children.sorted(by: { $0.time_start < $1.time_start })) { child in
-                    ActivityHierarchyView(
-                        instance: child,
-                        level: level + 1,
+            if !instance.sortedChildren.isEmpty {
+                ForEach(instance.sortedChildren, id: \.id) { item in
+                    LogItemRowView(
+                        item: item,
                         instanceToEdit: $instanceToEdit,
                         tripLegToEdit: $tripLegToEdit,
-                        interactionToEdit: $interactionToEdit
+                        interactionToEdit: $interactionToEdit,
+                        level: level + 1
                     )
                 }
             }
         }
+        .draggable(DraggableLogItem.activity(instance.persistentModelID))
+    }
+}
+
+extension ActivityInstance {
+    var sortedChildren: [any LogModel] {
+        var allChildren: [any LogModel] = []
+        
+        if let childActivities = self.childActivities {
+            allChildren.append(contentsOf: childActivities)
+        }
+        if let tripLegs = self.tripLegs {
+            allChildren.append(contentsOf: tripLegs)
+        }
+        if let interactions = self.interactions {
+            allChildren.append(contentsOf: interactions)
+        }
+        return allChildren.sorted(by: { $0.time_start < $1.time_start })
     }
 }

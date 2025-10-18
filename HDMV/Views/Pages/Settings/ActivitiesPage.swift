@@ -16,7 +16,7 @@ struct ActivitiesPage: View {
     var body: some View {
         NavigationStack {
             List {
-                OutlineGroup(viewModel.activityTree, children: \.optionalChildren) { activity in
+                OutlineGroup(viewModel.activities, children: \.children) { activity in
                     Button(action: {
                         activityToEdit = activity
                     }) {
@@ -27,13 +27,13 @@ struct ActivitiesPage: View {
             }
             .navigationTitle("Activities")
             .logPageToolbar(
-                refreshAction: { await viewModel.syncWithServer() },
-                syncAction: { await viewModel.syncLocalChanges() },
-                singleTapAction: { viewModel.createLocalActivity() },
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
+                singleTapAction: { viewModel.createActivity() },
                 longPressAction: {}
             )
             .sheet(item: $activityToEdit) { activity in
-                ActivityDetailSheet(activity: activity, viewModel: viewModel)
+                ActivityDetailSheet(activity: activity, modelContext: modelContext)
             }
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

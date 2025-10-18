@@ -10,172 +10,89 @@ import SwiftData
 
 @MainActor
 class ActivitiesPageViewModel: ObservableObject {
-    @Published var activityTree: [Activity] = []
-    @Published var isLoading = false
     
     private var modelContext: ModelContext?
-    private let activitiesService = ActivitiesService()
+    private var activitySyncer: ActivitySyncer?
+    
+    @Published var isLoading = false
+    @Published var activities: [Activity] = []
     
     // MARK: - Computed Properties for Views
-    var allActivities: [Activity] {
-        activityTree.flatMap { $0.flattened() }
-    }
-    
-    /// Checks if there are any activities that need to be synced with the server.
     var hasLocalChanges: Bool {
-        return allActivities.contains(where: { $0.syncStatus != .synced })
+        return activities.contains(where: { $0.hasUnsyncedChanges })
     }
     
+    // MARK: Initialization
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.activitySyncer = ActivitySyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
-    // MARK: - Data Fetching and Management
-    
-    func syncWithServer() async {
-        
-        guard let context = modelContext else { return }
-        isLoading = true
-        defer { isLoading = false }
-
-    
-        do {
-            let onlineActivities = try await activitiesService.fetchActivities()
-            let onlineDict = Dictionary(uniqueKeysWithValues: onlineActivities.map { ($0.id, $0) })
-            
-            let descriptor = FetchDescriptor<Activity>()
-            let localActivities = try context.fetch(descriptor)
-            let localDict = Dictionary(uniqueKeysWithValues: localActivities.map { ($0.id, $0) })
-            
-            for dto in onlineActivities {
-                if let localActivity = localDict[dto.id] {
-                    if localActivity.syncStatus == .synced {
-                        localActivity.update(fromDto: dto)
-                    }
-                } else {
-                    context.insert(Activity(fromDto: dto))
-                }
-            }
-            
-            for localActivity in localActivities {
-                if onlineDict[localActivity.id] == nil && localActivity.syncStatus == .synced {
-                    context.delete(localActivity)
-                }
-            }
-            
-            try context.save()
-            
-            let refreshedDescriptor = FetchDescriptor<Activity>(sortBy: [SortDescriptor(\.name)])
-            let activities = try context.fetch(refreshedDescriptor)
-            self.activityTree = Activity.buildTree(from: activities)
-        } catch {
-            print("Failed to fetch activities from server: \(error)")
-        }
-        
-    }
+    // MARK: - Data Loading and Caching
     
     private func fetchFromCache() {
         guard let context = modelContext else { return }
-        do {
-            let descriptor = FetchDescriptor<Activity>()
-            let cachedActivities = try context.fetch(descriptor)
-            self.activityTree = Activity.buildTree(from: cachedActivities)
-        } catch {
-            print("Failed to fetch activities from cache: \(error)")
-        }
-    }
-    
-
-    
-    // MARK: Synchronization
-    
-    private func syncActivity(activity: Activity, in context: ModelContext) async {
-        let payload = activity.toPayload()
-        do {
-            if activity.id < 0 {
-                let temporaryId = activity.id
-                let newDTO = try await self.activitiesService.createActivity(payload: payload)
-                if let activityToUpdate = try context.fetch(FetchDescriptor<Activity>()).first(where: { $0.id == temporaryId }) {
-                    activityToUpdate.id = newDTO.id
-                    activityToUpdate.syncStatus = SyncStatus.synced
-                }
-            } else {
-                _ = try await self.activitiesService.updateActivity(id: activity.id, payload: payload)
-            }
-            activity.syncStatus = .synced
-        } catch {
-            activity.syncStatus = .failed
-            print("Failed to sync activity \(activity.name): \(error).")
-        }
-    }
-    
-    /// Uploads all activities marked as `.local` or `.failed` to the server.
-    func syncLocalChanges() async {
-        guard let context = modelContext else { return }
-        isLoading = true
-        defer { isLoading = false }
         
         do {
-            let allActivitiesInDB = try context.fetch(FetchDescriptor<Activity>())
+            let predicate = #Predicate<Activity> { $0.parent == nil }
             
-            let activitiesToSync = allActivitiesInDB.filter {
-                $0.syncStatus == .local || $0.syncStatus == .failed
-            }
+            let descriptor = FetchDescriptor<Activity>(
+                predicate: predicate,
+                sortBy: [SortDescriptor(\.name)]
+            )
             
-            guard !activitiesToSync.isEmpty else {
-                print("✅ No local activity changes to sync.")
-                return
-            }
-            
-            print("⏳ Syncing \(activitiesToSync.count) activities...")
-            
-            await withTaskGroup(of: Void.self) { group in
-                for activity in activitiesToSync {
-                    group.addTask {
-                        await self.syncActivity(activity: activity, in: context)
-                    }
-                }
-            }
-            
-            try context.save()
-            print("✅ Sync complete. Refreshing from server...")
-            await syncWithServer()
-            
+            self.activities = try context.fetch(descriptor)
         } catch {
-            print("❌ Failed to fetch activities for syncing: \(error)")
+            print("Failed to fetch from cache: \(error)")
         }
     }
     
-    // MARK: Computed data
-    
-    func generateTempID() -> Int {
-        let minID =
-            activityTree.flatMap { $0.flattened() }
-                .map(\.id).filter { $0 < 0 }.min() ?? 0
-        return minID - 1
+    func refreshFromServer() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = activitySyncer else {
+            print("⚠️ [ActivitiesPageViewModel] Syncer is nil")
+            return
+        }
+        do {
+            try await syncer.pullChanges()
+            fetchFromCache()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
     }
+    
+    func uploadLocalChanges() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = activitySyncer else {
+            print("⚠️ [ActivitiesPageViewModel] countriesSyncer is nil")
+            return
+        }
+        do {
+            _ = try await syncer.pushChanges()
+            fetchFromCache()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
     
     // MARK: User Actions
     
-    func createLocalActivity() {
+    func createActivity() {
         guard let context = modelContext else { return }
-        let newActivity =
-        Activity(
-            id: generateTempID(),
-            name: "",
-            slug: "",
-            icon: "",
-            syncStatus: .local
-        )
+        let newActivity = Activity(syncStatus: .local)
         
         context.insert(newActivity)
+        activities.append(newActivity)
         do {
             try context.save()
-            self.activityTree.insert(newActivity, at: 0)
         } catch {
-            print("Failed to create interaction: \(error)")
+            print("Failed to create Activity: \(error)")
         }
     }
+    
 }

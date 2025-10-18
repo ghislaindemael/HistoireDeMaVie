@@ -40,7 +40,6 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     private func fetchLocalInteractions() -> [PersonInteraction] {
         guard let context = modelContext else { return [] }
 
-        
         do {
 
             let calendar = Calendar.current
@@ -101,7 +100,7 @@ class PeopleInteractionsPageViewModel: ObservableObject {
             let onlineInteractions = try await interactionService.fetchInteractions(for: selectedDate)
             
             let onlineDict = Dictionary(uniqueKeysWithValues: onlineInteractions.map { ($0.id, $0) })
-            let localDict = Dictionary(uniqueKeysWithValues: localInteractions.map { ($0.id, $0) })
+            let localDict = Dictionary(uniqueKeysWithValues: localInteractions.map { ($0.rid, $0) })
             
             let onlineIDs = Set(onlineDict.keys)
             let localIDs = Set(localDict.keys)
@@ -161,11 +160,11 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         guard interaction.isValid() else { return }
         let payload = PersonInteractionPayload(from: interaction)
         do {
-            if interaction.id < 0 {
+            if interaction.rid == nil {
                 let newDTO = try await self.interactionService.createInteraction(payload)
-                interaction.id = newDTO.id
+                interaction.rid = newDTO.id
             } else {
-                _ = try await self.interactionService.updatePersonInteraction(id: interaction.id, payload: payload)
+                _ = try await self.interactionService.updateInteraction(id: interaction.rid!, payload: payload)
             }
             interaction.syncStatus = .synced
         } catch {
@@ -179,20 +178,15 @@ class PeopleInteractionsPageViewModel: ObservableObject {
     func deleteInteraction(_ interaction: PersonInteraction) {
         guard let context = modelContext else { return }
         
-        if interaction.id < 0 {
+        if interaction.rid == nil {
             context.delete(interaction)
         } else {
             interaction.syncStatus = .toDelete
         }
-        
         try? context.save()
 
     }
     
-    func generateTempID() -> Int {
-        let minExistingID = interactions.map(\.id).filter { $0 < 0 }.min() ?? 0
-        return minExistingID - 1
-    }
     
     func endPersonInteraction(interaction: PersonInteraction){
         guard let context = modelContext else { return }
@@ -209,7 +203,6 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         let newInteraction =
             PersonInteraction(
-                id: generateTempID(),
                 time_start: .now,
                 person_id: 0,
                 in_person: true,
@@ -230,7 +223,6 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         let noonOnSelectedDate = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDate) ?? selectedDate
         let newInteraction =
         PersonInteraction(
-            id: generateTempID(),
             time_start: noonOnSelectedDate,
             person_id: 0,
             in_person: true,

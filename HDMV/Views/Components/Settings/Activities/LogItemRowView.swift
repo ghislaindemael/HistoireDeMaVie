@@ -1,20 +1,28 @@
+//
+//  LogItemRowView.swift
+//  HDMV
+//
+//  Created by Ghislain Demael on 17.10.2025.
+//
+
+
 import SwiftUI
 
 struct LogItemRowView: View {
-    // This view accepts any item that conforms to our protocol
+    
+    @EnvironmentObject var viewModel: MyActivitiesPageViewModel
+
     let item: any LogModel
     
-    // Pass through the bindings needed by the subviews
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripLegToEdit: TripLeg?
     @Binding var interactionToEdit: PersonInteraction?
+
     
-    // Pass through any other needed parameters, like the level
     let level: Int
 
     @ViewBuilder
     var body: some View {
-        // Use a switch to handle each concrete type
         switch item {
         case let activity as ActivityInstance:
             ActivityHierarchyView(
@@ -25,23 +33,24 @@ struct LogItemRowView: View {
                 interactionToEdit: $interactionToEdit
             )
         case let tripLeg as TripLeg:
-            TripLegRowView(leg: tripLeg)
-                // You can add gestures and modifiers for trip legs here
+                TripLegRowView(tripLeg: tripLeg, onEnd: {
+                    viewModel.endTripLeg(leg: tripLeg)
+                })
                 .onTapGesture {
                     tripLegToEdit = tripLeg
                 }
-                .padding(.leading, CGFloat(level) * 20) // Apply indentation for non-hierarchical children
+                .padding(.leading, CGFloat(level) * 20)
 
         case let interaction as PersonInteraction:
-            PersonInteractionRowView(interaction: interaction)
-                // You can add gestures and modifiers for interactions here
+                PersonInteractionRowView(interaction: interaction, onEnd: {
+                    viewModel.endInteraction(interaction: interaction)
+                })
                 .onTapGesture {
                     interactionToEdit = interaction
                 }
-                .padding(.leading, CGFloat(level) * 20) // Apply indentation
+                .padding(.leading, CGFloat(level) * 20)
 
         default:
-            // A fallback in case you add new types to LogModel
             EmptyView()
         }
     }

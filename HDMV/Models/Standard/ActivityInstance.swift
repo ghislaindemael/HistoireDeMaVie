@@ -11,37 +11,69 @@ import SwiftUI
 
 @Model
 final class ActivityInstance: SyncableModel {
-    
-    typealias Payload = ActivityInstancePayload
-    
-    @Attribute(.unique) var id: Int
+        
+    var rid: Int?
     var time_start: Date
     var time_end: Date?
-    var activity_id: Int?
-    var parent: ActivityInstance?
+    var activityRid: Int?
+    @Relationship
+    var relActivity: Activity? {
+        didSet {
+            activityRid = relActivity?.rid
+        }
+    }
+    var parentRid: Int?
+    var parent: ActivityInstance? {
+        didSet {
+            parentRid = parent?.rid
+        }
+    }
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parent)
-    var children: [ActivityInstance]? = []
+    var childActivities: [ActivityInstance]? = []
+    @Relationship(deleteRule: .nullify, inverse: \TripLeg.parentInstance)
+    var tripLegs: [TripLeg]? = []
+    @Relationship(deleteRule: .nullify, inverse: \PersonInteraction.parentInstance)
+    var interactions: [PersonInteraction]? = []
     var details: String?
-    var percentage: Int?
+    var percentage: Int
     var activity_details: Data?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+    
+    typealias DTO = ActivityInstanceDTO
+    typealias Payload = ActivityInstancePayload
+    
+    var activity: Activity? {
+        get {
+            if let activity = relActivity { return activity }
+            guard let rid = activityRid, let ctx = RelationResolver.context else { return nil }
+            let descriptor = FetchDescriptor<Activity>(predicate: #Predicate { $0.rid == rid })
+            return try? ctx.fetch(descriptor).first
+        }
+        set {
+            relActivity = newValue
+            activityRid = newValue?.rid
+        }
+    }
 
 
     init(
-        id: Int,
-        time_start: Date,
+        rid: Int? = nil,
+        time_start: Date = .now,
         time_end: Date? = nil,
-        activity_id: Int? = nil,
+        activityRid: Int? = nil,
+        activity: Activity? = nil,
+        parentRid: Int? = nil,
         parent: ActivityInstance? = nil,
         details: String? = nil,
-        percentage: Int? = nil,
+        percentage: Int = 100,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
     ) {
-        self.id = id
         self.time_start = time_start
         self.time_end = time_end
-        self.activity_id = activity_id
+        self.activityRid = activityRid
+        self.relActivity = activity
+        self.parentRid = parentRid
         self.parent = parent
         self.details = details
         self.percentage = percentage
@@ -59,29 +91,35 @@ final class ActivityInstance: SyncableModel {
         }
     }
     
+    convenience init(fromDto dto: ActivityInstanceDTO) {
+        self.init(
+            rid: dto.id,
+            time_start: dto.time_start,
+            time_end: dto.time_end,
+            activityRid: dto.activity_id,
+            parentRid: dto.parent_instance_id,
+            details: dto.details,
+            percentage: dto.percentage ?? 100,
+            activity_details: dto.activity_details,
+            syncStatus: .synced,
+        
+        )
+    }
+    
     func update(fromDto dto: ActivityInstanceDTO) {
-        self.id = dto.id
+        self.rid = dto.id
         self.time_start = dto.time_start
         self.time_end = dto.time_end
-        self.activity_id = dto.activity_id
+        self.activityRid = dto.activity_id
+        self.parentRid = dto.parent_instance_id
         self.details = dto.details
-        self.percentage = dto.percentage
+        self.percentage = dto.percentage ?? 100
         self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
     
-    func update(from editor: ActivityInstanceEditor) {
-        self.time_start = editor.time_start
-        self.time_end = editor.time_end
-        self.activity_id = editor.activity_id
-        self.parent = editor.parent
-        self.details = editor.details
-        self.percentage = editor.percentage
-        self.decodedActivityDetails = editor.decodedActivityDetails
-    }
-        
     func isValid() -> Bool {
-        return activity_id != nil
+        return activityRid != nil
     }
     
 }
@@ -108,7 +146,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let activity_id: Int?
     let parent_instance_id: Int?
     let details: String?
-    let percentage: Int?
+    let percentage: Int
     let activity_details: ActivityDetails?
 
     init?(from instance: ActivityInstance) {
@@ -119,31 +157,50 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         
         self.time_start = instance.time_start
         self.time_end = instance.time_end
-        self.activity_id = instance.activity_id
-        self.parent_instance_id = instance.parent?.id
+        self.activity_id = instance.activityRid
+        self.parent_instance_id = instance.parent?.rid
         self.details = instance.details
         self.percentage = instance.percentage
-        self.activity_details = instance.decodedActivityDetails
+        
+        if var details = instance.decodedActivityDetails {
+            details.removeFields()
+            self.activity_details = details
+        } else {
+            self.activity_details = nil
+        }
     }
 }
 
 struct ActivityInstanceEditor {
     var time_start: Date
     var time_end: Date?
-    var activity_id: Int?
+    var activity: Activity?
     var parent: ActivityInstance?
     var details: String?
-    var percentage: Int?
+    var percentage: Int
     var decodedActivityDetails: ActivityDetails?
     
     /// Initializes an editor from an existing ActivityInstance.
     init(from instance: ActivityInstance) {
         self.time_start = instance.time_start
         self.time_end = instance.time_end
-        self.activity_id = instance.activity_id
-        self.parent = instance.parent 
+        self.activity = instance.activity
+        self.parent = instance.parent
         self.details = instance.details
         self.percentage = instance.percentage
         self.decodedActivityDetails = instance.decodedActivityDetails
     }
+    
+    func apply(to instance: ActivityInstance) {
+        instance.time_start = self.time_start
+        instance.time_end = self.time_end
+        instance.activity = self.activity
+        instance.parent = self.parent
+        instance.details = self.details
+        instance.percentage = self.percentage
+        instance.decodedActivityDetails = self.decodedActivityDetails
+        
+    }
+    
+
 }

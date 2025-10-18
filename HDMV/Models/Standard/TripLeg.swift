@@ -12,176 +12,181 @@ import SwiftData
 // MARK: - SwiftData Model
 @Model
 final class TripLeg: Identifiable, SyncableModel {
-    
-    typealias Payload = TripLegPayload
-    
-    @Attribute(.unique) var id: Int
-    
-    var parent_id: Int?
+        
+    var rid: Int?
     var time_start: Date
     var time_end: Date?
-    var vehicle_id: Int?
-    var place_start_id: Int?
-    var place_end_id: Int?
+    var parentInstanceRid: Int?
+    var parentInstance: ActivityInstance? {
+        didSet {
+            parentInstanceRid = parentInstance.rid
+        }
+    }
+    var vehicle: Vehicle?
+    var placeStart: Place?
+    var placeEnd: Place?
+    var path: Path?
     var am_driver: Bool
     var path_str: String?
-    var path_id: Int?
-    var details: String?
-    @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
-    init(id: Int = Int.random(in: 1...999999),
-         parent_id: Int? = nil,
+    var details: String?
+    var syncStatusRaw: String = SyncStatus.undef.rawValue
+    
+    typealias DTO = TripLegDTO
+    typealias Payload = TripLegPayload
+
+    init(rid: Int? = nil,
+         parent_instance: ActivityInstance? = nil,
          time_start: Date,
          time_end: Date? = nil,
-         vehicle_id: Int? = nil,
-         place_start_id: Int? = nil,
-         place_end_id: Int? = nil,
+         vehicle: Vehicle? = nil,
+         placeStart: Place? = nil,
+         placeEnd: Place? = nil,
          am_driver: Bool = false,
-         path_str: String? = nil,
-         path_id: Int? = nil,
+         path: Path? = nil,
          details: String? = nil,
-         syncStatus: SyncStatus = .local) {
-        self.id = id
-        self.parent_id = parent_id
+         syncStatus: SyncStatus = .local)
+    {
+        self.rid = rid
+        self.parentInstance = parent_instance
         self.time_start = time_start
         self.time_end = time_end
-        self.vehicle_id = vehicle_id
-        self.place_start_id = place_start_id
-        self.place_end_id = place_end_id
+        self.vehicle = vehicle
+        self.placeStart = placeStart
+        self.placeEnd = placeEnd
         self.am_driver = am_driver
-        self.path_str = path_str
-        self.path_id = path_id
+        self.path = path
         self.details = details
         self.syncStatus = syncStatus
     }
     
-    init(fromDto dto: TripLegDTO){
-        self.id = dto.id
-        self.parent_id = dto.parent_id
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
-        self.vehicle_id = dto.vehicle_id
-        self.place_start_id = dto.place_start_id
-        self.place_end_id = dto.place_end_id
-        self.am_driver = dto.am_driver
-        self.path_str = dto.path_str
-        self.path_id = dto.path_id
-        self.details = dto.details
-        self.syncStatus = SyncStatus.synced
+    convenience init(fromDto dto: TripLegDTO) {
+        self.init(
+            rid: dto.id,
+            time_start: dto.timeStart,
+            time_end: dto.timeEnd,
+        )
     }
     
     func update(fromDto dto: TripLegDTO) {
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
-        self.vehicle_id = dto.vehicle_id
-        self.place_start_id = dto.place_start_id
-        self.place_end_id = dto.place_end_id
-        self.am_driver = dto.am_driver
-        self.path_str = dto.path_str
-        self.path_id = dto.path_id
-        self.details = dto.details
-        self.syncStatus = .synced
+        self.rid = dto.id
+        self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
     func isValid() -> Bool {
-        guard parent_id != nil,
-              place_start_id != nil,
-              place_end_id != nil,
-              vehicle_id != nil,
-              //path_id != nil,
-              //time_start != nil,
-              time_end != nil else {
-            return false
-        }
-        return true
+        return parentInstance != nil && placeStart != nil && placeEnd != nil && time_end != nil
     }
     
 }
 
 
 struct TripLegDTO: Identifiable, Codable, Sendable {
-    var id: Int
-    var parent_id: Int?
-    var time_start: Date
-    var time_end: Date?
-    var vehicle_id: Int?
-    var place_start_id: Int?
-    var place_end_id: Int?
-    var am_driver: Bool
-    var path_str: String?
-    var path_id: Int?
-    var details: String?
+    let id: Int
+    let parentId: Int?
+    let timeStart: Date
+    let timeEnd: Date?
+    let vehicleId: Int?
+    let placeStartId: Int?
+    let placeEndId: Int?
+    let amDriver: Bool
+    let pathId: Int?
+    let details: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, details
+        case parentId = "parent_id"
+        case timeStart = "time_start"
+        case timeEnd = "time_end"
+        case vehicleId = "vehicle_id"
+        case placeStartId = "place_start_id"
+        case placeEndId = "place_end_id"
+        case amDriver = "am_driver"
+        case pathId = "path_id"
+    }
 }
 
 struct TripLegPayload: Codable, InitializableWithModel {
-    
     typealias Model = TripLeg
     
-    var parent_id: Int
-    var time_start: Date
-    var time_end: Date
-    var vehicle_id: Int
-    var place_start_id: Int
-    var place_end_id: Int
-    var am_driver: Bool
-    var path_str: String?
-    var path_id: Int?
-    var details: String?
+    let parentId: Int
+    let timeStart: Date
+    let timeEnd: Date
+    let vehicleId: Int?
+    let placeStartId: Int
+    let placeEndId: Int
+    let amDriver: Bool
+    let pathId: Int?
+    let details: String?
     
     init?(from tripLeg: TripLeg) {
-        guard tripLeg.isValid() else {
-            print("-> TripLeg \(tripLeg.id) is invalid.")
-            return nil
-        }
+        guard tripLeg.isValid(),
+              let parentId = tripLeg.parentInstance?.rid,
+              let timeEnd = tripLeg.time_end,
+              let placeStartId = tripLeg.placeStart?.rid,
+              let placeEndId = tripLeg.placeEnd?.rid
+        else { return nil }
         
-        self.parent_id = tripLeg.parent_id!
-        self.time_start = tripLeg.time_start
-        self.time_end = tripLeg.time_end!
-        self.vehicle_id = tripLeg.vehicle_id!
-        self.place_start_id = tripLeg.place_start_id!
-        self.place_end_id = tripLeg.place_end_id!
-        self.am_driver = tripLeg.am_driver
-        self.path_str = tripLeg.path_str
-        self.path_id = tripLeg.path_id
+        self.parentId = parentId
+        self.timeStart = tripLeg.time_start
+        self.timeEnd = timeEnd
+        self.vehicleId = tripLeg.vehicle?.rid
+        self.placeStartId = placeStartId
+        self.placeEndId = placeEndId
+        self.amDriver = tripLeg.am_driver
+        self.pathId = tripLeg.path?.id
         self.details = tripLeg.details
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case details
+        case parentId = "parent_id"
+        case timeStart = "time_start"
+        case timeEnd = "time_end"
+        case vehicleId = "vehicle_id"
+        case placeStartId = "place_start_id"
+        case placeEndId = "place_end_id"
+        case amDriver = "am_driver"
+        case pathId = "path_id"
     }
 }
 
 struct TripLegEditor {
-    var parent_id: Int?
+    var parent: ActivityInstance?
+    var vehicle: Vehicle?
+    var placeStart: Place?
+    var placeEnd: Place?
+    var path: Path?
+    
     var time_start: Date
     var time_end: Date?
-    var vehicle_id: Int?
-    var place_start_id: Int?
-    var place_end_id: Int?
     var am_driver: Bool
     var details: String?
-    var path_id: Int?
-        
+    
     /// Initializes the editor with data from an existing TripLeg.
     init(tripLeg: TripLeg) {
         self.time_start = tripLeg.time_start
         self.time_end = tripLeg.time_end
-        self.vehicle_id = tripLeg.vehicle_id
-        self.place_start_id = tripLeg.place_start_id
-        self.place_end_id = tripLeg.place_end_id
         self.am_driver = tripLeg.am_driver
         self.details = tripLeg.details
-        self.parent_id = tripLeg.parent_id
-        self.path_id = tripLeg.path_id
+        self.parent = tripLeg.parentInstance
+        self.vehicle = tripLeg.vehicle
+        self.placeStart = tripLeg.placeStart
+        self.placeEnd = tripLeg.placeEnd
+        self.path = tripLeg.path
     }
     
     /// Applies the changes from the editor back to the original TripLeg model.
     func apply(to tripLeg: TripLeg) {
         tripLeg.time_start = self.time_start
         tripLeg.time_end = self.time_end
-        tripLeg.vehicle_id = self.vehicle_id
-        tripLeg.place_start_id = self.place_start_id
-        tripLeg.place_end_id = self.place_end_id
         tripLeg.am_driver = self.am_driver
         tripLeg.details = self.details
-        tripLeg.path_id = self.path_id
-        tripLeg.syncStatus = .local
+        tripLeg.parentInstance = self.parent
+        tripLeg.vehicle = self.vehicle
+        tripLeg.placeStart = self.placeStart
+        tripLeg.placeEnd = self.placeEnd
+        tripLeg.path = self.path
+        
+        tripLeg.markAsModified()
     }
-
 }

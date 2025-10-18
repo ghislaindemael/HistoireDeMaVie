@@ -6,27 +6,36 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ActivitySelectorView: View {
     @Environment(\.dismiss) private var dismiss
-    let activityTree: [Activity]
-    @Binding var selectedActivityId: Int?
+    @Binding var selectedActivity: Activity?
+    
+    @Query var activityTree: [Activity]
+    
+    init(selectedActivity: Binding<Activity?>) {
+        _selectedActivity = selectedActivity        
+        let predicate = #Predicate<Activity> { $0.parent == nil }
+        _activityTree = Query(filter: predicate, sort: \.name)
+    }
+    
     
     var body: some View {
         List {
             Button("None") {
-                selectedActivityId = nil
+                selectedActivity = nil
                 dismiss()
             }
             
-            OutlineGroup(activityTree, children: \.optionalChildren) { activity in
+            OutlineGroup(activityTree, children: \.children) { activity in
                 Button(action: {
-                    selectedActivityId = activity.id
+                    selectedActivity = activity
                     dismiss()
                 }) {
                     HStack {
-                        IconView(iconString: activity.icon)
-                        Text(activity.name)
+                        IconView(iconString: activity.icon ?? "")
+                        Text(activity.name ?? "Unset")
                     }
                     .foregroundStyle(.primary)
                 }

@@ -136,7 +136,6 @@ class PathsPageViewModel: ObservableObject {
                 id: TempIDGenerator.generate(for: Path.self, in: context),
                 syncStatus: .local
             )
-        
         context.insert(newPath)
         do {
             try context.save()

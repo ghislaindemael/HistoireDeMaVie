@@ -9,28 +9,29 @@ import SwiftUI
 
 struct ParentActivitySelector: View {
     let activities: [Activity]
-    @Binding var selectedParentId: Int?
+    @Binding var selectedParent: Activity?
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         List {
-            Button("Top Level") {
-                selectedParentId = nil
+            Button("Top Level (No Parent)") {
+                selectedParent = nil
                 dismiss()
             }
             
-            OutlineGroup(activities, children: \.optionalChildren) { activity in
+            OutlineGroup(activities, children: \.children) { activity in
+                
                 Button(action: {
-                    selectedParentId = activity.id
+                    selectedParent = activity
                     dismiss()
                 }) {
                     HStack {
-                        IconView(iconString: activity.icon)
+                        IconView(iconString: activity.icon ?? "")
                             .foregroundStyle(.primary)
-                        Text(activity.name)
+                        Text(activity.name ?? "Unset")
                     }
                 }
-                .foregroundStyle(.primary)
+                .buttonStyle(.plain)
             }
         }
         .navigationTitle("Select Parent")
