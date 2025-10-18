@@ -10,17 +10,17 @@ import Foundation
 import SwiftData
 
 @MainActor
-class TripLegSyncer: BaseSyncer<TripLeg, TripLegDTO, TripLegPayload> {
+class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
     
     private let tripLegsService = TripsService()
     
     // MARK: - Implemented Network Methods
     
-    override func createOnServer(payload: TripLegPayload) async throws -> TripLegDTO {
+    override func createOnServer(payload: TripPayload) async throws -> TripDTO {
         return try await tripLegsService.createTrip(payload)
     }
     
-    override func updateOnServer(rid: Int, payload: TripLegPayload) async throws -> TripLegDTO {
+    override func updateOnServer(rid: Int, payload: TripPayload) async throws -> TripDTO {
         return try await tripLegsService.updateTrip(id: rid, payload: payload)
     }
     

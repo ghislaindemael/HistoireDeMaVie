@@ -11,7 +11,7 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class TripLeg: Identifiable, SyncableModel {
+final class Trip: Identifiable, SyncableModel {
         
     var rid: Int?
     var time_start: Date
@@ -36,9 +36,9 @@ final class TripLeg: Identifiable, SyncableModel {
     typealias Payload = TripLegPayload
 
     init(rid: Int? = nil,
-         parent_instance: ActivityInstance? = nil,
          time_start: Date,
          time_end: Date? = nil,
+         parentInstance: ActivityInstance? = nil,
          vehicle: Vehicle? = nil,
          placeStart: Place? = nil,
          placeEnd: Place? = nil,
@@ -48,7 +48,7 @@ final class TripLeg: Identifiable, SyncableModel {
          syncStatus: SyncStatus = .local)
     {
         self.rid = rid
-        self.parentInstance = parent_instance
+        self.parentInstance = parentInstance
         self.time_start = time_start
         self.time_end = time_end
         self.vehicle = vehicle
@@ -106,7 +106,7 @@ struct TripLegDTO: Identifiable, Codable, Sendable {
 }
 
 struct TripLegPayload: Codable, InitializableWithModel {
-    typealias Model = TripLeg
+    typealias Model = Trip
     
     let parentId: Int
     let timeStart: Date
@@ -118,7 +118,7 @@ struct TripLegPayload: Codable, InitializableWithModel {
     let pathId: Int?
     let details: String?
     
-    init?(from tripLeg: TripLeg) {
+    init?(from tripLeg: Trip) {
         guard tripLeg.isValid(),
               let parentId = tripLeg.parentInstance?.rid,
               let timeEnd = tripLeg.time_end,
@@ -163,7 +163,7 @@ struct TripLegEditor {
     var details: String?
     
     /// Initializes the editor with data from an existing TripLeg.
-    init(tripLeg: TripLeg) {
+    init(tripLeg: Trip) {
         self.time_start = tripLeg.time_start
         self.time_end = tripLeg.time_end
         self.am_driver = tripLeg.am_driver
@@ -176,7 +176,7 @@ struct TripLegEditor {
     }
     
     /// Applies the changes from the editor back to the original TripLeg model.
-    func apply(to tripLeg: TripLeg) {
+    func apply(to tripLeg: Trip) {
         tripLeg.time_start = self.time_start
         tripLeg.time_end = self.time_end
         tripLeg.am_driver = self.am_driver
