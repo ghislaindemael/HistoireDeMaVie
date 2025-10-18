@@ -18,7 +18,7 @@ struct ActivityInstanceDetailSheet: View {
     @State private var editor: ActivityInstanceEditor
     
     @State private var showEndTime: Bool
-    @State private var tripLegToEdit: TripLeg?
+    @State private var tripToEdit: Trip?
     @State private var interactionToEdit: PersonInteraction?
     
     private var selectedActivity: Activity? {
@@ -51,9 +51,9 @@ struct ActivityInstanceDetailSheet: View {
 
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
-            .sheet(item: $tripLegToEdit) { leg in
-                TripLegDetailSheet(
-                    tripLeg: leg,
+            .sheet(item: $tripToEdit) { trip in
+                TripDetailSheet(
+                    trip: trip,
                     modelContext: modelContext
                 )
             }

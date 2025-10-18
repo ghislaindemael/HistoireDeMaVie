@@ -1,5 +1,5 @@
 //
-//  TripLegDetailViewModel.swift
+//  TripDetailViewModel.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 10.10.2025.
@@ -10,19 +10,19 @@ import SwiftUI
 import SwiftData
 
 @MainActor
-class TripLegDetailViewModel: ObservableObject {
-    @Published var editor: TripLegEditor
+class TripDetailViewModel: ObservableObject {
+    @Published var editor: TripEditor
     @Published var isShowingPathSelector = false
     @Published var showEndTime: Bool
     
-    private var tripLeg: TripLeg
+    private var trip: Trip
     private let modelContext: ModelContext
 
-    init(tripLeg: TripLeg, modelContext: ModelContext) {
-        self.tripLeg = tripLeg
-        self.editor = TripLegEditor(tripLeg: tripLeg)
+    init(trip: Trip, modelContext: ModelContext) {
+        self.trip = trip
+        self.editor = TripEditor(trip: trip)
         self.modelContext = modelContext
-        self.showEndTime = tripLeg.time_end != nil
+        self.showEndTime = trip.time_end != nil
     }
 
     func selectPath(path: Path) {
@@ -33,13 +33,13 @@ class TripLegDetailViewModel: ObservableObject {
         if !showEndTime {
             editor.time_end = nil
         }
-        editor.apply(to: tripLeg)
+        editor.apply(to: trip)
         
         do {
             try modelContext.save()
             completion()
         } catch {
-            print("❌ Failed to save TripLeg: \(error)")
+            print("❌ Failed to save Trip: \(error)")
         }
     }
 }

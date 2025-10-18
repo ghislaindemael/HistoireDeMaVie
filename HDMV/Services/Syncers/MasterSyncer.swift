@@ -12,19 +12,19 @@ import SwiftData
 @MainActor
 class MasterSyncer {
     private let activityInstanceSyncer: ActivityInstanceSyncer
-    private let tripLegSyncer: TripLegSyncer
+    private let tripSyncer: TripSyncer
     private let interactionSyncer: PersonInteractionSyncer
 
     init(modelContext: ModelContext) {
         self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
-        self.tripLegSyncer = TripLegSyncer(modelContext: modelContext)
+        self.tripSyncer = TripSyncer(modelContext: modelContext)
         self.interactionSyncer = PersonInteractionSyncer(modelContext: modelContext)
     }
 
     func sync() async {
         do {
             try await activityInstanceSyncer.sync()
-            try await tripLegSyncer.sync()
+            try await tripSyncer.sync()
             try await interactionSyncer.sync()
         } catch {
             print("❌ MasterSyncer full sync failed: \(error)")
@@ -34,7 +34,7 @@ class MasterSyncer {
     func pushChanges() async {
         do {
             _ = try await activityInstanceSyncer.pushChanges()            
-            _ = try await tripLegSyncer.pushChanges()
+            _ = try await tripSyncer.pushChanges()
             _ = try await interactionSyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")

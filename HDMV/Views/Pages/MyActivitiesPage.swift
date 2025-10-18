@@ -15,7 +15,7 @@ struct MyActivitiesPage: View {
     @StateObject private var viewModel = MyActivitiesPageViewModel()
     
     @State private var instanceToEdit: ActivityInstance?
-    @State private var tripLegToEdit: TripLeg?
+    @State private var tripToEdit: Trip?
     @State private var interactionToEdit: PersonInteraction?
     
     private func onAppear() {
@@ -52,9 +52,9 @@ struct MyActivitiesPage: View {
                         viewModel: viewModel,
                     )
                 }
-                .sheet(item: $tripLegToEdit) { leg in
-                    TripLegDetailSheet(
-                        tripLeg: leg,
+                .sheet(item: $tripToEdit) { trip in
+                    TripDetailSheet(
+                        trip: trip,
                         modelContext: modelContext
                     )
                 }
@@ -78,7 +78,7 @@ struct MyActivitiesPage: View {
                             instance: instance,
                             level: 0,
                             instanceToEdit: $instanceToEdit,
-                            tripLegToEdit: $tripLegToEdit,
+                            tripToEdit: $tripToEdit,
                             interactionToEdit: $interactionToEdit
                         )
                         .padding(.bottom, 8)
@@ -91,3 +91,4 @@ struct MyActivitiesPage: View {
     
     
 }
+

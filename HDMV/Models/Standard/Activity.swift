@@ -74,8 +74,8 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         self.archived = dto.archived
         self.syncStatus = SyncStatus.synced
         
-        self.allowedCapabilities = dto.allowed_capabilities.compactMap { ActivityCapability(rawValue: $0) }
-        self.requiredCapabilities = dto.required_capabilities.compactMap { ActivityCapability(rawValue: $0) }
+        self.allowedCapabilities = dto.allowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
+        self.requiredCapabilities = dto.required_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
     }
     
     // MARK: - Activity Tree
@@ -98,8 +98,8 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         self.archived = dto.archived
         self.syncStatus = .synced
         
-        self.allowedCapabilities = dto.allowed_capabilities.compactMap { ActivityCapability(rawValue: $0) }
-        self.requiredCapabilities = dto.required_capabilities.compactMap { ActivityCapability(rawValue: $0) }
+        self.allowedCapabilities = dto.allowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
+        self.requiredCapabilities = dto.required_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
         
     }
         
@@ -128,8 +128,8 @@ struct ActivityDTO: Codable, Identifiable {
     let slug: String
     let parent_id: Int?
     let icon: String
-    let allowed_capabilities: [String]
-    let required_capabilities: [String]
+    let allowed_capabilities: [String]?
+    let required_capabilities: [String]?
     let selectable: Bool
     let cache: Bool
     let archived: Bool

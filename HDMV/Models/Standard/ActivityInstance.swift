@@ -30,8 +30,8 @@ final class ActivityInstance: SyncableModel {
     }
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parent)
     var childActivities: [ActivityInstance]? = []
-    @Relationship(deleteRule: .nullify, inverse: \TripLeg.parentInstance)
-    var tripLegs: [TripLeg]? = []
+    @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
+    var trips: [Trip]? = []
     @Relationship(deleteRule: .nullify, inverse: \PersonInteraction.parentInstance)
     var interactions: [PersonInteraction]? = []
     var details: String?
@@ -195,6 +195,7 @@ struct ActivityInstanceEditor {
         instance.time_start = self.time_start
         instance.time_end = self.time_end
         instance.activity = self.activity
+        instance.activityRid = self.activity?.rid
         instance.parent = self.parent
         instance.details = self.details
         instance.percentage = self.percentage

@@ -18,7 +18,7 @@ struct ActivityHierarchyView: View {
     @State private var isDropTargeted: Bool = false
     
     @Binding var instanceToEdit: ActivityInstance?
-    @Binding var tripLegToEdit: TripLeg?
+    @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: PersonInteraction?
     
     private let indentationAmount: CGFloat = 20
@@ -35,7 +35,7 @@ struct ActivityHierarchyView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    let hasActiveLegs = instance.tripLegs?.contains { $0.time_end == nil } ?? false
+                    let hasActiveTrips = instance.trips?.contains { $0.time_end == nil } ?? false
                     let hasActiveInteractions = instance.interactions?.contains { $0.time_end == nil } ?? false
                     
                     ActivityInstanceRowView(
@@ -43,7 +43,12 @@ struct ActivityHierarchyView: View {
                         selectedDate: viewModel.filterDate
                     )
                     
-                    if instance.time_end == nil && !hasActiveLegs && !hasActiveInteractions {
+                    if instance.time_end == nil && !hasActiveTrips && !hasActiveInteractions {
+                        if !hasActiveTrips {
+                            StartItemButton(title: "Start Trip") {
+                                viewModel.createTrip(parent: instance)
+                            }
+                        }
                         EndItemButton(title: "End Activity") {
                             viewModel.endActivityInstance(instance: instance)
                         }
@@ -71,7 +76,7 @@ struct ActivityHierarchyView: View {
                     LogItemRowView(
                         item: item,
                         instanceToEdit: $instanceToEdit,
-                        tripLegToEdit: $tripLegToEdit,
+                        tripToEdit: $tripToEdit,
                         interactionToEdit: $interactionToEdit,
                         level: level + 1
                     )
@@ -89,8 +94,8 @@ extension ActivityInstance {
         if let childActivities = self.childActivities {
             allChildren.append(contentsOf: childActivities)
         }
-        if let tripLegs = self.tripLegs {
-            allChildren.append(contentsOf: tripLegs)
+        if let trips = self.trips {
+            allChildren.append(contentsOf: trips)
         }
         if let interactions = self.interactions {
             allChildren.append(contentsOf: interactions)

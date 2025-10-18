@@ -91,7 +91,11 @@ class CitiesPageViewModel: ObservableObject {
     func createCity() {
         guard let context = modelContext else { return }
         
-        let newCity = City(syncStatus: .local)
+        let newCity = City(
+            slug:"unset",
+            name: "Unset",
+            syncStatus: .local
+        )
         newCity.relCountry = selectedCountry
         
         context.insert(newCity)

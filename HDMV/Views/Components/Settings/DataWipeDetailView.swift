@@ -106,10 +106,15 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
-                case is TripLeg.Type:
-                    let descriptor = FetchDescriptor<TripLeg>(
-                        sortBy: [SortDescriptor(\TripLeg.time_start, order: .reverse)]
+                case is Trip.Type:
+                    let descriptor = FetchDescriptor<Trip>(
+                        sortBy: [SortDescriptor(\Trip.time_start, order: .reverse)]
                     )
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
+                case is Country.Type:
+                    let descriptor = FetchDescriptor<Country>()
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -174,9 +179,7 @@ struct DataWipeDetailView: View {
             case let instance as ActivityInstance:
                 return AnyView(instance.debugView)
             case let activity as Activity:
-                return AnyView(
-                    ActivityRowView(activity: activity)
-                )
+                return AnyView(activity.debugView)
             case let entry as AgendaEntry:
                 return AnyView(
                     VStack(alignment: .leading) {
@@ -185,6 +188,8 @@ struct DataWipeDetailView: View {
                             .font(.headline)
                     }
                 )
+            case let country as Country:
+                return AnyView(country.debugView)
             case let city as City:
                 return AnyView(
                     Text(city.name ?? "Name unset, ID: \(city.id)")
@@ -201,12 +206,8 @@ struct DataWipeDetailView: View {
                 return AnyView(
                     interaction.debugView
                 )
-            case let tripleg as TripLeg:
-                return AnyView(
-                    TripLegRowView(
-                        tripLeg: tripleg
-                    )
-                )
+            case let trip as Trip:
+                return AnyView(TripRowView(trip: trip))
             default:
                 return AnyView(Text("Unknown Object"))
         }
@@ -238,8 +239,8 @@ struct DataWipeDetailView: View {
             }
             dismiss()
         }
-        if let leg = item as? TripLeg {
-            appNavigator.selectedDate = leg.time_start
+        if let trip = item as? Trip {
+            appNavigator.selectedDate = trip.time_start
             appNavigator.selectedTab = .activities
             dismiss()
         }

@@ -69,7 +69,7 @@ class VehiclesPageViewModel: ObservableObject {
         }
         do {
             _ = try await syncer.pushChanges()
-            // TODO: For cleancode, add Trip Leg update on Vehicle Sync
+            // TODO: For cleancode, add Trip update on Vehicle Sync
             fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")

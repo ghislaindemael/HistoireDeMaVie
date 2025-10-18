@@ -64,7 +64,7 @@ where
                                 item.rid = newDTO.id
                                 item.syncStatus = .synced
                                 do {
-                                    try self.resolveDependencies(for: item)
+                                    try self.resolveRelationships(for: item)
                                 } catch {
                                     print("❌ Failed to resolve dependencies for \(item.id): \(error)")
                                 }
@@ -82,7 +82,6 @@ where
                                 //}
                             }
                         }
-                        item.syncStatus = .synced
                     } catch {
                         await MainActor.run {
                             item.syncStatus = .failed
@@ -130,6 +129,7 @@ where
                 }
             }
         }
+        try resolveRelationships()
         try modelContext.save()
     }
     
@@ -142,7 +142,8 @@ where
     func createOnServer(payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func updateOnServer(rid: Int, payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func deleteFromServer(_ rid: Int) async throws { fatalError("Subclasses must implement") }
-    func resolveDependencies(for model: Model) throws {}
+    func resolveRelationships() throws {}
+    func resolveRelationships(for model: Model) throws {}
     // MARK: - Helpers
     
     

@@ -16,7 +16,7 @@ struct ActivitySelectorView: View {
     
     init(selectedActivity: Binding<Activity?>) {
         _selectedActivity = selectedActivity        
-        let predicate = #Predicate<Activity> { $0.parent == nil }
+        let predicate = #Predicate<Activity> { $0.parentRid == nil }
         _activityTree = Query(filter: predicate, sort: \.name)
     }
     

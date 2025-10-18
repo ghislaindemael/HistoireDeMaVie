@@ -12,7 +12,7 @@ import SwiftUI
 
 enum DraggableLogItem: Codable, Transferable {
     case activity(PersistentIdentifier)
-    case tripLeg(PersistentIdentifier)
+    case trip(PersistentIdentifier)
     case interaction(PersistentIdentifier)
     
     static var transferRepresentation: some TransferRepresentation {

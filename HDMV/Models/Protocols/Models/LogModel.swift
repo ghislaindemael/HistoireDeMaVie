@@ -14,5 +14,5 @@ protocol LogModel: Identifiable {
 }
 
 extension ActivityInstance: LogModel {}
-extension TripLeg: LogModel {}
+extension Trip: LogModel {}
 extension PersonInteraction: LogModel {}

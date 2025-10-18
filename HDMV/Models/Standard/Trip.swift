@@ -11,7 +11,7 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class TripLeg: Identifiable, SyncableModel {
+final class Trip: Identifiable, SyncableModel {
         
     var rid: Int?
     var time_start: Date
@@ -32,13 +32,13 @@ final class TripLeg: Identifiable, SyncableModel {
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
-    typealias DTO = TripLegDTO
-    typealias Payload = TripLegPayload
+    typealias DTO = TripDTO
+    typealias Payload = TripPayload
 
     init(rid: Int? = nil,
-         parent_instance: ActivityInstance? = nil,
          time_start: Date,
          time_end: Date? = nil,
+         parentInstance: ActivityInstance? = nil,
          vehicle: Vehicle? = nil,
          placeStart: Place? = nil,
          placeEnd: Place? = nil,
@@ -48,7 +48,7 @@ final class TripLeg: Identifiable, SyncableModel {
          syncStatus: SyncStatus = .local)
     {
         self.rid = rid
-        self.parentInstance = parent_instance
+        self.parentInstance = parentInstance
         self.time_start = time_start
         self.time_end = time_end
         self.vehicle = vehicle
@@ -60,7 +60,7 @@ final class TripLeg: Identifiable, SyncableModel {
         self.syncStatus = syncStatus
     }
     
-    convenience init(fromDto dto: TripLegDTO) {
+    convenience init(fromDto dto: TripDTO) {
         self.init(
             rid: dto.id,
             time_start: dto.timeStart,
@@ -68,7 +68,7 @@ final class TripLeg: Identifiable, SyncableModel {
         )
     }
     
-    func update(fromDto dto: TripLegDTO) {
+    func update(fromDto dto: TripDTO) {
         self.rid = dto.id
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -80,7 +80,7 @@ final class TripLeg: Identifiable, SyncableModel {
 }
 
 
-struct TripLegDTO: Identifiable, Codable, Sendable {
+struct TripDTO: Identifiable, Codable, Sendable {
     let id: Int
     let parentId: Int?
     let timeStart: Date
@@ -105,8 +105,8 @@ struct TripLegDTO: Identifiable, Codable, Sendable {
     }
 }
 
-struct TripLegPayload: Codable, InitializableWithModel {
-    typealias Model = TripLeg
+struct TripPayload: Codable, InitializableWithModel {
+    typealias Model = Trip
     
     let parentId: Int
     let timeStart: Date
@@ -118,23 +118,23 @@ struct TripLegPayload: Codable, InitializableWithModel {
     let pathId: Int?
     let details: String?
     
-    init?(from tripLeg: TripLeg) {
-        guard tripLeg.isValid(),
-              let parentId = tripLeg.parentInstance?.rid,
-              let timeEnd = tripLeg.time_end,
-              let placeStartId = tripLeg.placeStart?.rid,
-              let placeEndId = tripLeg.placeEnd?.rid
+    init?(from trip: Trip) {
+        guard trip.isValid(),
+              let parentId = trip.parentInstance?.rid,
+              let timeEnd = trip.time_end,
+              let placeStartId = trip.placeStart?.rid,
+              let placeEndId = trip.placeEnd?.rid
         else { return nil }
         
         self.parentId = parentId
-        self.timeStart = tripLeg.time_start
+        self.timeStart = trip.time_start
         self.timeEnd = timeEnd
-        self.vehicleId = tripLeg.vehicle?.rid
+        self.vehicleId = trip.vehicle?.rid
         self.placeStartId = placeStartId
         self.placeEndId = placeEndId
-        self.amDriver = tripLeg.am_driver
-        self.pathId = tripLeg.path?.id
-        self.details = tripLeg.details
+        self.amDriver = trip.am_driver
+        self.pathId = trip.path?.id
+        self.details = trip.details
     }
     
     enum CodingKeys: String, CodingKey {
@@ -150,7 +150,7 @@ struct TripLegPayload: Codable, InitializableWithModel {
     }
 }
 
-struct TripLegEditor {
+struct TripEditor {
     var parent: ActivityInstance?
     var vehicle: Vehicle?
     var placeStart: Place?
@@ -162,31 +162,31 @@ struct TripLegEditor {
     var am_driver: Bool
     var details: String?
     
-    /// Initializes the editor with data from an existing TripLeg.
-    init(tripLeg: TripLeg) {
-        self.time_start = tripLeg.time_start
-        self.time_end = tripLeg.time_end
-        self.am_driver = tripLeg.am_driver
-        self.details = tripLeg.details
-        self.parent = tripLeg.parentInstance
-        self.vehicle = tripLeg.vehicle
-        self.placeStart = tripLeg.placeStart
-        self.placeEnd = tripLeg.placeEnd
-        self.path = tripLeg.path
+    /// Initializes the editor with data from an existing Trip.
+    init(trip: Trip) {
+        self.time_start = trip.time_start
+        self.time_end = trip.time_end
+        self.am_driver = trip.am_driver
+        self.details = trip.details
+        self.parent = trip.parentInstance
+        self.vehicle = trip.vehicle
+        self.placeStart = trip.placeStart
+        self.placeEnd = trip.placeEnd
+        self.path = trip.path
     }
     
-    /// Applies the changes from the editor back to the original TripLeg model.
-    func apply(to tripLeg: TripLeg) {
-        tripLeg.time_start = self.time_start
-        tripLeg.time_end = self.time_end
-        tripLeg.am_driver = self.am_driver
-        tripLeg.details = self.details
-        tripLeg.parentInstance = self.parent
-        tripLeg.vehicle = self.vehicle
-        tripLeg.placeStart = self.placeStart
-        tripLeg.placeEnd = self.placeEnd
-        tripLeg.path = self.path
+    /// Applies the changes from the editor back to the original Trip model.
+    func apply(to trip: Trip) {
+        trip.time_start = self.time_start
+        trip.time_end = self.time_end
+        trip.am_driver = self.am_driver
+        trip.details = self.details
+        trip.parentInstance = self.parent
+        trip.vehicle = self.vehicle
+        trip.placeStart = self.placeStart
+        trip.placeEnd = self.placeEnd
+        trip.path = self.path
         
-        tripLeg.markAsModified()
+        trip.markAsModified()
     }
 }

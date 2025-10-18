@@ -9,13 +9,13 @@
 import SwiftUI
 import SwiftData
 
-struct TripLegRowView: View {
-    let tripLeg: TripLeg
+struct TripRowView: View {
+    let trip: Trip
     let onEnd: (() -> Void)?
     private let isSmall: Bool
 
-    init(tripLeg: TripLeg, isSmall: Bool = true, onEnd: (() -> Void)? = nil) {
-        self.tripLeg = tripLeg
+    init(trip: Trip, isSmall: Bool = true, onEnd: (() -> Void)? = nil) {
+        self.trip = trip
         self.onEnd = onEnd
         self.isSmall = isSmall
 
@@ -26,39 +26,39 @@ struct TripLegRowView: View {
             if isSmall {
                 VStack(alignment: .leading) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleRid: tripLeg.vehicle?.rid, isSmall: isSmall)
+                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid, isSmall: isSmall)
                         
                         HStack {
-                            PlaceDisplayView(placeId: tripLeg.placeStart?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeId: trip.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: tripLeg.placeEnd?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeId: trip.placeEnd?.rid, isSmall: isSmall)
                             
                         }
                         Spacer()
-                        SyncStatusIndicator(status: tripLeg.syncStatus)
+                        SyncStatusIndicator(status: trip.syncStatus)
                     }
                     DateRangeDisplayView(
-                        startDate: tripLeg.time_start,
-                        endDate: tripLeg.time_end
+                        startDate: trip.time_start,
+                        endDate: trip.time_end
                     )
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleRid: tripLeg.vehicle?.rid)
+                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid)
                         HStack {
-                            PlaceDisplayView(placeId: tripLeg.placeStart?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeId: trip.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: tripLeg.placeEnd?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeId: trip.placeEnd?.rid, isSmall: isSmall)
                         }
                         Spacer()
-                        SyncStatusIndicator(status: tripLeg.syncStatus)
+                        SyncStatusIndicator(status: trip.syncStatus)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if tripLeg.time_end == nil, let onEnd = onEnd {
-                EndItemButton(title: "End Trip Leg") {
+            if trip.time_end == nil, let onEnd = onEnd {
+                EndItemButton(title: "End Trip") {
                     onEnd()
                 }
             }

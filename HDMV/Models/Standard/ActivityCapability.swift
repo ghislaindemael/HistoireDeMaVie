@@ -7,7 +7,7 @@
 
 
 enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
-    case create_trip_legs
+    case create_trips
     case create_interactions
     case link_place
     case log_food
@@ -18,7 +18,7 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
     
     var label: String {
         switch self {
-            case .create_trip_legs: return "Can create Trip Legs"
+            case .create_trips: return "Can create Trips"
             case .create_interactions: return "Can create Interactions"
             case .link_place: return "Can attach Place"
             case .log_food: return "Can log Meals"

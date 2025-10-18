@@ -33,7 +33,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     
     @Published var instances: [ActivityInstance] = []
-    @Published var tripLegs: [TripLeg] = []
+    @Published var trips: [Trip] = []
     @Published var interactions: [PersonInteraction] = []
     
     @Published var activityTree: [Activity] = []
@@ -56,7 +56,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func fetchDailyData() {
         fetchInstances()
-        fetchTripLegs()
+        fetchTrips()
         fetchInteractions()
     }
  
@@ -122,29 +122,29 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    func fetchTripLegs() {
+    func fetchTrips() {
         guard let context = modelContext else { return }
         
-        let descriptor: FetchDescriptor<TripLeg>
+        let descriptor: FetchDescriptor<Trip>
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: filterDate)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
         let future = Date.distantFuture
         
-        let predicate = #Predicate<TripLeg> {
+        let predicate = #Predicate<Trip> {
             $0.time_start < endOfDay &&
             ($0.time_end ?? future) > startOfDay
         }
-        descriptor = FetchDescriptor<TripLeg>(
+        descriptor = FetchDescriptor<Trip>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.time_start, order: .reverse)]
         )
         
         do {
-            self.tripLegs = try context.fetch(descriptor)
+            self.trips = try context.fetch(descriptor)
         } catch {
-            print("Failed to fetch trip legs: \(error)")
+            print("Failed to fetch trips: \(error)")
         }
     }
     
@@ -196,38 +196,41 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     // MARK: - Local Cache Creation
     
-    func createTripLeg(parent_id: Int) {
+    func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
-        let newLeg = TripLeg(time_start: .now)
-        context.insert(newLeg)
+        let newTrip = Trip(
+            time_start: .now,
+            parentInstance: parent
+        )
+        context.insert(newTrip)
         do {
             try context.save()
-            self.tripLegs.insert(newLeg, at: 0)
+            self.trips.insert(newTrip, at: 0)
         } catch {
             print("Failed to create new trip: \(error)")
         }
     }
     
-    func endTripLeg(leg: TripLeg){
+    func endTrip(trip: Trip){
         guard let context = modelContext else { return }
         do {
-            leg.time_end = .now
-            leg.syncStatus = .local
+            trip.time_end = .now
+            trip.markAsModified()
             try context.save()
         } catch {
             print("Failed to end trip: \(error)")
         }
     }
     
-    func claim(tripLeg: TripLeg, for instance: ActivityInstance) {
+    func claim(trip: Trip, for instance: ActivityInstance) {
         guard let context = modelContext else { return }
         
         do {
-            tripLeg.parentInstance = instance
-            tripLeg.markAsModified()
+            trip.parentInstance = instance
+            trip.markAsModified()
             try context.save()
         } catch {
-            print("Failed to claim leg: \(error)")
+            print("Failed to claim trip: \(error)")
         }
     }
         
@@ -322,10 +325,10 @@ class MyActivitiesPageViewModel: ObservableObject {
                 childToMove.parent = newParent
                 childToMove.markAsModified()
                 
-            case .tripLeg(let childID):
-                guard let childToMove = context.model(for: childID) as? TripLeg else { return }
+            case .trip(let childID):
+                guard let childToMove = context.model(for: childID) as? Trip else { return }
                 
-                print("✅ Re-parenting TripLeg '\(childToMove.id)' onto '\(newParent.id)'.")
+                print("✅ Re-parenting Trip '\(childToMove.id)' onto '\(newParent.id)'.")
                 childToMove.parentInstance = newParent
                 childToMove.markAsModified()
                 

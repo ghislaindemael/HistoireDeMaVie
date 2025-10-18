@@ -47,7 +47,7 @@ struct CitiesPage: View {
             Picker("Country", selection: $viewModel.selectedCountry) {
                 Text("Select").tag(nil as Country?)
                 ForEach(countries) { country in
-                    Text(country.name!).tag(country as Country?)
+                    Text(country.name ?? "Unset").tag(country as Country?)
                 }
             }
         }

@@ -15,7 +15,7 @@ struct LogItemRowView: View {
     let item: any LogModel
     
     @Binding var instanceToEdit: ActivityInstance?
-    @Binding var tripLegToEdit: TripLeg?
+    @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: PersonInteraction?
 
     
@@ -29,15 +29,15 @@ struct LogItemRowView: View {
                 instance: activity,
                 level: level,
                 instanceToEdit: $instanceToEdit,
-                tripLegToEdit: $tripLegToEdit,
+                tripToEdit: $tripToEdit,
                 interactionToEdit: $interactionToEdit
             )
-        case let tripLeg as TripLeg:
-                TripLegRowView(tripLeg: tripLeg, onEnd: {
-                    viewModel.endTripLeg(leg: tripLeg)
+        case let trip as Trip:
+                TripRowView(trip: trip, onEnd: {
+                    viewModel.endTrip(trip: trip)
                 })
                 .onTapGesture {
-                    tripLegToEdit = tripLeg
+                    tripToEdit = trip
                 }
                 .padding(.leading, CGFloat(level) * 20)
 

@@ -32,5 +32,27 @@ final class ActivitySyncer: BaseSyncer<Activity, ActivityDTO, ActivityPayload> {
         fatalError("Country deletion not implemented")
     }
     
+    override func resolveRelationships() throws {
+        
+        let allActivities = try modelContext.fetch(FetchDescriptor<Activity>())
+        let modelsWithRid = allActivities.filter { $0.rid != nil }
+        
+        let activityCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) },
+                                       uniquingKeysWith: { (first, _) in first })
+        
+        for activity in allActivities {
+            guard let parentRid = activity.parentRid else {
+                if activity.parent != nil {
+                    activity.parent = nil
+                }
+                continue
+            }
+            
+            if activity.parent?.rid != parentRid {
+                activity.parent = activityCache[parentRid]
+            }
+        }
+    }
+    
 }
 

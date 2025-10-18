@@ -172,7 +172,7 @@ struct InstanceSection: View {
 struct PreviewWrapperView: View {
     @Query private var instances: [ActivityInstance]
     @Query private var activities: [Activity]
-    @Query private var tripLegs: [TripLeg]
+    @Query private var trips: [Trip]
     @Query private var vehicles: [Vehicle]
     @Query private var places: [Place]
     
@@ -210,7 +210,7 @@ struct PreviewWrapperView: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Activity.self, ActivityInstance.self, TripLeg.self, Vehicle.self, Place.self, configurations: config)
+    let container = try! ModelContainer(for: Activity.self, ActivityInstance.self, Trip.self, Vehicle.self, Place.self, configurations: config)
     
     NavigationStack {
         PreviewWrapperView()
@@ -248,7 +248,7 @@ struct PreviewWrapperView: View {
             name: "Travel",
             slug: "travel",
             icon: "point.bottomleft.forward.to.point.topright.scurvepath.fill",
-            allowedCapabilities: [.create_trip_legs]
+            allowedCapabilities: [.create_trips]
         )
         
         let inProgressInstance = ActivityInstance(
@@ -288,22 +288,22 @@ struct PreviewWrapperView: View {
             syncStatus: .local
         )
         
-        let completedLeg = TripLeg(
+        let completedTrip = Trip(
             rid: 301,
-            parent_instance: travelInstance,
             time_start: .now.addingTimeInterval(-3500),
             time_end: .now.addingTimeInterval(-1800),
+            parentInstance: travelInstance,
             vehicle: nil,
             placeStart: place1,
             placeEnd: place2,
             syncStatus: .synced
         )
         
-        let inProgressLeg = TripLeg(
+        let inProgressTrip = Trip(
             rid: 302,
-            parent_instance: inProgressInstance,
             time_start: .now.addingTimeInterval(-900),
             time_end: nil,
+            parentInstance: inProgressInstance,
             vehicle: nil,
             placeStart: place2,
             placeEnd: nil,
@@ -324,7 +324,7 @@ struct PreviewWrapperView: View {
             unassignedInstance,
             travelInstance
         ].forEach { context.insert($0) }
-        [completedLeg, inProgressLeg].forEach { context.insert($0) }
+        [completedTrip, inProgressTrip].forEach { context.insert($0) }
         
     }
 }

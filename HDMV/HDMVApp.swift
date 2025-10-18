@@ -21,15 +21,13 @@ struct HDMVApp: App {
             Place.self,
             Person.self,
             PersonInteraction.self,
-            TripLeg.self,
+            Trip.self,
             Vehicle.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])            
-            //try DatabaseMigrator.migrateAllSyncableModels(container: container)
-
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             return container
         } catch {
             fatalError("Could not create ModelContainer: \(error)")

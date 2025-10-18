@@ -1,5 +1,5 @@
 //
-//  TripLegDetailSheet.swift
+//  TripDetailSheet.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 01.08.2025.
@@ -8,14 +8,14 @@
 import SwiftUI
 import SwiftData
 
-struct TripLegDetailSheet: View {
+struct TripDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel: TripLegDetailViewModel
+    @StateObject private var viewModel: TripDetailViewModel
     
-    init(tripLeg: TripLeg, modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: TripLegDetailViewModel(
-            tripLeg: tripLeg,
+    init(trip: Trip, modelContext: ModelContext) {
+        _viewModel = StateObject(wrappedValue: TripDetailViewModel(
+            trip: trip,
             modelContext: modelContext
         ))
     }
@@ -35,7 +35,7 @@ struct TripLegDetailSheet: View {
                 pathSection
                 detailsSection
             }
-            .navigationTitle("Trip Leg Details")
+            .navigationTitle("Trip Details")
             .standardSheetToolbar(onDone: {
                 viewModel.onDone {
                     dismiss()

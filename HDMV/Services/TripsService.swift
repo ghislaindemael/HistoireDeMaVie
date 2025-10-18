@@ -12,12 +12,12 @@ class TripsService {
     private let supabaseClient = SupabaseService.shared.client
     private let settings = SettingsStore.shared
     
-    private let TRIPS_TABLE_NAME = "my_trip_legs"
+    private let TRIPS_TABLE_NAME = "my_trips"
     private let PATHS_TABLE_NAME = "data_paths"
         
-    // MARK: TripLegs
+    // MARK: Trips
     
-    func fetchTripLegs(for date: Date) async throws -> [TripLegDTO] {
+    func fetchTrips(for date: Date) async throws -> [TripDTO] {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
 
         let startOfDay = Calendar.current.startOfDay(for: date)
@@ -33,7 +33,7 @@ class TripsService {
             .value
     }
     
-    func createTrip(_ payload: TripLegPayload) async throws -> TripLegDTO {
+    func createTrip(_ payload: TripPayload) async throws -> TripDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         return try await supabaseClient
             .from(TRIPS_TABLE_NAME)
@@ -44,7 +44,7 @@ class TripsService {
             .value
     }
     
-    func updateTrip(id: Int, payload: TripLegPayload) async throws -> TripLegDTO {
+    func updateTrip(id: Int, payload: TripPayload) async throws -> TripDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
         return try await supabaseClient
             .from(TRIPS_TABLE_NAME)
