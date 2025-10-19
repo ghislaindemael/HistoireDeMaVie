@@ -106,6 +106,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
 }
 
 struct TripPayload: Codable, InitializableWithModel {
+
     typealias Model = Trip
     
     let parentId: Int
@@ -162,7 +163,6 @@ struct TripEditor {
     var am_driver: Bool
     var details: String?
     
-    /// Initializes the editor with data from an existing Trip.
     init(trip: Trip) {
         self.time_start = trip.time_start
         self.time_end = trip.time_end
@@ -175,7 +175,6 @@ struct TripEditor {
         self.path = trip.path
     }
     
-    /// Applies the changes from the editor back to the original Trip model.
     func apply(to trip: Trip) {
         trip.time_start = self.time_start
         trip.time_end = self.time_end

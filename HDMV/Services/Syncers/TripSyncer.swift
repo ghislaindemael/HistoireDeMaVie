@@ -27,5 +27,4 @@ class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
     override func deleteFromServer(_ id: Int) async throws {
         // try await tripService.deleteTrip(id: id)
     }
-    
 }
