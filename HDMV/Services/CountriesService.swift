@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class CountriesService: SupabaseCatalogueService<CountryDTO, CountryPayload> {
+final class CountriesService: SupabaseDataService<CountryDTO, CountryPayload> {
     
     init() {
         super.init(tableName: "data_countries")

@@ -15,17 +15,24 @@ final class PersonInteraction: Equatable, SyncableModel {
     @Attribute(.unique) var rid: Int?
     var time_start: Date
     var time_end: Date?
-    var parentInstanceRid: Int?
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance.rid
-        }
-    }
-    var person_id: Int?
     var timed: Bool = true
     var in_person: Bool = true
     var details: String?
     var percentage: Int?
+    var personRid: Int?
+    @Relationship
+    var relPerson: Person? {
+        didSet {
+            personRid = relPerson?.rid
+        }
+    }
+    var parentInstanceRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance? {
+        didSet {
+            parentInstanceRid = parentInstance?.rid
+        }
+    }
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = PersonInteractionDTO
@@ -48,7 +55,7 @@ final class PersonInteraction: Equatable, SyncableModel {
         self.time_end = time_end
         self.parentInstance = parentInstance
         self.parentInstanceRid = parentInstanceRid
-        self.person_id = person_id
+        self.personRid = person_id
         self.timed = timed
         self.in_person = in_person
         self.details = details
@@ -75,7 +82,7 @@ final class PersonInteraction: Equatable, SyncableModel {
         self.time_start = dto.time_start
         self.time_end = dto.time_end
         self.parentInstanceRid = dto.parent_activity_id
-        self.person_id = dto.person_id
+        self.personRid = dto.person_id
         self.timed = dto.timed
         self.in_person = dto.in_person
         self.details = dto.details
@@ -92,9 +99,9 @@ final class PersonInteraction: Equatable, SyncableModel {
     /// An interaction needs to have a person linked, and either be attached to an activity instance
     /// or have it's own start time
     func isValid() -> Bool {
-        guard self.person_id != nil else { return false }
+        guard self.personRid != nil else { return false }
         
-        return time_end != nil
+        return true
     }
     
 }
@@ -133,7 +140,7 @@ struct PersonInteractionPayload: Codable, InitializableWithModel {
         self.time_start = interaction.time_start
         self.time_end = interaction.time_end
         self.parent_instance_id = interaction.parentInstanceRid
-        self.person_id = interaction.person_id
+        self.person_id = interaction.personRid
         self.timed = interaction.timed
         self.in_person = interaction.in_person
         self.details = interaction.details

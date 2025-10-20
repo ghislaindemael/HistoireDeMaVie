@@ -19,6 +19,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
     private var masterSyncer: MasterSyncer?
+    private var settings: SettingsStore = SettingsStore.shared
 
 
     @Published var isLoading: Bool = false
@@ -181,14 +182,24 @@ class MyActivitiesPageViewModel: ObservableObject {
     func syncWithServer() async {
         isLoading = true
         defer { isLoading = false }
-        await masterSyncer?.sync()
+        await masterSyncer?.sync(
+            filterMode: self.filterMode,
+            date: self.filterDate,
+            activityRid: self.filterActivity?.rid,
+            startDate: self.filterStartDate,
+            endDate: self.filterEndDate
+        )
         fetchDailyData()
     }
     
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }
-        await masterSyncer?.pushChanges()
+        do {
+            try await masterSyncer?.pushChanges()
+        } catch {
+            print("MasterSyncer changes upload failed: \(error)")
+        }
         fetchDailyData()
     }
     
@@ -198,8 +209,13 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
+        
+        var date = Date.now
+        if settings.planningMode {
+            date = parent.time_start
+        }
         let newTrip = Trip(
-            time_start: .now,
+            time_start: date,
             parentInstance: parent
         )
         context.insert(newTrip)
@@ -234,31 +250,28 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
         
-    func createActivtiyInstance() {
+    func createActivityInstance(date: Date? = nil) {
         guard let context = modelContext else { return }
-        let newInstance = ActivityInstance(
-            time_start: .now
-        )
-        context.insert(newInstance)
-        do {
-            try context.save()
-            self.instances.insert(newInstance, at: 0)
-        } catch {
-            print("Failed to save new instance: \(error)")
+        
+        let startTime: Date
+        if let specificDate = date {
+            startTime = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: specificDate) ?? specificDate
+        } else {
+            startTime = .now
         }
-    }
-    
-    func createActivityInstanceForDate() {
-        guard let context = modelContext else { return }
-        let noonOnSelectedDate = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: filterDate) ?? filterDate
-        let newInstance = ActivityInstance(time_start: noonOnSelectedDate, syncStatus: .local)
+        
+        let newInstance = ActivityInstance(
+            time_start: startTime,
+            syncStatus: .local
+        )
+        
         context.insert(newInstance)
         do {
             try context.save()
             self.instances.append(newInstance)
             self.instances.sort { $0.time_start > $1.time_start }
         } catch {
-            print("Failed to save new instance at noon: \(error)")
+            print("Failed to save new instance: \(error)")
         }
     }
     
@@ -292,7 +305,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         do {
             interaction.time_end = .now
-            interaction.syncStatus = .local
+            interaction.markAsModified()
             try context.save()
         } catch {
             print("Failed to end interaction: \(error)")
@@ -306,7 +319,6 @@ class MyActivitiesPageViewModel: ObservableObject {
             return
         }
         
-        // Use a switch to handle the different types of dragged items
         switch draggedItem {
             case .activity(let childID):
                 guard let childToMove = context.model(for: childID) as? ActivityInstance else { return }

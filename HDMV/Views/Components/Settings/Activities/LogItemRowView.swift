@@ -18,7 +18,6 @@ struct LogItemRowView: View {
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: PersonInteraction?
 
-    
     let level: Int
 
     @ViewBuilder
@@ -39,7 +38,6 @@ struct LogItemRowView: View {
                 .onTapGesture {
                     tripToEdit = trip
                 }
-                .padding(.leading, CGFloat(level) * 20)
 
         case let interaction as PersonInteraction:
                 PersonInteractionRowView(interaction: interaction, onEnd: {
@@ -48,8 +46,6 @@ struct LogItemRowView: View {
                 .onTapGesture {
                     interactionToEdit = interaction
                 }
-                .padding(.leading, CGFloat(level) * 20)
-
         default:
             EmptyView()
         }

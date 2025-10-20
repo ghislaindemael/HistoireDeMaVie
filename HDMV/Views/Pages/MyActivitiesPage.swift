@@ -36,8 +36,8 @@ struct MyActivitiesPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    singleTapAction: { viewModel.createActivtiyInstance() },
-                    longPressAction: { viewModel.createActivityInstanceForDate() },
+                    singleTapAction: { viewModel.createActivityInstance() },
+                    longPressAction: { viewModel.createActivityInstance(date: viewModel.filterDate) },
                 )
                 .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterDate) { viewModel.fetchDailyData() }
@@ -70,7 +70,7 @@ struct MyActivitiesPage: View {
             FilterControlView(viewModel: viewModel)
             
             ScrollView {
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: 8) {
                     let topLevelInstances = viewModel.instances.filter { $0.parent == nil }
                     
                     ForEach(topLevelInstances) { instance in
@@ -81,7 +81,6 @@ struct MyActivitiesPage: View {
                             tripToEdit: $tripToEdit,
                             interactionToEdit: $interactionToEdit
                         )
-                        .padding(.bottom, 8)
                     }
                 }
                 .padding(.horizontal)

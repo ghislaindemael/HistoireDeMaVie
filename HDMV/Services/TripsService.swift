@@ -7,6 +7,7 @@
 
 import Foundation
 
+
 class TripsService {
     
     private let supabaseClient = SupabaseService.shared.client
@@ -19,15 +20,24 @@ class TripsService {
     
     func fetchTrips(for date: Date) async throws -> [TripDTO] {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            throw SyncError.dateCalculationError
+        }
+        
+        let formatter = ISO8601DateFormatter()
+        let startOfDayString = formatter.string(from: startOfDay)
+        let endOfDayString = formatter.string(from: endOfDay)
+        
+        let endCondition = "time_end.gt.\(startOfDayString),time_end.is.null"
         
         return try await supabaseClient
             .from(TRIPS_TABLE_NAME)
             .select()
-            .gte("time_start", value: ISO8601DateFormatter().string(from: startOfDay))
-            .lt("time_start", value: ISO8601DateFormatter().string(from: endOfDay))
+            .lt("time_start", value: endOfDayString)
+            .or(endCondition)
             .order("time_start", ascending: false)
             .execute()
             .value

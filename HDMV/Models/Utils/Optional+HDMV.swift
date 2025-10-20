@@ -14,11 +14,30 @@ extension Optional where Wrapped == String {
     }
 }
 
+extension Optional where Wrapped == Bool {
+    var isTrue: Bool {
+        self ?? false
+    }
+}
+
 extension Binding where Value == String? {
     func orEmpty() -> Binding<String> {
         Binding<String>(
             get: { self.wrappedValue ?? "" },
             set: { self.wrappedValue = $0 }
+        )
+    }
+}
+
+extension Binding where Value == Date? {
+    func orNow() -> Binding<Date> {
+        Binding<Date>(
+            get: {
+                self.wrappedValue ?? Date()
+            },
+            set: {
+                self.wrappedValue = $0
+            }
         )
     }
 }

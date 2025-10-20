@@ -16,7 +16,7 @@ final class ActivitySyncer: BaseSyncer<Activity, ActivityDTO, ActivityPayload> {
     private let activitiesService = ActivitiesService()
     private let settings: SettingsStore = SettingsStore.shared
         
-    override func fetchRemoteModels() async throws -> [ActivityDTO] {
+    override func fetchRemoteModels(date: Date?) async throws -> [ActivityDTO] {
         return try await activitiesService.fetchActivities(includeArchived: settings.includeArchived)
     }
     

@@ -49,7 +49,7 @@ struct VehicleDetailSheet: View {
                 }
                 
             }
-            .navigationTitle("Edit Path")
+            .navigationTitle("Edit Vehicle")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
                 viewModel.onDone()

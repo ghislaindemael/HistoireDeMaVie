@@ -8,7 +8,7 @@
 
 import Foundation
 
-class SupabaseCatalogueService<DTO: Identifiable & Codable, Payload: Codable>: CatalogueServiceProtocol {
+class SupabaseDataService<DTO: Identifiable & Codable, Payload: Codable>: DataServiceProtocol {
     
     let supabaseClient = SupabaseService.shared.client
     let tableName: String
@@ -25,6 +25,31 @@ class SupabaseCatalogueService<DTO: Identifiable & Codable, Payload: Codable>: C
             query = query.eq("archived", value: false)
         }
         return try await query.order("name", ascending: true)
+            .execute()
+            .value
+    }
+    
+    func fetchForDate(date: Date) async throws -> [DTO] {
+        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            throw SyncError.dateCalculationError
+        }
+        
+        let formatter = ISO8601DateFormatter()
+        let startOfDayString = formatter.string(from: startOfDay)
+        let endOfDayString = formatter.string(from: endOfDay)
+        
+        let endCondition = "time_end.gt.\(startOfDayString),time_end.is.null"
+        
+        return try await supabaseClient
+            .from(tableName)
+            .select()
+            .lt("time_start", value: endOfDayString)
+            .or(endCondition)
+            .order("time_start", ascending: false)
             .execute()
             .value
     }

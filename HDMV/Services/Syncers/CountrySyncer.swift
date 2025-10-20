@@ -16,7 +16,7 @@ final class CountrySyncer: BaseSyncer<Country, CountryDTO, CountryPayload> {
     private let countriesService = CountriesService()
     private let settings: SettingsStore = SettingsStore.shared
         
-    override func fetchRemoteModels() async throws -> [CountryDTO] {
+    override func fetchRemoteModels(date: Date? = nil) async throws -> [CountryDTO] {
         return try await countriesService.fetchCountries(includeArchived: settings.includeArchived)
     }
     

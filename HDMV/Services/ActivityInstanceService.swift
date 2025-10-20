@@ -8,32 +8,33 @@
 
 import Foundation
 
-class ActivityInstanceService {
+class ActivityInstanceService: SupabaseDataService<ActivityInstanceDTO, ActivityInstancePayload > {
     
-    private let supabaseClient = SupabaseService.shared.client
-    private let settings = SettingsStore.shared
+    init() {
+        super.init(tableName: "my_activities")
+    }
     
-    private let TABLE_NAME = "my_activities"
+    // MARK: Semantic methods
+    
+    func createActivityInstance(_ payload: ActivityInstancePayload) async throws -> ActivityInstanceDTO {
+        try await create(payload: payload)
+    }
+    
+    func updateActivityInstance(rid: Int, payload: ActivityInstancePayload) async throws -> ActivityInstanceDTO {
+        try await update(rid: rid, payload: payload)
+    }
+    
+    func deleteActivityInstance(id: Int) async throws -> Bool {
+        try await delete(rid: id)
+    }
     
     func fetchActivityInstances(for date: Date) async throws -> [ActivityInstanceDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .select()
-            .gte("time_start", value: ISO8601DateFormatter().string(from: startOfDay))
-            .lt("time_start", value: ISO8601DateFormatter().string(from: endOfDay))
-            .order("time_start", ascending: false)
-            .execute()
-            .value
+        try await fetchForDate(date: date)
     }
     
     /// A flexible function to fetch instances from the server based on a date range and an optional activity ID.
     func fetchActivityInstances(
-        activityId: Int?,
+        activityId: Int,
         startDate: Date,
         endDate: Date
     ) async throws -> [ActivityInstanceDTO] {
@@ -41,44 +42,17 @@ class ActivityInstanceService {
         
         let formatter = ISO8601DateFormatter()
         
-        var query = supabaseClient
-            .from(TABLE_NAME)
+        let query = supabaseClient
+            .from(tableName)
             .select()
+            .eq("activity_id", value: activityId)
             .gte("time_start", value: formatter.string(from: startDate))
             .lt("time_start", value: formatter.string(from: endDate))
-        
-        if let activityId = activityId {
-            query = query.eq("activity_id", value: activityId)
-        }
         
         return try await query
             .order("time_start", ascending: false)
             .execute()
             .value
     }
-    
-    func createActivityInstance(_ payload: ActivityInstancePayload) async throws -> ActivityInstanceDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .insert(payload, returning: .representation)
-            .select()
-            .single()
-            .execute()
-            .value
-    }
-    
-    func updateActivityInstance(id: Int, payload: ActivityInstancePayload) async throws -> ActivityInstanceDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .update(payload)
-            .eq("id", value: id)
-            .select()
-            .single()
-            .execute()
-            .value
-    }
-    
     
 }

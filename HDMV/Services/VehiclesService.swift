@@ -9,7 +9,7 @@
 import Foundation
 
 
-final class VehiclesService: SupabaseCatalogueService<VehicleDTO, VehiclePayload> {
+final class VehiclesService: SupabaseDataService<VehicleDTO, VehiclePayload> {
     
     init() {
         super.init(tableName: "data_vehicles")

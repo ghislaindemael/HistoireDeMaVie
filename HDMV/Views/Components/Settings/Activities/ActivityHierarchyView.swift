@@ -24,44 +24,20 @@ struct ActivityHierarchyView: View {
     private let indentationAmount: CGFloat = 20
     private let indicatorWidth: CGFloat = 2
     private let indicatorColor: Color = .gray.opacity(0.4)
+    private let contentLeadingPadding: CGFloat = 8
+    private let verticalPadding: CGFloat = 8
+    
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
-                if level > 0 {
-                    indicatorColor
-                        .frame(width: indicatorWidth)
-                        .padding(.leading, (CGFloat(level) * indentationAmount) - indicatorWidth)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    let hasActiveTrips = instance.trips?.contains { $0.time_end == nil } ?? false
-                    let hasActiveInteractions = instance.interactions?.contains { $0.time_end == nil } ?? false
-                    
-                    ActivityInstanceRowView(
-                        instance: instance,
-                        selectedDate: viewModel.filterDate
-                    )
-                    
-                    if instance.time_end == nil && !hasActiveTrips && !hasActiveInteractions {
-                        if !hasActiveTrips {
-                            StartItemButton(title: "Start Trip") {
-                                viewModel.createTrip(parent: instance)
-                            }
-                        }
-                        EndItemButton(title: "End Activity") {
-                            viewModel.endActivityInstance(instance: instance)
-                        }
-                    }
-                }
-                .padding(.leading, level == 0 ? 0 : 8)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    instanceToEdit = instance
-                }
-            }
-            .padding(.vertical, 8)
+        VStack(alignment: .leading, spacing: 4) {
+            
+            ActivityInstanceRowView(
+                instance: instance,
+                selectedDate: viewModel.filterDate,
+            )
             .background(isDropTargeted ? Color.accentColor.opacity(0.2) : Color.clear)
+            .contentShape(Rectangle())
+            .onTapGesture { instanceToEdit = instance }
             .cornerRadius(8)
             .dropDestination(for: DraggableLogItem.self) { items, location in
                 guard let droppedItem = items.first else { return false }
@@ -70,20 +46,49 @@ struct ActivityHierarchyView: View {
             } isTargeted: { isTargeted in
                 self.isDropTargeted = isTargeted
             }
+            .draggable(DraggableLogItem.activity(instance.persistentModelID))
             
             if !instance.sortedChildren.isEmpty {
-                ForEach(instance.sortedChildren, id: \.id) { item in
-                    LogItemRowView(
-                        item: item,
-                        instanceToEdit: $instanceToEdit,
-                        tripToEdit: $tripToEdit,
-                        interactionToEdit: $interactionToEdit,
-                        level: level + 1
-                    )
+                HStack(alignment: .top, spacing: contentLeadingPadding) {
+                    
+                    indicatorColor
+                        .frame(width: indicatorWidth)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(instance.sortedChildren, id: \.id) { item in
+                            LogItemRowView(
+                                item: item,
+                                instanceToEdit: $instanceToEdit,
+                                tripToEdit: $tripToEdit,
+                                interactionToEdit: $interactionToEdit,
+                                level: level + 1
+                            )
+                        }
+                    }
+                    
                 }
             }
+            
+            if instance.time_end == nil {
+                let hasActiveTrips = instance.trips?.contains { $0.time_end == nil } ?? false
+                let hasActiveInteractions = instance.interactions?.contains { $0.time_end == nil } ?? false
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    if !hasActiveTrips && instance.activity?.can(.create_trips) == true {
+                        StartItemButton(title: "Start Trip") {
+                            viewModel.createTrip(parent: instance)
+                        }
+                    }
+                    
+                    if !hasActiveTrips && !hasActiveInteractions {
+                        EndItemButton(title: "End Activity") {
+                            viewModel.endActivityInstance(instance: instance)
+                        }
+                    }
+                }
+            }
+            
         }
-        .draggable(DraggableLogItem.activity(instance.persistentModelID))
     }
 }
 

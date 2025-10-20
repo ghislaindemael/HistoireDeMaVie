@@ -15,6 +15,13 @@ class PersonInteractionSyncer: BaseSyncer<PersonInteraction, PersonInteractionDT
     private let interactionService = PeopleInteractionsService()
 
     // MARK: - Implemented Network Methods
+    
+    override func fetchRemoteModels(date: Date?) async throws -> [PersonInteractionDTO] {
+        if let date = date {
+            return try await interactionService.fetchInteractions(for: date)
+        }
+        fatalError("No date passed in fetchRemoteModels")
+    }
         
     override func createOnServer(payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
         return try await interactionService.createInteraction(payload)

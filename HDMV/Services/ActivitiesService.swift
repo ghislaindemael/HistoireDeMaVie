@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class ActivitiesService: SupabaseCatalogueService<ActivityDTO, ActivityPayload> {
+final class ActivitiesService: SupabaseDataService<ActivityDTO, ActivityPayload> {
     
     init() {
         super.init(tableName: "data_activities")

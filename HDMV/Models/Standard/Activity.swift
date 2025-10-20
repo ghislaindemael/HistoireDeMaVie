@@ -12,8 +12,6 @@ import SwiftUI
 @Model
 final class Activity: Identifiable, Hashable, SyncableModel {
     
-    typealias Payload = ActivityPayload
-    
     var rid: Int?
     var name: String?
     var slug: String?
@@ -32,6 +30,9 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     var cache: Bool = true
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+    
+    typealias Payload = ActivityPayload
+    typealias DTO = ActivityDTO
     
     init(
         rid: Int? = nil,
@@ -63,7 +64,8 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         case requiredCapabilities = "required_capabilities"
     }
     
-    init(fromDto dto: ActivityDTO) {
+    convenience init(fromDto dto: ActivityDTO) {
+        self.init()
         self.rid = dto.id
         self.name = dto.name
         self.slug = dto.slug

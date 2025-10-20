@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class CitiesService: SupabaseCatalogueService<CityDTO, CityPayload> {
+final class CitiesService: SupabaseDataService<CityDTO, CityPayload> {
     
     init() {
         super.init(tableName: "data_cities")

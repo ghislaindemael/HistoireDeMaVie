@@ -21,17 +21,37 @@ class MasterSyncer {
         self.interactionSyncer = PersonInteractionSyncer(modelContext: modelContext)
     }
 
-    func sync() async {
+    func sync(
+        filterMode: MyActivitiesPageViewModel.FilterMode,
+        date: Date,
+        activityRid: Int?,
+        startDate: Date?,
+        endDate: Date?
+    ) async {
         do {
-            try await activityInstanceSyncer.sync()
-            try await tripSyncer.sync()
-            try await interactionSyncer.sync()
+            switch filterMode {
+                case .byDate:
+                    try await activityInstanceSyncer.pullChanges(for: date)
+                case .byActivity:
+                    guard let actRid = activityRid, let start = startDate, let end = endDate else {
+                        print("❌ MasterSyncer: Missing parameters for byActivity sync.")
+                        return
+                    }
+                    try await activityInstanceSyncer.pullChanges(activityRid: actRid, startDate: start, endDate: end)
+            }
+            
+            let primaryDate = (filterMode == .byDate) ? date : startDate ?? date
+            try await tripSyncer.pullChanges(for: primaryDate)
+            try await interactionSyncer.pullChanges(for: primaryDate)
+            
+            try await pushChanges()
+            
         } catch {
             print("❌ MasterSyncer full sync failed: \(error)")
         }
     }
 
-    func pushChanges() async {
+    func pushChanges() async throws {
         do {
             _ = try await activityInstanceSyncer.pushChanges()            
             _ = try await tripSyncer.pushChanges()

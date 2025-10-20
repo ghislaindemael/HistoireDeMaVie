@@ -7,80 +7,53 @@
 
 import Foundation
 
-class PeopleService {
+
+final class PeopleService: SupabaseDataService<PersonDTO, PersonPayload> {
     
-    private let supabaseClient = SupabaseService.shared.client
-    private let settings = SettingsStore.shared
+    init() {
+        super.init(tableName: "data_people")
+    }
     
-    private let TABLE_NAME = "data_people"
-        
-    func fetchPeople() async throws -> [PersonDTO] {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        
-        var query = supabaseClient
-            .from(TABLE_NAME)
-            .select()
-        
-        if !settings.includeArchived {
+    // MARK: Semantic methods
+    
+    func fetchPeople(includeArchived: Bool = false) async throws -> [PersonDTO] {
+        guard let client = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        var query = client.from(tableName).select()
+        if !includeArchived {
             query = query.eq("archived", value: false)
         }
         
-        let response = try await query.execute()
-        
-        let decoder = DecoderFactory.dateOnlyDecoder()
-        let people = try decoder.decode([PersonDTO].self, from: response.data)
-        
-        return people
-    }
-    
-    
-    func createPerson(_ payload: NewPersonPayload) async throws -> PersonDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        
-        let response = try await supabaseClient
-            .from(TABLE_NAME)
-            .insert(payload)
-            .select()
-            .execute()
+        let response = try await query.order("name", ascending: true).execute()
+        let data = response.data
         
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(DateFormatter.dateOnly)
         
-        let dtos = try decoder.decode([PersonDTO].self, from: response.data)
-        guard let person = dtos.first else {
-            throw URLError(.cannotParseResponse)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        
+        do {
+            let people = try decoder.decode([PersonDTO].self, from: data)
+            return people
+        } catch {
+            print("❌ PersonDTO decoding failed: \(error)")
+            if let decodingError = error as? DecodingError { print("Details: \(decodingError)") }
+            throw error
         }
-        return person
-    }
-
-    
-    func updatePerson(_ person: PersonDTO) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        try await supabaseClient
-            .from(TABLE_NAME)
-            .update(person)
-            .eq("id", value: person.id)
-            .execute()
     }
     
-    func updateCacheStatus(forPersonId personId: Int, isActive: Bool) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        
-        try await supabaseClient
-            .from("data_people")
-            .update(["cache": isActive])
-            .eq("id", value: personId)
-            .execute()
+    func createPerson(payload: PersonPayload) async throws -> PersonDTO {
+        try await create(payload: payload)
     }
     
-    /// Archives a person by setting its 'archived' flag to true on the server.
-    func archivePerson(forPersonId: Int) async throws {
-        guard let supabaseClient = supabaseClient else { return }
-        try await supabaseClient
-            .from("data_people")
-            .update(["archived": true])
-            .eq("id", value: forPersonId)
-            .execute()
+    func updatePerson(rid: Int, payload: PersonPayload) async throws -> PersonDTO {
+        try await update(rid: rid, payload: payload)
     }
     
+    func deletePerson(id: Int) async throws -> Bool {
+        try await delete(rid: id)
+    }
 }

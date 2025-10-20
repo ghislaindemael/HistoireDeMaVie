@@ -16,7 +16,7 @@ final class PlaceSyncer: BaseSyncer<Place, PlaceDTO, PlacePayload> {
     private let placesService = PlacesService()
     private let settings: SettingsStore = SettingsStore.shared
     
-    override func fetchRemoteModels() async throws -> [PlaceDTO] {
+    override func fetchRemoteModels(date: Date?) async throws -> [PlaceDTO] {
         return try await placesService.fetch(includeArchived: settings.includeArchived)
     }
     

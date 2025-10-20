@@ -29,16 +29,16 @@ struct PeopleInteractionsPage: View {
     }
     
     // MARK: - Filtering State
-    @State private var selectedPersonId: Int? = nil
+    @State private var selectedPersonRid: Int? = nil
     @State private var showUnassigned: Bool = true
     @State private var isFilteringExpanded: Bool = false
         
     private var filteredInteractions: [PersonInteraction] {
         viewModel.interactions.filter { interaction in
-            let isAssigned = interaction.person_id != nil
+            let isAssigned = interaction.personRid != nil
             
             if isAssigned {
-                return selectedPersonId == nil || interaction.person_id == selectedPersonId
+                return selectedPersonRid == nil || interaction.personRid == selectedPersonRid
             }
             return showUnassigned
         }
@@ -70,7 +70,7 @@ struct PeopleInteractionsPage: View {
                 deletingInteraction = nil
             }
         } message: { interaction in
-            Text("Are you sure you want to delete this interaction with \(viewModel.people.first(where: { $0.id == interaction.person_id })?.fullName ?? "Unknown")?")
+            Text("Are you sure you want to delete this interaction with \(viewModel.people.first(where: { $0.rid == interaction.personRid })?.fullName ?? "Unknown")?")
         }
         
     }
@@ -107,10 +107,10 @@ struct PeopleInteractionsPage: View {
     private var filteringControls: some View {
         DisclosureGroup("Filtering", isExpanded: $isFilteringExpanded) {
             HStack(spacing: 16) {
-                Picker("Person", selection: $selectedPersonId) {
+                Picker("Person", selection: $selectedPersonRid) {
                     Text("All People").tag(Int?.none)
                     ForEach(viewModel.people) { person in
-                        Text(person.fullName).tag(person.id as Int?)
+                        Text(person.fullName).tag(person.rid as Int?)
                     }
                 }
                 .pickerStyle(.menu)
@@ -152,8 +152,8 @@ struct PeopleInteractionsPage: View {
             let container = try ModelContainer(for: schema, configurations: [config])
             let context = container.mainContext
             
-            let matthieuC = Person(id: 1, slug: "matthieuC", name: "Matthieu", familyName: "Colin", surname: "Brug", birthdate: nil, cache: true)
-            let matthieuD = Person(id: 2, slug: "matthieuD", name: "Matthieu", familyName: "Dumont", surname: nil, birthdate: nil, cache: true)
+            let matthieuC = Person(rid: 1, slug: "matthieuC", name: "Matthieu", familyName: "Colin", surname: "Brug", birthdate: nil)
+            let matthieuD = Person(rid: 2, slug: "matthieuD", name: "Matthieu", familyName: "Dumont", surname: nil, birthdate: nil)
             
             context.insert(matthieuC)
             context.insert(matthieuD)

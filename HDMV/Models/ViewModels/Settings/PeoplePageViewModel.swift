@@ -11,23 +11,19 @@ import SwiftData
 @MainActor
 class PeoplePageViewModel: ObservableObject {
     
-    @Published var people: [Person] = []
-    @Published var isLoading = false
-    
-    private let peopleService = PeopleService()
-    
     private var modelContext: ModelContext?
+    private var personSyncer: PersonSyncer?
+    
+    @Published var isLoading = false
+    @Published var people: [Person] = []
+    
+    
+    // MARK: Init
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        
+        self.personSyncer = PersonSyncer(modelContext: modelContext)
         fetchFromCache()
-        
-        if people.isEmpty {
-            Task {
-                await fetchFromServer()
-            }
-        }
     }
     
     // MARK: - Data Loading and Caching
@@ -44,85 +40,54 @@ class PeoplePageViewModel: ObservableObject {
         }
     }
     
-    func fetchFromServer() async {
-        self.isLoading = true
-        defer { self.isLoading = false }
-        
+    func refreshFromServer() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = personSyncer else {
+            print("⚠️ [PeoplePageViewModel] Syncer is nil")
+            return
+        }
         do {
-            let peopleDTOs = try await peopleService.fetchPeople()
-            
-            self.people = peopleDTOs.compactMap { dto in
-                Person(fromDTO: dto)
-            }.sorted {
-                ($0.familyName, $0.name) < ($1.familyName, $1.name)
-            }
+            try await syncer.pullChanges()
+            fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
     }
     
-    
-    
-    // MARK: - User Actions
-    
-    func cachePeople() {
-        guard let context = modelContext else {
-            print("Cannot cache: model context is missing.")
+    func uploadLocalChanges() async {
+        isLoading = true
+        defer { isLoading = false }
+        guard let syncer = personSyncer else {
+            print("⚠️ [PeoplePageViewModel] countriesSyncer is nil")
             return
         }
-        
         do {
-            try context.delete(model: Person.self)
-            let peopleToCache = self.people.filter { $0.cache }
-            
-            for person in peopleToCache {
-                context.insert(person)
-            }
+            _ = try await syncer.pushChanges()
+            fetchFromCache()
+        } catch {
+            print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
+    // MARK: - User Actions
+
+    
+    func createPerson() {
+        guard let context = modelContext else { return }
+        let newPerson = Person(
+            slug: "unset",
+            name: "Unset",
+            familyName: "Unset",
+            syncStatus: .local)
+        context.insert(newPerson)
+        do {
             try context.save()
         } catch {
-            print("Failed to perform targeted cache update for people: \(error)")
+            print("Failed to create Person: \(error)")
         }
+        
     }
     
-    func createPerson(newPerson: NewPersonPayload) async throws {
-        guard let context = modelContext else { return }
-        
-        let createdDTO: PersonDTO = try await peopleService.createPerson(newPerson)
-        
-        let finalPerson = Person(fromDTO: createdDTO)
-        if createdDTO.cache {
-            context.insert(finalPerson)
-            try context.save()
-        }
-    }
-    
-    /// Toggles the cache status for a place.
-    func toggleCache(for person: Person) async {
-        do {
-            try await peopleService.updateCacheStatus(forPersonId: person.id, isActive: person.cache)
-            try modelContext?.save()
-        } catch {
-            print("Failed to update cache status: \(error)")
-            person.cache.toggle()
-        }
-    }
-    
-    /// Archives a person instead of deleting it.
-    func archivePerson(for person: Person) {
-        guard let context = modelContext else { return }
-        
-        people.removeAll { $0.id == person.id }
-        
-        Task {
-            do {
-                try await peopleService.archivePerson(forPersonId: person.id)
-                context.delete(person)
-                try context.save()
-            } catch {
-                print("Failed to archive place on server: \(error).")
-                people.append(person)
-            }
-        }
-    }
     
 }

@@ -50,8 +50,9 @@ struct PersonInteractionEditSheet: View {
     
     private var basicsSection: some View {
         Section("Basics") {
-             
-            PersonSelectorView(selectedPersonId: $interaction.person_id)
+            
+            PersonDisplayView(interaction: interaction)
+            PersonSelectorView(selectedPerson: $interaction.person)
             FullTimePicker(label: "Start Time", selection: $interaction.time_start)
             Toggle("End Time?", isOn: $showEndTime)
             if showEndTime {

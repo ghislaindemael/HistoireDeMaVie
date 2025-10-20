@@ -45,59 +45,40 @@ where
     // MARK: - Sync Logic
     
     /// Pushes local creations, updates, and deletions to the server.
-    func pushChanges() async throws -> Void {
+    func pushChanges() async throws {
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
         let itemsToSync = localItems + failedItems
         
         guard !itemsToSync.isEmpty else { return }
         
-        await withTaskGroup(of: Void.self) { group in
-            for item in itemsToSync {
-                group.addTask {
-                    guard let payload = Payload(from: item) else { return }
+        for item in itemsToSync {
+            guard let payload = Payload(from: item) else {
+                continue
+            }
+            
+            do {
+                if item.rid == nil {
+                    let newDTO = try await self.createOnServer(payload: payload)
+                    item.rid = newDTO.id
+                    item.syncStatus = .synced
+                    try self.resolveRelationships(for: item)
                     
-                    do {
-                        if item.rid == nil {
-                            let newDTO = try await self.createOnServer(payload: payload)
-                            await MainActor.run {
-                                item.rid = newDTO.id
-                                item.syncStatus = .synced
-                                do {
-                                    try self.resolveRelationships(for: item)
-                                } catch {
-                                    print("❌ Failed to resolve dependencies for \(item.id): \(error)")
-                                }
-                            }
-
-                        } else {
-                            _ = try await self.updateOnServer(rid: item.rid!, payload: payload)
-                            await MainActor.run {
-                                item.syncStatus = .synced
-                                
-                                //do {
-                                //  try self.resolveDependencies(for: item)
-                                //} catch {
-                                //  print("❌ Failed to resolve dependencies for \(item.id): \(error)")
-                                //}
-                            }
-                        }
-                    } catch {
-                        await MainActor.run {
-                            item.syncStatus = .failed
-                            print("❌ Failed to sync item \(item.id): \(error)")
-                        }
-                    }
+                } else {
+                    _ = try await self.updateOnServer(rid: item.rid!, payload: payload)
+                    item.syncStatus = .synced
                 }
+            } catch {
+                item.syncStatus = .failed
+                print("❌ Failed to sync item \(item.id): \(error)")
             }
         }
-        
         try modelContext.save()
     }
     
     @MainActor
-    final func pullChanges() async throws {
-        let dtos = try await fetchRemoteModels()
+    func defaultPullChanges(date: Date? = nil) async throws {
+        let dtos = try await fetchRemoteModels(date: date)
         let serverRids = Set(dtos.map { $0.id })
         
         let localModels = try modelContext.fetch(FetchDescriptor<Model>())
@@ -129,16 +110,23 @@ where
                 }
             }
         }
-        try resolveRelationships()
-        try modelContext.save()
+        do {
+            try resolveRelationships()
+            try modelContext.save()
+            print("✅ Context saved successfully in pullChanges.")
+        } catch {
+            print("‼️ FAILED to save context in pullChanges: \(error)")
+        }
     }
     
-    
+    func pullChanges(for date: Date? = nil) async throws {
+        try await defaultPullChanges(date: date)
+    }
     
 
     // MARK: - Abstract Methods for Subclasses to Implement
     
-    func fetchRemoteModels() async throws -> [DTO] { fatalError("Subclasses must implement fetchRemoteModels()") }
+    func fetchRemoteModels(date: Date? = nil) async throws -> [DTO] { fatalError("Subclasses must implement fetchRemoteModels()") }
     func createOnServer(payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func updateOnServer(rid: Int, payload: Payload) async throws -> DTO { fatalError("Subclasses must implement") }
     func deleteFromServer(_ rid: Int) async throws { fatalError("Subclasses must implement") }

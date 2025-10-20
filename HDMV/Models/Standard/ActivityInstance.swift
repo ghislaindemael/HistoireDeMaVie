@@ -12,7 +12,7 @@ import SwiftUI
 @Model
 final class ActivityInstance: SyncableModel {
         
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var time_start: Date
     var time_end: Date?
     var activityRid: Int?
@@ -42,19 +42,6 @@ final class ActivityInstance: SyncableModel {
     typealias DTO = ActivityInstanceDTO
     typealias Payload = ActivityInstancePayload
     
-    var activity: Activity? {
-        get {
-            if let activity = relActivity { return activity }
-            guard let rid = activityRid, let ctx = RelationResolver.context else { return nil }
-            let descriptor = FetchDescriptor<Activity>(predicate: #Predicate { $0.rid == rid })
-            return try? ctx.fetch(descriptor).first
-        }
-        set {
-            relActivity = newValue
-            activityRid = newValue?.rid
-        }
-    }
-
 
     init(
         rid: Int? = nil,
@@ -92,22 +79,19 @@ final class ActivityInstance: SyncableModel {
     }
     
     convenience init(fromDto dto: ActivityInstanceDTO) {
-        self.init(
-            rid: dto.id,
-            time_start: dto.time_start,
-            time_end: dto.time_end,
-            activityRid: dto.activity_id,
-            parentRid: dto.parent_instance_id,
-            details: dto.details,
-            percentage: dto.percentage ?? 100,
-            activity_details: dto.activity_details,
-            syncStatus: .synced,
-        
-        )
+        self.init()
+        self.rid = dto.id
+        self.time_start = dto.time_start
+        self.time_end = dto.time_end
+        self.activityRid = dto.activity_id
+        self.parentRid = dto.parent_instance_id
+        self.details = dto.details
+        self.percentage = dto.percentage ?? 100
+        self.decodedActivityDetails = dto.activity_details
+        self.syncStatus = .synced
     }
     
     func update(fromDto dto: ActivityInstanceDTO) {
-        self.rid = dto.id
         self.time_start = dto.time_start
         self.time_end = dto.time_end
         self.activityRid = dto.activity_id

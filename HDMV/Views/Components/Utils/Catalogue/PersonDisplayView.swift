@@ -10,35 +10,37 @@ import SwiftUI
 import SwiftData
 
 struct PersonDisplayView: View {
-    @Query private var people: [Person]
     
-    private let personId: Int?
+    let personRid: Int?
+    let person: Person?
     
-    private var person: Person? {
-        people.first
+    init(personRid: Int?, person: Person?){
+        self.personRid = personRid
+        self.person = person
     }
-
-    init(personId: Int?) {
-        self.personId = personId
-        
-        if let id = personId, id > 0 {
-            _people = Query(filter: #Predicate { $0.id == id })
+    
+    init(interaction: PersonInteraction) {
+        self.init(personRid: interaction.personRid, person: interaction.person)
+    }
+    
+    private var iconColor: Color {
+        if person != nil {
+            return .primary
+        } else if personRid != nil {
+            return .orange
         } else {
-            _people = Query(filter: #Predicate { _ in false })
+            return .red
         }
     }
     
     var body: some View {
         HStack {
             Image(systemName: "person")
-                .foregroundColor(
-                    person != nil ? .primary :
-                    (personId != nil && personId! > 0 ? .orange : .red)
-                )
-
+                .foregroundColor(iconColor)
+            
             if let person = person {
                 Text(person.fullName)
-            } else if let id = personId, id > 0 {
+            } else if let id = personRid {
                 Text("\(id): Uncached Person")
                     .italic()
                     .foregroundColor(.orange)

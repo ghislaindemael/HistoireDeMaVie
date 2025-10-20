@@ -39,7 +39,7 @@ struct PlaceDetailSheet: View {
                 }
                 
             }
-            .navigationTitle("Edit Path")
+            .navigationTitle("Edit Place")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
                 viewModel.onDone()

@@ -28,7 +28,7 @@ struct PersonInteractionRowView: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                PersonDisplayView(personId: interaction.person_id)
+                PersonDisplayView(interaction: interaction)
                 Spacer()
                 SyncStatusIndicator(status: interaction.syncStatus)
             }

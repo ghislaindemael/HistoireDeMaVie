@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @MainActor
 class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
@@ -15,6 +16,13 @@ class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
     private let tripsService = TripsService()
     
     // MARK: - Implemented Network Methods
+    
+    override func fetchRemoteModels(date: Date?) async throws -> [TripDTO] {
+        if let date = date {
+            return try await tripsService.fetchTrips(for: date)
+        }
+        fatalError("No date passed in fetchRemoteModels")
+    }
     
     override func createOnServer(payload: TripPayload) async throws -> TripDTO {
         return try await tripsService.createTrip(payload)

@@ -81,6 +81,11 @@ struct ActivityInstanceRowView: View {
                 .padding([.top, .trailing], 0)
         }
         .frame(maxWidth: .infinity)
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondaryBackgroundColor)
+        )
     }
     
     @ViewBuilder

@@ -16,7 +16,7 @@ final class VehicleSyncer: BaseSyncer<Vehicle, VehicleDTO, VehiclePayload> {
     private let vehiclesService = VehiclesService()
     private let settings: SettingsStore = SettingsStore.shared
     
-    override func fetchRemoteModels() async throws -> [VehicleDTO] {
+    override func fetchRemoteModels(date: Date?) async throws -> [VehicleDTO] {
         return try await vehiclesService.fetch(includeArchived: settings.includeArchived)
     }
     

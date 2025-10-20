@@ -9,7 +9,7 @@
 import Foundation
 
 
-final class PlacesService: SupabaseCatalogueService<PlaceDTO, PlacePayload> {
+final class PlacesService: SupabaseDataService<PlaceDTO, PlacePayload> {
     
     init() {
         super.init(tableName: "data_places")

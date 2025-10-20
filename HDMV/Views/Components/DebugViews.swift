@@ -131,8 +131,8 @@ extension PersonInteraction {
                 Text("Independent interaction")
             }
             
-            if let pid = person_id  {
-                Text("Person ID: \(pid)")
+            if let pid = personRid  {
+                Text("Person RID: \(pid)")
             } else {
                 Text("Person: Unset")
                     .bold()

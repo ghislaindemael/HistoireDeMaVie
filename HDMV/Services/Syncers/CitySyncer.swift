@@ -16,7 +16,7 @@ final class CitySyncer: BaseSyncer<City, CityDTO, CityPayload> {
     private let citiesService = CitiesService()
     private let settings: SettingsStore = SettingsStore.shared
     
-    override func fetchRemoteModels() async throws -> [CityDTO] {
+    override func fetchRemoteModels(date: Date?) async throws -> [CityDTO] {
         return try await citiesService.fetch(includeArchived: settings.includeArchived)
     }
     

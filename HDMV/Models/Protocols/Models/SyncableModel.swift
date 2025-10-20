@@ -9,8 +9,8 @@
 import SwiftData
 
 protocol SyncableModel: AnyObject {
-    associatedtype DTO
     associatedtype Payload
+    associatedtype DTO
     var rid: Int? { get set }
     var syncStatusRaw: String { get set }
     init(fromDto dto: DTO)

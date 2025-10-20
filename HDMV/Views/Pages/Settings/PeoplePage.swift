@@ -5,43 +5,35 @@ struct PeoplePage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PeoplePageViewModel()
     
-    @State private var isShowingAddSheet = false
+    @State private var personToEdit: Person?
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("People")) {
-                    ForEach(viewModel.people) { person in
-                        HStack {
-                            Text(person.fullName)
-                            Spacer()
-                            Toggle(isOn: Binding<Bool>(
-                                get: { person.cache },
-                                set: { newValue in
-                                    person.cache = newValue
-                                    Task {
-                                        await viewModel.toggleCache(for: person)
-                                    }
-                                }
-                            )) {
-                                EmptyView()
-                            }
-                        }
-                    }
-                }
+                peopleList
             }
             .navigationTitle("People")
-            .standardConfigPageToolbar(
-                refreshAction: viewModel.fetchFromServer,
-                cacheAction: viewModel.cachePeople,
-                isShowingAddSheet: $isShowingAddSheet
+            .logPageToolbar(
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
+                singleTapAction: { viewModel.createPerson() },
+                longPressAction: {}
             )
+            .onAppear {
+                viewModel.setup(modelContext: modelContext)
+            }
+            .sheet(item: $personToEdit) { person in
+                //TODO: Add person editor sheet
+            }
         }
-        .task {
-            viewModel.setup(modelContext: modelContext)
-        }
-        .sheet(isPresented: $isShowingAddSheet) {
-            NewPersonSheet(viewModel: viewModel)
+    }
+    
+    @ViewBuilder
+    private var peopleList: some View {
+        Section("People") {
+            ForEach(viewModel.people) { person in
+                PersonRowView(person: person)
+            }
         }
     }
 }

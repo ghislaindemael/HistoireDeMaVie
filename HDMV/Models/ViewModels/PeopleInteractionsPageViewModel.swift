@@ -76,14 +76,6 @@ class PeopleInteractionsPageViewModel: ObservableObject {
         }
     }
     
-    // MARK: Transmitted data
-    
-    func findPerson(by id:Int?) -> Person? {
-        guard let id = id else { return nil }
-        return people.first { $0.id == id }
-    }
-
-    
     // MARK: - Core Synchronization Logic
     
     func syncWithServer() async {
