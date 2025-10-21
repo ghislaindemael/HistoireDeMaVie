@@ -31,7 +31,7 @@ class MasterSyncer {
         do {
             switch filterMode {
                 case .byDate:
-                    try await activityInstanceSyncer.pullChanges(for: date)
+                    try await activityInstanceSyncer.pullChanges(date: date)
                 case .byActivity:
                     guard let actRid = activityRid, let start = startDate, let end = endDate else {
                         print("❌ MasterSyncer: Missing parameters for byActivity sync.")
@@ -41,8 +41,8 @@ class MasterSyncer {
             }
             
             let primaryDate = (filterMode == .byDate) ? date : startDate ?? date
-            try await tripSyncer.pullChanges(for: primaryDate)
-            try await interactionSyncer.pullChanges(for: primaryDate)
+            try await tripSyncer.pullChanges(date: primaryDate)
+            try await interactionSyncer.pullChanges(date: primaryDate)
             
             try await pushChanges()
             

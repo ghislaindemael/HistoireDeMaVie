@@ -35,5 +35,44 @@ class InteractionSyncer: BaseSyncer<Interaction, InteractionDTO, InteractionPayl
         //try await instanceService.deleteActivityInstance(id: id)
     }
     
+    override func resolveRelationships() throws {
+        let allInteractions = try modelContext.fetch(FetchDescriptor<Interaction>())
+        let allPeople = try modelContext.fetch(FetchDescriptor<Person>())
+        let allInstances = try modelContext.fetch(FetchDescriptor<ActivityInstance>())
+        
+        let peopleCache: [Int: Person] = allPeople.reduce(into: [:]) { dict, person in
+            if let rid = person.rid {
+                dict[rid] = person
+            }
+        }
+        
+        let instanceCache: [Int: ActivityInstance] = allInstances.reduce(into: [:]) { dict, instance in
+            if let rid = instance.rid {
+                dict[rid] = instance
+            }
+        }
+        
+        for interaction in allInteractions {
+            if let personRid = interaction.personRid {
+                let correctPerson = peopleCache[personRid]
+                if interaction.person?.rid != personRid {
+                    interaction.person = correctPerson
+                }
+            } else if interaction.person != nil {
+                interaction.person = nil
+            }
+            
+            if let parentRid = interaction.parentInstanceRid {
+                let correctInstance = instanceCache[parentRid]
+                if interaction.parentInstance?.rid != parentRid {
+                    interaction.parentInstance = correctInstance
+                }
+            } else if interaction.parentInstance != nil {
+                interaction.parentInstance = nil
+            }
+        }
+        
+        print("✅ Relationships resolved for \(allInteractions.count) interactions.")
+    }
 
 }

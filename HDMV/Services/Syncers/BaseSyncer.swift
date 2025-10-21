@@ -81,45 +81,86 @@ where
         let dtos = try await fetchRemoteModels(date: date)
         let serverRids = Set(dtos.map { $0.id })
         
-        let localModels = try modelContext.fetch(FetchDescriptor<Model>())
-        let modelsWithRid = localModels.filter { $0.rid != nil }
+        let allLocalModels = try modelContext.fetch(FetchDescriptor<Model>())
         
-        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in
-            return first
-        })
+        let relevantLocalModels: [Model]
+        if let filterDate = date, Model.self is any TimeTrackable.Type {
+            let calendar = Calendar.current
+            let startOfDay = calendar.startOfDay(for: filterDate)
+            guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+                throw SyncError.dateCalculationError
+            }
+            let future = Date.distantFuture
+            
+            relevantLocalModels = allLocalModels.filter { model in
+                if let timeTrackableModel = model as? any TimeTrackable {
+                    return timeTrackableModel.time_start < endOfDay &&
+                    (timeTrackableModel.time_end ?? future) > startOfDay
+                }
+                return false
+            }
+        } else {
+            relevantLocalModels = allLocalModels
+        }
+        
+        let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
+        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in return first })
         let localRids = Set(localCache.keys)
+        print("PullChanges: Found \(relevantLocalModels.count) relevant local models (\(localRids.count) with rids) for \(Model.self).")
         
+        var insertedCount = 0
+        var updatedCount = 0
         for dto in dtos {
             if let existingModel = localCache[dto.id] {
-                guard existingModel.syncStatus == .synced else {
-                    continue
-                }
+                guard existingModel.syncStatus == .synced else { continue }
                 existingModel.update(fromDto: dto)
+                updatedCount += 1
             } else {
                 let newModel = Model(fromDto: dto)
                 modelContext.insert(newModel)
+                insertedCount += 1
             }
         }
+        print("PullChanges: Inserted \(insertedCount), Updated \(updatedCount) for \(Model.self).")
         
         let ridsToDelete = localRids.subtracting(serverRids)
-        for rid in ridsToDelete {
-            if let modelToDelete = localCache[rid] {
-                
-                if modelToDelete.syncStatus == .synced {
-                    modelContext.delete(modelToDelete)
+        var deletedCount = 0
+        if !ridsToDelete.isEmpty {
+            print("PullChanges: Pruning \(ridsToDelete.count) items for \(Model.self)...")
+            for rid in ridsToDelete {
+                if let modelToDelete = localCache[rid] {
+                    if modelToDelete.syncStatus == .synced {
+                        modelContext.delete(modelToDelete)
+                        deletedCount += 1
+                    } else {
+                        print("   - Skipping prune for \(modelToDelete.id) (status: \(modelToDelete.syncStatus))")
+                    }
                 }
             }
+            print("PullChanges: Deleted \(deletedCount) items for \(Model.self).")
         }
+        
         do {
             try resolveRelationships()
-            try modelContext.save()
-            print("✅ Context saved successfully in pullChanges.")
         } catch {
-            print("‼️ FAILED to save context in pullChanges: \(error)")
+            print("‼️ FAILED during resolveRelationships in pullChanges: \(error)")
+        }
+        
+        
+        if modelContext.hasChanges {
+            do {
+                try modelContext.save()
+                print("✅ Context saved successfully in pullChanges for \(Model.self).")
+            } catch {
+                print("‼️ FAILED to save context in pullChanges for \(Model.self): \(error)")
+                throw error
+            }
+        } else {
+            print("PullChanges: No changes to save for \(Model.self).")
         }
     }
     
-    func pullChanges(for date: Date? = nil) async throws {
+    func pullChanges(date: Date? = nil) async throws {
         try await defaultPullChanges(date: date)
     }
     

@@ -69,11 +69,11 @@ class MyInteractionsPageViewModel: ObservableObject {
     
     // MARK: - Core Synchronization Logic
     
-    func syncWithServer() async {
+    func refreshFromServer() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await interactionSyncer?.sync()
+            try await interactionSyncer?.pullChanges(date: filterDate)
         } catch {
             print("Failed to sync interactions: \(error)")
         }

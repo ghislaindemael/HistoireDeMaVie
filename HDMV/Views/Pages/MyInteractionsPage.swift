@@ -35,12 +35,12 @@ struct MyInteractionsPage: View {
                 .onAppear(perform: onAppear)
                 .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
-                    refreshAction: { await viewModel.syncWithServer() },
+                    refreshAction: { await viewModel.refreshFromServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
                     singleTapAction: { viewModel.createInteraction() },
                     longPressAction: { viewModel.createInteraction(date: viewModel.filterDate) },
                 )
-                .onChange(of: viewModel.filterMode) { viewModel.fetchInteractions() }
+                .onChange(of: viewModel.filterDate) { viewModel.fetchInteractions() }
                 .sheet(item: $interactionToEdit) { interaction in
                     InteractionDetailSheet(
                         interaction: interaction,
