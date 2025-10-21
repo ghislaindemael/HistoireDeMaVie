@@ -23,8 +23,6 @@ class ActivityDetailSheetViewModel: ObservableObject {
         self.modelContext = modelContext
     }
 
-    // MARK: - User Actions
-
     func onDone() {
         editor.apply(to: activity)
         activity.markAsModified()

@@ -12,6 +12,10 @@ protocol DebugViewable {
     @ViewBuilder var debugView: DebugView { get }
 }
 
+extension DebugViewable {
+    var erasedDebugView: AnyView { AnyView(debugView) }
+}
+
 extension Activity: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading) {
@@ -31,7 +35,7 @@ extension Activity: DebugViewable {
     }
 }
 
-extension ActivityInstance {
+extension ActivityInstance: DebugViewable {
     
     var debugView: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -98,7 +102,7 @@ extension Country: DebugViewable {
     }
 }
 
-extension Path {
+extension Path: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ID: \(id)")
@@ -110,7 +114,7 @@ extension Path {
     }
 }
 
-extension PersonInteraction {
+extension Interaction: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -134,7 +138,14 @@ extension PersonInteraction {
             if let pid = personRid  {
                 Text("Person RID: \(pid)")
             } else {
-                Text("Person: Unset")
+                Text("Person RID : Unset")
+                    .bold()
+                    .foregroundStyle(.red)
+            }
+            if let person = person  {
+                Text("Person: \(person.fullName)")
+            } else {
+                Text("Person : Unset")
                     .bold()
                     .foregroundStyle(.red)
             }
@@ -149,7 +160,24 @@ extension PersonInteraction {
     }
 }
 
-extension Place {
+extension Person: DebugViewable {
+    var debugView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let rid {
+                Text(verbatim: "RID: \(rid)")
+            } else {
+                Text("RID: –")
+                    .foregroundStyle(.secondary)
+            }
+            NamedStringDisplayView(name: "Slug", value: slug)
+            NamedStringDisplayView(name: "Name", value: name)
+            NamedStringDisplayView(name: "Family name", value: familyName)
+            NamedStringDisplayView(name: "Surname", value: surname, unsetTint: .yellow)
+        }
+    }
+}
+
+extension Place: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let rid {

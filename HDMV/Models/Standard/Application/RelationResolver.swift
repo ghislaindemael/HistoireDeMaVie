@@ -41,14 +41,3 @@ extension ActivityInstance {
         }
     }
 }
-
-extension PersonInteraction {
-    var person: Person? {
-        get {
-            RelationResolver.resolve(relationship: relPerson, rid: personRid)
-        }
-        set {
-            relPerson = newValue
-        }
-    }
-}

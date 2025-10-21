@@ -22,10 +22,30 @@ final class Trip: Identifiable, SyncableModel {
             parentInstanceRid = parentInstance.rid
         }
     }
-    var vehicle: Vehicle?
-    var placeStart: Place?
-    var placeEnd: Place?
-    var path: Path?
+    var placeStartRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var placeStart: Place? {
+        didSet {
+            placeStartRid = placeStart?.rid
+        }
+    }
+    var placeEndRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var placeEnd: Place? {
+        didSet {
+            placeEndRid = placeEnd?.rid
+        }
+    }
+    var vehicleRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var vehicle: Vehicle? {
+        didSet { vehicleRid = vehicle?.rid }
+    }
+    var pathRid: Int?
+    @Relationship(deleteRule: .nullify)
+    var path: Path? {
+        didSet { pathRid = path?.rid }
+    }
     var am_driver: Bool
     var path_str: String?
 

@@ -19,7 +19,7 @@ struct ActivityHierarchyView: View {
     
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
-    @Binding var interactionToEdit: PersonInteraction?
+    @Binding var interactionToEdit: Interaction?
     
     private let indentationAmount: CGFloat = 20
     private let indicatorWidth: CGFloat = 2

@@ -13,12 +13,12 @@ import SwiftData
 class MasterSyncer {
     private let activityInstanceSyncer: ActivityInstanceSyncer
     private let tripSyncer: TripSyncer
-    private let interactionSyncer: PersonInteractionSyncer
+    private let interactionSyncer: InteractionSyncer
 
     init(modelContext: ModelContext) {
         self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
         self.tripSyncer = TripSyncer(modelContext: modelContext)
-        self.interactionSyncer = PersonInteractionSyncer(modelContext: modelContext)
+        self.interactionSyncer = InteractionSyncer(modelContext: modelContext)
     }
 
     func sync(

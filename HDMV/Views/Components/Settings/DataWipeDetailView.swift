@@ -138,9 +138,9 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
-                case is PersonInteraction.Type:
-                    let descriptor = FetchDescriptor<PersonInteraction>(
-                        sortBy: [SortDescriptor(\PersonInteraction.time_start, order: .reverse)]
+                case is Interaction.Type:
+                    let descriptor = FetchDescriptor<Interaction>(
+                        sortBy: [SortDescriptor(\Interaction.time_start, order: .reverse)]
                     )
                     let results = try modelContext.fetch(descriptor)
                     items = results
@@ -175,44 +175,22 @@ struct DataWipeDetailView: View {
     }
     
     private func describeView(for item: any PersistentModel) -> AnyView {
-        switch item {
-            case let instance as ActivityInstance:
-                return AnyView(instance.debugView)
-            case let activity as Activity:
-                return AnyView(activity.debugView)
-            case let entry as AgendaEntry:
-                return AnyView(
-                    VStack(alignment: .leading) {
-                        Text(entry.date)
-                        Text(entry.daySummary)
-                            .font(.headline)
-                    }
-                )
-            case let country as Country:
-                return AnyView(country.debugView)
-            case let city as City:
-                return AnyView(
-                    Text(city.name ?? "Name unset, ID: \(city.id)")
-                )
-            case let path as Path:
-                return AnyView(path.debugView)
-            case let place as Place:
-                return AnyView(place.debugView)
-            case let person as Person:
-                return AnyView(
-                    Text(person.fullName)
-                )
-            case let interaction as PersonInteraction:
-                return AnyView(
-                    interaction.debugView
-                )
-            case let trip as Trip:
-                return AnyView(TripRowView(trip: trip))
-            default:
-                return AnyView(Text("Unknown Object"))
+        if let debugItem = item as? any DebugViewable {
+            return debugItem.erasedDebugView
+        } else {
+            return AnyView(
+                VStack {
+                    Text("⚠️ Model is not DebugViewable")
+                        .font(.headline)
+                        .foregroundColor(.red)
+                    Text("Type: \(String(describing: type(of: item)))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                    .padding()
+            )
         }
     }
-    
     
     private func deleteItem(_ item: any PersistentModel) {
         modelContext.delete(item)
@@ -230,7 +208,7 @@ struct DataWipeDetailView: View {
             appNavigator.selectedTab = .activities
             dismiss()
         }
-        if let interaction = item as? PersonInteraction {
+        if let interaction = item as? Interaction {
             appNavigator.selectedDate = interaction.time_start
             if interaction.parentInstanceRid != nil {
                 appNavigator.selectedTab = .activities

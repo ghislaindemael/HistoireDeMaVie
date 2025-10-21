@@ -15,7 +15,7 @@ class PeopleInteractionsService {
     
     private let TABLE_NAME = "my_people_interactions"
     
-    func fetchInteractions(for date: Date) async throws -> [PersonInteractionDTO] {
+    func fetchInteractions(for date: Date) async throws -> [InteractionDTO] {
         guard let supabaseClient = supabaseClient else { return [] }
         
         let startOfDay = Calendar.current.startOfDay(for: date)
@@ -31,7 +31,7 @@ class PeopleInteractionsService {
             .value
     }
     
-    func createInteraction(_ payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+    func createInteraction(_ payload: InteractionPayload) async throws -> InteractionDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
         return try await supabaseClient
             .from(TABLE_NAME)
@@ -42,7 +42,7 @@ class PeopleInteractionsService {
             .value
     }
     
-    func updateInteraction(id: Int, payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+    func updateInteraction(id: Int, payload: InteractionPayload) async throws -> InteractionDTO {
         guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
         return try await supabaseClient
             .from(TABLE_NAME)

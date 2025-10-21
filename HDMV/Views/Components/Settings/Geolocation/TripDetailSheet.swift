@@ -12,7 +12,7 @@ struct TripDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailViewModel
-    
+
     init(trip: Trip, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: TripDetailViewModel(
             trip: trip,
@@ -35,7 +35,7 @@ struct TripDetailSheet: View {
                 pathSection
                 detailsSection
             }
-            .navigationTitle("Trip Details")
+            .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {
                 viewModel.onDone {
                     dismiss()

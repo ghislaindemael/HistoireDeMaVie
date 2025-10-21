@@ -41,3 +41,17 @@ extension Binding where Value == Date? {
         )
     }
 }
+
+extension Binding where Value == Int? {
+    /// Provides a non-optional Binding<Double>, mapping nil to/from 0.
+    func or100Double() -> Binding<Double> {
+        Binding<Double>(
+            get: {
+                Double(self.wrappedValue ?? 100)
+            },
+            set: {
+                self.wrappedValue = Int($0)
+            }
+        )
+    }
+}

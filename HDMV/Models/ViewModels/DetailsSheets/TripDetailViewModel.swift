@@ -13,7 +13,7 @@ import SwiftData
 class TripDetailViewModel: ObservableObject {
     @Published var editor: TripEditor
     @Published var isShowingPathSelector = false
-    @Published var showEndTime: Bool
+    @State var showEndTime: Bool = true
     
     private var trip: Trip
     private let modelContext: ModelContext
@@ -30,10 +30,8 @@ class TripDetailViewModel: ObservableObject {
     }
 
     func onDone(completion: @escaping () -> Void) {
-        if !showEndTime {
-            editor.time_end = nil
-        }
         editor.apply(to: trip)
+        trip.markAsModified()
         
         do {
             try modelContext.save()

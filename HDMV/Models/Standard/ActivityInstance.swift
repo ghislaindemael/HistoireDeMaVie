@@ -32,8 +32,8 @@ final class ActivityInstance: SyncableModel {
     var childActivities: [ActivityInstance]? = []
     @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
     var trips: [Trip]? = []
-    @Relationship(deleteRule: .nullify, inverse: \PersonInteraction.parentInstance)
-    var interactions: [PersonInteraction]? = []
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
+    var interactions: [Interaction]? = []
     var details: String?
     var percentage: Int
     var activity_details: Data?

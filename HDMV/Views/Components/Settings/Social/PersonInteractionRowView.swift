@@ -1,5 +1,5 @@
 //
-//  PersonInteractionRowView.swift
+//  InteractionRowView.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 29.06.2025.
@@ -8,8 +8,8 @@
 import SwiftUI
 import SwiftData
 
-struct PersonInteractionRowView: View {
-    let interaction: PersonInteraction
+struct InteractionRowView: View {
+    let interaction: Interaction
     let onEnd: () -> Void
     
     var body: some View {

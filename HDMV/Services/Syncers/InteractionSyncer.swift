@@ -1,5 +1,5 @@
 //
-//  PersonInteractionSyncer.swift
+//  InteractionSyncer.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 09.10.2025.
@@ -10,24 +10,24 @@ import Foundation
 import SwiftData
 
 @MainActor
-class PersonInteractionSyncer: BaseSyncer<PersonInteraction, PersonInteractionDTO, PersonInteractionPayload> {
+class InteractionSyncer: BaseSyncer<Interaction, InteractionDTO, InteractionPayload> {
     
     private let interactionService = PeopleInteractionsService()
 
     // MARK: - Implemented Network Methods
     
-    override func fetchRemoteModels(date: Date?) async throws -> [PersonInteractionDTO] {
+    override func fetchRemoteModels(date: Date?) async throws -> [InteractionDTO] {
         if let date = date {
             return try await interactionService.fetchInteractions(for: date)
         }
         fatalError("No date passed in fetchRemoteModels")
     }
         
-    override func createOnServer(payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+    override func createOnServer(payload: InteractionPayload) async throws -> InteractionDTO {
         return try await interactionService.createInteraction(payload)
     }
     
-    override func updateOnServer(rid: Int, payload: PersonInteractionPayload) async throws -> PersonInteractionDTO {
+    override func updateOnServer(rid: Int, payload: InteractionPayload) async throws -> InteractionDTO {
         return try await interactionService.updateInteraction(id: rid, payload: payload)
     }
     

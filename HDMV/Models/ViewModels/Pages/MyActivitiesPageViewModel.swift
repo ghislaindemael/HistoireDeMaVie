@@ -21,7 +21,6 @@ class MyActivitiesPageViewModel: ObservableObject {
     private var masterSyncer: MasterSyncer?
     private var settings: SettingsStore = SettingsStore.shared
 
-
     @Published var isLoading: Bool = false
     
     @Published var filterMode: FilterMode = .byDate
@@ -35,24 +34,13 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     @Published var instances: [ActivityInstance] = []
     @Published var trips: [Trip] = []
-    @Published var interactions: [PersonInteraction] = []
+    @Published var interactions: [Interaction] = []
     
     @Published var activityTree: [Activity] = []
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.masterSyncer = MasterSyncer(modelContext: modelContext)
-        fetchActivities()
-    }
-    
-    private func fetchActivities() {
-        guard let context = modelContext else { return }
-        self.activityTree = Activity.fetchActivityTree(from: context)
-    }
-    
-    private func fetchData() {
-        fetchActivities()
-        fetchDailyData()
     }
     
     func fetchDailyData() {
@@ -152,7 +140,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     func fetchInteractions() {
         guard let context = modelContext else { return }
         
-        let descriptor: FetchDescriptor<PersonInteraction>
+        let descriptor: FetchDescriptor<Interaction>
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: filterDate)
@@ -160,11 +148,11 @@ class MyActivitiesPageViewModel: ObservableObject {
         let future = Date.distantFuture
         
         
-        let predicate = #Predicate<PersonInteraction> {
+        let predicate = #Predicate<Interaction> {
             $0.time_start < endOfDay &&
             ($0.time_end ?? future) > startOfDay
         }
-        descriptor = FetchDescriptor<PersonInteraction>(
+        descriptor = FetchDescriptor<Interaction>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.time_start, order: .reverse)]
         )
@@ -288,7 +276,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createInteraction(parent: ActivityInstance) {
         guard let context = modelContext else { return }
-        let newInteraction = PersonInteraction(
+        let newInteraction = Interaction(
             time_start: .now,
             parentInstance: parent
         )
@@ -301,7 +289,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    func endInteraction(interaction: PersonInteraction){
+    func endInteraction(interaction: Interaction){
         guard let context = modelContext else { return }
         do {
             interaction.time_end = .now
@@ -345,7 +333,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                 childToMove.markAsModified()
                 
             case .interaction(let childID):
-                guard let childToMove = context.model(for: childID) as? PersonInteraction else { return }
+                guard let childToMove = context.model(for: childID) as? Interaction else { return }
                 
                 print("✅ Re-parenting Interaction '\(childToMove.id)' onto '\(newParent.id)'.")
                 childToMove.parentInstance = newParent

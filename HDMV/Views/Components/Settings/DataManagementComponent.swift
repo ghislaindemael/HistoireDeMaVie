@@ -22,7 +22,7 @@ struct DataManagementComponent: View {
         Path.self,
         Place.self,
         Person.self,
-        PersonInteraction.self,
+        Interaction.self,
         Trip.self,
         Vehicle.self
     ]
@@ -99,5 +99,5 @@ struct DataManagementComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, PersonInteraction.self])
+    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self])
 }

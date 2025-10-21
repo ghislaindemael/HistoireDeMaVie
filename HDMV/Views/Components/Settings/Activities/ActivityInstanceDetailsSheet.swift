@@ -19,7 +19,7 @@ struct ActivityInstanceDetailSheet: View {
     
     @State private var showEndTime: Bool
     @State private var tripToEdit: Trip?
-    @State private var interactionToEdit: PersonInteraction?
+    @State private var interactionToEdit: Interaction?
     
     private var selectedActivity: Activity? {
         editor.activity

@@ -16,7 +16,7 @@ struct LogItemRowView: View {
     
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
-    @Binding var interactionToEdit: PersonInteraction?
+    @Binding var interactionToEdit: Interaction?
 
     let level: Int
 
@@ -39,8 +39,8 @@ struct LogItemRowView: View {
                     tripToEdit = trip
                 }
 
-        case let interaction as PersonInteraction:
-                PersonInteractionRowView(interaction: interaction, onEnd: {
+        case let interaction as Interaction:
+                InteractionRowView(interaction: interaction, onEnd: {
                     viewModel.endInteraction(interaction: interaction)
                 })
                 .onTapGesture {

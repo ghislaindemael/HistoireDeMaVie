@@ -12,8 +12,8 @@ import UniformTypeIdentifiers
 
 @MainActor
 class PersonDetailSheetViewModel: ObservableObject {
+    
     @Published var editor: PersonEditor
-
     private var person: Person
     private let modelContext: ModelContext
     

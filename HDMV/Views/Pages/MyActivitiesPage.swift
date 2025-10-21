@@ -16,7 +16,7 @@ struct MyActivitiesPage: View {
     
     @State private var instanceToEdit: ActivityInstance?
     @State private var tripToEdit: Trip?
-    @State private var interactionToEdit: PersonInteraction?
+    @State private var interactionToEdit: Interaction?
     
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
@@ -59,7 +59,10 @@ struct MyActivitiesPage: View {
                     )
                 }
                 .sheet(item: $interactionToEdit) { interaction in
-                    PersonInteractionEditSheet(interaction: interaction)
+                    InteractionDetailSheet(
+                        interaction: interaction,
+                        modelContext: modelContext
+                    )
                 }
         }
         .environmentObject(viewModel)

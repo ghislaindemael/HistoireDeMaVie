@@ -15,4 +15,4 @@ protocol LogModel: Identifiable {
 
 extension ActivityInstance: LogModel {}
 extension Trip: LogModel {}
-extension PersonInteraction: LogModel {}
+extension Interaction: LogModel {}

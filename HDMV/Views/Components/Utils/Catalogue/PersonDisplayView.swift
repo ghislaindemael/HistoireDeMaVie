@@ -19,7 +19,7 @@ struct PersonDisplayView: View {
         self.person = person
     }
     
-    init(interaction: PersonInteraction) {
+    init(interaction: Interaction) {
         self.init(personRid: interaction.personRid, person: interaction.person)
     }
     
