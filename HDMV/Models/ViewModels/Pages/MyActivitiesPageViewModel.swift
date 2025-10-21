@@ -164,6 +164,14 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
+    var unclaimedTrips: [Trip] {
+        trips.filter { $0.parentInstance == nil }
+    }
+    
+    var unclaimedInteractions: [Interaction] {
+        interactions.filter { $0.parentInstance == nil }
+    }
+    
     
     // MARK: - Core Synchronization Logic
         

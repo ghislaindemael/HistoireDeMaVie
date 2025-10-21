@@ -22,12 +22,11 @@ final class Vehicle: CatalogueModel {
     }
     var cityRid: Int?
     @Relationship
-    var relCity: City? {
+    var city: City? {
         didSet {
-            self.cityRid = relCity.rid
+            self.cityRid = city.rid
         }
     }
-    var label: String = ""
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -35,27 +34,12 @@ final class Vehicle: CatalogueModel {
     typealias DTO = VehicleDTO
     typealias Payload = VehiclePayload
     
-    var city: City? {
-        get {
-            if let city = relCity { return city }
-            guard let rid = cityRid, let ctx = RelationResolver.context else { return nil }
-            let descriptor = FetchDescriptor<City>(predicate: #Predicate { $0.rid == rid })
-            return try? ctx.fetch(descriptor).first
-        }
-        set {
-            relCity = newValue
-            if newValue?.rid != cityRid {
-                cityRid = newValue?.rid
-            }
-        }
-    }
-    
     init(rid: Int? = nil,
          name: String? = nil,
          typeSlug: String? = nil,
          type: VehicleType? = nil,
          cityRid: Int? = nil,
-         relCity: City? = nil,
+         city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
          syncStatus: SyncStatus = .local) {
@@ -64,7 +48,7 @@ final class Vehicle: CatalogueModel {
         self.typeSlug = typeSlug
         self.type = type
         self.cityRid = cityRid
-        self.relCity = relCity
+        self.city = city
         self.cache = cache
         self.archived = archived
         self.syncStatusRaw = syncStatus.rawValue
@@ -93,7 +77,31 @@ final class Vehicle: CatalogueModel {
     }
     
     func isValid() -> Bool {
-        return name != nil && cityRid != nil && typeSlug != nil
+        return name != nil && typeSlug != nil
+    }
+    
+    var label: String {
+        var components: [String] = []
+        
+        if let typeIcon = type?.icon {
+            components.append(typeIcon)
+        } else {
+            components.append("❓")
+        }
+        
+        if let cityName = city?.name, !cityName.isEmpty {
+            components.append(cityName)
+        } else if cityRid != nil {
+            components.append("(\(cityRid!))")
+        }
+        
+        if let vehicleName = name, !vehicleName.isEmpty {
+            components.append(vehicleName)
+        } else {
+            components.append("Unnamed")
+        }
+        
+        return components.joined(separator: " - ")
     }
 }
 
@@ -103,7 +111,7 @@ struct VehicleDTO: Codable, Identifiable, Sendable {
     var id: Int
     var name: String
     var type_slug: String
-    var city_id: Int
+    var city_id: Int?
     var cache: Bool
     var archived: Bool
 }
@@ -162,7 +170,7 @@ struct VehicleEditor: CachableModel {
         vehicle.type = self.type
         
         if let selectedCity = self.city {
-            vehicle.relCity = selectedCity
+            vehicle.city = selectedCity
             vehicle.cityRid = selectedCity.rid
         } else {
             vehicle.cityRid = self.cityRid

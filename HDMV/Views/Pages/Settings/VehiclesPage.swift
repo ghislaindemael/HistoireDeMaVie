@@ -30,6 +30,8 @@ struct VehiclesPage: View {
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
+            .onChange(of: viewModel.selectedType) { viewModel.refreshFilteredVehicles()
+            }
             .sheet(item: $vehicleToEdit) { vehicle in
                 VehicleDetailSheet(vehicle: vehicle, modelContext: modelContext)
             }

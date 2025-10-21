@@ -191,3 +191,50 @@ extension Place: DebugViewable {
         }
     }
 }
+
+extension Trip: DebugViewable {
+    
+    var debugView: some View {
+        VStack {
+            Section("Identity & Sync") {
+                LabeledContent("RID", value: self.rid?.description ?? "nil (local)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Text("Sync Status")
+                    Spacer()
+                    SyncStatusIndicator(status: self.syncStatus)
+                }
+            }
+            
+            Section("Time") {
+                LabeledContent("Start", value: self.time_start.formatted(date: .numeric, time: .standard))
+                LabeledContent("End", value: self.time_end?.formatted(date: .numeric, time: .standard) ?? "In Progress")
+            }
+            
+            Section("Relationships") {
+                LabeledContent("Parent Instance RID", value: self.parentInstanceRid?.description ?? "nil")
+                LabeledContent("Parent Loaded", value: self.parentInstance != nil ? "✅ Yes" : "❌ No")
+                
+                LabeledContent("Vehicle RID", value: self.vehicleRid?.description ?? "nil")
+                LabeledContent("Vehicle Loaded", value: self.vehicle != nil ? "✅ Yes" : "❌ No")
+                
+                LabeledContent("Place Start RID", value: self.placeStartRid?.description ?? "nil")
+                LabeledContent("Place Start Loaded", value: self.placeStart != nil ? "✅ Yes" : "❌ No")
+                
+                LabeledContent("Place End RID", value: self.placeEndRid?.description ?? "nil")
+                LabeledContent("Place End Loaded", value: self.placeEnd != nil ? "✅ Yes" : "❌ No")
+                
+                LabeledContent("Path RID", value: self.pathRid?.description ?? "nil")
+                LabeledContent("Path Loaded", value: self.path != nil ? "✅ Yes" : "❌ No")
+            }
+            
+            // MARK: - Details
+            Section("Details") {
+                LabeledContent("Am Driver", value: self.am_driver.description)
+                LabeledContent("Details Text", value: self.details ?? "N/A")
+                LabeledContent("Path String", value: self.path_str ?? "N/A")
+            }
+        }
+    }
+}

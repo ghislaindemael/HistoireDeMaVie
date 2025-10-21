@@ -17,12 +17,7 @@ class VehiclesPageViewModel: ObservableObject {
     @Published var isLoading = false
     @Published private var vehicles: [Vehicle] = []
     @Published var filteredVehicles: [Vehicle] = []
-    
-    @Published var selectedType: VehicleType? {
-        didSet {
-            updateFilteredVehicles()
-        }
-    }
+    @Published var selectedType: VehicleType? = .car
     
     // MARK: Initialization
     
@@ -40,6 +35,7 @@ class VehiclesPageViewModel: ObservableObject {
         do {
             let descriptor = FetchDescriptor<Vehicle>(sortBy: [SortDescriptor(\.name)])
             self.vehicles = try context.fetch(descriptor)
+            self.refreshFilteredVehicles()
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
@@ -76,7 +72,7 @@ class VehiclesPageViewModel: ObservableObject {
         }
     }
     
-    private func updateFilteredVehicles() {
+    func refreshFilteredVehicles() {
         if let selectedType = selectedType {
             self.filteredVehicles = vehicles.filter { $0.type == selectedType }
         } else {

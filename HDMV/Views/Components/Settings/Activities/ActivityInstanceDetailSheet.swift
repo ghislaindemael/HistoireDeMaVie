@@ -17,10 +17,6 @@ struct ActivityInstanceDetailSheet: View {
     let instance: ActivityInstance
     @State private var editor: ActivityInstanceEditor
     
-    @State private var showEndTime: Bool
-    @State private var tripToEdit: Trip?
-    @State private var interactionToEdit: Interaction?
-    
     private var selectedActivity: Activity? {
         editor.activity
     }
@@ -29,7 +25,6 @@ struct ActivityInstanceDetailSheet: View {
         self.instance = instance
         self.viewModel = viewModel
         _editor = State(initialValue: ActivityInstanceEditor(from: instance))
-        _showEndTime = State(initialValue: instance.time_end != nil)
     }
     
     var body: some View {
@@ -41,29 +36,33 @@ struct ActivityInstanceDetailSheet: View {
                     specializedDetailsSection
                 }
                 
-                Section("Hierarchy") {
-                    if editor.parent != nil {
+                
+                if editor.parent != nil {
+                    Section("Hierarchy") {
                         Button("Remove from Parent", role: .destructive) {
                             editor.parent = nil
+                        }
+                    }
+                }
+                
+                if !viewModel.unclaimedTrips.isEmpty {
+                    Section("Claim Trips") {
+                        ForEach(viewModel.unclaimedTrips) { trip in
+                            TripRowView(trip: trip)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    viewModel.claim(trip: trip, for: instance)
+                                }
                         }
                     }
                 }
 
             }
             .navigationTitle(selectedActivity?.name ?? "New Activity")
-            .sheet(item: $tripToEdit) { trip in
-                TripDetailSheet(
-                    trip: trip,
-                    modelContext: modelContext
-                )
-            }
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
                 editor.apply(to: instance)
                 instance.markAsModified()
-                if !showEndTime {
-                    instance.time_end = nil
-                }
                 try? modelContext.save()
                 dismiss()
             }
@@ -87,13 +86,7 @@ struct ActivityInstanceDetailSheet: View {
                 }
             }
             FullTimePicker(label: "Start Time", selection: $editor.time_start)
-            Toggle("End Time?", isOn: $showEndTime)
-            if showEndTime {
-                FullTimePicker(label: "End Time", selection: Binding(
-                    get: { editor.time_end ?? Date() },
-                    set: { editor.time_end = $0 }
-                ))
-            }
+            FullTimePicker(label: "End Time", selection: $editor.time_end)
         }
     }
     
