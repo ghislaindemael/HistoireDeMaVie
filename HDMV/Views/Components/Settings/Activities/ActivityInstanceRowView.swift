@@ -51,14 +51,14 @@ struct ActivityInstanceRowView: View {
                             .fontWeight(.semibold)
                             .foregroundStyle(instance.activity != nil ? Color.primary : Color.red)
                         HStack(spacing: 4) {
-                            if let startDateString = displayDateIfNeeded(for: instance.time_start, comparedTo: selectedDate) {
+                            if let startDateString = displayDateIfNeeded(for: instance.timeStart, comparedTo: selectedDate) {
                                 Text("\(startDateString) ")
                             }
-                            Text(instance.time_start, style: .time)
+                            Text(instance.timeStart, style: .time)
                             
                             Image(systemName: "arrow.right")
                             
-                            if let timeEnd = instance.time_end {
+                            if let timeEnd = instance.timeEnd {
                                 if let endDateString = displayDateIfNeeded(for: timeEnd, comparedTo: selectedDate) {
                                     Text("\(endDateString) ")
                                 }
@@ -258,38 +258,38 @@ struct PreviewWrapperView: View {
         
         let inProgressInstance = ActivityInstance(
             rid: 1,
-            time_start: .now.addingTimeInterval(-3600),
-            time_end: nil,
-            activityRid: workActivity.rid,
+            timeStart: .now.addingTimeInterval(-3600),
+            timeEnd: nil,
             percentage: 75,
+            activityRid: workActivity.rid,
             syncStatus: .syncing
         )
         
         
         let completedInstance = ActivityInstance(
             rid: 2,
-            time_start: .now.addingTimeInterval(-10800),
-            time_end: .now.addingTimeInterval(-7200),
-            activityRid: lunchActivity.rid,
+            timeStart: .now.addingTimeInterval(-10800),
+            timeEnd: .now.addingTimeInterval(-7200),
             percentage: 100,
+            activityRid: lunchActivity.rid,
             syncStatus: .synced
         )
         
         let unassignedInstance = ActivityInstance(
             rid: 3,
-            time_start: .now,
-            time_end: nil,
-            activityRid: nil,
+            timeStart: .now,
+            timeEnd: nil,
             percentage: 75,
+            activityRid: nil,
             syncStatus: .local
         )
         
         let travelInstance = ActivityInstance(
             rid: 4,
-            time_start: .now,
-            time_end: nil,
-            activityRid: travelActivity.rid,
+            timeStart: .now,
+            timeEnd: nil,
             percentage: 50,
+            activityRid: travelActivity.rid,
             syncStatus: .local
         )
         

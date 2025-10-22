@@ -96,7 +96,7 @@ struct DataWipeDetailView: View {
                     count = results.count
                 case is ActivityInstance.Type:
                     let descriptor = FetchDescriptor<ActivityInstance>(
-                        sortBy: [SortDescriptor(\ActivityInstance.time_start, order: .reverse)]
+                        sortBy: [SortDescriptor(\ActivityInstance.timeStart, order: .reverse)]
                     )
                     let results = try modelContext.fetch(descriptor)
                     items = results
@@ -108,7 +108,7 @@ struct DataWipeDetailView: View {
                     count = results.count
                 case is Trip.Type:
                     let descriptor = FetchDescriptor<Trip>(
-                        sortBy: [SortDescriptor(\Trip.time_start, order: .reverse)]
+                        sortBy: [SortDescriptor(\Trip.timeStart, order: .reverse)]
                     )
                     let results = try modelContext.fetch(descriptor)
                     items = results
@@ -140,7 +140,7 @@ struct DataWipeDetailView: View {
                     count = results.count
                 case is Interaction.Type:
                     let descriptor = FetchDescriptor<Interaction>(
-                        sortBy: [SortDescriptor(\Interaction.time_start, order: .reverse)]
+                        sortBy: [SortDescriptor(\Interaction.timeStart, order: .reverse)]
                     )
                     let results = try modelContext.fetch(descriptor)
                     items = results
@@ -204,12 +204,12 @@ struct DataWipeDetailView: View {
     
     private func navigateToItem(_ item: any PersistentModel) {
         if let instance = item as? ActivityInstance {
-            appNavigator.selectedDate = instance.time_start
+            appNavigator.selectedDate = instance.timeStart
             appNavigator.selectedTab = .activities
             dismiss()
         }
         if let interaction = item as? Interaction {
-            appNavigator.selectedDate = interaction.time_start
+            appNavigator.selectedDate = interaction.timeStart
             if interaction.parentInstanceRid != nil {
                 appNavigator.selectedTab = .activities
             } else {
@@ -218,7 +218,7 @@ struct DataWipeDetailView: View {
             dismiss()
         }
         if let trip = item as? Trip {
-            appNavigator.selectedDate = trip.time_start
+            appNavigator.selectedDate = trip.timeStart
             appNavigator.selectedTab = .activities
             dismiss()
         }

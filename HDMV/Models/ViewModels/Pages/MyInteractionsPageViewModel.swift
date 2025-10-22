@@ -51,12 +51,12 @@ class MyInteractionsPageViewModel: ObservableObject {
             let future = Date.distantFuture
             
             let predicate = #Predicate<Interaction> {
-                $0.time_start < endOfDay &&
-                ($0.time_end ?? future) > startOfDay
+                $0.timeStart < endOfDay &&
+                ($0.timeEnd ?? future) > startOfDay
             }
             let descriptor = FetchDescriptor<Interaction>(
                 predicate: predicate,
-                sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+                sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
             )
             
             self.interactions = try context.fetch(descriptor)
@@ -123,7 +123,7 @@ class MyInteractionsPageViewModel: ObservableObject {
     func endInteraction(interaction: Interaction){
         guard let context = modelContext else { return }
         do {
-            interaction.time_end = .now
+            interaction.timeEnd = .now
             interaction.markAsModified()
             try context.save()
         } catch {

@@ -10,11 +10,14 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class ActivityInstance: SyncableModel {
+final class ActivityInstance: LogModel {
         
     @Attribute(.unique) var rid: Int?
-    var time_start: Date
-    var time_end: Date?
+    var timeStart: Date
+    var timeEnd: Date?
+    var timed: Bool = true
+    var percentage: Int
+    
     var activityRid: Int?
     @Relationship
     var relActivity: Activity? {
@@ -35,29 +38,30 @@ final class ActivityInstance: SyncableModel {
     @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
     var interactions: [Interaction]? = []
     var details: String?
-    var percentage: Int
     var activity_details: Data?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = ActivityInstanceDTO
     typealias Payload = ActivityInstancePayload
+    typealias Editor = ActivityInstanceEditor
     
 
     init(
         rid: Int? = nil,
-        time_start: Date = .now,
-        time_end: Date? = nil,
+        timeStart: Date = .now,
+        timeEnd: Date? = nil,
+        timed: Bool = true,
+        percentage: Int = 100,
         activityRid: Int? = nil,
         activity: Activity? = nil,
         parentRid: Int? = nil,
         parent: ActivityInstance? = nil,
         details: String? = nil,
-        percentage: Int = 100,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
     ) {
-        self.time_start = time_start
-        self.time_end = time_end
+        self.timeStart = timeStart
+        self.timeEnd = timeEnd
         self.activityRid = activityRid
         self.relActivity = activity
         self.parentRid = parentRid
@@ -81,8 +85,8 @@ final class ActivityInstance: SyncableModel {
     convenience init(fromDto dto: ActivityInstanceDTO) {
         self.init()
         self.rid = dto.id
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
         self.parentRid = dto.parent_instance_id
         self.details = dto.details
@@ -92,8 +96,8 @@ final class ActivityInstance: SyncableModel {
     }
     
     func update(fromDto dto: ActivityInstanceDTO) {
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
         self.parentRid = dto.parent_instance_id
         self.details = dto.details
@@ -139,8 +143,8 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
             return nil
         }
         
-        self.time_start = instance.time_start
-        self.time_end = instance.time_end
+        self.time_start = instance.timeStart
+        self.time_end = instance.timeEnd
         self.activity_id = instance.activityRid
         self.parent_instance_id = instance.parent?.rid
         self.details = instance.details
@@ -155,36 +159,40 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     }
 }
 
-struct ActivityInstanceEditor {
-    var time_start: Date
-    var time_end: Date?
+struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
+    var timeStart: Date
+    var timeEnd: Date?
+    var timed: Bool
+    var percentage: Int
     var activity: Activity?
     var parent: ActivityInstance?
     var details: String?
-    var percentage: Int
     var decodedActivityDetails: ActivityDetails?
+    
+    typealias Model = ActivityInstance
     
     /// Initializes an editor from an existing ActivityInstance.
     init(from instance: ActivityInstance) {
-        self.time_start = instance.time_start
-        self.time_end = instance.time_end
+        self.timeStart = instance.timeStart
+        self.timeEnd = instance.timeEnd
+        self.timed = instance.timed
+        self.percentage = instance.percentage
         self.activity = instance.activity
         self.parent = instance.parent
         self.details = instance.details
-        self.percentage = instance.percentage
         self.decodedActivityDetails = instance.decodedActivityDetails
     }
     
     func apply(to instance: ActivityInstance) {
-        instance.time_start = self.time_start
-        instance.time_end = self.time_end
+        instance.timeStart = self.timeStart
+        instance.timeEnd = self.timeEnd
+        instance.timed = self.timed
+        instance.percentage = self.percentage
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
         instance.parent = self.parent
         instance.details = self.details
-        instance.percentage = self.percentage
         instance.decodedActivityDetails = self.decodedActivityDetails
-        
     }
     
 

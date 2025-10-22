@@ -69,9 +69,9 @@ struct ActivityHierarchyView: View {
                 }
             }
             
-            if instance.time_end == nil {
-                let hasActiveTrips = instance.trips?.contains { $0.time_end == nil } ?? false
-                let hasActiveInteractions = instance.interactions?.contains { $0.time_end == nil } ?? false
+            if instance.timeEnd == nil {
+                let hasActiveTrips = instance.trips?.contains { $0.timeEnd == nil } ?? false
+                let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
                 
                 VStack(alignment: .leading, spacing: 4) {
                     if !hasActiveTrips && instance.activity?.can(.create_trips) == true {
@@ -105,6 +105,6 @@ extension ActivityInstance {
         if let interactions = self.interactions {
             allChildren.append(contentsOf: interactions)
         }
-        return allChildren.sorted(by: { $0.time_start < $1.time_start })
+        return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
     }
 }

@@ -86,7 +86,7 @@ class ActivityInstanceSyncer: BaseSyncer<ActivityInstance, ActivityInstanceDTO, 
         let future = Date.distantFuture
         
         let relevantLocalModels = allLocalModels.filter { model in
-            model.time_start < endOfDayForEndDate && (model.time_end ?? future) > startOfDay
+            model.timeStart < endOfDayForEndDate && (model.timeEnd ?? future) > startOfDay
         }
         let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
         let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in

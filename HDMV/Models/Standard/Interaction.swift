@@ -10,13 +10,14 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class Interaction: Equatable, SyncableModel {
+final class Interaction: LogModel {
         
     @Attribute(.unique) var rid: Int?
-    var time_start: Date = Date()
-    var time_end: Date?
+    var timeStart: Date = Date()
+    var timeEnd: Date?
     var timed: Bool = true
-    var in_person: Bool = true
+    var percentage: Int = 100
+    var inPerson: Bool = true
     var personRid: Int?
     @Relationship
     var person: Person? {
@@ -24,7 +25,6 @@ final class Interaction: Equatable, SyncableModel {
             personRid = person?.rid
         }
     }
-    var percentage: Int?
     var parentInstanceRid: Int?
     @Relationship(deleteRule: .nullify)
     var parentInstance: ActivityInstance? {
@@ -37,28 +37,29 @@ final class Interaction: Equatable, SyncableModel {
     
     typealias DTO = InteractionDTO
     typealias Payload = InteractionPayload
+    typealias Editor = InteractionEditor
 
     init(
         rid: Int? = nil,
         time_start: Date = .now,
         time_end: Date? = nil,
         timed: Bool = true,
+        percentage: Int = 100,
         parentInstance: ActivityInstance? = nil,
         person: Person? = nil,
         in_person: Bool = true,
         details: String? = nil,
-        percentage: Int? = nil,
         syncStatus: SyncStatus = .local
     ) {
         self.rid = rid
-        self.time_start = time_start
-        self.time_end = time_end
+        self.timeStart = time_start
+        self.timeEnd = time_end
         self.timed = timed
-        self.parentInstance = parentInstance
-        self.person = person
-        self.in_person = in_person
-        self.details = details
         self.percentage = percentage
+        self.person = person
+        self.inPerson = in_person
+        self.parentInstance = parentInstance
+        self.details = details
         self.syncStatus = syncStatus
     }
     
@@ -66,26 +67,28 @@ final class Interaction: Equatable, SyncableModel {
         self.init()
         
         self.rid = dto.id
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
-        self.parentInstanceRid = dto.parent_activity_id
-        self.personRid = dto.person_id
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
+        self.percentage = dto.percentage ?? 100
         self.timed = dto.timed
-        self.in_person = dto.in_person
+        self.personRid = dto.person_id
+        self.inPerson = dto.in_person
         self.details = dto.details
-        self.percentage = dto.percentage
+        self.parentInstanceRid = dto.parent_activity_id
         self.syncStatus = .synced
     }
     
     func update(fromDto dto: InteractionDTO) {
-        self.time_start = dto.time_start
-        self.time_end = dto.time_end
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
+        self.timed = dto.timed
+        self.percentage = dto.percentage ?? 100
+
         self.parentInstanceRid = dto.parent_activity_id
         self.personRid = dto.person_id
         self.timed = dto.timed
-        self.in_person = dto.in_person
+        self.inPerson = dto.in_person
         self.details = dto.details
-        self.percentage = dto.percentage
         
         if self.person?.rid != self.personRid { self.person = nil }
         if self.parentInstance?.rid != self.parentInstanceRid { self.parentInstance = nil }
@@ -114,12 +117,12 @@ struct InteractionDTO: Codable, Identifiable, Sendable {
     var id: Int
     var time_start: Date
     var time_end: Date?
-    var parent_activity_id: Int?
-    var person_id: Int
     var timed: Bool
-    var in_person: Bool
-    var details: String?
     var percentage: Int?
+    var person_id: Int
+    var in_person: Bool
+    var parent_activity_id: Int?
+    var details: String?
 }
 
 
@@ -129,88 +132,82 @@ struct InteractionPayload: Codable, InitializableWithModel {
     
     var time_start: Date?
     var time_end: Date?
-    var parent_instance_id: Int?
-    var person_id: Int?
     var timed: Bool
+    var percentage: Int
+    var person_id: Int?
     var in_person: Bool
+    var parent_instance_id: Int?
     var details: String?
-    var percentage: Int?
         
     /// Creates a payload directly from a Interaction model object.
     /// This is the primary initializer you'll use in your ViewModel.
     init(from interaction: Interaction) {
-        self.time_start = interaction.time_start
-        self.time_end = interaction.time_end
+        self.time_start = interaction.timeStart
+        self.time_end = interaction.timeEnd
         self.parent_instance_id = interaction.parentInstanceRid
         self.person_id = interaction.personRid
         self.timed = interaction.timed
-        self.in_person = interaction.in_person
+        self.in_person = interaction.inPerson
         self.details = interaction.details
         self.percentage = interaction.percentage
     }
 }
 
 
-struct InteractionEditor {
+struct InteractionEditor: EditorProtocol {
     
     var time_start: Date
     var time_end: Date?
     var timed: Bool
-    var in_person: Bool
-    var details: String?
     var percentage: Int?
-    
     var personRid: Int?
     var person: Person?
-    
+    var in_person: Bool
     var parentInstanceRid: Int?
     var parentInstance: ActivityInstance?
+    var details: String?
     
-    
+    typealias Model = Interaction
+
     // MARK: - Derived flags
     
-    /// Indicates if the linked person record might be archived or missing.
     var isPersonArchived: Bool {
         person == nil && personRid != nil
     }
     
-    /// Indicates if this editor has a linked parent activity.
     var hasParent: Bool {
         parentInstance != nil || parentInstanceRid != nil
     }
     
     // MARK: - Init from model
     
-    init(interaction: Interaction) {
-        self.time_start = interaction.time_start
-        self.time_end = interaction.time_end
+    init(from interaction: Interaction) {
+        self.time_start = interaction.timeStart
+        self.time_end = interaction.timeEnd
         self.timed = interaction.timed
-        self.in_person = interaction.in_person
-        self.details = interaction.details
         self.percentage = interaction.percentage
-        
+        self.in_person = interaction.inPerson
         self.person = interaction.person
         self.personRid = interaction.personRid
         self.parentInstance = interaction.parentInstance
         self.parentInstanceRid = interaction.parentInstanceRid
+        self.details = interaction.details
     }
     
     // MARK: - Apply back to model
     
     func apply(to interaction: Interaction) {
-        interaction.time_start = self.time_start
-        interaction.time_end = self.time_end
+        interaction.timeStart = self.time_start
+        interaction.timeEnd = self.time_end
         interaction.timed = self.timed
-        interaction.in_person = self.in_person
-        interaction.details = self.details
-        interaction.percentage = self.percentage
-        
+        interaction.percentage = self.percentage ?? 100
         interaction.person = self.person
         interaction.personRid = self.person?.rid
-
+        interaction.inPerson = self.in_person
         interaction.parentInstance = self.parentInstance
         interaction.parentInstanceRid = self.parentInstance?.rid
-        
+        interaction.details = self.details
+
         interaction.markAsModified()
     }
 }

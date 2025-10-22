@@ -1,14 +1,13 @@
 //
-//  PathDetailViewModel.swift
+//  ActivityDetailSheetViewModel.swift
 //  HDMV
 //
-//  Created by Ghislain Demael on 08.10.2025.
+//  Created by Ghislain Demael on 22.10.2025.
 //
 
 
 import SwiftUI
 import SwiftData
-import UniformTypeIdentifiers
 
 @MainActor
 class ActivityDetailSheetViewModel: ObservableObject {

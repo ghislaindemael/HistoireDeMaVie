@@ -49,7 +49,9 @@ struct MyActivitiesPage: View {
                 ) { instance in
                     ActivityInstanceDetailSheet(
                         instance: instance,
-                        viewModel: viewModel,
+                        modelContext: modelContext,
+                        availableTrips: viewModel.trips,
+                        availableInteractions: viewModel.interactions
                     )
                 }
                 .sheet(item: $tripToEdit) { trip in

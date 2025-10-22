@@ -92,7 +92,7 @@ struct ActivityDetailSheet: View {
     
     /// Handles the logic when the "Done" button is tapped.
     private func onDone() async {
-        activity.syncStatus = .local
+        activity.markAsModified()
         
         do {
             try modelContext.save()

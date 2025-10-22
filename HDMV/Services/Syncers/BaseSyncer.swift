@@ -94,8 +94,8 @@ where
             
             relevantLocalModels = allLocalModels.filter { model in
                 if let timeTrackableModel = model as? any TimeTrackable {
-                    return timeTrackableModel.time_start < endOfDay &&
-                    (timeTrackableModel.time_end ?? future) > startOfDay
+                    return timeTrackableModel.timeStart < endOfDay &&
+                    (timeTrackableModel.timeEnd ?? future) > startOfDay
                 }
                 return false
             }

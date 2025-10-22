@@ -33,7 +33,7 @@ struct InteractionRowView: View {
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
-            DateRangeDisplayView(startDate: interaction.time_start, endDate: interaction.time_end)
+            DateRangeDisplayView(startDate: interaction.timeStart, endDate: interaction.timeEnd)
             
             HStack {
                 if interaction.timed == false {
@@ -41,13 +41,13 @@ struct InteractionRowView: View {
                         .foregroundStyle(.red)
                         .bold()
                 }
-                if interaction.in_person {
+                if interaction.inPerson {
                     Image(systemName: "person.2")
                 } else {
                     Image(systemName: "phone")
                 }
                 GradientPercentageBarView(
-                    percentage: Double(interaction.percentage ?? 100)
+                    percentage: Double(interaction.percentage)
                 )
                 .frame(height: 8)
                 .padding(.leading, 4)
@@ -63,7 +63,7 @@ struct InteractionRowView: View {
                     .foregroundColor(Color.primary)
                     .font(.body)
             }
-            if interaction.time_end == nil {
+            if interaction.timeEnd == nil {
                 EndItemButton(title: "End Interaction", action: onEnd)
             }
         }

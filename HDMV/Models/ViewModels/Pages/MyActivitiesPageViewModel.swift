@@ -63,12 +63,12 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let future = Date.distantFuture
                 
                 let predicate = #Predicate<ActivityInstance> {
-                    $0.time_start < endOfDay &&
-                    ($0.time_end ?? future) > startOfDay
+                    $0.timeStart < endOfDay &&
+                    ($0.timeEnd ?? future) > startOfDay
                 }
                 descriptor = FetchDescriptor<ActivityInstance>(
                     predicate: predicate,
-                    sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                 )
                 
             case .byActivity:
@@ -89,8 +89,8 @@ class MyActivitiesPageViewModel: ObservableObject {
                 }
                 
                 let timePredicate = #Predicate<ActivityInstance> { instance in
-                    instance.time_start < endOfDay &&
-                    (instance.time_end ?? future) > startOfDay
+                    instance.timeStart < endOfDay &&
+                    (instance.timeEnd ?? future) > startOfDay
                 }
                 
                 let combinedPredicate = #Predicate<ActivityInstance> { instance in
@@ -100,7 +100,7 @@ class MyActivitiesPageViewModel: ObservableObject {
 
                 descriptor = FetchDescriptor<ActivityInstance>(
                     predicate: combinedPredicate,
-                    sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                 )
         }
         
@@ -122,12 +122,12 @@ class MyActivitiesPageViewModel: ObservableObject {
         let future = Date.distantFuture
         
         let predicate = #Predicate<Trip> {
-            $0.time_start < endOfDay &&
-            ($0.time_end ?? future) > startOfDay
+            $0.timeStart < endOfDay &&
+            ($0.timeEnd ?? future) > startOfDay
         }
         descriptor = FetchDescriptor<Trip>(
             predicate: predicate,
-            sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+            sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
         )
         
         do {
@@ -149,12 +149,12 @@ class MyActivitiesPageViewModel: ObservableObject {
         
         
         let predicate = #Predicate<Interaction> {
-            $0.time_start < endOfDay &&
-            ($0.time_end ?? future) > startOfDay
+            $0.timeStart < endOfDay &&
+            ($0.timeEnd ?? future) > startOfDay
         }
         descriptor = FetchDescriptor<Interaction>(
             predicate: predicate,
-            sortBy: [SortDescriptor(\.time_start, order: .reverse)]
+            sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
         )
         
         do {
@@ -164,13 +164,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    var unclaimedTrips: [Trip] {
-        trips.filter { $0.parentInstance == nil }
-    }
     
-    var unclaimedInteractions: [Interaction] {
-        interactions.filter { $0.parentInstance == nil }
-    }
     
     
     // MARK: - Core Synchronization Logic
@@ -208,7 +202,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         
         var date = Date.now
         if settings.planningMode {
-            date = parent.time_start
+            date = parent.timeStart
         }
         let newTrip = Trip(
             time_start: date,
@@ -226,26 +220,14 @@ class MyActivitiesPageViewModel: ObservableObject {
     func endTrip(trip: Trip){
         guard let context = modelContext else { return }
         do {
-            trip.time_end = .now
+            trip.timeEnd = .now
             trip.markAsModified()
             try context.save()
         } catch {
             print("Failed to end trip: \(error)")
         }
     }
-    
-    func claim(trip: Trip, for instance: ActivityInstance) {
-        guard let context = modelContext else { return }
-        
-        do {
-            trip.parentInstance = instance
-            trip.markAsModified()
-            try context.save()
-        } catch {
-            print("Failed to claim trip: \(error)")
-        }
-    }
-        
+            
     func createActivityInstance(date: Date? = nil) {
         guard let context = modelContext else { return }
         
@@ -257,7 +239,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
         
         let newInstance = ActivityInstance(
-            time_start: startTime,
+            timeStart: startTime,
             syncStatus: .local
         )
         
@@ -265,7 +247,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         do {
             try context.save()
             self.instances.append(newInstance)
-            self.instances.sort { $0.time_start > $1.time_start }
+            self.instances.sort { $0.timeStart > $1.timeStart }
         } catch {
             print("Failed to save new instance: \(error)")
         }
@@ -274,7 +256,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     func endActivityInstance(instance: ActivityInstance){
         guard let context = modelContext else { return }
         do {
-            instance.time_end = .now
+            instance.timeEnd = .now
             instance.syncStatus = .local
             try context.save()
         } catch {
@@ -300,7 +282,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     func endInteraction(interaction: Interaction){
         guard let context = modelContext else { return }
         do {
-            interaction.time_end = .now
+            interaction.timeEnd = .now
             interaction.markAsModified()
             try context.save()
         } catch {

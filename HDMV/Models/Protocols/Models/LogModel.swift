@@ -8,11 +8,6 @@
 import Foundation
 import SwiftData
 
-protocol LogModel: Identifiable, TimeTrackable, SyncableModel {
+protocol LogModel: Identifiable, TimeTrackable, SyncableModel, EditableModel {
     var id: PersistentIdentifier { get }
-    var time_start: Date { get }
 }
-
-extension ActivityInstance: LogModel {}
-extension Trip: LogModel {}
-extension Interaction: LogModel {}

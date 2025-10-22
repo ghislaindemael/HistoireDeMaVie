@@ -104,20 +104,20 @@ struct MyInteractionsPage: View {
                 rid: 201,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: .now.addingTimeInterval(-720),
+                percentage: 100,
                 person: matthieuC,
                 in_person: true,
                 details: "Test",
-                percentage: 100
             )
             
             let interaction2 = Interaction(
                 rid: 202,
                 time_start: .now.addingTimeInterval(-1000),
                 time_end: nil,
+                percentage: 50,
                 person: matthieuD,
                 in_person: false,
                 details: "Test",
-                percentage: 50
             )
             
             context.insert(interaction1)

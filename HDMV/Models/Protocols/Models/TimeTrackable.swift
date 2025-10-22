@@ -8,6 +8,8 @@
 import Foundation
 
 protocol TimeTrackable {
-    var time_start: Date { get }
-    var time_end: Date? { get }
+    var timeStart: Date { get set }
+    var timeEnd: Date? { get set }
+    var timed: Bool { get set }
+    var percentage: Int { get set }
 }

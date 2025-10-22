@@ -11,11 +11,11 @@ import SwiftData
 struct TripDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel: TripDetailViewModel
+    @StateObject private var viewModel: TripDetailSheetViewModel
 
     init(trip: Trip, modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: TripDetailViewModel(
-            trip: trip,
+        _viewModel = StateObject(wrappedValue: TripDetailSheetViewModel(
+            model: trip,
             modelContext: modelContext
         ))
     }
@@ -23,7 +23,7 @@ struct TripDetailSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                timeSection
+                TimeSection(editor: $viewModel.editor)
                 vehicleSection
                 
                 Section("Start Place") {
@@ -37,9 +37,8 @@ struct TripDetailSheet: View {
             }
             .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {
-                viewModel.onDone {
-                    dismiss()
-                }
+                viewModel.onDone()
+                dismiss()
             })
             .sheet(isPresented: $viewModel.isShowingPathSelector) {
                 PathSelectorSheet(
@@ -52,19 +51,6 @@ struct TripDetailSheet: View {
     }
     
     // MARK: - UI Sections
-    
-    private var timeSection: some View {
-        Section(header: Text("Time")) {
-            FullTimePicker(label: "Start Time", selection: $viewModel.editor.time_start)
-            Toggle("End Time?", isOn: $viewModel.showEndTime)
-            if viewModel.showEndTime {
-                FullTimePicker(label: "End Time", selection: Binding(
-                    get: { viewModel.editor.time_end ?? Date() },
-                    set: { viewModel.editor.time_end = $0 }
-                ))
-            }
-        }
-    }
     
     private var vehicleSection: some View {
         Section("Vehicle") {

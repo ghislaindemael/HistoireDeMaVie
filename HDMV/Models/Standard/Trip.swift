@@ -11,11 +11,14 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class Trip: Identifiable, SyncableModel {
+final class Trip: LogModel {
         
     var rid: Int?
-    var time_start: Date
-    var time_end: Date?
+    var timeStart: Date
+    var timeEnd: Date?
+    var timed: Bool = true
+    var percentage: Int = 100
+    
     var parentInstanceRid: Int?
     var parentInstance: ActivityInstance? {
         didSet {
@@ -48,16 +51,19 @@ final class Trip: Identifiable, SyncableModel {
     }
     var am_driver: Bool
     var path_str: String?
-
+    
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = TripDTO
     typealias Payload = TripPayload
+    typealias Editor = TripEditor
 
     init(rid: Int? = nil,
          time_start: Date,
          time_end: Date? = nil,
+         timed: Bool = true,
+         percentage: Int = 100,
          parentInstance: ActivityInstance? = nil,
          vehicle: Vehicle? = nil,
          placeStart: Place? = nil,
@@ -69,8 +75,8 @@ final class Trip: Identifiable, SyncableModel {
     {
         self.rid = rid
         self.parentInstance = parentInstance
-        self.time_start = time_start
-        self.time_end = time_end
+        self.timeStart = time_start
+        self.timeEnd = time_end
         self.vehicle = vehicle
         self.placeStart = placeStart
         self.placeEnd = placeEnd
@@ -83,8 +89,8 @@ final class Trip: Identifiable, SyncableModel {
     convenience init(fromDto dto: TripDTO) {
         self.init(
             rid: dto.id,
-            time_start: dto.timeStart,
-            time_end: dto.timeEnd,
+            time_start: dto.time_start,
+            time_end: dto.time_end,
         )
     }
     
@@ -94,17 +100,16 @@ final class Trip: Identifiable, SyncableModel {
     }
     
     func isValid() -> Bool {
-        return parentInstance != nil && placeStart != nil && placeEnd != nil && time_end != nil
+        return parentInstance != nil && placeStart != nil && placeEnd != nil && timeEnd != nil
     }
     
 }
 
-
 struct TripDTO: Identifiable, Codable, Sendable {
     let id: Int
     let parentId: Int?
-    let timeStart: Date
-    let timeEnd: Date?
+    let time_start: Date
+    let time_end: Date?
     let vehicleId: Int?
     let placeStartId: Int?
     let placeEndId: Int?
@@ -113,10 +118,8 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let details: String?
     
     enum CodingKeys: String, CodingKey {
-        case id, details
+        case id, details, time_start, time_end
         case parentId = "parent_id"
-        case timeStart = "time_start"
-        case timeEnd = "time_end"
         case vehicleId = "vehicle_id"
         case placeStartId = "place_start_id"
         case placeEndId = "place_end_id"
@@ -124,6 +127,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
         case pathId = "path_id"
     }
 }
+
 
 struct TripPayload: Codable, InitializableWithModel {
 
@@ -142,13 +146,13 @@ struct TripPayload: Codable, InitializableWithModel {
     init?(from trip: Trip) {
         guard trip.isValid(),
               let parentId = trip.parentInstance?.rid,
-              let timeEnd = trip.time_end,
+              let timeEnd = trip.timeEnd,
               let placeStartId = trip.placeStart?.rid,
               let placeEndId = trip.placeEnd?.rid
         else { return nil }
         
         self.parentId = parentId
-        self.timeStart = trip.time_start
+        self.timeStart = trip.timeStart
         self.timeEnd = timeEnd
         self.vehicleId = trip.vehicle?.rid
         self.placeStartId = placeStartId
@@ -171,21 +175,27 @@ struct TripPayload: Codable, InitializableWithModel {
     }
 }
 
-struct TripEditor {
+struct TripEditor: TimeTrackable, EditorProtocol {
+    
+    var timeStart: Date
+    var timeEnd: Date?
+    var timed: Bool = true
+    var percentage: Int = 100
+    
     var parent: ActivityInstance?
     var vehicle: Vehicle?
     var placeStart: Place?
     var placeEnd: Place?
     var path: Path?
     
-    var time_start: Date
-    var time_end: Date?
     var am_driver: Bool
     var details: String?
     
-    init(trip: Trip) {
-        self.time_start = trip.time_start
-        self.time_end = trip.time_end
+    typealias Model = Trip
+    
+    init(from trip: Trip) {
+        self.timeStart = trip.timeStart
+        self.timeEnd = trip.timeEnd
         self.am_driver = trip.am_driver
         self.details = trip.details
         self.parent = trip.parentInstance
@@ -196,8 +206,8 @@ struct TripEditor {
     }
     
     func apply(to trip: Trip) {
-        trip.time_start = self.time_start
-        trip.time_end = self.time_end
+        trip.timeStart = self.timeStart
+        trip.timeEnd = self.timeEnd
         trip.am_driver = self.am_driver
         trip.details = self.details
         trip.parentInstance = self.parent

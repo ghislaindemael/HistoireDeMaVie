@@ -16,7 +16,7 @@ struct InteractionDetailSheet: View {
 
     init(interaction: Interaction, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: InteractionDetailSheetViewModel(
-            interaction: interaction,
+            model: interaction,
             modelContext: modelContext
         ))
     }
@@ -31,10 +31,10 @@ struct InteractionDetailSheet: View {
             .navigationTitle("Edit Interaction")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar(onDone: {
-                viewModel.onDone {
+                viewModel.onDone()
                     dismiss()
                 }
-            })
+            )
         }
     }
     

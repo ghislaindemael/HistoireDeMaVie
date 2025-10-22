@@ -38,8 +38,8 @@ struct TripRowView: View {
                         SyncStatusIndicator(status: trip.syncStatus)
                     }
                     DateRangeDisplayView(
-                        startDate: trip.time_start,
-                        endDate: trip.time_end
+                        startDate: trip.timeStart,
+                        endDate: trip.timeEnd
                     )
                 }
             } else {
@@ -57,7 +57,7 @@ struct TripRowView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if trip.time_end == nil, let onEnd = onEnd {
+            if trip.timeEnd == nil, let onEnd = onEnd {
                 EndItemButton(title: "End Trip") {
                     onEnd()
                 }

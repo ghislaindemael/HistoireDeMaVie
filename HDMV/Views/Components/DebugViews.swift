@@ -47,14 +47,14 @@ extension ActivityInstance: DebugViewable {
                     .foregroundStyle(.orange)
             }
             HStack {
-                Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")
+                Text("Start: \(timeStart.formatted(date: .abbreviated, time: .shortened))")
                 
                 Spacer()
                 SyncStatusIndicator(status: syncStatus)
             }
             
-            if let time_end {
-                Text("End: \(time_end.formatted(date: .abbreviated, time: .shortened))")
+            if let timeEnd {
+                Text("End: \(timeEnd.formatted(date: .abbreviated, time: .shortened))")
             } else {
                 Text("End: In Progress")
             }
@@ -76,8 +76,6 @@ extension ActivityInstance: DebugViewable {
                 Text("Activity Details:")
                 Text(decodedActivityDetails.debugDescription)
             }
-            
-            
         }
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
@@ -118,13 +116,13 @@ extension Interaction: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Start: \(time_start.formatted(date: .abbreviated, time: .shortened))")                
+                Text("Start: \(timeStart.formatted(date: .abbreviated, time: .shortened))")                
                 Spacer()
                 SyncStatusIndicator(status: syncStatus)
             }
             
-            if let time_end {
-                Text("End: \(time_end.formatted(date: .abbreviated, time: .shortened))")
+            if let timeEnd {
+                Text("End: \(timeEnd.formatted(date: .abbreviated, time: .shortened))")
             } else {
                 Text("End: In Progress")
             }
@@ -150,7 +148,7 @@ extension Interaction: DebugViewable {
                     .foregroundStyle(.red)
             }
             
-            Text("Percentage: \((percentage ?? 100))%")
+            Text("Percentage: \((percentage))%")
             Text("Details: \(details ?? "N/A")")
             
         }
@@ -208,8 +206,8 @@ extension Trip: DebugViewable {
             }
             
             Section("Time") {
-                LabeledContent("Start", value: self.time_start.formatted(date: .numeric, time: .standard))
-                LabeledContent("End", value: self.time_end?.formatted(date: .numeric, time: .standard) ?? "In Progress")
+                LabeledContent("Start", value: self.timeStart.formatted(date: .numeric, time: .standard))
+                LabeledContent("End", value: self.timeEnd?.formatted(date: .numeric, time: .standard) ?? "In Progress")
             }
             
             Section("Relationships") {
