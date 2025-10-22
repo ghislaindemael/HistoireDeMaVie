@@ -267,7 +267,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     func createInteraction(parent: ActivityInstance) {
         guard let context = modelContext else { return }
         let newInteraction = Interaction(
-            time_start: .now,
+            timeStart: .now,
             parentInstance: parent
         )
         context.insert(newInteraction)

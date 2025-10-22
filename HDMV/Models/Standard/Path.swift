@@ -23,10 +23,9 @@ final class Path: SyncableModel {
     var placeStart: Place?
     var placeEnd: Place?
     
-    var metrics: PathMetrics?
+    var metrics: PathMetrics = PathMetrics()
     var geojsonTrack: GeoJSONLineString?
     
-    var path_ids: [Int]?
     var cache: Bool = true
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -40,9 +39,8 @@ final class Path: SyncableModel {
         details: String? = nil,
         placeStart: Place? = nil,
         placeEnd: Place? = nil,
-        metrics: PathMetrics? = nil,
+        metrics: PathMetrics = PathMetrics(),
         geojsonTrack: GeoJSONLineString? = nil,
-        path_ids: [Int]? = nil,
         cache: Bool = true,
         archived: Bool = false,
         syncStatus: SyncStatus = .local
@@ -54,13 +52,11 @@ final class Path: SyncableModel {
         self.placeEnd = placeEnd
         self.metrics = metrics
         self.geojsonTrack = geojsonTrack
-        self.path_ids = path_ids
         self.cache = cache
         self.archived = archived
         self.syncStatus = syncStatus
     }
     
-    /// Create a Path from a DTO without resolving relationships
     convenience init(fromDto dto: PathDTO) {
         self.init(
             id: dto.id,
@@ -68,12 +64,10 @@ final class Path: SyncableModel {
             details: dto.details,
             metrics: dto.metrics,
             geojsonTrack: dto.geojson_track,
-            path_ids: dto.path_ids,
             cache: dto.cache,
             archived: dto.archived,
             syncStatus: .synced
         )
-        // Place relationships will be resolved later in the syncer
     }
     
     // MARK: - Update
@@ -83,7 +77,6 @@ final class Path: SyncableModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
-        self.path_ids = dto.path_ids
         self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
@@ -111,7 +104,7 @@ struct PathDTO: Codable, Sendable, Identifiable {
     var place_start_id: Int
     var place_end_id: Int
     var distance: Double?
-    var metrics: PathMetrics?
+    var metrics: PathMetrics
     var geojson_track: GeoJSONLineString?
     var path_ids: [Int]?
     var cache: Bool
@@ -145,7 +138,6 @@ struct PathPayload: Codable, InitializableWithModel {
         self.place_end_id = endId
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
-        self.path_ids = path.path_ids
         self.cache = path.cache
         self.archived = path.archived
     }
@@ -158,7 +150,7 @@ struct PathEditor {
     var placeStart: Place?
     var placeEnd: Place?
     var distance: Double?
-    var metrics: PathMetrics?
+    var metrics: PathMetrics = PathMetrics()
     var geojson_track: GeoJSONLineString?
     var path_ids: [Int]?
     var cache: Bool
@@ -171,7 +163,6 @@ struct PathEditor {
         self.placeEnd = path.placeEnd
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
-        self.path_ids = path.path_ids
         self.cache = path.cache
         self.archived = path.archived
     }
@@ -183,7 +174,6 @@ struct PathEditor {
         path.placeEnd = placeEnd
         path.metrics = metrics
         path.geojsonTrack = geojson_track
-        path.path_ids = path_ids
         path.cache = cache
         path.archived = archived
     }

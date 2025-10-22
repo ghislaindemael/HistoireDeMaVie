@@ -19,7 +19,7 @@ struct ParentActivitySelector: View {
                 dismiss()
             }
             
-            OutlineGroup(activities, children: \.children) { activity in
+            OutlineGroup(activities, children: \.optionalChildren) { activity in
                 
                 Button(action: {
                     selectedParent = activity

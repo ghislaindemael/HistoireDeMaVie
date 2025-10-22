@@ -298,9 +298,9 @@ struct PreviewWrapperView: View {
             time_start: .now.addingTimeInterval(-3500),
             time_end: .now.addingTimeInterval(-1800),
             parentInstance: travelInstance,
-            vehicle: nil,
             placeStart: place1,
             placeEnd: place2,
+            vehicle: nil,
             syncStatus: .synced
         )
         
@@ -309,9 +309,9 @@ struct PreviewWrapperView: View {
             time_start: .now.addingTimeInterval(-900),
             time_end: nil,
             parentInstance: inProgressInstance,
-            vehicle: nil,
             placeStart: place2,
             placeEnd: nil,
+            vehicle: nil,
             syncStatus: .syncing
         )
         

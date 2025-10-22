@@ -21,7 +21,7 @@ struct FullTimePicker: View {
     @State private var second: Int = 0
     
     @State private var selectedDateOnly: Date = Date()
-    
+
     init(label: String, selection: Binding<Date?>) {
         self.label = label
         self._selection = selection
@@ -49,29 +49,57 @@ struct FullTimePicker: View {
             }
             .animation(nil, value: isExpanded)
             
-            if isExpanded {
+            if isExpanded && selection != nil {
                 timeWheels
             }
         }
         .padding(.vertical, -6)
         .onAppear {
-            let current = selection ?? Date()
-            updatePickerState(from: current)
-            selectedDateOnly = Calendar.current.startOfDay(for: current)
+            updateComponentStates(from: selection)
+        }
+        .onChange(of: selection) { _, newDate in
+            updateComponentStates(from: newDate)
+            if newDate == nil { isExpanded = false }
         }
     }
     
-    private func mergeDateOnly(_ newDate: Date) {
+    private func updateComponentStates(from date: Date?) {
         let calendar = Calendar.current
-        let oldComponents = calendar.dateComponents([.hour, .minute, .second], from: selection ?? Date())
-        
-        var components = calendar.dateComponents([.year, .month, .day], from: newDate)
-        components.hour = oldComponents.hour
-        components.minute = oldComponents.minute
-        components.second = oldComponents.second
+        let dateForComponents = date ?? Date()
+        hour = calendar.component(.hour, from: dateForComponents)
+        minute = calendar.component(.minute, from: dateForComponents)
+        second = calendar.component(.second, from: dateForComponents)
+        selectedDateOnly = calendar.startOfDay(for: dateForComponents)
+    }
+    
+    private func mergeDateOnly(_ newDateOnlyPart: Date) {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: newDateOnlyPart)
+        components.hour = self.hour
+        components.minute = self.minute
+        components.second = self.second
         
         if let mergedDate = calendar.date(from: components) {
-            selection = mergedDate
+            if selection != mergedDate {
+                selection = mergedDate
+            }
+        }
+    }
+    
+    private func updateTimeFromWheels() {
+        guard let baseDate = selection else {
+            print("Warning: updateTimeFromWheels called when selection is nil. Ignoring.")
+            return
+        }
+        
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
+        components.hour = hour
+        components.minute = minute
+        components.second = second
+        
+        if let newDate = calendar.date(from: components), newDate != baseDate {
+            selection = newDate
         }
     }
     
@@ -84,24 +112,18 @@ struct FullTimePicker: View {
     }
     
     private func updateDate() {
-        guard let oldDate = selection else {
-            let newDate = Calendar.current.date(
-                bySettingHour: hour,
-                minute: minute,
-                second: second,
-                of: Date()
-            )
-            selection = newDate
+        guard let existingDate = selection else {
+            print("Warning: updateDate called when selection is nil. Ignoring.")
             return
         }
         
         let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: oldDate)
+        var components = calendar.dateComponents([.year, .month, .day], from: existingDate)
         components.hour = hour
         components.minute = minute
         components.second = second
         
-        if let newDate = calendar.date(from: components), newDate != oldDate {
+        if let newDate = calendar.date(from: components), newDate != existingDate {
             selection = newDate
         }
     }
@@ -109,7 +131,6 @@ struct FullTimePicker: View {
     private func setTimeToNow() {
         let now = Date()
         let calendar = Calendar.current
-        
         let baseDate = selection ?? now
         var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
         let nowComponents = calendar.dateComponents([.hour, .minute, .second], from: now)
@@ -120,13 +141,12 @@ struct FullTimePicker: View {
         
         if let newDate = calendar.date(from: components) {
             selection = newDate
-            updatePickerState(from: newDate)
+            updateComponentStates(from: newDate)
         }
     }
     
     private func setTimeTo(hour: Int, minute: Int, second: Int) {
         let calendar = Calendar.current
-        
         let baseDate = selection ?? Date()
         var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
         components.hour = hour
@@ -135,7 +155,7 @@ struct FullTimePicker: View {
         
         if let newDate = calendar.date(from: components) {
             selection = newDate
-            updatePickerState(from: newDate)
+            updateComponentStates(from: newDate)
         }
     }
     

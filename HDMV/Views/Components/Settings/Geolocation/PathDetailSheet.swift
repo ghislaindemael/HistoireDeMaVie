@@ -17,7 +17,6 @@ struct PathDetailSheet: View {
     @StateObject private var viewModel: PathDetailSheetViewModel
     let path: Path
     
-    @State private var isShowingPathSelector = false
     @State private var isShowingGpxFileImporter = false
     
     init(path: Path, modelContext: ModelContext) {
@@ -58,13 +57,6 @@ struct PathDetailSheet: View {
             .standardSheetToolbar() {
                 viewModel.onDone()
             }
-            .sheet(isPresented: $isShowingPathSelector) {
-                PathSelectorSheet(
-                    startPlaceId: path.placeStart?.rid,
-                    endPlaceId: path.placeEnd?.rid,
-                    onPathSelected: viewModel.addPathSegment
-                )
-            }
             .fileImporter(
                 isPresented: $isShowingGpxFileImporter,
                 allowedContentTypes: [.gpx],
@@ -81,35 +73,19 @@ struct PathDetailSheet: View {
     private var pathSection: some View {
         Section(header: Text("Paths")) {
             
-            Text("Distance: \(viewModel.editor.metrics?.distance ?? 0, specifier: "%.2f") m")
-            Text("Elevation Gain (D+): \(viewModel.editor.metrics?.elevationGain ?? 0, specifier: "%.1f") m")
-            Text("Elevation Loss (D-): \(viewModel.editor.metrics?.elevationLoss ?? 0, specifier: "%.1f") m")
+            HStack {
+                Text("Distance (m)")
+                Spacer()
+                TextField("Distance (m)", value: $viewModel.editor.metrics.distance, format: .number)
+                .keyboardType(.decimalPad)
+            }
+            Text("Elevation Gain (D+): \(viewModel.editor.metrics.elevationGain, specifier: "%.1f") m")
+            Text("Elevation Loss (D-): \(viewModel.editor.metrics.elevationLoss, specifier: "%.1f") m")
             Text("GeoJSON track points: \(viewModel.editor.geojson_track?.coordinates.count ?? 0)")
             
-            ForEach(viewModel.editor.path_ids ?? [], id: \.self) { pathId in
-                PathDisplayView(pathId: pathId)
+            Button(action: { isShowingGpxFileImporter = true }) {
+                Label("Import GPX", systemImage: "square.and.arrow.up.circle.fill")
             }
-            .onMove { indices, newOffset in
-                viewModel.editor.path_ids = (viewModel.editor.path_ids ?? [])
-                viewModel.editor.path_ids?.move(fromOffsets: indices, toOffset: newOffset)
-            }
-            .onDelete { indices in
-                viewModel.editor.path_ids = (viewModel.editor.path_ids ?? [])
-                viewModel.editor.path_ids?.remove(atOffsets: indices)
-            }
-            
-            if viewModel.editor.path_ids == nil {
-                Button(action: { isShowingGpxFileImporter = true }) {
-                    Label("Import GPX", systemImage: "square.and.arrow.up.circle.fill")
-                }
-            }
-            
-            if viewModel.editor.metrics == nil {
-                Button(action: { isShowingPathSelector = true }) {
-                    Label("Add path", systemImage: "plus.circle.fill")
-                }
-            }
-            
         }
     }
     

@@ -102,8 +102,8 @@ struct MyInteractionsPage: View {
             
             let interaction1 = Interaction(
                 rid: 201,
-                time_start: .now.addingTimeInterval(-1000),
-                time_end: .now.addingTimeInterval(-720),
+                timeStart: .now.addingTimeInterval(-1000),
+                timeEnd: .now.addingTimeInterval(-720),
                 percentage: 100,
                 person: matthieuC,
                 in_person: true,
@@ -112,8 +112,8 @@ struct MyInteractionsPage: View {
             
             let interaction2 = Interaction(
                 rid: 202,
-                time_start: .now.addingTimeInterval(-1000),
-                time_end: nil,
+                timeStart: .now.addingTimeInterval(-1000),
+                timeEnd: nil,
                 percentage: 50,
                 person: matthieuD,
                 in_person: false,

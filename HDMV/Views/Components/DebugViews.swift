@@ -229,9 +229,8 @@ extension Trip: DebugViewable {
             
             // MARK: - Details
             Section("Details") {
-                LabeledContent("Am Driver", value: self.am_driver.description)
+                LabeledContent("Am Driver", value: self.amDriver.description)
                 LabeledContent("Details Text", value: self.details ?? "N/A")
-                LabeledContent("Path String", value: self.path_str ?? "N/A")
             }
         }
     }

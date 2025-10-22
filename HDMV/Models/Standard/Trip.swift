@@ -25,6 +25,7 @@ final class Trip: LogModel {
             parentInstanceRid = parentInstance.rid
         }
     }
+    
     var placeStartRid: Int?
     @Relationship(deleteRule: .nullify)
     var placeStart: Place? {
@@ -44,14 +45,12 @@ final class Trip: LogModel {
     var vehicle: Vehicle? {
         didSet { vehicleRid = vehicle?.rid }
     }
+    var amDriver: Bool = false
     var pathRid: Int?
     @Relationship(deleteRule: .nullify)
     var path: Path? {
         didSet { pathRid = path?.rid }
     }
-    var am_driver: Bool
-    var path_str: String?
-    
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -60,43 +59,56 @@ final class Trip: LogModel {
     typealias Editor = TripEditor
 
     init(rid: Int? = nil,
-         time_start: Date,
+         time_start: Date = .now,
          time_end: Date? = nil,
-         timed: Bool = true,
-         percentage: Int = 100,
          parentInstance: ActivityInstance? = nil,
-         vehicle: Vehicle? = nil,
          placeStart: Place? = nil,
          placeEnd: Place? = nil,
-         am_driver: Bool = false,
+         vehicle: Vehicle? = nil,
+         amDriver: Bool = false,
          path: Path? = nil,
          details: String? = nil,
          syncStatus: SyncStatus = .local)
     {
         self.rid = rid
-        self.parentInstance = parentInstance
         self.timeStart = time_start
         self.timeEnd = time_end
-        self.vehicle = vehicle
+        self.parentInstance = parentInstance
         self.placeStart = placeStart
         self.placeEnd = placeEnd
-        self.am_driver = am_driver
+        self.vehicle = vehicle
+        self.amDriver = amDriver
         self.path = path
         self.details = details
         self.syncStatus = syncStatus
     }
     
     convenience init(fromDto dto: TripDTO) {
-        self.init(
-            rid: dto.id,
-            time_start: dto.time_start,
-            time_end: dto.time_end,
-        )
+        self.init()
+        self.rid = dto.id
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
+        self.parentInstanceRid = dto.parent_instance_id
+        self.placeStartRid = dto.place_start_id
+        self.placeEndRid = dto.place_end_id
+        self.vehicleRid = dto.vehicle_id
+        self.amDriver = dto.am_driver
+        self.pathRid = dto.path_id
+        self.details = dto.details
+        self.syncStatus = .synced
     }
     
     func update(fromDto dto: TripDTO) {
-        self.rid = dto.id
-        self.syncStatusRaw = SyncStatus.synced.rawValue
+        self.timeStart = dto.time_start
+        self.timeEnd = dto.time_end
+        self.parentInstanceRid = dto.parent_instance_id
+        self.placeStartRid = dto.place_start_id
+        self.placeEndRid = dto.place_end_id
+        self.vehicleRid = dto.vehicle_id
+        self.amDriver = dto.am_driver
+        self.pathRid = dto.path_id
+        self.details = dto.details
+        self.syncStatus = .synced
     }
     
     func isValid() -> Bool {
@@ -107,25 +119,15 @@ final class Trip: LogModel {
 
 struct TripDTO: Identifiable, Codable, Sendable {
     let id: Int
-    let parentId: Int?
+    let parent_instance_id: Int?
     let time_start: Date
     let time_end: Date?
-    let vehicleId: Int?
-    let placeStartId: Int?
-    let placeEndId: Int?
-    let amDriver: Bool
-    let pathId: Int?
+    let vehicle_id: Int?
+    let place_start_id: Int?
+    let place_end_id: Int?
+    let am_driver: Bool
+    let path_id: Int?
     let details: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id, details, time_start, time_end
-        case parentId = "parent_id"
-        case vehicleId = "vehicle_id"
-        case placeStartId = "place_start_id"
-        case placeEndId = "place_end_id"
-        case amDriver = "am_driver"
-        case pathId = "path_id"
-    }
 }
 
 
@@ -157,7 +159,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.vehicleId = trip.vehicle?.rid
         self.placeStartId = placeStartId
         self.placeEndId = placeEndId
-        self.amDriver = trip.am_driver
+        self.amDriver = trip.amDriver
         self.pathId = trip.path?.id
         self.details = trip.details
     }
@@ -196,7 +198,7 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     init(from trip: Trip) {
         self.timeStart = trip.timeStart
         self.timeEnd = trip.timeEnd
-        self.am_driver = trip.am_driver
+        self.am_driver = trip.amDriver
         self.details = trip.details
         self.parent = trip.parentInstance
         self.vehicle = trip.vehicle
@@ -208,7 +210,7 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     func apply(to trip: Trip) {
         trip.timeStart = self.timeStart
         trip.timeEnd = self.timeEnd
-        trip.am_driver = self.am_driver
+        trip.amDriver = self.am_driver
         trip.details = self.details
         trip.parentInstance = self.parent
         trip.vehicle = self.vehicle

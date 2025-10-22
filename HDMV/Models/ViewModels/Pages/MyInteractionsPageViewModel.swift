@@ -96,7 +96,7 @@ class MyInteractionsPageViewModel: ObservableObject {
     func createInteraction(date: Date? = nil) {
         guard let context = modelContext else { return }
         let newInteraction = Interaction(
-            time_start: date ?? .now
+            timeStart: date ?? .now
         )
         context.insert(newInteraction)
         do {

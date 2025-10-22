@@ -22,7 +22,7 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         }
     }
     @Relationship(deleteRule: .nullify, inverse: \Activity.parent)
-    var children: [Activity]? = []
+    var children: [Activity] = []
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
@@ -117,8 +117,11 @@ final class Activity: Identifiable, Hashable, SyncableModel {
         if self.syncStatus != .synced {
             return true
         }
-        return self.children?.contains(where: { $0.hasUnsyncedChanges }) ?? false
+        return self.children.contains(where: { $0.hasUnsyncedChanges })
     }
+    
+    var optionalChildren: [Activity]? { children.isEmpty ? nil : children }
+
     
 }
 

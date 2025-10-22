@@ -13,7 +13,7 @@ import SwiftData
 final class Interaction: LogModel {
         
     @Attribute(.unique) var rid: Int?
-    var timeStart: Date = Date()
+    var timeStart: Date
     var timeEnd: Date?
     var timed: Bool = true
     var percentage: Int = 100
@@ -41,8 +41,8 @@ final class Interaction: LogModel {
 
     init(
         rid: Int? = nil,
-        time_start: Date = .now,
-        time_end: Date? = nil,
+        timeStart: Date = .now,
+        timeEnd: Date? = nil,
         timed: Bool = true,
         percentage: Int = 100,
         parentInstance: ActivityInstance? = nil,
@@ -52,8 +52,8 @@ final class Interaction: LogModel {
         syncStatus: SyncStatus = .local
     ) {
         self.rid = rid
-        self.timeStart = time_start
-        self.timeEnd = time_end
+        self.timeStart = timeStart
+        self.timeEnd = timeEnd
         self.timed = timed
         self.percentage = percentage
         self.person = person

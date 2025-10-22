@@ -16,7 +16,7 @@ struct ActivitiesPage: View {
     var body: some View {
         NavigationStack {
             List {
-                OutlineGroup(viewModel.activities, children: \.children) { activity in
+                OutlineGroup(viewModel.activities, children: \.optionalChildren) { activity in
                     Button(action: {
                         activityToEdit = activity
                     }) {

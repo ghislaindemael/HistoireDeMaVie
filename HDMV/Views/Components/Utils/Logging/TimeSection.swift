@@ -9,8 +9,8 @@ import SwiftUI
 
 struct TimeSection<Editor: TimeTrackable>: View {
     @Binding var editor: Editor
-    let timeOnly: Bool = false
-
+    var timeOnly: Bool = false
+    
     private var percentageBinding: Binding<Double> {
         Binding<Double>(
             get: { Double(editor.percentage) },

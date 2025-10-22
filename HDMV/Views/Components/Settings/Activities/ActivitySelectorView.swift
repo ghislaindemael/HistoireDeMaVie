@@ -28,7 +28,7 @@ struct ActivitySelectorView: View {
                 dismiss()
             }
             
-            OutlineGroup(activityTree, children: \.children) { activity in
+            OutlineGroup(activityTree, children: \.optionalChildren) { activity in
                 Button(action: {
                     selectedActivity = activity
                     dismiss()

@@ -56,47 +56,33 @@ class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
         let pathCache = Dictionary(paths.compactMap { $0.rid != nil ? ($0.rid!, $0) : nil },
                                    uniquingKeysWith: { first, _ in first })
         
-        var linksMade = 0
         for trip in tripsToResolve {
             if trip.parentInstance == nil, let rid = trip.parentInstanceRid {
                 if let parent = instanceCache[rid] {
                     trip.parentInstance = parent
-                    linksMade += 1
                 }
             }
-            // Link Vehicle
             if trip.vehicle == nil, let rid = trip.vehicleRid {
                 if let vehicle = vehicleCache[rid] {
                     trip.vehicle = vehicle
-                    linksMade += 1
                 }
             }
-            // Link Place Start
             if trip.placeStart == nil, let rid = trip.placeStartRid {
                 if let place = placeCache[rid] {
                     trip.placeStart = place
-                    linksMade += 1
                 }
             }
-            // Link Place End
             if trip.placeEnd == nil, let rid = trip.placeEndRid {
                 if let place = placeCache[rid] {
                     trip.placeEnd = place
-                    linksMade += 1
                 }
             }
-            // Link Path
             if trip.path == nil, let rid = trip.pathRid {
                 if let path = pathCache[rid] {
                     trip.path = path
-                    linksMade += 1
                 }
             }
-        } // End loop
-        
-        if linksMade > 0 {
-            print("✅ Resolved \(linksMade) relationships for Trips.")
         }
-        // Save happens in pullChanges after this method returns.
+        
     }
 }

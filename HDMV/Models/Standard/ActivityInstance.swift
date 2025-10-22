@@ -34,9 +34,9 @@ final class ActivityInstance: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parent)
     var childActivities: [ActivityInstance]? = []
     @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
-    var trips: [Trip]? = []
+    var trips: [Trip]? = nil
     @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
-    var interactions: [Interaction]? = []
+    var interactions: [Interaction]? = nil
     var details: String?
     var activity_details: Data?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
