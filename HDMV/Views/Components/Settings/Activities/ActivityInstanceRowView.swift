@@ -295,8 +295,8 @@ struct PreviewWrapperView: View {
         
         let completedTrip = Trip(
             rid: 301,
-            time_start: .now.addingTimeInterval(-3500),
-            time_end: .now.addingTimeInterval(-1800),
+            timeStart: .now.addingTimeInterval(-3500),
+            timeEnd: .now.addingTimeInterval(-1800),
             parentInstance: travelInstance,
             placeStart: place1,
             placeEnd: place2,
@@ -306,8 +306,8 @@ struct PreviewWrapperView: View {
         
         let inProgressTrip = Trip(
             rid: 302,
-            time_start: .now.addingTimeInterval(-900),
-            time_end: nil,
+            timeStart: .now.addingTimeInterval(-900),
+            timeEnd: nil,
             parentInstance: inProgressInstance,
             placeStart: place2,
             placeEnd: nil,

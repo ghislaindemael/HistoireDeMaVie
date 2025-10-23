@@ -234,4 +234,31 @@ extension Trip: DebugViewable {
             }
         }
     }
+    
+    var debugText: String {
+        var components: [String] = []
+        components.append("--- Trip ---")
+        components.append("Local ID: \(self.id.id)")
+        components.append("RID: \(self.rid?.description ?? "nil (local)")")
+        components.append("Sync Status: \(self.syncStatus.rawValue)")
+        components.append("---")
+        components.append("Time Start: \(self.timeStart.formatted())")
+        components.append("Time End: \(self.timeEnd?.formatted() ?? "nil (In Progress)")")
+        components.append("Am Driver: \(self.amDriver)")
+        components.append("Details: \(self.details ?? "N/A")")
+        components.append("---")
+        components.append("Parent Instance RID: \(self.parentInstanceRid?.description ?? "nil")")
+        components.append("-> Parent Loaded: \(self.parentInstance != nil ? "Yes" : "No")")
+        components.append("Vehicle RID: \(self.vehicleRid?.description ?? "nil")")
+        components.append("-> Vehicle Loaded: \(self.vehicle != nil ? "Yes" : "No")")
+        components.append("Place Start RID: \(self.placeStartRid?.description ?? "nil")")
+        components.append("-> Place Start Loaded: \(self.placeStart != nil ? "Yes" : "No")")
+        components.append("Place End RID: \(self.placeEndRid?.description ?? "nil")")
+        components.append("-> Place End Loaded: \(self.placeEnd != nil ? "Yes" : "No")")
+        components.append("Path RID: \(self.pathRid?.description ?? "nil")")
+        components.append("-> Path Loaded: \(self.path != nil ? "Yes" : "No")")
+        components.append("------------")
+        
+        return components.joined(separator: "\n")
+    }
 }

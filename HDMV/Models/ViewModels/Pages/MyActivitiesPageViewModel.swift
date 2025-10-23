@@ -205,7 +205,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             date = parent.timeStart
         }
         let newTrip = Trip(
-            time_start: date,
+            timeStart: date,
             parentInstance: parent
         )
         context.insert(newTrip)

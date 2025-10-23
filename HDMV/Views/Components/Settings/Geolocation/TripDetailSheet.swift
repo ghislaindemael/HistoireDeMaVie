@@ -56,7 +56,7 @@ struct TripDetailSheet: View {
         Section("Vehicle") {
             VehicleSelectorView(
                 selectedVehicle: $viewModel.editor.vehicle,
-                amDriver: $viewModel.editor.am_driver
+                amDriver: $viewModel.editor.amDriver
             )
         }
     }

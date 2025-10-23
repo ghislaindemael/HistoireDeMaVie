@@ -14,7 +14,7 @@ import SwiftData
 final class Trip: LogModel {
         
     var rid: Int?
-    var timeStart: Date
+    var timeStart: Date = Date()
     var timeEnd: Date?
     var timed: Bool = true
     var percentage: Int = 100
@@ -59,8 +59,8 @@ final class Trip: LogModel {
     typealias Editor = TripEditor
 
     init(rid: Int? = nil,
-         time_start: Date = .now,
-         time_end: Date? = nil,
+         timeStart: Date = .now,
+         timeEnd: Date? = nil,
          parentInstance: ActivityInstance? = nil,
          placeStart: Place? = nil,
          placeEnd: Place? = nil,
@@ -71,8 +71,8 @@ final class Trip: LogModel {
          syncStatus: SyncStatus = .local)
     {
         self.rid = rid
-        self.timeStart = time_start
-        self.timeEnd = time_end
+        self.timeStart = timeStart
+        self.timeEnd = timeEnd
         self.parentInstance = parentInstance
         self.placeStart = placeStart
         self.placeEnd = placeEnd
@@ -112,7 +112,11 @@ final class Trip: LogModel {
     }
     
     func isValid() -> Bool {
-        return parentInstanceRid != nil && placeStartRid != nil && placeEndRid != nil && timeEnd != nil && vehicleRid != nil
+        return timeEnd != nil
+        && parentInstanceRid != nil
+        && placeStartRid != nil
+        && placeEndRid != nil
+        && vehicleRid != nil
     }
     
 }
@@ -135,45 +139,36 @@ struct TripPayload: Codable, InitializableWithModel {
 
     typealias Model = Trip
     
+    let time_start: Date
+    let time_end: Date
     let parent_instance_id: Int
-    let timeStart: Date
-    let timeEnd: Date
-    let vehicleId: Int?
-    let placeStartId: Int
-    let placeEndId: Int
-    let amDriver: Bool
+    let place_start_id: Int
+    let place_end_id: Int
+    let vehicle_id: Int?
+    let am_driver: Bool
     let pathId: Int?
     let details: String?
     
     init?(from trip: Trip) {
         guard trip.isValid(),
-              let parentId = trip.parentInstance?.rid,
               let timeEnd = trip.timeEnd,
-              let placeStartId = trip.placeStart?.rid,
-              let placeEndId = trip.placeEnd?.rid
+              let parentId = trip.parentInstanceRid,
+              let placeStartId = trip.placeStartRid,
+              let placeEndId = trip.placeEndRid,
+              let vehicleId = trip.vehicleRid
         else { return nil }
         
         self.parent_instance_id = parentId
-        self.timeStart = trip.timeStart
-        self.timeEnd = timeEnd
-        self.vehicleId = trip.vehicle?.rid
-        self.placeStartId = placeStartId
-        self.placeEndId = placeEndId
-        self.amDriver = trip.amDriver
+        self.time_start = trip.timeStart
+        self.time_end = timeEnd
+        self.vehicle_id = vehicleId
+        self.place_start_id = placeStartId
+        self.place_end_id = placeEndId
+        self.am_driver = trip.amDriver
         self.pathId = trip.path?.id
         self.details = trip.details
     }
     
-    enum CodingKeys: String, CodingKey {
-        case details, parent_instance_id
-        case timeStart = "time_start"
-        case timeEnd = "time_end"
-        case vehicleId = "vehicle_id"
-        case placeStartId = "place_start_id"
-        case placeEndId = "place_end_id"
-        case amDriver = "am_driver"
-        case pathId = "path_id"
-    }
 }
 
 struct TripEditor: TimeTrackable, EditorProtocol {
@@ -189,17 +184,17 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     var placeEnd: Place?
     var path: Path?
     
-    var am_driver: Bool
+    var amDriver: Bool
     var details: String?
     
     typealias Model = Trip
     
     init(from trip: Trip) {
+        self.parent = trip.parentInstance
         self.timeStart = trip.timeStart
         self.timeEnd = trip.timeEnd
-        self.am_driver = trip.amDriver
+        self.amDriver = trip.amDriver
         self.details = trip.details
-        self.parent = trip.parentInstance
         self.vehicle = trip.vehicle
         self.placeStart = trip.placeStart
         self.placeEnd = trip.placeEnd
@@ -207,16 +202,22 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     }
     
     func apply(to trip: Trip) {
+
         trip.timeStart = self.timeStart
         trip.timeEnd = self.timeEnd
-        trip.amDriver = self.am_driver
-        trip.details = self.details
         trip.parentInstance = self.parent
-        trip.vehicle = self.vehicle
+        trip.parentInstanceRid = self.parent?.rid
         trip.placeStart = self.placeStart
+        trip.placeStartRid = self.placeStart?.rid
         trip.placeEnd = self.placeEnd
+        trip.placeEndRid = self.placeEnd?.rid
+        trip.vehicle = self.vehicle
+        trip.vehicleRid = self.vehicle?.rid
+        trip.amDriver = self.amDriver
         trip.path = self.path
-        
+        trip.pathRid = self.path?.rid
+        trip.details = self.details
+
         trip.markAsModified()
     }
 }
