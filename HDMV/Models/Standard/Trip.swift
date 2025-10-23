@@ -112,7 +112,7 @@ final class Trip: LogModel {
     }
     
     func isValid() -> Bool {
-        return parentInstance != nil && placeStart != nil && placeEnd != nil && timeEnd != nil
+        return parentInstanceRid != nil && placeStartRid != nil && placeEndRid != nil && timeEnd != nil && vehicleRid != nil
     }
     
 }
@@ -135,7 +135,7 @@ struct TripPayload: Codable, InitializableWithModel {
 
     typealias Model = Trip
     
-    let parentId: Int
+    let parent_instance_id: Int
     let timeStart: Date
     let timeEnd: Date
     let vehicleId: Int?
@@ -153,7 +153,7 @@ struct TripPayload: Codable, InitializableWithModel {
               let placeEndId = trip.placeEnd?.rid
         else { return nil }
         
-        self.parentId = parentId
+        self.parent_instance_id = parentId
         self.timeStart = trip.timeStart
         self.timeEnd = timeEnd
         self.vehicleId = trip.vehicle?.rid
@@ -165,8 +165,7 @@ struct TripPayload: Codable, InitializableWithModel {
     }
     
     enum CodingKeys: String, CodingKey {
-        case details
-        case parentId = "parent_id"
+        case details, parent_instance_id
         case timeStart = "time_start"
         case timeEnd = "time_end"
         case vehicleId = "vehicle_id"
