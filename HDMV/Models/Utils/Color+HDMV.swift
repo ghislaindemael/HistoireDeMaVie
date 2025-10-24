@@ -18,4 +18,11 @@ extension Color {
             }
         })
     }
+    
+    static var tertiaryBackgroundColor: Color {
+        Color(uiColor: .tertiarySystemGroupedBackground)        
+        // Use systemGray5 or systemGray6 for a more pronounced difference
+        // Color(uiColor: .systemGray6) // Lighter gray
+        // Color(uiColor: .systemGray5) // Darker gray than 6
+    }
 }

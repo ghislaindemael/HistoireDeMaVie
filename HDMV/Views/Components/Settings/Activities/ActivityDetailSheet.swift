@@ -15,13 +15,13 @@ struct ActivityDetailSheet: View {
     
     @StateObject private var viewModel: ActivityDetailSheetViewModel
     
-    let activity: Activity
     @Query var activityTree: [Activity]
 
-    
     init(activity: Activity, modelContext: ModelContext) {
-        self.activity = activity
-        _viewModel = StateObject(wrappedValue: ActivityDetailSheetViewModel(activity: activity, modelContext: modelContext))
+        _viewModel = StateObject(wrappedValue: ActivityDetailSheetViewModel(
+            model: activity,
+            modelContext: modelContext
+        ))
         let predicate = #Predicate<Activity> { $0.parent == nil }
         _activityTree = Query(filter: predicate, sort: \.name)
     }
@@ -40,7 +40,7 @@ struct ActivityDetailSheet: View {
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
                         Spacer()
-                        IconView(iconString: activity.icon ?? "")
+                        IconView(iconString: viewModel.editor.icon ?? "")
                     }
                     NavigationLink(destination: ParentActivitySelector(
                         activities: activityTree,
@@ -57,24 +57,23 @@ struct ActivityDetailSheet: View {
                     ForEach(ActivityCapability.allCases) { capability in
                         VStack(alignment: .leading) {
                             Toggle(capability.label, isOn: Binding(
-                                get: { activity.hasCapability(capability) },
-                                set: { _ in activity.toggleCapability(capability) }
+                                get: { viewModel.editor.hasCapability(capability) },
+                                set: { _ in viewModel.editor.toggleCapability(capability) }
                             ))
                             
-                            if activity.hasCapability(capability) {
+                            if viewModel.editor.hasCapability(capability) {
                                 Toggle("Mark as Required", isOn: Binding(
-                                    get: { activity.isRequired(capability) },
-                                    set: { _ in activity.toggleRequired(capability) }
+                                    get: { viewModel.editor.isRequired(capability) },
+                                    set: { _ in viewModel.editor.toggleRequired(capability) }
                                 ))
                                 .padding(.leading, 10)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                         }
                     }
-                    .animation(.default, value: activity.allowedCapabilities)
+                    .animation(.default, value: viewModel.editor.allowedCapabilities)
                 }
 
-                
                 Section("Usage") {
                     Toggle("Selectable", isOn: $viewModel.editor.selectable)
                     Toggle("Cached", isOn: $viewModel.editor.cache)
@@ -85,23 +84,11 @@ struct ActivityDetailSheet: View {
             .navigationTitle("Edit Activity")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
-                await onDone()
+                viewModel.onDone()
             }
         }
     }
     
-    /// Handles the logic when the "Done" button is tapped.
-    private func onDone() async {
-        activity.markAsModified()
-        
-        do {
-            try modelContext.save()
-            print("✅ Activity '\(activity.name ?? "TOSET")' saved to context.")
-        } catch {
-            print("❌ Failed to save activity to context: \(error)")
-        }
-        
-    }
     
     
 }

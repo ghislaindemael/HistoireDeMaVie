@@ -29,6 +29,12 @@ struct ActivityInstanceRowView: View {
             basicsSection
             detailsSection
         }
+        .frame(maxWidth: .infinity)
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondaryBackgroundColor)
+        )
         
     }
     
@@ -80,12 +86,6 @@ struct ActivityInstanceRowView: View {
             SyncStatusIndicator(status: instance.syncStatus)
                 .padding([.top, .trailing], 0)
         }
-        .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.secondaryBackgroundColor)
-        )
     }
     
     @ViewBuilder
@@ -98,7 +98,7 @@ struct ActivityInstanceRowView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(UIColor.secondarySystemBackground))
+                            .fill(Color(UIColor.tertiarySystemBackground))
                     )
                     .foregroundColor(Color.primary)
                     .font(.body)
@@ -106,8 +106,7 @@ struct ActivityInstanceRowView: View {
             
             if instance.percentage != 100 {
                 GradientPercentageBarView(percentage: Double(instance.percentage))
-                    .frame(height: 8)
-                    .padding(.leading, 4)
+                    .frame(height: 10)
             }
             if instance.activity?.can(.log_food) == true {
                 mealContentText
@@ -127,7 +126,7 @@ struct ActivityInstanceRowView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                    .fill(Color(UIColor.tertiarySystemBackground))
             )
             .foregroundColor(isMissingRequiredDetails ? .red : .primary)
             .fontWeight(isMissingRequiredDetails ? .bold : .regular)

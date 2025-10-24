@@ -13,7 +13,6 @@ struct InteractionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
         
-
     init(interaction: Interaction, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: InteractionDetailSheetViewModel(
             model: interaction,

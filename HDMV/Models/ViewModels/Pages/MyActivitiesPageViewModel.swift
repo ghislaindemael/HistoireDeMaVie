@@ -201,7 +201,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         
         var date = Date.now
-        if settings.planningMode {
+        if settings.planningMode && parent.timeEnd != nil {
             date = parent.timeStart
         }
         let newTrip = Trip(

@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class Activity: Identifiable, Hashable, SyncableModel {
+final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable {
     
     var rid: Int?
     var name: String?
@@ -33,6 +33,7 @@ final class Activity: Identifiable, Hashable, SyncableModel {
     
     typealias Payload = ActivityPayload
     typealias DTO = ActivityDTO
+    typealias Editor = ActivityEditor
     
     init(
         rid: Int? = nil,
@@ -132,7 +133,7 @@ struct ActivityDTO: Codable, Identifiable {
     let name: String
     let slug: String
     let parent_id: Int?
-    let icon: String
+    let icon: String?
     let allowed_capabilities: [String]?
     let required_capabilities: [String]?
     let selectable: Bool
@@ -173,7 +174,7 @@ struct ActivityPayload: Codable, InitializableWithModel {
 }
 
 
-struct ActivityEditor: CachableModel {
+struct ActivityEditor: CachableModel, EditorProtocol, Capable {
     var name: String?
     var slug: String?
     var parentRid: Int?
@@ -184,6 +185,8 @@ struct ActivityEditor: CachableModel {
     var selectable: Bool = true
     var cache: Bool = true
     var archived: Bool = false
+    
+    typealias Model = Activity
     
     init(from activity: Activity) {
         self.name = activity.name
@@ -201,8 +204,8 @@ struct ActivityEditor: CachableModel {
     func apply(to activity: Activity) {
         activity.name = self.name
         activity.slug = self.slug
-        activity.parentRid = self.parentRid
         activity.parent = self.parent
+        activity.parentRid = self.parentRid
         activity.icon = self.icon
         activity.allowedCapabilities = self.allowedCapabilities
         activity.requiredCapabilities = self.requiredCapabilities

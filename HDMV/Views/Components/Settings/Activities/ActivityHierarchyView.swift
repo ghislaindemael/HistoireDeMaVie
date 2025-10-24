@@ -14,6 +14,7 @@ struct ActivityHierarchyView: View {
     let level: Int
     
     @EnvironmentObject var viewModel: MyActivitiesPageViewModel
+    @ObservedObject var settings = SettingsStore.shared
     
     @State private var isDropTargeted: Bool = false
     
@@ -35,7 +36,7 @@ struct ActivityHierarchyView: View {
                 instance: instance,
                 selectedDate: viewModel.filterDate,
             )
-            .background(isDropTargeted ? Color.accentColor.opacity(0.2) : Color.clear)
+            .background(isDropTargeted ? Color.green.opacity(0.2) : Color.clear)
             .contentShape(Rectangle())
             .onTapGesture { instanceToEdit = instance }
             .cornerRadius(8)
@@ -54,7 +55,7 @@ struct ActivityHierarchyView: View {
                     indicatorColor
                         .frame(width: indicatorWidth)
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         ForEach(instance.sortedChildren, id: \.id) { item in
                             LogItemRowView(
                                 item: item,
@@ -74,9 +75,11 @@ struct ActivityHierarchyView: View {
                 let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    if !hasActiveTrips && instance.activity?.can(.create_trips) == true {
-                        StartItemButton(title: "Start Trip") {
-                            viewModel.createTrip(parent: instance)
+                    if (instance.activity?.can(.create_trips) == true) {
+                        if !hasActiveTrips || settings.planningMode  {
+                            StartItemButton(title: "Start Trip") {
+                                viewModel.createTrip(parent: instance)
+                            }
                         }
                     }
                     
