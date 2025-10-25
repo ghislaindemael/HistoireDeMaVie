@@ -12,41 +12,61 @@ import SwiftData
 struct PlaceDisplayView: View {
     @Query private var places: [Place]
     
-    private let placeId: Int?
+    private let placeRid: Int?
     private let isSmall: Bool
+    private let showMapPin: Bool
+    private let color: Color
+    private let fontWeight: Font.Weight
     
     private var place: Place? {
         places.first
     }
 
-    init(placeId: Int?, isSmall: Bool = false) {
-        self.placeId = placeId
+    init(
+        placeRid: Int?,
+        isSmall: Bool = false,
+        showMapPin: Bool = false,
+        color: Color? = .red,
+        fontWeight: Font.Weight? = .regular
+    ) {
+        self.placeRid = placeRid
         self.isSmall = isSmall
+        self.showMapPin = showMapPin
+        self.color = color ?? .red
+        self.fontWeight = fontWeight ?? .regular
         
-        if let id = placeId, id > 0 {
-            _places = Query(filter: #Predicate { $0.rid == id })
+        if let rid = placeRid {
+            _places = Query(filter: #Predicate { $0.rid == rid })
         } else {
             _places = Query(filter: #Predicate { _ in false })
         }
     }
     
     var body: some View {
-        if let place = place {
-            if isSmall {
-                Text(place.city?.name ?? "—")
-                    .foregroundStyle(.secondary)
+        HStack {
+            if let place = place {
+                if showMapPin {
+                    IconView(iconString: "mappin.circle")
+                }
+                if isSmall {
+                    Text(place.city?.name ?? "—")
+                        .foregroundStyle(.secondary)
+                } else {
+                    let cityName = place.city?.name ?? "—"
+                    Text("\(cityName) – \(place.name)")
+                }
+            } else if let id = placeRid, id > 0 {
+                if showMapPin {
+                    IconView(iconString: "mappin.circle", tint: .orange)
+                }
+                Text(isSmall == false ? "Place uncached" : "Uncached")
+                    .foregroundStyle(.orange)
             } else {
-                let cityName = place.city?.name ?? "—"
-                let placeName = place.name ?? "Unnamed"
-                Text("\(cityName) – \(placeName)")
+                if showMapPin { IconView(iconString: "mappin.circle", tint: color) }
+                Text(isSmall ? "Unset" : "Place unset")
+                    .foregroundStyle(color)
+                    .fontWeight(fontWeight)
             }
-        } else if let id = placeId, id > 0 {
-            Text("Uncached")
-                .foregroundStyle(.orange)
-        } else {
-            Text("Unset")
-                .foregroundStyle(.red)
-                .fontWeight(.semibold)
         }
     }
 }

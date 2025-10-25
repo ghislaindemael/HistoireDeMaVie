@@ -11,7 +11,7 @@ import SwiftData
 struct ActivityInstanceRowView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var settings = SettingsStore.shared
-        
+    
     let instance: ActivityInstance
     let selectedDate: Date
     
@@ -111,16 +111,19 @@ struct ActivityInstanceRowView: View {
             if instance.activity?.can(.log_food) == true {
                 mealContentText
             }
+            if instance.activity?.shouldShowPlaceLink(settings: settings) == true {
+                linkedPlaceView
+            }
             
         }
     }
-            
+    
     @ViewBuilder
     private var mealContentText: some View {
         
         let displayText = instance.decodedActivityDetails?.meal?.displayText ?? "Meal not logged."
         let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && instance.decodedActivityDetails?.meal == nil
-
+        
         Text(displayText)
             .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,6 +134,30 @@ struct ActivityInstanceRowView: View {
             .foregroundColor(isMissingRequiredDetails ? .red : .primary)
             .fontWeight(isMissingRequiredDetails ? .bold : .regular)
             .font(.body)
+    }
+    
+    @ViewBuilder
+    private var linkedPlaceView: some View {
+        
+        let placeId = instance.decodedActivityDetails?.place?.placeId
+        let color = instance.activity?.placeUnsetColor(settings: settings, placeId: placeId)
+        let weight = instance.activity?.placeUnsetWeight(placeId: placeId)
+
+        PlaceDisplayView(
+            placeRid: placeId,
+            showMapPin: true,
+            color: color,
+            fontWeight: weight
+        )
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(UIColor.tertiarySystemBackground))
+            )
+            .font(.body)
+
+        
     }
     
     private func displayDateIfNeeded(for date: Date, comparedTo selectedDate: Date) -> String? {
@@ -152,7 +179,7 @@ struct InstanceSection: View {
     let instance: ActivityInstance
     
     @Environment(\.modelContext) private var modelContext
-        
+    
     init(
         title: String,
         instance: ActivityInstance,

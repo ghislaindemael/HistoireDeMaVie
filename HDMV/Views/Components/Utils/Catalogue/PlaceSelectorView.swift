@@ -22,7 +22,10 @@ struct PlaceSelectorView: View {
     
     private var placesForSelectedCity: [Place] {
         guard let cityId = displayCityId else { return [] }
-        let predicate = #Predicate<Place> { $0.cityRid == cityId && $0.name != nil }
+        let predicate = #Predicate<Place> {
+            $0.cityRid == cityId &&
+            $0.cache == true
+        }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Place.name)])
         return (try? modelContext.fetch(descriptor)) ?? []
     }
@@ -75,7 +78,7 @@ struct PlaceSelectorView: View {
         Picker("Place", selection: $selectedPlace) {
             Text("Select a Place").tag(nil as Place?)
             ForEach(placesForSelectedCity) { place in
-                Text(place.name!).tag(place as Place?)
+                Text(place.name).tag(place as Place?)
             }
         }
         .onChange(of: selectedPlace) { _, newPlace in

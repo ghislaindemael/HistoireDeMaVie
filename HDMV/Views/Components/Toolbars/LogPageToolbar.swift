@@ -39,10 +39,13 @@ struct LogPageToolbar: ViewModifier {
                             settings.planningMode.toggle()
                         }) {
                             Label {
-                                Text("Planning Mode")
-                                    .fontWeight(settings.planningMode ? .bold : .regular)
+                                Text("\(settings.planningMode ? "Exit": "Enter") Planning Mode")
                             } icon: {
-                                Image(systemName: "calendar")
+                                if settings.planningMode {
+                                    Image(systemName: "calendar.badge.minus")
+                                } else {
+                                    Image(systemName: "calendar.badge.plus")
+                                }
                             }
                         }
                     } label: {

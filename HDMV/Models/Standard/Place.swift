@@ -11,10 +11,10 @@ import SwiftData
 
 // MARK: - SwiftData Model
 @Model
-final class Place: CatalogueModel {
+final class Place: CatalogueModel, EditableModel {
     
     var rid: Int?
-    var name: String?
+    var name: String
     var cityRid: Int?
     @Relationship(deleteRule: .nullify)
     var relCity: City? {
@@ -28,6 +28,7 @@ final class Place: CatalogueModel {
     
     typealias DTO = PlaceDTO
     typealias Payload = PlacePayload
+    typealias Editor = PlaceEditor
     
     var city: City? {
         get {
@@ -45,7 +46,7 @@ final class Place: CatalogueModel {
     }
 
     init(rid: Int? = nil,
-         name: String? = nil,
+         name: String = "Unset",
          cityRid: Int? = nil,
          relCity: City? = nil,
          cache: Bool = true,
@@ -81,7 +82,7 @@ final class Place: CatalogueModel {
     }
     
     func isValid() -> Bool {
-        return name != nil && cityRid != nil
+        return name != "Unset" && name.count > 0 && cityRid != nil
     }
 }
 
@@ -105,25 +106,26 @@ struct PlacePayload: Codable, InitializableWithModel {
     
     init?(from place: Place) {
         guard place.isValid(),
-              let name = place.name,
               let cityRid = place.city?.rid ?? place.cityRid else {
             return nil
         }
-        self.name = name
+        self.name = place.name
         self.city_id = cityRid
         self.cache = place.cache
         self.archived = place.archived
     }
 }
 
-struct PlaceEditor: CachableModel {
+struct PlaceEditor: CachableModel, EditorProtocol {
     var rid: Int?
     var slug: String?
-    var name: String?
+    var name: String
     var cityRid: Int?
     var city: City?
     var cache: Bool
     var archived: Bool
+    
+    typealias Model = Place
     
     init(from place: Place) {
         self.rid = place.rid
@@ -136,7 +138,7 @@ struct PlaceEditor: CachableModel {
     
     func apply(to place: Place) {
         place.rid = self.rid
-        if let name = self.name { place.name = name }
+        place.name = self.name
         
         if let selectedCity = self.city {
             place.relCity = selectedCity

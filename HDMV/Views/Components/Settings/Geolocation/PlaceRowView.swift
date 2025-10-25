@@ -15,13 +15,9 @@ struct PlaceRowView: View {
     var body: some View {
         VStack{
             HStack {
-                if let name = place.name {
-                    Text(name)
-                } else {
-                    Text("Unset")
-                        .bold()
-                        .foregroundStyle(.red)
-                }
+                Text(place.name)
+                    .bold(place.name == "Unset")
+                    .foregroundStyle(place.name == "Unset" ? .red : .primary)
                 Spacer()
                 if !place.cache {
                     IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)

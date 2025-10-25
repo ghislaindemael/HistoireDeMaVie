@@ -5,6 +5,8 @@
 //  Created by Ghislain Demael on 22.09.2025.
 //
 
+import Foundation
+import SwiftUI
 
 enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
     case create_trips
@@ -27,8 +29,6 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
         }
     }
 }
-
-import Foundation
 
 protocol Capable {
     var allowedCapabilities: [ActivityCapability] { get set }
@@ -89,5 +89,46 @@ extension Capable {
             }
         }
     }
+}
+
+extension Activity {
+    
+    // MARK: Named implementations
+    
+    func shouldShowPlaceLink(settings: SettingsStore) -> Bool {
+        return must(.link_place) || (can(.link_place) && settings.planningMode)
+    }
+    
+    func placeUnsetColor(settings: SettingsStore, placeId: Int?) -> Color {
+        return linkedModelColor(capability: .link_place, modelRid: placeId, settings: settings)
+    }
+    
+    func placeUnsetWeight(placeId: Int?) -> Font.Weight {
+        return linkedModelFontWeight(capability: .link_place, modelRid: placeId)
+    }
+    
+    
+    // MARK: Base functions
+    
+    func linkedModelColor(capability: ActivityCapability, modelRid: Int?, settings: SettingsStore) -> Color {
+        if must(capability) == true && modelRid == nil {
+            return .red
+        }
+        else if can(capability) == true && settings.planningMode && modelRid == nil {
+            return .orange
+        }
+        else {
+            return .primary
+        }
+    }
+    
+    func linkedModelFontWeight(capability: ActivityCapability, modelRid: Int?) -> Font.Weight {
+        if must(capability) == true && modelRid == nil {
+            return .bold
+        } else {
+            return .regular
+        }
+    }
+    
 }
 

@@ -19,14 +19,14 @@ struct PlaceDetailSheet: View {
         
     init(place: Place, modelContext: ModelContext) {
         self.place = place
-        _viewModel = StateObject(wrappedValue: PlaceDetailSheetViewModel(place: place, modelContext: modelContext))
+        _viewModel = StateObject(wrappedValue: PlaceDetailSheetViewModel(model: place, modelContext: modelContext))
     }
     
     var body: some View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: $viewModel.editor.name.orEmpty())
+                    TextField("Name", text: $viewModel.editor.name)
                     CitySelectorView(selectedCity: Binding(
                         get: { viewModel.editor.city },
                         set: { viewModel.editor.city = $0 }

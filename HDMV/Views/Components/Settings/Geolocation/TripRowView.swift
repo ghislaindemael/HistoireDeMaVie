@@ -29,9 +29,9 @@ struct TripRowView: View {
                         VehicleDisplayView(vehicleRid: trip.vehicle?.rid, isSmall: isSmall)
                         
                         HStack {
-                            PlaceDisplayView(placeId: trip.placeStart?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: trip.placeEnd?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: isSmall)
                             
                         }
                         Spacer()
@@ -47,9 +47,9 @@ struct TripRowView: View {
                     HStack(spacing: 10) {
                         VehicleDisplayView(vehicleRid: trip.vehicle?.rid)
                         HStack {
-                            PlaceDisplayView(placeId: trip.placeStart?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: isSmall)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeId: trip.placeEnd?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: isSmall)
                         }
                         Spacer()
                         SyncStatusIndicator(status: trip.syncStatus)
