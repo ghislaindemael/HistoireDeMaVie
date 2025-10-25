@@ -60,20 +60,21 @@ struct MyInteractionsPage: View {
                 .datePickerStyle(.compact)
                 .padding(.horizontal)
             
-            List {
-                ForEach(viewModel.interactions) { interaction in
-                    InteractionRowView(
-                        interaction: interaction,
-                        onEnd: {
-                            viewModel.endInteraction(interaction: interaction)
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                    ForEach(viewModel.interactions) { interaction in
+                        InteractionRowView(
+                            interaction: interaction,
+                            onEnd: {
+                                viewModel.endInteraction(interaction: interaction)
+                            }
+                        )
+                        .onTapGesture {
+                            interactionToEdit = interaction
                         }
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        interactionToEdit = interaction
                     }
                 }
-                
+                .padding(.horizontal)
             }
         }
         

@@ -1,5 +1,5 @@
 //
-//  PlaceRowView.swift
+//  VehicleRowView.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 20.06.2025.

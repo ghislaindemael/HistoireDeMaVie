@@ -184,7 +184,7 @@ extension Place: DebugViewable {
                 Text("RID: –")
                     .foregroundStyle(.secondary)
             }
-            Text("Name: \(name ?? "Unset")")
+            Text("Name: \(name)")
             Text("City rid: \(city?.rid ?? -1)")
         }
     }

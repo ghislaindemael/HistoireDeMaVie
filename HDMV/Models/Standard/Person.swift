@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class Person: CatalogueModel {
+final class Person: CatalogueModel, EditableModel {
     @Attribute(.unique) var rid: Int?
     var slug: String?
     var name: String?
@@ -22,6 +22,7 @@ final class Person: CatalogueModel {
 
     typealias Payload = PersonPayload
     typealias DTO = PersonDTO
+    typealias Editor = PersonEditor
     
     init(
         rid: Int? = nil,
@@ -124,7 +125,7 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
 
 }
 
-struct PersonEditor: CachableModel {
+struct PersonEditor: CachableModel, EditorProtocol {
     var slug: String?
     var name: String?
     var familyName: String?
@@ -132,6 +133,8 @@ struct PersonEditor: CachableModel {
     var birthdate: Date?
     var cache: Bool
     var archived: Bool
+    
+    typealias Model = Person
     
     init(from person: Person) {
         self.slug = person.slug

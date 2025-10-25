@@ -33,7 +33,7 @@ struct ActivityInstanceRowView: View {
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color.secondaryBackgroundColor)
+                .fill(Color.primaryBackground)
         )
         
     }
@@ -98,7 +98,7 @@ struct ActivityInstanceRowView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(UIColor.tertiarySystemBackground))
+                            .fill(Color.secondaryBackground)
                     )
                     .foregroundColor(Color.primary)
                     .font(.body)
@@ -111,7 +111,8 @@ struct ActivityInstanceRowView: View {
             if instance.activity?.can(.log_food) == true {
                 mealContentText
             }
-            if instance.activity?.shouldShowPlaceLink(settings: settings) == true {
+            if instance.activity?.shouldShowPlaceLink(settings: settings) == true
+                || instance.decodedActivityDetails?.place?.placeId != nil {
                 linkedPlaceView
             }
             
@@ -129,7 +130,7 @@ struct ActivityInstanceRowView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.secondaryBackground)
             )
             .foregroundColor(isMissingRequiredDetails ? .red : .primary)
             .fontWeight(isMissingRequiredDetails ? .bold : .regular)
@@ -149,14 +150,12 @@ struct ActivityInstanceRowView: View {
             color: color,
             fontWeight: weight
         )
-            .padding(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(UIColor.tertiarySystemBackground))
-            )
-            .font(.body)
-
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.secondaryBackground)
+        )
         
     }
     

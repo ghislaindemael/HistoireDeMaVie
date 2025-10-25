@@ -21,7 +21,7 @@ struct PathDetailSheet: View {
     
     init(path: Path, modelContext: ModelContext) {
         self.path = path
-        _viewModel = StateObject(wrappedValue: PathDetailSheetViewModel(path: path, modelContext: modelContext))
+        _viewModel = StateObject(wrappedValue: PathDetailSheetViewModel(model: path, modelContext: modelContext))
     }
     
     var body: some View {
@@ -88,21 +88,6 @@ struct PathDetailSheet: View {
             }
         }
     }
-    
-    /// Handles the logic when the "Done" button is tapped.
-    private func onDone() {
-        viewModel.editor.apply(to: path)
-        path.syncStatus = .local
-
-        do {
-            try modelContext.save()
-            print("✅ Path \(path.id) saved to context.")
-        } catch {
-            print("❌ Failed to save path to context: \(error)")
-        }
-        
-    }
-    
     
 }
 

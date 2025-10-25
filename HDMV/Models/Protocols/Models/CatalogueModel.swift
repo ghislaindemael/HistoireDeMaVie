@@ -8,4 +8,4 @@
 import Foundation
 import SwiftData
 
-protocol CatalogueModel: SyncableModel, CachableModel {}
+protocol CatalogueModel: SyncableModel, CachableModel, EditableModel {}

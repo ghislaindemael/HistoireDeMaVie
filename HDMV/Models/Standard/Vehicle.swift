@@ -33,6 +33,7 @@ final class Vehicle: CatalogueModel {
     
     typealias DTO = VehicleDTO
     typealias Payload = VehiclePayload
+    typealias Editor = VehicleEditor
     
     init(rid: Int? = nil,
          name: String? = nil,
@@ -140,7 +141,7 @@ struct VehiclePayload: Codable, InitializableWithModel {
     }
 }
 
-struct VehicleEditor: CachableModel {
+struct VehicleEditor: CachableModel, EditorProtocol {
     var rid: Int?
     var name: String?
     var typeSlug: String?

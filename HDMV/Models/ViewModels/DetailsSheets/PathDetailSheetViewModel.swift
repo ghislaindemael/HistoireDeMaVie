@@ -11,29 +11,19 @@ import SwiftData
 import UniformTypeIdentifiers
 
 @MainActor
-class PathDetailSheetViewModel: ObservableObject {
-    @Published var editor: PathEditor
+class PathDetailSheetViewModel: BaseDetailSheetViewModel<Path, PathEditor>{
     @Published var isShowingGpxFileImporter = false
     @Published var isProcessing = false
     @Published var errorMessage: String?
 
-    private var path: Path
-    private let modelContext: ModelContext
-    
-    // Services for handling complex logic
     private let gpxParser = GPXParserService()
     private let storageService = StorageService()
 
-    init(path: Path, modelContext: ModelContext) {
-        self.path = path
-        self.editor = PathEditor(from: path)
-        self.modelContext = modelContext
-    }
 
     // MARK: - User Actions
 
     func importButtonTapped() {
-        guard path.id > 0 else {
+        guard editor.rid != nil else {
             errorMessage = "Please save the path before attaching a GPX file."
             return
         }
@@ -46,6 +36,7 @@ class PathDetailSheetViewModel: ObservableObject {
         Task {
             isProcessing = true
             defer { isProcessing = false }
+            guard let rid = editor.rid else { return }
             
             switch result {
                 case .success(let url):
@@ -80,7 +71,8 @@ class PathDetailSheetViewModel: ObservableObject {
                     editor.geojson_track = gpxData.geojsonCoordinates
                     
                     do {
-                        _ = try await storageService.uploadGPX(fileURL: destURL, for: path.id)
+                        
+                        _ = try await storageService.uploadGPX(fileURL: destURL, for: rid)
                     } catch {
                         errorMessage = "Failed to upload file: \(error.localizedDescription)"
                     }
@@ -92,16 +84,4 @@ class PathDetailSheetViewModel: ObservableObject {
     }
 
 
-    func onDone() {
-        editor.apply(to: path)
-        path.syncStatus = .local
-        
-        do {
-            try modelContext.save()
-            print("✅ Path \(path.id) saved to context.")
-        } catch {
-            print("❌ Failed to save path to context: \(error)")
-            errorMessage = "Failed to save changes."
-        }
-    }
 }

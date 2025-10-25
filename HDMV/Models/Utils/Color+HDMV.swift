@@ -9,20 +9,12 @@
 import SwiftUI
 
 extension Color {
-    static var secondaryBackgroundColor: Color {
-        Color(UIColor { traitCollection in
-            if traitCollection.userInterfaceStyle == .dark {
-                return UIColor.tertiarySystemBackground
-            } else {
-                return UIColor.secondarySystemBackground
-            }
-        })
+    
+    static var primaryBackground: Color {
+        Color(.tertiarySystemGroupedBackground)
     }
     
-    static var tertiaryBackgroundColor: Color {
-        Color(uiColor: .tertiarySystemGroupedBackground)        
-        // Use systemGray5 or systemGray6 for a more pronounced difference
-        // Color(uiColor: .systemGray6) // Lighter gray
-        // Color(uiColor: .systemGray5) // Darker gray than 6
+    static var secondaryBackground: Color {
+        Color(.secondarySystemGroupedBackground)
     }
 }

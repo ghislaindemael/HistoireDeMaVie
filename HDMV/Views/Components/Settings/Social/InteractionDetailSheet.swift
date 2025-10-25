@@ -26,6 +26,15 @@ struct InteractionDetailSheet: View {
             Form {
                 basicsSection
                 detailsSection
+                
+                if viewModel.editor.parentInstance != nil {
+                    Section("Hierarchy") {
+                        Button("Remove from Parent", role: .destructive) {
+                            viewModel.editor.parentInstance = nil
+                            viewModel.editor.parentInstanceRid = nil
+                        }
+                    }
+                }
             }
             .navigationTitle("Edit Interaction")
             .navigationBarTitleDisplayMode(.inline)

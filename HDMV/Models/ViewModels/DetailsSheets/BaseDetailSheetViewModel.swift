@@ -30,7 +30,6 @@ where ModelType == EditorType.Model
 
         do {
             try modelContext.save()
-            print("✅ \(ModelType.self) \(model.id) saved to context.")
         } catch {
             print("❌ Failed to save \(ModelType.self) to context: \(error)")
         }

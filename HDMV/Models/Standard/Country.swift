@@ -22,6 +22,8 @@ final class Country: CatalogueModel {
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
     typealias Payload = CountryPayload
+    typealias DTO = CountryDTO
+    typealias Editor = CountryEditor
     
     init(slug: String? = nil, name: String? = nil, rid: Int? = nil, cache: Bool = true, archived: Bool = false, syncStatus: SyncStatus = .local) {
         self.slug = slug
@@ -79,12 +81,14 @@ struct CountryPayload: Codable, InitializableWithModel {
     }
 }
 
-struct CountryEditor: CachableModel {
+struct CountryEditor: CachableModel, EditorProtocol {
     var rid: Int?
     var slug: String?
     var name: String?
     var cache: Bool
     var archived: Bool
+    
+    typealias Model = Country
     
     init(from country: Country) {
         self.rid = country.rid

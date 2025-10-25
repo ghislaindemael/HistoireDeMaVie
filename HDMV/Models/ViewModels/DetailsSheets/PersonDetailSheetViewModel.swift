@@ -11,29 +11,7 @@ import SwiftData
 import UniformTypeIdentifiers
 
 @MainActor
-class PersonDetailSheetViewModel: ObservableObject {
+class PersonDetailSheetViewModel: BaseDetailSheetViewModel<Person, PersonEditor> {
     
-    @Published var editor: PersonEditor
-    private var person: Person
-    private let modelContext: ModelContext
     
-    init(person: Person, modelContext: ModelContext) {
-        self.person = person
-        self.editor = PersonEditor(from: person)
-        self.modelContext = modelContext
-    }
-
-    // MARK: - User Actions
-
-    func onDone() {
-        editor.apply(to: person)
-        person.markAsModified()
-        
-        do {
-            try modelContext.save()
-            print("✅ Person \(person.id) saved to context.")
-        } catch {
-            print("❌ Failed to save place to context: \(error)")
-        }
-    }
 }

@@ -56,13 +56,27 @@ struct ActivityInstanceDetailSheet: View {
                     }
                 }
                 
-                if !viewModel.unclaimedTrips.isEmpty {
+                if !viewModel.unclaimedTrips.isEmpty && selectedActivity?.can(.create_trips) == true {
                     Section("Claim Trips") {
                         ForEach(viewModel.unclaimedTrips) { trip in
                             TripRowView(trip: trip)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     viewModel.claim(trip: trip, for: instance)
+                                }
+                        }
+                    }
+                }
+                
+                if !viewModel.unclaimedInteractions.isEmpty &&
+                    selectedActivity?.can(.create_interactions) == true
+                    {
+                    Section("Claim Interactions") {
+                        ForEach(viewModel.unclaimedInteractions) { interaction in
+                            InteractionRowView(interaction: interaction)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    viewModel.claim(interaction: interaction, for: instance)
                                 }
                         }
                     }

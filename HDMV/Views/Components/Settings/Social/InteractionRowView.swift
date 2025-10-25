@@ -10,18 +10,21 @@ import SwiftData
 
 struct InteractionRowView: View {
     let interaction: Interaction
-    let onEnd: () -> Void
+    let onEnd: (() -> Void)?
+    
+    init(interaction: Interaction, onEnd: (() -> Void)? = nil) {
+        self.interaction = interaction
+        self.onEnd = onEnd
+    }
     
     var body: some View {
         content
-            .if(!interaction.isStandalone) { view in
-                view
-                    .padding(8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.secondaryBackgroundColor)
-                    )
-            }
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.primaryBackground)
+            )
+                   
     }
     
     @ViewBuilder
@@ -58,12 +61,12 @@ struct InteractionRowView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(UIColor.secondarySystemBackground))
+                            .fill(Color.secondaryBackground)
                     )
                     .foregroundColor(Color.primary)
                     .font(.body)
             }
-            if interaction.timeEnd == nil {
+            if interaction.timeEnd == nil, let onEnd = onEnd {
                 EndItemButton(title: "End Interaction", action: onEnd)
             }
         }

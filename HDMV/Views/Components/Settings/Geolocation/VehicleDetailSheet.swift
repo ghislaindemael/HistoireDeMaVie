@@ -19,7 +19,7 @@ struct VehicleDetailSheet: View {
         
     init(vehicle: Vehicle, modelContext: ModelContext) {
         self.vehicle = vehicle
-        _viewModel = StateObject(wrappedValue: VehicleDetailSheetViewModel(vehicle: vehicle, modelContext: modelContext))
+        _viewModel = StateObject(wrappedValue: VehicleDetailSheetViewModel(model: vehicle, modelContext: modelContext))
     }
     
     var body: some View {

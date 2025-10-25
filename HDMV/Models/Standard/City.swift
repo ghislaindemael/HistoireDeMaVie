@@ -26,6 +26,8 @@ final class City: CatalogueModel {
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
     typealias Payload = CityPayload
+    typealias DTO = CityDTO
+    typealias Editor = CityEditor
     
     var country: Country? {
         get {
@@ -86,7 +88,7 @@ final class City: CatalogueModel {
               let name = name, !name.isEmpty else {
             return false
         }
-        return relCountry != nil
+        return countryRid != nil
     }
 }
 
@@ -124,7 +126,7 @@ struct CityPayload: Codable, InitializableWithModel {
     }
 }
 
-struct CityEditor: CachableModel {
+struct CityEditor: CachableModel, EditorProtocol {
     var rid: Int?
     var slug: String?
     var name: String?

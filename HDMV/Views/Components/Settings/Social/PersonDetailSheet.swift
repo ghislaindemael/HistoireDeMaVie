@@ -19,7 +19,10 @@ struct PersonDetailSheet: View {
         
     init(person: Person, modelContext: ModelContext) {
         self.person = person
-        _viewModel = StateObject(wrappedValue: PersonDetailSheetViewModel(person: person, modelContext: modelContext))
+        _viewModel = StateObject(wrappedValue: PersonDetailSheetViewModel(
+            model: person,
+            modelContext: modelContext)
+        )
     }
     
     var body: some View {

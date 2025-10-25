@@ -46,4 +46,14 @@ class ActivityInstanceDetailSheetViewModel: BaseDetailSheetViewModel<ActivityIns
         }
     }
     
+    func claim(interaction: Interaction, for instance: ActivityInstance) {
+        do {
+            interaction.parentInstance = instance
+            interaction.markAsModified()
+            try modelContext.save()
+        } catch {
+            print("Failed to claim interaction: \(error)")
+        }
+    }
+    
 }

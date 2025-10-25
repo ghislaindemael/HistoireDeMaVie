@@ -10,9 +10,8 @@ import SwiftData
 import SwiftData
 
 @Model
-final class Path: SyncableModel {
+final class Path: CatalogueModel {
     
-    typealias Payload = PathPayload
     
     @Attribute(.unique) var id: Int
     var rid: Int?
@@ -29,6 +28,10 @@ final class Path: SyncableModel {
     var cache: Bool = true
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+    
+    typealias Payload = PathPayload
+    typealias DTO = PathDTO
+    typealias Editor = PathEditor
     
     // MARK: - Initializers
     
@@ -144,7 +147,9 @@ struct PathPayload: Codable, InitializableWithModel {
 }
 
 
-struct PathEditor {
+struct PathEditor : EditorProtocol {
+    
+    var rid: Int?
     var name: String?
     var details: String?
     var placeStart: Place?
@@ -155,6 +160,8 @@ struct PathEditor {
     var path_ids: [Int]?
     var cache: Bool
     var archived: Bool
+    
+    typealias Model = Path
     
     init(from path: Path) {
         self.name = path.name
