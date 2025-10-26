@@ -201,8 +201,8 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
     init(from activity: Activity) {
         self.name = activity.name
         self.slug = activity.slug
-        self.parentRid = activity.rid
         self.parent = activity.parent
+        self.parentRid = activity.parentRid
         self.icon = activity.icon
         self.allowedCapabilities = activity.allowedCapabilities
         self.requiredCapabilities = activity.requiredCapabilities
@@ -215,7 +215,7 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
         activity.name = self.name
         activity.slug = self.slug
         activity.parent = self.parent
-        activity.parentRid = self.parentRid
+        activity.parentRid = self.parentRid ?? self.parent?.rid
         activity.icon = self.icon
         activity.allowedCapabilities = self.allowedCapabilities
         activity.requiredCapabilities = self.requiredCapabilities

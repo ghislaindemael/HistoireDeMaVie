@@ -16,7 +16,6 @@ struct DataManagementComponent: View {
     private let modelTypes: [any PersistentModel.Type] = [
         Activity.self,
         ActivityInstance.self,
-        AgendaEntry.self,
         Country.self,
         City.self,
         Path.self,

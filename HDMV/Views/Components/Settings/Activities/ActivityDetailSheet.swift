@@ -80,6 +80,15 @@ struct ActivityDetailSheet: View {
                     Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
                 
+                if viewModel.editor.parent != nil || viewModel.editor.parentRid != nil {
+                    Section("Hierarchy") {
+                        Button("Remove from Parent", role: .destructive) {
+                            viewModel.editor.parent = nil
+                            viewModel.editor.parentRid = nil
+                        }
+                    }
+                }
+                
             }
             .navigationTitle("Edit Activity")
             .navigationBarTitleDisplayMode(.inline)

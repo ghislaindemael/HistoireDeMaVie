@@ -49,14 +49,14 @@ struct ActivityHierarchyView: View {
             }
             .draggable(DraggableLogItem.activity(instance.persistentModelID))
             
-            if !instance.sortedChildren.isEmpty {
+            if !filteredAndSortedChildren.isEmpty {
                 HStack(alignment: .top, spacing: contentLeadingPadding) {
                     
                     indicatorColor
                         .frame(width: indicatorWidth)
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        ForEach(instance.sortedChildren, id: \.id) { item in
+                        ForEach(filteredAndSortedChildren, id: \.id) { item in
                             LogItemRowView(
                                 item: item,
                                 instanceToEdit: $instanceToEdit,
@@ -70,20 +70,20 @@ struct ActivityHierarchyView: View {
                 }
             }
             
-            if instance.timeEnd == nil {
-                let hasActiveTrips = instance.trips?.contains { $0.timeEnd == nil } ?? false
-                let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
-                
+            let hasActiveTrips = instance.trips?.contains { $0.timeEnd == nil } ?? false
+            let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
+            
+            if instance.timeEnd == nil || settings.planningMode == true {
                 VStack(alignment: .leading, spacing: 4) {
                     if (instance.activity?.can(.create_trips) == true) {
-                        if !hasActiveTrips || settings.planningMode  {
+                        if !hasActiveTrips  {
                             StartItemButton(title: "Start Trip") {
                                 viewModel.createTrip(parent: instance)
                             }
                         }
                     }
                     
-                    if !hasActiveTrips && !hasActiveInteractions {
+                    if instance.timeEnd == nil && !hasActiveTrips && !hasActiveInteractions {
                         EndItemButton(title: "End Activity") {
                             viewModel.endActivityInstance(instance: instance)
                         }
@@ -91,6 +91,27 @@ struct ActivityHierarchyView: View {
                 }
             }
             
+        }
+    }
+    
+    private var filteredAndSortedChildren: [any LogModel] {
+        let allSortedChildren = instance.sortedChildren
+        
+        switch viewModel.filterMode {
+            case .byDate:
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: viewModel.filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+                    return []
+                }
+                let future = Date.distantFuture
+                
+                return allSortedChildren.filter { item in
+                    item.timeStart < endOfDay && (item.timeEnd ?? future) > startOfDay
+                }
+                
+            case .byActivity:
+                return []
         }
     }
 }
@@ -110,4 +131,6 @@ extension ActivityInstance {
         }
         return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
     }
+    
+    
 }

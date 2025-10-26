@@ -83,9 +83,9 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: filterEndDate)) ?? filterEndDate
                 let future = Date.distantFuture
                 
-                let targetActivityID = activity.id
+                let targetActivityID = activity.rid
                 let activityPredicate = #Predicate<ActivityInstance> { instance in
-                    instance.activity?.id == targetActivityID
+                    instance.activityRid == targetActivityID
                 }
                 
                 let timePredicate = #Predicate<ActivityInstance> { instance in
@@ -201,7 +201,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         
         var date = Date.now
-        if settings.planningMode && parent.timeEnd != nil {
+        if settings.planningMode {
             date = parent.timeStart
         }
         let newTrip = Trip(
@@ -220,7 +220,12 @@ class MyActivitiesPageViewModel: ObservableObject {
     func endTrip(trip: Trip){
         guard let context = modelContext else { return }
         do {
-            trip.timeEnd = .now
+            let now = Date.now
+            if now > trip.timeStart {
+                trip.timeEnd = now
+            } else {
+                trip.timeEnd = trip.timeStart
+            }
             trip.markAsModified()
             try context.save()
         } catch {

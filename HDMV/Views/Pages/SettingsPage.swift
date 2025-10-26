@@ -5,13 +5,15 @@ struct SettingsPage: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
-                AuthComponent(expanded: !auth.isAuthenticated)
-                DataManagementComponent()
-                ConfigPageLinksComponent()
-                Spacer()
+            ScrollView{
+                LazyVStack {
+                    AuthComponent(expanded: !auth.isAuthenticated)
+                    DataManagementComponent()
+                    ConfigPageLinksComponent()
+                    Spacer()
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Settings")
         }
     }
