@@ -122,20 +122,20 @@ struct VehiclePayload: Codable, InitializableWithModel {
     typealias Model = Vehicle
     var name: String
     var type_slug: String
-    var city_id: Int
+    var city_id: Int?
     var cache: Bool
     var archived: Bool
     
     init?(from vehicle: Vehicle) {
         guard vehicle.isValid(),
               let name = vehicle.name,
-              let typeSlug = vehicle.typeSlug,
-              let cityRid = vehicle.city?.rid ?? vehicle.cityRid else {
+              let typeSlug = vehicle.typeSlug
+        else {
             return nil
         }
         self.name = name
         self.type_slug = typeSlug
-        self.city_id = cityRid
+        self.city_id = vehicle.cityRid
         self.cache = vehicle.cache
         self.archived = vehicle.archived
     }

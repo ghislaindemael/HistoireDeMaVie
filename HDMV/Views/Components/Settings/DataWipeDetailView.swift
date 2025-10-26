@@ -90,7 +90,9 @@ struct DataWipeDetailView: View {
         do {
             switch modelType {
                 case is Activity.Type:
-                    let descriptor = FetchDescriptor<Activity>()
+                    let descriptor = FetchDescriptor<Activity>(
+                        sortBy: [SortDescriptor(\Activity.name)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
@@ -146,7 +148,9 @@ struct DataWipeDetailView: View {
                     items = results
                     count = results.count
                 case is Vehicle.Type:
-                    let descriptor = FetchDescriptor<Vehicle>()
+                    let descriptor = FetchDescriptor<Vehicle>(
+                        sortBy: [SortDescriptor(\.name)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count

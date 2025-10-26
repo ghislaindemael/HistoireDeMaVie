@@ -107,7 +107,17 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     }
         
     func isValid() -> Bool {
-        return name != nil && slug != nil && parentRid != rid
+        guard name != nil, slug != nil else {
+            return false
+        }
+        
+        if let pRid = parentRid, let currentRid = rid {
+            guard pRid != currentRid else {
+                return false
+            }
+        }
+        
+        return true
     }
     
     func canLogDetails() -> Bool {

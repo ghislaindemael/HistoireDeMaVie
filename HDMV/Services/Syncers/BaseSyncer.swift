@@ -54,6 +54,7 @@ where
         
         for item in itemsToSync {
             guard let payload = Payload(from: item) else {
+                print("Invalid payload for: \(item.id)")
                 continue
             }
             
