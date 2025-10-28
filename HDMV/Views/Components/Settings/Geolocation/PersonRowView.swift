@@ -13,7 +13,7 @@ struct PersonRowView: View {
     let person: Person
     
     var body: some View {
-        VStack{
+        VStack(alignment: .leading){
             HStack {
                 NamedStringDisplayView(name: "Slug", value: person.slug)
                 

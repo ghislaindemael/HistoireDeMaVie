@@ -23,7 +23,7 @@ struct PeoplePage: View {
                 viewModel.setup(modelContext: modelContext)
             }
             .sheet(item: $personToEdit) { person in
-                //TODO: Add person editor sheet
+                PersonDetailSheet(person: person, modelContext: modelContext)
             }
         }
     }
@@ -32,7 +32,12 @@ struct PeoplePage: View {
     private var peopleList: some View {
         Section("People") {
             ForEach(viewModel.people) { person in
-                PersonRowView(person: person)
+                Button(action: {
+                    personToEdit = person
+                }) {
+                    PersonRowView(person: person)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

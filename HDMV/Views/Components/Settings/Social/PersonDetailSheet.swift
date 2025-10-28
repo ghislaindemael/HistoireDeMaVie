@@ -31,7 +31,7 @@ struct PersonDetailSheet: View {
                 Section("Basics") {
                     TextField("Name", text: $viewModel.editor.name.orEmpty())
                     TextField("Family Name", text: $viewModel.editor.familyName.orEmpty())
-                    TextField("Surname", text: $viewModel.editor.familyName.orEmpty())
+                    TextField("Surname", text: $viewModel.editor.surname.orEmpty())
                     DatePicker(
                         "Birthdate",
                         selection: $viewModel.editor.birthdate.orNow(),
