@@ -31,6 +31,8 @@ struct LogItemRowView: View {
                 tripToEdit: $tripToEdit,
                 interactionToEdit: $interactionToEdit
             )
+            .draggable(DraggableLogItem.activity(activity.persistentModelID))
+
         case let trip as Trip:
                 TripRowView(trip: trip, onEnd: {
                     viewModel.endTrip(trip: trip)
@@ -38,6 +40,7 @@ struct LogItemRowView: View {
                 .onTapGesture {
                     tripToEdit = trip
                 }
+                .draggable(DraggableLogItem.trip(trip.persistentModelID))
 
         case let interaction as Interaction:
                 InteractionRowView(interaction: interaction, onEnd: {
@@ -46,6 +49,7 @@ struct LogItemRowView: View {
                 .onTapGesture {
                     interactionToEdit = interaction
                 }
+                .draggable(DraggableLogItem.interaction(interaction.persistentModelID))
         default:
             EmptyView()
         }

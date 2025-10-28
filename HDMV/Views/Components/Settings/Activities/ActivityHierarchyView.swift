@@ -74,19 +74,18 @@ struct ActivityHierarchyView: View {
             let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
             
             if instance.timeEnd == nil || settings.planningMode == true {
-                VStack(alignment: .leading, spacing: 4) {
-                    if (instance.activity?.can(.create_trips) == true) {
-                        if !hasActiveTrips  {
-                            StartItemButton(title: "Start Trip") {
-                                viewModel.createTrip(parent: instance)
-                            }
+                if (instance.activity?.can(.create_trips) == true) {
+                    if !hasActiveTrips  {
+                        StartItemButton(title: "Start Trip") {
+                            viewModel.createTrip(parent: instance)
                         }
+                        .padding(.bottom, 4)
                     }
-                    
-                    if instance.timeEnd == nil && !hasActiveTrips && !hasActiveInteractions {
-                        EndItemButton(title: "End Activity") {
-                            viewModel.endActivityInstance(instance: instance)
-                        }
+                }
+                
+                if instance.timeEnd == nil && !hasActiveTrips && !hasActiveInteractions {
+                    EndItemButton(title: "End Activity") {
+                        viewModel.endActivityInstance(instance: instance)
                     }
                 }
             }
