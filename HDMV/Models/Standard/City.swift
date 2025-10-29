@@ -16,7 +16,7 @@ final class City: CatalogueModel {
     var name: String?
     var countryRid: Int?
     @Relationship(deleteRule: .nullify)
-    var relCountry: Country? {
+    var country: Country? {
         didSet {
             self.countryRid = relCountry.rid
         }
@@ -29,23 +29,12 @@ final class City: CatalogueModel {
     typealias DTO = CityDTO
     typealias Editor = CityEditor
     
-    var country: Country? {
-        get {
-            if let country = relCountry { return country }
-            guard let rid = countryRid, let ctx = RelationResolver.context else { return nil }
-            let descriptor = FetchDescriptor<Country>(predicate: #Predicate { $0.rid == rid })
-            return try? ctx.fetch(descriptor).first
-        }
-        set {
-            relCountry = newValue
-        }
-    }
-    
     // MARK: - Initializer
     init(
         rid: Int? = nil,
         slug: String? = nil,
         name: String? = nil,
+        country: Country? = nil,
         countryRid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,
@@ -54,6 +43,7 @@ final class City: CatalogueModel {
         self.slug = slug
         self.name = name
         self.rid = rid
+        self.country = country
         self.countryRid = countryRid
         self.cache = cache
         self.archived = archived
@@ -96,7 +86,6 @@ struct CityDTO: Codable, Identifiable, Sendable {
     var id: Int
     var slug: String
     var name: String
-    var rank: Int
     var country_id: Int
     var cache: Bool
     var archived: Bool
@@ -127,7 +116,6 @@ struct CityPayload: Codable, InitializableWithModel {
 }
 
 struct CityEditor: CachableModel, EditorProtocol {
-    var rid: Int?
     var slug: String?
     var name: String?
     var countryRid: Int?
@@ -136,7 +124,6 @@ struct CityEditor: CachableModel, EditorProtocol {
     var archived: Bool
     
     init(from city: City) {
-        self.rid = city.rid
         self.slug = city.slug
         self.name = city.name
         self.countryRid = city.countryRid
@@ -146,12 +133,11 @@ struct CityEditor: CachableModel, EditorProtocol {
     }
     
     func apply(to city: City) {
-        city.rid = self.rid
         if let slug = self.slug { city.slug = slug }
         if let name = self.name { city.name = name }
         
         if let selectedCountry = self.country {
-            city.relCountry = selectedCountry
+            city.country = selectedCountry
             city.countryRid = selectedCountry.rid
         }
         

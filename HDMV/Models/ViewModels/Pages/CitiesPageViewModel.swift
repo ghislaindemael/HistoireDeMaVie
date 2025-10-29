@@ -96,7 +96,7 @@ class CitiesPageViewModel: ObservableObject {
             name: "Unset",
             syncStatus: .local
         )
-        newCity.relCountry = selectedCountry
+        newCity.country = selectedCountry
         
         context.insert(newCity)
         cities.append(newCity)

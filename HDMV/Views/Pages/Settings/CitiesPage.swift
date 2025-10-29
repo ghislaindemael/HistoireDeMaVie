@@ -36,7 +36,7 @@ struct CitiesPage: View {
                 viewModel.setup(modelContext: modelContext)
             }
             .sheet(item: $cityToEdit) { city in
-                //TODO: Add city editor sheet
+                CityDetailSheet(city: city, modelContext: modelContext)
             }
         }
     }
@@ -57,7 +57,13 @@ struct CitiesPage: View {
     private var citiesList: some View {
         Section("Cities") {
             ForEach(viewModel.filteredCities) { city in
-                CityRowView(city: city)
+                Button(action: {
+                    cityToEdit = city
+                }) {
+                    CityRowView(city: city)
+
+                }
+                .buttonStyle(.plain)
                 
             }
         }
