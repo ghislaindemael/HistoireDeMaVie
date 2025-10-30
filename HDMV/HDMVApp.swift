@@ -17,6 +17,7 @@ struct HDMVApp: App {
             AgendaEntry.self,
             Country.self,
             City.self,
+            LifeEvent.self,
             Path.self,
             Place.self,
             Person.self,

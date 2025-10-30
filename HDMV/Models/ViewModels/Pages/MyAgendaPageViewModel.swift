@@ -13,7 +13,7 @@ import SwiftData
 
 @MainActor
 class MyAgendaPageViewModel: ObservableObject {
-
+    
     @Published var agendaEntry: AgendaEntry?
     @Published var lifeEvents: [LifeEvent] = []
     
@@ -25,15 +25,18 @@ class MyAgendaPageViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
     private var agendaSyncer: AgendaEntrySyncer?
+    private var lifeEventSyncer: LifeEventSyncer?
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.agendaSyncer = AgendaEntrySyncer(modelContext: modelContext)
+        self.lifeEventSyncer = LifeEventSyncer(modelContext: modelContext)
         fetchDailyData()
     }
     
     func fetchDailyData() {
         self.agendaEntry = fetchLocalAgenda(for: filterDate)
+        fetchLifeEvents()
         // TODO: Pull lifevents
     }
     
@@ -44,6 +47,29 @@ class MyAgendaPageViewModel: ObservableObject {
         let descriptor = FetchDescriptor(predicate: predicate)
         
         return try? context.fetch(descriptor).first
+    }
+    
+    private func fetchLifeEvents() {
+        guard let context = modelContext else { return }
+        
+        do {
+            let calendar = Calendar.current
+            let startOfDay = calendar.startOfDay(for: filterDate)
+            guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+            
+            let predicate = #Predicate<LifeEvent> {
+                $0.timeStart >= startOfDay && $0.timeStart < endOfDay
+            }
+            let descriptor = FetchDescriptor<LifeEvent>(
+                predicate: predicate,
+                sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+            )
+            self.lifeEvents = try context.fetch(descriptor)
+        } catch {
+            print("Error during interaction fetch: \(error)")
+            self.lifeEvents = []
+        }
+        
     }
     
     func createAgendaEntry() {
@@ -77,6 +103,7 @@ class MyAgendaPageViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         try? await agendaSyncer?.pullChanges(date: filterDate)
+        try? await lifeEventSyncer?.pullChanges(date: filterDate)
         fetchDailyData()
     }
     
@@ -84,11 +111,22 @@ class MyAgendaPageViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         try? await agendaSyncer?.pushChanges()
+        try? await lifeEventSyncer?.pushChanges()
         fetchDailyData()
     }
     
     func createLifeEvent() {
-        print("Create Life Event tapped (not implemented)")
+        guard let context = modelContext else { return }
+        let newEvent = LifeEvent(
+            timeStart: filterDate
+        )
+        context.insert(newEvent)
+        do {
+            try context.save()
+            self.lifeEvents.append(newEvent)
+        } catch {
+            print("Failed to create lifeEvent: \(error)")
+        }
     }
     
 }

@@ -12,3 +12,5 @@
 
 # xcuserdata folders (all workspaces & projects)
 **/xcuserdata/
+
+/Config/*

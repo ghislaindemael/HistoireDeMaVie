@@ -33,6 +33,9 @@ struct MyAgendaPage: View {
                 .sheet(item: $entryToEdit, onDismiss: { viewModel.fetchDailyData() }) { entry in
                     AgendaEntryDetailSheet(entry: entry, modelContext: modelContext)
                 }
+                .sheet(item: $eventToEdit) { event in
+                    LifeEventDetailSheet(lifeEvent: event, modelContext: modelContext)
+                }
         }
         
         
