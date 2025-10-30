@@ -7,9 +7,7 @@
 
 import Foundation
 
-protocol TimeTrackable {
-    var timeStart: Date { get set }
-    var timeEnd: Date? { get set }
+protocol TimeTrackable: TimeBound {
     var timed: Bool { get set }
     var percentage: Int { get set }
 }

@@ -178,7 +178,7 @@ where
     
     
     
-    private func fetchLocalModels(with status: SyncStatus) throws -> [Model] {
+    func fetchLocalModels(with status: SyncStatus) throws -> [Model] {
         let predicate = #Predicate<Model> { $0.syncStatusRaw == status.rawValue }
         return try modelContext.fetch(FetchDescriptor(predicate: predicate))
     }

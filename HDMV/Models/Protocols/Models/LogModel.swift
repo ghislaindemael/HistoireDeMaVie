@@ -8,6 +8,6 @@
 import Foundation
 import SwiftData
 
-protocol LogModel: Identifiable, TimeTrackable, SyncableModel, EditableModel {
+protocol LogModel: Identifiable, TimeBound, SyncableModel, EditableModel {
     var id: PersistentIdentifier { get }
 }

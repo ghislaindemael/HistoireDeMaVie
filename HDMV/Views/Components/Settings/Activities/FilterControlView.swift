@@ -14,7 +14,7 @@ struct FilterControlView: View {
     private var currentTabViewHeight: CGFloat {
         switch viewModel.filterMode {
             case .byDate:
-                return 40
+                return 33
             case .byActivity:
                 return 140
         }

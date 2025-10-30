@@ -7,14 +7,42 @@
 
 import SwiftUI
 
-struct TimeSection<Editor: TimeTrackable>: View {
+struct TimeSection<Editor: TimeBound>: View {
     @Binding var editor: Editor
-    var timeOnly: Bool = false
+    
+    private var isTrackable: Bool {
+        editor is any TimeTrackable
+    }
+    
+    private var timedBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                (editor as? any TimeTrackable)?.timed ?? false
+            },
+            set: { newValue in
+                if var trackableEditor = editor as? any TimeTrackable {
+                    trackableEditor.timed = newValue
+                    if let casted = trackableEditor as? Editor {
+                        editor = casted
+                    }
+                }
+            }
+        )
+    }
     
     private var percentageBinding: Binding<Double> {
         Binding<Double>(
-            get: { Double(editor.percentage) },
-            set: { editor.percentage = Int($0) }
+            get: {
+                Double((editor as? any TimeTrackable)?.percentage ?? 0)
+            },
+            set: { newValue in
+                if var trackableEditor = editor as? any TimeTrackable {
+                    trackableEditor.percentage = Int(newValue)
+                    if let casted = trackableEditor as? Editor {
+                        editor = casted
+                    }
+                }
+            }
         )
     }
 
@@ -23,14 +51,15 @@ struct TimeSection<Editor: TimeTrackable>: View {
             FullTimePicker(label: "Start Time", selection: $editor.timeStart)
             FullTimePicker(label: "End Time", selection: $editor.timeEnd)
             
-            if !timeOnly{
-                Toggle("Timed ?", isOn: $editor.timed)
+            if isTrackable {
+                Toggle("Timed ?", isOn: timedBinding)
+                
                 Slider(
                     value: percentageBinding,
                     in: 0...100,
                     step: 1
                 )
-                .tint(editor.percentage == 100 ? .gray : .accentColor)
+                .tint(percentageBinding.wrappedValue == 100 ? .gray : .accentColor)
             }
         }
     }

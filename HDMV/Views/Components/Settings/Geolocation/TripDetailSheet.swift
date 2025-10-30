@@ -23,7 +23,7 @@ struct TripDetailSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                TimeSection(editor: $viewModel.editor, timeOnly: true)
+                TimeSection(editor: $viewModel.editor)
                 vehicleSection
                 
                 Section("Start Place") {

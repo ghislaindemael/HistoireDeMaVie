@@ -7,8 +7,6 @@
 
 import SwiftData
 
-import SwiftData
-
 @Model
 final class Path: CatalogueModel {
     

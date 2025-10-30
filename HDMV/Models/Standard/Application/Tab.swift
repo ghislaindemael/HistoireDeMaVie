@@ -48,7 +48,7 @@ enum Tab: CaseIterable {
             case .activities:
                 MyActivitiesPage()
             case .agenda:
-                AgendaPage()
+                MyAgendaPage()
             case .settings:
                 SettingsPage()
             case .test:
