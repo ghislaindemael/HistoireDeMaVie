@@ -165,7 +165,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.place_start_id = placeStartId
         self.place_end_id = placeEndId
         self.am_driver = trip.amDriver
-        self.pathId = trip.path?.id
+        self.pathId = trip.pathRid
         self.details = trip.details
     }
     

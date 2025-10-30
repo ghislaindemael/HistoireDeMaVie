@@ -12,26 +12,26 @@ import SwiftData
 struct TripRowView: View {
     let trip: Trip
     let onEnd: (() -> Void)?
-    private let isSmall: Bool
+    private let smallDisplay: Bool
 
-    init(trip: Trip, isSmall: Bool = true, onEnd: (() -> Void)? = nil) {
+    init(trip: Trip, smallDisplay: Bool = true, onEnd: (() -> Void)? = nil) {
         self.trip = trip
         self.onEnd = onEnd
-        self.isSmall = isSmall
+        self.smallDisplay = smallDisplay
 
     }
         
     var body: some View {
         VStack {
-            if isSmall {
+            if smallDisplay {
                 VStack(alignment: .leading) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid, isSmall: isSmall)
+                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid, isSmall: smallDisplay)
                         
                         HStack {
-                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: smallDisplay)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: isSmall)
+                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: smallDisplay)
                             
                         }
                         Spacer()
@@ -43,17 +43,19 @@ struct TripRowView: View {
                     )
                 }
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
                         VehicleDisplayView(vehicleRid: trip.vehicle?.rid)
-                        HStack {
-                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: isSmall)
-                            Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: isSmall)
-                        }
                         Spacer()
                         SyncStatusIndicator(status: trip.syncStatus)
                     }
+                    PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: smallDisplay)
+
+                    HStack {
+                        Image(systemName: "arrow.turn.down.right")
+                        PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: smallDisplay)
+                    }
+
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

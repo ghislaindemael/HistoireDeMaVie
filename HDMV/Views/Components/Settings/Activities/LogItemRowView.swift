@@ -11,6 +11,7 @@ import SwiftUI
 struct LogItemRowView: View {
     
     @EnvironmentObject var viewModel: MyActivitiesPageViewModel
+    @ObservedObject var settings: SettingsStore = SettingsStore.shared
 
     let item: any LogModel
     
@@ -34,8 +35,11 @@ struct LogItemRowView: View {
             .draggable(DraggableLogItem.activity(activity.persistentModelID))
 
         case let trip as Trip:
-                TripRowView(trip: trip, onEnd: {
-                    viewModel.endTrip(trip: trip)
+                TripRowView(
+                    trip: trip,
+                    smallDisplay: settings.smallDisplay,
+                    onEnd: {
+                        viewModel.endTrip(trip: trip)
                 })
                 .onTapGesture {
                     tripToEdit = trip

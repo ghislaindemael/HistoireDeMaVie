@@ -25,7 +25,7 @@ struct ActivityHierarchyView: View {
     private let indentationAmount: CGFloat = 20
     private let indicatorWidth: CGFloat = 2
     private let indicatorColor: Color = .gray.opacity(0.4)
-    private let contentLeadingPadding: CGFloat = 8
+    private let contentLeadingPadding: CGFloat = 4
     private let verticalPadding: CGFloat = 8
     
     
@@ -55,7 +55,7 @@ struct ActivityHierarchyView: View {
                     indicatorColor
                         .frame(width: indicatorWidth)
                     
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
                         ForEach(filteredAndSortedChildren, id: \.id) { item in
                             LogItemRowView(
                                 item: item,

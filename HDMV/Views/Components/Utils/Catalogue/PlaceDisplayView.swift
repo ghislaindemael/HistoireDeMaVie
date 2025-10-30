@@ -50,7 +50,6 @@ struct PlaceDisplayView: View {
                 }
                 if isSmall {
                     Text(place.city?.name ?? "—")
-                        .foregroundStyle(.secondary)
                 } else {
                     let cityName = place.city?.name ?? "—"
                     Text("\(cityName) – \(place.name)")
