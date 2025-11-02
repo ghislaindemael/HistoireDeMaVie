@@ -36,7 +36,11 @@ struct InteractionRowView: View {
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
-            DateRangeDisplayView(startDate: interaction.timeStart, endDate: interaction.timeEnd)
+            DateRangeDisplayView(
+                startDate: interaction.timeStart,
+                endDate: interaction.timeEnd,
+                selectedDate: interaction.timeStart
+            )
             
             HStack {
                 if interaction.timed == false {

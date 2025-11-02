@@ -74,7 +74,7 @@ final class Interaction: LogModel {
         self.personRid = dto.person_id
         self.inPerson = dto.in_person
         self.details = dto.details
-        self.parentInstanceRid = dto.parent_activity_id
+        self.parentInstanceRid = dto.parent_instance_id
         self.syncStatus = .synced
     }
     
@@ -84,7 +84,7 @@ final class Interaction: LogModel {
         self.timed = dto.timed
         self.percentage = dto.percentage ?? 100
 
-        self.parentInstanceRid = dto.parent_activity_id
+        self.parentInstanceRid = dto.parent_instance_id
         self.personRid = dto.person_id
         self.timed = dto.timed
         self.inPerson = dto.in_person
@@ -121,7 +121,7 @@ struct InteractionDTO: Codable, Identifiable, Sendable {
     var percentage: Int?
     var person_id: Int
     var in_person: Bool
-    var parent_activity_id: Int?
+    var parent_instance_id: Int?
     var details: String?
 }
 
@@ -141,11 +141,17 @@ struct InteractionPayload: Codable, InitializableWithModel {
         
     /// Creates a payload directly from a Interaction model object.
     /// This is the primary initializer you'll use in your ViewModel.
-    init(from interaction: Interaction) {
+    init?(from interaction: Interaction) {
+        guard interaction.isValid(),
+              let personRid = interaction.personRid
+        else {
+            print("-> Interaction \(interaction.id) is invalid.")
+            return nil
+        }
         self.time_start = interaction.timeStart
         self.time_end = interaction.timeEnd
         self.parent_instance_id = interaction.parentInstanceRid
-        self.person_id = interaction.personRid
+        self.person_id = personRid
         self.timed = interaction.timed
         self.in_person = interaction.inPerson
         self.details = interaction.details

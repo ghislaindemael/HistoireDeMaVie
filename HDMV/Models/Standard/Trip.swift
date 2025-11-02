@@ -102,6 +102,9 @@ final class Trip: LogModel {
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.parentInstanceRid = dto.parent_instance_id
+        if self.parentInstanceRid == nil {
+            self.parentInstance = nil
+        }
         self.placeStartRid = dto.place_start_id
         self.placeEndRid = dto.place_end_id
         self.vehicleRid = dto.vehicle_id

@@ -55,16 +55,14 @@ struct LogPageToolbar: ViewModifier {
                 
                 // MARK: - Trailing Add Button
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .simultaneousGesture(LongPressGesture().onEnded { _ in
-                        longPressAction()
-                    })
-                    .simultaneousGesture(TapGesture().onEnded {
-                        singleTapAction()
-                    })
+                    Image(systemName: "plus")
+                        .onLongPressGesture {
+                            longPressAction()
+                        }
+                    
+                        .onTapGesture {
+                            singleTapAction()
+                        }
                 }
             }
     }

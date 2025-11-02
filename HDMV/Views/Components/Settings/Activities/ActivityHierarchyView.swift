@@ -70,6 +70,27 @@ struct ActivityHierarchyView: View {
                 }
             }
             
+            if !invalidChildren.isEmpty {
+                
+                HStack(alignment: .top, spacing: contentLeadingPadding) {
+                    Color.red
+                        .frame(width: indicatorWidth)
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(invalidChildren, id: \.id) { item in
+                            LogItemRowView(
+                                item: item,
+                                instanceToEdit: $instanceToEdit,
+                                tripToEdit: $tripToEdit,
+                                interactionToEdit: $interactionToEdit,
+                                level: level + 1
+                            )
+                        }
+                    }
+                }
+                
+            }
+            
             let hasActiveTrips = instance.trips?.contains { $0.timeEnd == nil } ?? false
             let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
             
@@ -113,6 +134,22 @@ struct ActivityHierarchyView: View {
                 return []
         }
     }
+    
+    private var invalidChildren: [any LogModel] {
+        guard let parentEndTime = instance.timeEnd else {
+            return []
+        }
+        
+        let parentStartTime = instance.timeStart
+        
+        return instance.sortedChildren.filter { item in
+            let startsAfterParentEnds = item.timeStart >= parentEndTime
+            
+            let endsBeforeParentStarts = (item.timeEnd ?? Date.distantFuture) <= parentStartTime
+            
+            return startsAfterParentEnds || endsBeforeParentStarts
+        }
+    }
 }
 
 extension ActivityInstance {
@@ -130,6 +167,8 @@ extension ActivityInstance {
         }
         return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
     }
+    
+    
     
     
 }
