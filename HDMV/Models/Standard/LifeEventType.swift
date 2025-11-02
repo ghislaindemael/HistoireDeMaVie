@@ -24,7 +24,9 @@ enum LifeEventType: String, CaseIterable, Codable, Identifiable {
     case milestone
     case reflection
     case reward
+    case search
     case social
+    case stress
     case success
     case transition
     case unset
@@ -44,10 +46,12 @@ enum LifeEventType: String, CaseIterable, Codable, Identifiable {
             case .milestone: return "Milestone"
             case .reflection: return "Reflection"
             case .reward: return "Reward"
+            case .search: return "Search"
             case .social: return "Social"
+            case .stress: return "Stress"
             case .success: return "Success"
             case .transition: return "Transition"
-            case .unset: return "questionmark.circle"
+            case .unset: return "Unset"
         }
     }
     
@@ -66,7 +70,9 @@ enum LifeEventType: String, CaseIterable, Codable, Identifiable {
             case .milestone: return "🎯"
             case .reflection: return "💭"
             case .reward: return "💰"
+            case .search: return "🔍"
             case .social: return "👥"
+            case .stress: return "♥️"
             case .success: return "🏆"
             case .transition: return "🔄"
             case .unset: return "questionmark.circle"

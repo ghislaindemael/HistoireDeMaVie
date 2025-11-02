@@ -178,7 +178,8 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     var timed: Bool = true
     var percentage: Int = 100
     
-    var parent: ActivityInstance?
+    var parentInstanceRid: Int?
+    var parentInstance: ActivityInstance?
     var vehicle: Vehicle?
     var placeStart: Place?
     var placeEnd: Place?
@@ -190,7 +191,7 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     typealias Model = Trip
     
     init(from trip: Trip) {
-        self.parent = trip.parentInstance
+        self.parentInstance = trip.parentInstance
         self.timeStart = trip.timeStart
         self.timeEnd = trip.timeEnd
         self.amDriver = trip.amDriver
@@ -205,8 +206,8 @@ struct TripEditor: TimeTrackable, EditorProtocol {
 
         trip.timeStart = self.timeStart
         trip.timeEnd = self.timeEnd
-        trip.parentInstance = self.parent
-        trip.parentInstanceRid = self.parent?.rid
+        trip.parentInstance = self.parentInstance
+        trip.parentInstanceRid = self.parentInstanceRid
         trip.placeStart = self.placeStart
         trip.placeStartRid = self.placeStart?.rid
         trip.placeEnd = self.placeEnd

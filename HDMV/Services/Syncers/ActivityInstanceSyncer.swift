@@ -10,7 +10,7 @@ import Foundation
 import SwiftData
 
 @MainActor
-class ActivityInstanceSyncer: BaseSyncer<ActivityInstance, ActivityInstanceDTO, ActivityInstancePayload> {
+class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDTO, ActivityInstancePayload> {
     
     private let instanceService = ActivityInstanceService()
 
@@ -70,28 +70,22 @@ class ActivityInstanceSyncer: BaseSyncer<ActivityInstance, ActivityInstanceDTO, 
         }
     }
     
-    func pullChanges(activityRid: Int, startDate: Date, endDate: Date) async throws {
+    override func pullChanges(date: Date?) async throws {
+        guard let filterDate = date else { throw SyncError.missingDateContext }
         
-        let dtos = try await instanceService.fetchActivityInstances(
-            activityId: activityRid,
-            startDate: startDate,
-            endDate: endDate
-        )
+        let dtos = try await instanceService.fetchActivityInstances(for: filterDate)
         let serverRids = Set(dtos.map { $0.id })
         
-        let allLocalModels = try modelContext.fetch(FetchDescriptor<ActivityInstance>())
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: startDate)
-        let endOfDayForEndDate = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) ?? endDate
+        let (startOfDay, endOfDay) = getDayBounds(for: filterDate)
         let future = Date.distantFuture
-        
-        let relevantLocalModels = allLocalModels.filter { model in
-            model.timeStart < endOfDayForEndDate && (model.timeEnd ?? future) > startOfDay
+        let predicate = #Predicate<ActivityInstance> {
+            $0.timeStart < endOfDay && ($0.timeEnd ?? future) > startOfDay
         }
+        let descriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
+        let relevantLocalModels = try modelContext.fetch(descriptor)
+        
         let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
-        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in
-            return first
-        })
+        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in return first })
         let localRids = Set(localCache.keys)
         
         for dto in dtos {
@@ -106,15 +100,73 @@ class ActivityInstanceSyncer: BaseSyncer<ActivityInstance, ActivityInstanceDTO, 
         
         let ridsToDelete = localRids.subtracting(serverRids)
         for rid in ridsToDelete {
-            if let modelToDelete = localCache[rid] {
-                if modelToDelete.syncStatus == .synced {
-                    modelContext.delete(modelToDelete)
-                }
+            if let modelToDelete = localCache[rid], modelToDelete.syncStatus == .synced {
+                modelContext.delete(modelToDelete)
             }
         }
         
         try resolveRelationships()
-        try modelContext.save()
+        if modelContext.hasChanges { try modelContext.save() }
     }
+    
+    func pullChanges(activityRid: Int, startDate: Date, endDate: Date) async throws {
+        
+        let dtos = try await instanceService.fetchActivityInstances(
+            activityId: activityRid,
+            startDate: startDate,
+            endDate: endDate
+        )
+        let serverRids = Set(dtos.map { $0.id })
+        
+        let (startOfDay, endOfDay) = getDayBounds(for: startDate, and: endDate)
+        let future = Date.distantFuture
+        let predicate = #Predicate<ActivityInstance> { model in
+            model.activityRid == activityRid &&
+            model.timeStart < endOfDay &&
+            (model.timeEnd ?? future) > startOfDay
+        }
+        let descriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
+        let relevantLocalModels = try modelContext.fetch(descriptor)
+        
+        let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
+        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in return first })
+        let localRids = Set(localCache.keys)
+        
+        for dto in dtos {
+            if let existingModel = localCache[dto.id] {
+                guard existingModel.syncStatus == .synced else { continue }
+                existingModel.update(fromDto: dto)
+            } else {
+                let newModel = ActivityInstance(fromDto: dto)
+                modelContext.insert(newModel)
+            }
+        }
+        
+        let ridsToDelete = localRids.subtracting(serverRids)
+        for rid in ridsToDelete {
+            if let modelToDelete = localCache[rid], modelToDelete.syncStatus == .synced {
+                modelContext.delete(modelToDelete)
+            }
+        }
+        
+        try resolveRelationships()
+        if modelContext.hasChanges { try modelContext.save() }
+    }
+    
+    private func getDayBounds(for date: Date) -> (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: date)
+        let end = calendar.date(byAdding: .day, value: 1, to: start)!
+        return (start, end)
+    }
+    
+    private func getDayBounds(for start: Date, and end: Date) -> (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: start)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end))!
+        return (startOfDay, endOfDay)
+    }
+    
+    
     
 }

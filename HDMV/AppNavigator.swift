@@ -9,6 +9,9 @@ import SwiftUI
 
 /// A shared object to coordinate navigation between different parts of the app.
 class AppNavigator: ObservableObject {
+    
+    static let shared = AppNavigator()
+    
     /// The currently selected tab. The TabView will be bound to this.
     @Published var selectedTab: Tab = .home
     

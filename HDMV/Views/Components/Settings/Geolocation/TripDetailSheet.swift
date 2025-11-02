@@ -34,6 +34,15 @@ struct TripDetailSheet: View {
                 }
                 pathSection
                 detailsSection
+                
+                if viewModel.editor.parentInstance != nil || viewModel.editor.parentInstanceRid != nil {
+                    Section("Hierarchy") {
+                        Button("Remove from Parent", role: .destructive) {
+                            viewModel.editor.parentInstance = nil
+                            viewModel.editor.parentInstanceRid = nil
+                        }
+                    }
+                }
             }
             .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {

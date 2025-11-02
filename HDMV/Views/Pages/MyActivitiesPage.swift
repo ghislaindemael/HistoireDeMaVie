@@ -11,6 +11,7 @@ import SwiftData
 struct MyActivitiesPage: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appNavigator: AppNavigator
+    @EnvironmentObject private var settings: SettingsStore
     
     @StateObject private var viewModel = MyActivitiesPageViewModel()
     
@@ -21,7 +22,9 @@ struct MyActivitiesPage: View {
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
             viewModel.filterDate = navDate
-            appNavigator.selectedDate = nil
+            if settings.planningMode == false {
+                appNavigator.selectedDate = nil
+            }
         }
         viewModel.setup(modelContext: modelContext)
         viewModel.fetchDailyData()
@@ -40,7 +43,10 @@ struct MyActivitiesPage: View {
                     longPressAction: { viewModel.createActivityInstance(date: viewModel.filterDate) },
                 )
                 .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.filterDate) { viewModel.fetchDailyData() }
+                .onChange(of: viewModel.filterDate) {
+                    viewModel.fetchDailyData()
+                    appNavigator.selectedDate = viewModel.filterDate
+                }
                 .onChange(of: viewModel.filterActivity) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }

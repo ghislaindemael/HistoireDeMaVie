@@ -46,14 +46,30 @@ struct TripRowView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         VehicleDisplayView(vehicleRid: trip.vehicle?.rid)
+                        
                         Spacer()
                         SyncStatusIndicator(status: trip.syncStatus)
                     }
+                    DateRangeDisplayView(
+                        startDate: trip.timeStart,
+                        endDate: trip.timeEnd,
+                        selectedDate: trip.timeStart
+                    )
                     PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: smallDisplay)
-
                     HStack {
                         Image(systemName: "arrow.turn.down.right")
                         PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: smallDisplay)
+                    }
+                    if let details = trip.details, !details.isEmpty {
+                        Text(details)
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.secondaryBackground)
+                            )
+                            .foregroundColor(Color.primary)
+                            .font(.body)
                     }
 
                 }

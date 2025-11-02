@@ -11,6 +11,7 @@ import SwiftData
 struct MyInteractionsPage: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appNavigator: AppNavigator
+    @EnvironmentObject private var settings: SettingsStore
     
     @StateObject private var viewModel = MyInteractionsPageViewModel()
     
@@ -21,7 +22,9 @@ struct MyInteractionsPage: View {
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
             viewModel.filterDate = navDate
-            appNavigator.selectedDate = nil
+            if settings.planningMode == false {
+                appNavigator.selectedDate = nil
+            }
         }
         viewModel.setup(modelContext: modelContext)
         viewModel.fetchInteractions()
@@ -40,7 +43,10 @@ struct MyInteractionsPage: View {
                     singleTapAction: { viewModel.createInteraction() },
                     longPressAction: { viewModel.createInteraction(date: viewModel.filterDate) },
                 )
-                .onChange(of: viewModel.filterDate) { viewModel.fetchInteractions() }
+                .onChange(of: viewModel.filterDate) {
+                    viewModel.fetchInteractions()
+                    appNavigator.selectedDate = viewModel.filterDate
+                }
                 .sheet(item: $interactionToEdit) { interaction in
                     InteractionDetailSheet(
                         interaction: interaction,

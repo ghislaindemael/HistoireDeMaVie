@@ -11,7 +11,7 @@ import SwiftData
 import SwiftUI
 
 @MainActor
-class TripSyncer: BaseSyncer<Trip, TripDTO, TripPayload> {
+class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
     
     private let tripsService = TripsService()
     

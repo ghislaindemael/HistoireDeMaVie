@@ -10,7 +10,7 @@ import Foundation
 import SwiftData
 
 @MainActor
-class InteractionSyncer: BaseSyncer<Interaction, InteractionDTO, InteractionPayload> {
+class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionPayload> {
     
     private let interactionService = PeopleInteractionsService()
 

@@ -35,8 +35,8 @@ struct HDMVApp: App {
         }
     }()
     
-    @StateObject var settings = SettingsStore()
-    @StateObject var appNavigator = AppNavigator()
+    @StateObject var settings = SettingsStore.shared
+    @StateObject var appNavigator = AppNavigator.shared
 
     var body: some Scene {
         WindowGroup {
