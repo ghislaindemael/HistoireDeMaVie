@@ -14,7 +14,8 @@ import SwiftData
 
 @Model
 final class Country: CatalogueModel {
-    var rid: Int?
+    
+    @Attribute(.unique) var rid: Int?
     var slug: String?
     var name: String?
     var cache: Bool = true
@@ -24,6 +25,13 @@ final class Country: CatalogueModel {
     typealias Payload = CountryPayload
     typealias DTO = CountryDTO
     typealias Editor = CountryEditor
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \City.country)
+    var cities: [City]?
+    
+    // MARK: Init
     
     init(slug: String? = nil, name: String? = nil, rid: Int? = nil, cache: Bool = true, archived: Bool = false, syncStatus: SyncStatus = .local) {
         self.slug = slug

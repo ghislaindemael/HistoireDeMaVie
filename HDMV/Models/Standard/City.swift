@@ -11,16 +11,11 @@ import SwiftData
 @Model
 final class City: CatalogueModel {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var slug: String?
     var name: String?
     var countryRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var country: Country? {
-        didSet {
-            self.countryRid = relCountry.rid
-        }
-    }
+
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -28,6 +23,16 @@ final class City: CatalogueModel {
     typealias Payload = CityPayload
     typealias DTO = CityDTO
     typealias Editor = CityEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var country: Country?
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Place.city)
+    var places: [Place]?
     
     // MARK: - Initializer
     init(
@@ -103,7 +108,7 @@ struct CityPayload: Codable, InitializableWithModel {
         guard city.isValid(),
               let slug = city.slug,
               let name = city.name,
-              let countryRid = city.country?.rid ?? city.countryRid else {
+              let countryRid = city.countryRid else {
             return nil
         }
         
@@ -136,11 +141,13 @@ struct CityEditor: CachableModel, EditorProtocol {
         if let slug = self.slug { city.slug = slug }
         if let name = self.name { city.name = name }
         
-        if let selectedCountry = self.country {
-            city.country = selectedCountry
-            city.countryRid = selectedCountry.rid
-        }
+        if city.country === self.country {
+                print(" apply: No change. 'city.country' is already 'self.country'.")
+            } else {
+                print(" apply: 'country' has changed. 'didSet' will fire.")
+            }
         
+        city.country = self.country
         city.cache = self.cache
         city.archived = self.archived
     }

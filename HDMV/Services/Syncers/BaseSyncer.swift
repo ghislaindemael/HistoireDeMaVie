@@ -15,12 +15,12 @@ import SwiftData
 @MainActor
 class BaseSyncer<Model, DTO, Payload>
 where
-    Model: SyncableModel & Identifiable & PersistentModel,
-    DTO: Codable & Identifiable,
-    DTO == Model.DTO,
-    DTO.ID == Int,
-    Payload: Codable & InitializableWithModel,
-    Payload.Model == Model
+Model: SyncableModel & Identifiable & PersistentModel,
+DTO: Codable & Identifiable,
+DTO == Model.DTO,
+DTO.ID == Int,
+Payload: Codable & InitializableWithModel,
+Payload.Model == Model
 {
     
     private enum SyncTaskResult {
@@ -165,7 +165,7 @@ where
         try await defaultPullChanges(date: date)
     }
     
-
+    
     // MARK: - Abstract Methods for Subclasses to Implement
     
     func fetchRemoteModels(date: Date? = nil) async throws -> [DTO] { fatalError("Subclasses must implement fetchRemoteModels()") }
@@ -176,6 +176,52 @@ where
     func resolveRelationships(for model: Model) throws {}
     // MARK: - Helpers
     
+    @MainActor
+    final func getLookupMap<T: PersistentModel & SyncableModel>() throws -> [Int: T] {
+        let allModels = try modelContext.fetch(FetchDescriptor<T>())
+        
+        let lookup = allModels.reduce(into: [Int: T]()) { (dict, model) in
+            guard let rid = model.rid else { return }
+            
+            if dict[rid] == nil {
+                dict[rid] = model
+            }
+        }
+        
+        return lookup
+    }
+    
+    @MainActor
+    final func resolveRelationship<Child: PersistentModel, Parent: PersistentModel & SyncableModel>(
+        for children: Child.Type,
+        relationshipKeyPath: WritableKeyPath<Child, Parent?>,
+        ridKeyPath: KeyPath<Child, Int?>,
+        lookupMap: [Int: Parent]
+    ) throws {
+        
+        let allChildren = try modelContext.fetch(FetchDescriptor<Child>())
+        
+        let childrenToFix = allChildren.filter { child in
+            guard let rid = child[keyPath: ridKeyPath] else {
+                return false
+            }
+            
+            if let currentParent = child[keyPath: relationshipKeyPath] {
+                return currentParent.rid != rid
+            } else {
+                return true
+            }
+        }
+        
+        if childrenToFix.isEmpty { return }
+        
+        print("Resolving \(childrenToFix.count) broken relationships for \(Child.self) -> \(Parent.self)")
+        
+        for var child in childrenToFix {
+            guard let rid = child[keyPath: ridKeyPath] else { continue }
+            child[keyPath: relationshipKeyPath] = lookupMap[rid]
+        }
+    }
     
     
     func fetchLocalModels(with status: SyncStatus) throws -> [Model] {

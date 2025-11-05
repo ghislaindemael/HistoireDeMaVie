@@ -13,7 +13,7 @@ import SwiftData
 @Model
 final class Place: CatalogueModel, EditableModel {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     var cityRid: Int?
 
@@ -24,12 +24,23 @@ final class Place: CatalogueModel, EditableModel {
     typealias DTO = PlaceDTO
     typealias Payload = PlacePayload
     typealias Editor = PlaceEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var city: City? {
+        didSet {
+            cityRid = city?.rid
+        }
+    }
+    
+    // MARK: Init
 
 
     init(rid: Int? = nil,
          name: String = "Unset",
          cityRid: Int? = nil,
-         relCity: City? = nil,
+         city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
          syncStatus: SyncStatus = .local) {
