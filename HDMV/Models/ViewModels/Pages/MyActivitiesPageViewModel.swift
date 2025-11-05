@@ -205,9 +205,9 @@ class MyActivitiesPageViewModel: ObservableObject {
             date = parent.timeStart
         }
         let newTrip = Trip(
-            timeStart: date,
-            parentInstance: parent
+            timeStart: date
         )
+        newTrip.setParentInstance(parent)
         context.insert(newTrip)
         do {
             try context.save()
@@ -318,20 +318,22 @@ class MyActivitiesPageViewModel: ObservableObject {
                 
                 print("✅ Re-parenting Activity '\(childToMove.id)' onto '\(newParent.id)'.")
                 childToMove.parent = newParent
+                childToMove.parentRid = newParent.rid
                 childToMove.markAsModified()
                 
             case .trip(let childID):
-                guard let childToMove = context.model(for: childID) as? Trip else { return }
+                guard let tripToMove = context.model(for: childID) as? Trip else { return }
                 
-                print("✅ Re-parenting Trip '\(childToMove.id)' onto '\(newParent.id)'.")
-                childToMove.parentInstance = newParent
-                childToMove.markAsModified()
+                print("✅ Re-parenting Trip '\(tripToMove.id)' onto '\(newParent.id)'.")
+                tripToMove.setParentInstance(newParent)
+                tripToMove.markAsModified()
                 
             case .interaction(let childID):
                 guard let childToMove = context.model(for: childID) as? Interaction else { return }
                 
                 print("✅ Re-parenting Interaction '\(childToMove.id)' onto '\(newParent.id)'.")
                 childToMove.parentInstance = newParent
+                childToMove.parentInstanceRid = newParent.rid
                 childToMove.markAsModified()
         }
         

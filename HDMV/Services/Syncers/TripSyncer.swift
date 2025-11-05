@@ -36,53 +36,6 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
         // try await tripService.deleteTrip(id: id)
     }
     
-    override func resolveRelationships() throws {
-        print("⚙️ Resolving relationships for Trips...")
-        let tripsToResolve = try modelContext.fetch(FetchDescriptor<Trip>())
-        
-        let instances = try modelContext.fetch(FetchDescriptor<ActivityInstance>())
-        let instanceCache = Dictionary(instances.compactMap { $0.rid != nil ? ($0.rid!, $0) : nil },
-                                       uniquingKeysWith: { first, _ in first })
-        
-        let places = try modelContext.fetch(FetchDescriptor<Place>())
-        let placeCache = Dictionary(places.compactMap { $0.rid != nil ? ($0.rid!, $0) : nil },
-                                    uniquingKeysWith: { first, _ in first })
-        
-        let vehicles = try modelContext.fetch(FetchDescriptor<Vehicle>())
-        let vehicleCache = Dictionary(vehicles.compactMap { $0.rid != nil ? ($0.rid!, $0) : nil },
-                                      uniquingKeysWith: { first, _ in first })
-        
-        let paths = try modelContext.fetch(FetchDescriptor<Path>())
-        let pathCache = Dictionary(paths.compactMap { $0.rid != nil ? ($0.rid!, $0) : nil },
-                                   uniquingKeysWith: { first, _ in first })
-        
-        for trip in tripsToResolve {
-            if trip.parentInstance == nil, let rid = trip.parentInstanceRid {
-                if let parent = instanceCache[rid] {
-                    trip.parentInstance = parent
-                }
-            }
-            if trip.vehicle == nil, let rid = trip.vehicleRid {
-                if let vehicle = vehicleCache[rid] {
-                    trip.vehicle = vehicle
-                }
-            }
-            if trip.placeStart == nil, let rid = trip.placeStartRid {
-                if let place = placeCache[rid] {
-                    trip.placeStart = place
-                }
-            }
-            if trip.placeEnd == nil, let rid = trip.placeEndRid {
-                if let place = placeCache[rid] {
-                    trip.placeEnd = place
-                }
-            }
-            if trip.path == nil, let rid = trip.pathRid {
-                if let path = pathCache[rid] {
-                    trip.path = path
-                }
-            }
-        }
-        
-    }
+    override func resolveRelationships() throws {}
+    
 }

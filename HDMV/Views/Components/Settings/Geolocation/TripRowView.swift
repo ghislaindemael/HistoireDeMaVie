@@ -26,12 +26,12 @@ struct TripRowView: View {
             if smallDisplay {
                 VStack(alignment: .leading) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid, isSmall: smallDisplay)
+                        VehicleDisplayView(vehicleRid: trip.vehicleRid, isSmall: smallDisplay)
                         
                         HStack {
-                            PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: smallDisplay)
+                            PlaceDisplayView(placeRid: trip.placeStartRid, isSmall: smallDisplay)
                             Image(systemName: "arrow.right").padding(.leading, 2)
-                            PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: smallDisplay)
+                            PlaceDisplayView(placeRid: trip.placeEndRid, isSmall: smallDisplay)
                             
                         }
                         Spacer()
@@ -45,7 +45,7 @@ struct TripRowView: View {
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        VehicleDisplayView(vehicleRid: trip.vehicle?.rid)
+                        VehicleDisplayView(vehicleRid: trip.vehicleRid)
                         
                         Spacer()
                         SyncStatusIndicator(status: trip.syncStatus)
@@ -55,10 +55,10 @@ struct TripRowView: View {
                         endDate: trip.timeEnd,
                         selectedDate: trip.timeStart
                     )
-                    PlaceDisplayView(placeRid: trip.placeStart?.rid, isSmall: smallDisplay)
+                    PlaceDisplayView(placeRid: trip.placeStartRid, isSmall: smallDisplay)
                     HStack {
                         Image(systemName: "arrow.turn.down.right")
-                        PlaceDisplayView(placeRid: trip.placeEnd?.rid, isSmall: smallDisplay)
+                        PlaceDisplayView(placeRid: trip.placeEndRid, isSmall: smallDisplay)
                     }
                     if let details = trip.details, !details.isEmpty {
                         Text(details)

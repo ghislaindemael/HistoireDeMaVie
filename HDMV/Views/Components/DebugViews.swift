@@ -204,7 +204,13 @@ extension Place: DebugViewable {
                     .foregroundStyle(.secondary)
             }
             Text("Name: \(name)")
-            Text("City rid: \(city?.rid ?? -1)")
+            if let cid = cityRid  {
+                Text("City RID: \(cid)")
+            } else {
+                Text("City RID : Unset")
+                    .bold()
+                    .foregroundStyle(.red)
+            }
         }
     }
 }
@@ -234,16 +240,12 @@ extension Trip: DebugViewable {
                 LabeledContent("Parent Loaded", value: self.parentInstance != nil ? "✅ Yes" : "❌ No")
                 
                 LabeledContent("Vehicle RID", value: self.vehicleRid?.description ?? "nil")
-                LabeledContent("Vehicle Loaded", value: self.vehicle != nil ? "✅ Yes" : "❌ No")
                 
                 LabeledContent("Place Start RID", value: self.placeStartRid?.description ?? "nil")
-                LabeledContent("Place Start Loaded", value: self.placeStart != nil ? "✅ Yes" : "❌ No")
                 
                 LabeledContent("Place End RID", value: self.placeEndRid?.description ?? "nil")
-                LabeledContent("Place End Loaded", value: self.placeEnd != nil ? "✅ Yes" : "❌ No")
                 
                 LabeledContent("Path RID", value: self.pathRid?.description ?? "nil")
-                LabeledContent("Path Loaded", value: self.path != nil ? "✅ Yes" : "❌ No")
             }
             
             // MARK: - Details
@@ -269,13 +271,9 @@ extension Trip: DebugViewable {
         components.append("Parent Instance RID: \(self.parentInstanceRid?.description ?? "nil")")
         components.append("-> Parent Loaded: \(self.parentInstance != nil ? "Yes" : "No")")
         components.append("Vehicle RID: \(self.vehicleRid?.description ?? "nil")")
-        components.append("-> Vehicle Loaded: \(self.vehicle != nil ? "Yes" : "No")")
         components.append("Place Start RID: \(self.placeStartRid?.description ?? "nil")")
-        components.append("-> Place Start Loaded: \(self.placeStart != nil ? "Yes" : "No")")
         components.append("Place End RID: \(self.placeEndRid?.description ?? "nil")")
-        components.append("-> Place End Loaded: \(self.placeEnd != nil ? "Yes" : "No")")
         components.append("Path RID: \(self.pathRid?.description ?? "nil")")
-        components.append("-> Path Loaded: \(self.path != nil ? "Yes" : "No")")
         components.append("------------")
         
         return components.joined(separator: "\n")

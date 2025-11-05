@@ -131,7 +131,9 @@ struct DataWipeDetailView: View {
                     items = results
                     count = results.count
                 case is Place.Type:
-                    let descriptor = FetchDescriptor<Place>()
+                    let descriptor = FetchDescriptor<Place>(
+                        sortBy: [SortDescriptor(\.name)]
+                    )
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count

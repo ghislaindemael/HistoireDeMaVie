@@ -16,12 +16,7 @@ final class Place: CatalogueModel, EditableModel {
     var rid: Int?
     var name: String
     var cityRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var relCity: City? {
-        didSet {
-            self.cityRid = relCity.rid
-        }
-    }
+
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -29,21 +24,7 @@ final class Place: CatalogueModel, EditableModel {
     typealias DTO = PlaceDTO
     typealias Payload = PlacePayload
     typealias Editor = PlaceEditor
-    
-    var city: City? {
-        get {
-            if let city = relCity { return city }
-            guard let rid = cityRid, let ctx = RelationResolver.context else { return nil }
-            let descriptor = FetchDescriptor<City>(predicate: #Predicate { $0.rid == rid })
-            return try? ctx.fetch(descriptor).first
-        }
-        set {
-            relCity = newValue
-            if newValue?.rid != cityRid {
-                cityRid = newValue?.rid
-            }
-        }
-    }
+
 
     init(rid: Int? = nil,
          name: String = "Unset",
@@ -55,7 +36,6 @@ final class Place: CatalogueModel, EditableModel {
         self.rid = rid
         self.name = name
         self.cityRid = cityRid
-        self.relCity = relCity
         self.cache = cache
         self.archived = archived
         self.syncStatusRaw = syncStatus.rawValue
@@ -105,8 +85,7 @@ struct PlacePayload: Codable, InitializableWithModel {
     var archived: Bool
     
     init?(from place: Place) {
-        guard place.isValid(),
-              let cityRid = place.city?.rid ?? place.cityRid else {
+        guard place.isValid(), let cityRid = place.cityRid else {
             return nil
         }
         self.name = place.name
@@ -131,7 +110,6 @@ struct PlaceEditor: CachableModel, EditorProtocol {
         self.rid = place.rid
         self.name = place.name
         self.cityRid = place.cityRid
-        self.city = place.city
         self.cache = place.cache
         self.archived = place.archived
     }
@@ -139,12 +117,7 @@ struct PlaceEditor: CachableModel, EditorProtocol {
     func apply(to place: Place) {
         place.rid = self.rid
         place.name = self.name
-        
-        if let selectedCity = self.city {
-            place.relCity = selectedCity
-            place.cityRid = selectedCity.rid
-        }
-        
+        place.cityRid = self.cityRid
         place.cache = self.cache
         place.archived = self.archived
     }

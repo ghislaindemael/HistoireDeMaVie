@@ -27,10 +27,16 @@ struct TripDetailSheet: View {
                 vehicleSection
                 
                 Section("Start Place") {
-                    PlaceSelectorView(selectedPlace: $viewModel.editor.placeStart)
+                    PlaceSelectorView(
+                        selectedPlace: $viewModel.editor.placeStart,
+                        linkedPlaceRid: viewModel.editor.placeStartRid
+                    )
                 }
                 Section("End Place") {
-                    PlaceSelectorView(selectedPlace: $viewModel.editor.placeEnd)
+                    PlaceSelectorView(
+                        selectedPlace: $viewModel.editor.placeEnd,
+                        linkedPlaceRid: viewModel.editor.placeEndRid
+                    )
                 }
                 pathSection
                 detailsSection

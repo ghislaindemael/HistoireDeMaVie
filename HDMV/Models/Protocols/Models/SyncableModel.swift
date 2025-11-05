@@ -29,4 +29,19 @@ extension SyncableModel {
             syncStatus = .local
         }
     }
+    
+    var syncPriority: Int {
+        switch SyncStatus.safeInit(syncStatusRaw) {
+            case .local, .failed:
+                return 0
+            case .syncing:
+                return 1
+            case .toDelete:
+                return 2
+            case .synced:
+                return 3
+            case .undef:
+                return 4
+        }
+    }
 }
