@@ -122,7 +122,7 @@ extension City: DebugViewable {
                     .foregroundStyle(.red)
             }
             if let country {
-                Text("Country: \(country.name!)")
+                Text("Country: \(country.name)")
             } else {
                 Text("Country: Unset")
                     .bold()

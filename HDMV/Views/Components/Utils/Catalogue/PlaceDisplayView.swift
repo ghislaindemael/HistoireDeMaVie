@@ -50,7 +50,7 @@ struct PlaceDisplayView: View {
                 if showMapPin {
                     IconView(iconString: "mappin.circle")
                 }
-                let cityName = place.city(in: modelContext)?.name ?? "—"
+                let cityName = place.city?.name ?? "—"
                 
                 if isSmall {
                     Text(cityName)

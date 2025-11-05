@@ -36,6 +36,42 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
         // try await tripService.deleteTrip(id: id)
     }
     
-    override func resolveRelationships() throws {}
+    override func resolveRelationships() throws {
+        print("Resolving Trip relationships...")
+        
+        let placeLookup: [Int: Place] = try getLookupMap()
+        let vehicleLookup: [Int: Vehicle] = try getLookupMap()
+        let pathLookup: [Int: Path] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.placeStart,
+            ridKeyPath: \Trip.placeStartRid,
+            lookupMap: placeLookup
+        )
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.placeEnd,
+            ridKeyPath: \Trip.placeEndRid,
+            lookupMap: placeLookup
+        )
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.vehicle,
+            ridKeyPath: \Trip.vehicleRid,
+            lookupMap: vehicleLookup
+        )
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.path,
+            ridKeyPath: \Trip.pathRid,
+            lookupMap: pathLookup
+        )
+        
+        print("All Trip relationships resolved.")
+    }
     
 }

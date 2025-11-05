@@ -19,25 +19,27 @@ final class Interaction: LogModel {
     var percentage: Int = 100
     var inPerson: Bool = true
     var personRid: Int?
-    @Relationship
-    var person: Person? {
-        didSet {
-            personRid = person?.rid
-        }
-    }
+    
     var parentInstanceRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance?.rid
-        }
-    }
+    
+    
     var details: String?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = InteractionDTO
     typealias Payload = InteractionPayload
     typealias Editor = InteractionEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var person: Person?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+
+    
+    // MARK: Init
 
     init(
         rid: Int? = nil,

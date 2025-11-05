@@ -103,7 +103,7 @@ struct ActivityInstanceDetailSheet: View {
                     Text("Select Activity")
                     Spacer()
                     if let activity = selectedActivity {
-                        Text(activity.name ?? "TOSET")
+                        Text(activity.name)
                             .foregroundStyle(.secondary)
                     }
                 }

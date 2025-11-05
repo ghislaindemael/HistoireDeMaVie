@@ -95,7 +95,7 @@ struct PlaceSelectorView: View {
         Picker("City", selection: $displayCityId) {
             Text("Select a City").tag(nil as Int?)
             ForEach(cities) { city in
-                Text(city.name!).tag(city.rid as Int?)
+                Text(city.name).tag(city.rid as Int?)
             }
         }
     }

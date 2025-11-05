@@ -8,19 +8,27 @@
 import SwiftUI
 import SwiftData
 
-protocol LinkedCity {
+protocol LinkedCity: AnyObject {
     
     var cityRid: Int? { get set }
+    var city: City? { get set }
     
 }
 
 extension LinkedCity {
-    func city(in context: ModelContext) -> City? {
-        guard let cityRid = cityRid else { return nil }
-        return try? context.fetch(FetchDescriptor<City>(
-            predicate: #Predicate { $0.rid == cityRid }
-        )).first
+    
+    func setCity(_ newCity: City?, fallbackRid: Int? = nil) {
+        self.city = newCity
+        self.cityRid = newCity?.rid ?? fallbackRid
     }
+    
+    func clearCity() {
+        self.city = nil
+        self.cityRid = nil
+    }
+    
 }
 
 extension Place: LinkedCity {}
+extension Vehicle: LinkedCity {}
+

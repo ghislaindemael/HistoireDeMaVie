@@ -41,10 +41,7 @@ struct HDMVApp: App {
     var body: some Scene {
         WindowGroup {
             AppView()
-                .onAppear {
-                    RelationResolver.setContext(HDMVApp.sharedModelContainer.mainContext)
-
-                }
+                .onAppear {}
         }
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)

@@ -16,8 +16,8 @@ import SwiftData
 final class Country: CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
-    var slug: String?
-    var name: String?
+    var slug: String
+    var name: String
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -33,7 +33,14 @@ final class Country: CatalogueModel {
     
     // MARK: Init
     
-    init(slug: String? = nil, name: String? = nil, rid: Int? = nil, cache: Bool = true, archived: Bool = false, syncStatus: SyncStatus = .local) {
+    init(
+        slug: String,
+        name: String,
+        rid: Int? = nil,
+        cache: Bool = true,
+        archived: Bool = false,
+        syncStatus: SyncStatus = .local
+    ) {
         self.slug = slug
         self.name = name
         self.rid = rid
@@ -43,8 +50,7 @@ final class Country: CatalogueModel {
     }
     
     func isValid() -> Bool {
-        guard let slug = slug, !slug.isEmpty,
-              let name = name, !name.isEmpty else {
+        guard name.isNotUnset()  else {
             return false
         }
         return true
@@ -82,8 +88,8 @@ struct CountryPayload: Codable, InitializableWithModel {
     
     init?(from country: Country) {
         guard country.isValid() else { return nil }
-        self.slug = country.slug!
-        self.name = country.name!
+        self.slug = country.slug
+        self.name = country.name
         self.cache = country.cache
         self.archived = country.archived
     }

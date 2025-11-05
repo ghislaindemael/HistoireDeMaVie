@@ -15,13 +15,7 @@ struct CityRowView: View {
     var body: some View {
         VStack{
             HStack {
-                if let name = city.name {
-                    Text(name)
-                } else {
-                    Text("Unset")
-                        .bold()
-                        .foregroundStyle(.red)
-                }
+                NamedStringDisplayView(name: "Name", value: city.name)
                 Spacer()
                 if !city.cache {
                     IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)

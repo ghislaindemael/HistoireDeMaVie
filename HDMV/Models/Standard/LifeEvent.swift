@@ -19,11 +19,7 @@ final class LifeEvent: LogModel {
     var metrics: LifeEventMetrics?
     
     var parentInstanceRid: Int?
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance.rid
-        }
-    }
+
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     var type: LifeEventType {
@@ -34,6 +30,13 @@ final class LifeEvent: LogModel {
     typealias DTO = LifeEventDTO
     typealias Payload = LifeEventPayload
     typealias Editor = LifeEventEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    // MARK: Init
     
     init(rid: Int? = nil,
          type: LifeEventType? = .unset,

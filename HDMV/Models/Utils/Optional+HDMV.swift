@@ -7,6 +7,17 @@
 
 import SwiftUI
 
+extension String {
+    func isNotUnset() -> Bool {
+        let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.lowercased() != "unset"
+    }
+    
+    func isUnset() -> Bool {
+        return !isNotUnset()
+    }
+}
+
 extension Optional where Wrapped == String {
     var bound: String {
         get { self ?? "" }

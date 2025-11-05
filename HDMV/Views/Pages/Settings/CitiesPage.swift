@@ -17,6 +17,11 @@ struct CitiesPage: View {
         sortBy: [SortDescriptor(\.name)]))
     private var countries: [Country]
     
+    @Query(
+        filter: #Predicate<City> { $0.country == nil },
+        sort: \.name
+    ) private var orphanedCities: [City]
+    
     @State private var cityToEdit: City?
     
     var body: some View {
@@ -45,9 +50,9 @@ struct CitiesPage: View {
     private var countryFilter: some View {
         Section("Country Filter") {
             Picker("Country", selection: $viewModel.selectedCountry) {
-                Text("Select").tag(nil as Country?)
+                Text("No country").tag(nil as Country?)
                 ForEach(countries) { country in
-                    Text(country.name ?? "Unset").tag(country as Country?)
+                    Text(country.name).tag(country as Country?)
                 }
             }
         }
@@ -55,16 +60,23 @@ struct CitiesPage: View {
     
     @ViewBuilder
     private var citiesList: some View {
-        Section("Cities") {
-            ForEach(viewModel.filteredCities) { city in
-                Button(action: {
-                    cityToEdit = city
-                }) {
-                    CityRowView(city: city)
-
+        if let selectedCountry = viewModel.selectedCountry {
+            Section("Cities in \(selectedCountry.name)") {
+                ForEach(selectedCountry.cities ?? []) { city in
+                    Button(action: { cityToEdit = city }) {
+                        CityRowView(city: city)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                
+            }
+        } else {
+            Section("Cities (No Country)") {
+                ForEach(orphanedCities) { city in
+                    Button(action: { cityToEdit = city }) {
+                        CityRowView(city: city)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }

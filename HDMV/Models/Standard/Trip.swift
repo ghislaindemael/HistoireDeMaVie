@@ -18,8 +18,6 @@ final class Trip: LogModel {
     var timeEnd: Date?
     
     var parentInstanceRid: Int?
-    var parentInstance: ActivityInstance?
-    
     var placeStartRid: Int?
     var placeEndRid: Int?
     var vehicleRid: Int?
@@ -33,6 +31,30 @@ final class Trip: LogModel {
     typealias DTO = TripDTO
     typealias Payload = TripPayload
     typealias Editor = TripEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var placeStart: Place?
+    
+    @Relationship(deleteRule: .nullify)
+    var placeEnd: Place?
+    
+    @Relationship(deleteRule: .nullify)
+    var vehicle: Vehicle?
+    
+    @Relationship(deleteRule: .nullify)
+    var path: Path?
+    
+    
+    // MARK: Relationship conformance
+    
+    
+    
+    // MARK: Init
 
     init(rid: Int? = nil,
          timeStart: Date = .now,
@@ -179,12 +201,16 @@ struct TripEditor: TimeBound, EditorProtocol {
         self.parentInstance = trip.parentInstance
         
         self.vehicleRid = trip.vehicleRid
+        self.vehicle = trip.vehicle
         
         self.placeStartRid = trip.placeStartRid
+        self.placeStart = trip.placeStart
         
         self.placeEndRid = trip.placeEndRid
+        self.placeEnd = trip.placeEnd
         
         self.pathRid = trip.pathRid
+        self.path = trip.path
         
         self.amDriver = trip.amDriver
         self.details = trip.details
@@ -196,11 +222,11 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.amDriver = amDriver
         trip.details = details
         
-        trip.parentInstanceRid = parentInstanceRid
-        trip.vehicleRid = vehicleRid
-        trip.placeStartRid = placeStartRid
-        trip.placeEndRid = placeEndRid
-        trip.pathRid = pathRid
+        trip.setParentInstance(parentInstance, fallbackRid: parentInstanceRid)
+        trip.setPlaceStart(placeStart, fallbackRid: placeStartRid)
+        trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
+        trip.setVehicle(vehicle, fallbackRid: vehicleRid)
+        trip.setPath(path, fallbackRid: pathRid)
         
         trip.markAsModified()
     }

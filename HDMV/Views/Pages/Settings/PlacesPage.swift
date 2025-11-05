@@ -13,7 +13,7 @@ struct PlacesPage: View {
     @StateObject private var viewModel = PlacesPageViewModel()
     
     @Query(FetchDescriptor<City>(
-        predicate: #Predicate { $0.cache == true && $0.name != nil },
+        predicate: #Predicate { $0.cache == true },
         sortBy: [SortDescriptor(\.name)]))
     private var cities: [City]
     
@@ -48,7 +48,7 @@ struct PlacesPage: View {
             Picker("City", selection: $viewModel.selectedCity) {
                 Text("Select").tag(nil as City?)
                 ForEach(cities) { city in
-                    Text(city.name!).tag(city as City?)
+                    Text(city.name).tag(city as City?)
                 }
             }
         }

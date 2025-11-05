@@ -28,7 +28,7 @@ struct ParentActivitySelector: View {
                     HStack {
                         IconView(iconString: activity.icon ?? "")
                             .foregroundStyle(.primary)
-                        Text(activity.name ?? "Unset")
+                        Text(activity.name)
                     }
                 }
                 .buttonStyle(.plain)

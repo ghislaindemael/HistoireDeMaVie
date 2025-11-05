@@ -8,15 +8,22 @@
 protocol LinkedParentInstance: AnyObject {
     var parentInstance: ActivityInstance? { get set }
     var parentInstanceRid: Int? { get set }
-    
-    func setParentInstance(_ newParent: ActivityInstance?)
 }
 
 extension LinkedParentInstance {
-    func setParentInstance(_ newParent: ActivityInstance?) {
+    
+    func setParentInstance(_ newParent: ActivityInstance?, fallbackRid: Int? = nil) {
         parentInstance = newParent
-        parentInstanceRid = newParent?.rid
+        parentInstanceRid = newParent?.rid ?? fallbackRid
+    }
+    
+    func clearParentInstance() {
+        parentInstance = nil
+        parentInstanceRid = nil
     }
 }
 
+extension ActivityInstance: LinkedParentInstance {}
 extension Trip: LinkedParentInstance {}
+extension Interaction: LinkedParentInstance {}
+extension LifeEvent: LinkedParentInstance {}

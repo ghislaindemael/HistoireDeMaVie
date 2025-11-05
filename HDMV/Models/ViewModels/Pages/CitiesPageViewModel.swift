@@ -16,35 +16,16 @@ class CitiesPageViewModel: ObservableObject {
     private var citySyncer: CitySyncer?
     
     @Published var isLoading = false
-    @Published var cities: [City] = []
-    @Published var filteredCities: [City] = []
-
-    @Published var selectedCountry: Country? {
-        didSet {
-            updateFilteredCities()
-        }
-    }
+    @Published var selectedCountry: Country?
     
     // MARK: Initialization
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.citySyncer = CitySyncer(modelContext: modelContext)
-        fetchFromCache()
     }
     
     // MARK: - Data Loading and Caching
-    
-    private func fetchFromCache() {
-        guard let context = modelContext else { return }
-        
-        do {
-            let cityDescriptor = FetchDescriptor<City>(sortBy: [SortDescriptor(\.name)])
-            self.cities = try context.fetch(cityDescriptor)
-        } catch {
-            print("Failed to fetch from cache: \(error)")
-        }
-    }
     
     func refreshFromServer() async {
         isLoading = true
@@ -55,7 +36,6 @@ class CitiesPageViewModel: ObservableObject {
         }
         do {
             try await syncer.pullChanges()
-            fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
@@ -71,43 +51,39 @@ class CitiesPageViewModel: ObservableObject {
         do {
             _ = try await syncer.pushChanges()
             // TODO: For cleancode, add Place update on City Sync
-            fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
     }
     
-    private func updateFilteredCities() {
-        if let selectedCountry = selectedCountry {
-            self.filteredCities = cities.filter { $0.countryRid == selectedCountry.rid }
-        } else {
-            self.filteredCities = cities.filter { $0.countryRid == nil }
-        }
-    }
-    
-    
     // MARK: - User Actions
         
     func createCity() {
+        
         guard let context = modelContext else { return }
+
+        let existing = try? context.fetch(FetchDescriptor<City>(
+            predicate: #Predicate { $0.slug == "unset" || $0.name == "Unset"}
+        )).first
         
-        let newCity = City(
-            slug:"unset",
-            name: "Unset",
-            syncStatus: .local
-        )
-        newCity.country = selectedCountry
+        if existing != nil {
+            return
+        }
+
         
+        let newCity = City()
+        newCity.setCountry(selectedCountry)
         context.insert(newCity)
-        cities.append(newCity)
-        filteredCities.append(newCity)
         
         do {
             try context.save()
+            print("✅ Created new placeholder city.")
         } catch {
-            print("Failed to create city: \(error)")
+            context.rollback()
+            print("❌ Failed to create city: \(error)")
         }
     }
+
     
     
 }

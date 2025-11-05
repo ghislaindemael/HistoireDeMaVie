@@ -15,7 +15,7 @@ struct CountrySelectorView: View {
     @Binding var selectedCountry: Country?
     
     @Query(FetchDescriptor<Country>(
-        predicate: #Predicate { $0.cache == true && $0.name != nil },
+        predicate: #Predicate { $0.cache == true },
             sortBy: [SortDescriptor(\.name)]))
     private var countries: [Country]
     
@@ -24,7 +24,7 @@ struct CountrySelectorView: View {
             Picker("Country", selection: $selectedCountry) {
                 Text("None").tag(nil as Country?)
                 ForEach(countries) { country in
-                    Text(country.name!).tag(country as Country?)
+                    Text(country.name).tag(country as Country?)
                 }
             }
         }

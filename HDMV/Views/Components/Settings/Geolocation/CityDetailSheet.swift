@@ -28,10 +28,7 @@ struct CityDetailSheet: View {
                 Section("Basics") {
                     TextField("Name", text: $viewModel.editor.name.orEmpty())
                     TextField("Slug", text: $viewModel.editor.slug.orEmpty())
-                    CountrySelectorView(selectedCountry: Binding(
-                        get: { viewModel.editor.country },
-                        set: { viewModel.editor.country = $0 }
-                    ))
+                    CountrySelectorView(selectedCountry: $viewModel.editor.country)
                 }
 
                 Section("Usage") {

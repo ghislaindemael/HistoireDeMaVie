@@ -13,8 +13,8 @@ import SwiftUI
 final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable {
     
     var rid: Int?
-    var name: String?
-    var slug: String?
+    var name: String
+    var slug: String
     var parentRid: Int?
     var parent: Activity? {
         didSet {
@@ -37,8 +37,8 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     
     init(
         rid: Int? = nil,
-        name: String? = nil,
-        slug: String? = nil,
+        name: String = "Unset",
+        slug: String = "unset",
         parentRid: Int? = nil,
         icon: String? = nil,
         allowedCapabilities: [ActivityCapability] = [],
@@ -107,9 +107,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     }
         
     func isValid() -> Bool {
-        guard name != nil, slug != nil else {
-            return false
-        }
+        guard slug.isNotUnset() && name.isNotUnset() else { return false }
         
         if let pRid = parentRid, let currentRid = rid {
             guard pRid != currentRid else {
@@ -166,13 +164,10 @@ struct ActivityPayload: Codable, InitializableWithModel {
     typealias Model = Activity
     
     init?(from activity: Activity) {
-        guard activity.isValid(),
-              let name = activity.name,
-              let slug = activity.slug
-        else { return nil }
+        guard activity.isValid() else { return nil }
         
-        self.name = name
-        self.slug = slug
+        self.name = activity.name
+        self.slug = activity.slug
         self.parent_id = activity.parentRid
         self.icon = activity.icon
         self.allowed_capabilities = activity.allowedCapabilities.map { $0.rawValue }
@@ -185,8 +180,8 @@ struct ActivityPayload: Codable, InitializableWithModel {
 
 
 struct ActivityEditor: CachableModel, EditorProtocol, Capable {
-    var name: String?
-    var slug: String?
+    var name: String
+    var slug: String
     var parentRid: Int?
     var parent: Activity?
     var icon: String?

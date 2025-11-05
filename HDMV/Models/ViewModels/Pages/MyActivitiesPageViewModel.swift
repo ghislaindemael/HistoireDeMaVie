@@ -317,8 +317,8 @@ class MyActivitiesPageViewModel: ObservableObject {
                 }
                 
                 print("✅ Re-parenting Activity '\(childToMove.id)' onto '\(newParent.id)'.")
-                childToMove.parent = newParent
-                childToMove.parentRid = newParent.rid
+                childToMove.parentInstance = newParent
+                childToMove.parentInstanceRid = newParent.rid
                 childToMove.markAsModified()
                 
             case .trip(let childID):
@@ -353,7 +353,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             if currentParent == child {
                 return true
             }
-            parentIterator = currentParent.parent
+            parentIterator = currentParent.parentInstance
         }
         return false
     }

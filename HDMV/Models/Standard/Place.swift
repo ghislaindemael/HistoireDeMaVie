@@ -28,11 +28,21 @@ final class Place: CatalogueModel, EditableModel {
     // MARK: Relationships
     
     @Relationship(deleteRule: .nullify)
-    var city: City? {
-        didSet {
-            cityRid = city?.rid
-        }
-    }
+    var city: City?
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.placeStart)
+    var startTrips: [Trip]?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.placeEnd)
+    var endTrips: [Trip]?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Path.placeStart)
+    var startPaths: [Path]?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Path.placeEnd)
+    var endPaths: [Path]?
     
     // MARK: Init
 

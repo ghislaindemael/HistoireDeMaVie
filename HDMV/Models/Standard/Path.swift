@@ -12,13 +12,12 @@ final class Path: CatalogueModel {
     
     
     @Attribute(.unique) var id: Int
-    var rid: Int?
-    var name: String?
+    @Attribute(.unique) var rid: Int?
+    @Attribute(.unique) var name: String?
     var details: String?
     
-    // Relationships
-    var placeStart: Place?
-    var placeEnd: Place?
+    var placeStartRid: Int?
+    var placeEndRid: Int?
     
     var metrics: PathMetrics = PathMetrics()
     var geojsonTrack: GeoJSONLineString?
@@ -31,7 +30,20 @@ final class Path: CatalogueModel {
     typealias DTO = PathDTO
     typealias Editor = PathEditor
     
-    // MARK: - Initializers
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var placeStart: Place?
+    
+    @Relationship(deleteRule: .nullify)
+    var placeEnd: Place?
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.path)
+    var trips: [Trip]?
+    
+    // MARK: - Init
     
     /// Regular initializer
     init(

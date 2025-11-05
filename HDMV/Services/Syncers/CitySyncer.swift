@@ -32,20 +32,29 @@ final class CitySyncer: BaseSyncer<City, CityDTO, CityPayload> {
         fatalError("City deletion not implemented")
     }
     
-    override func resolveRelationships() throws {
-            print("Resolving City relationships...")
-            
-            let countryLookup: [Int: Country] = try getLookupMap()
-
-            try resolveRelationship(
-                for: City.self,
-                relationshipKeyPath: \City.country,
-                ridKeyPath: \City.countryRid,
-                lookupMap: countryLookup
-            )
-            
-            print("All City relationships resolved.")
+    override func resolveRelationships(for model: City) throws {
+        let places = try modelContext.fetch(FetchDescriptor<Place>())
+        
+        for place in places where place.city?.persistentModelID == model.persistentModelID && place.cityRid == nil {
+            place.cityRid = model.rid
+            print("🔗 Fixed missing cityRid for Place \(place.name) -> City \(model.name)")
         }
+    }
+    
+    override func resolveRelationships() throws {
+        print("Resolving City relationships...")
+        
+        let countryLookup: [Int: Country] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: City.self,
+            relationshipKeyPath: \City.country,
+            ridKeyPath: \City.countryRid,
+            lookupMap: countryLookup
+        )
+        
+        print("All City relationships resolved.")
+    }
     
 }
 

@@ -35,7 +35,7 @@ struct ActivitySelectorView: View {
                 }) {
                     HStack {
                         IconView(iconString: activity.icon ?? "")
-                        Text(activity.name ?? "Unset")
+                        Text(activity.name)
                     }
                     .foregroundStyle(.primary)
                 }

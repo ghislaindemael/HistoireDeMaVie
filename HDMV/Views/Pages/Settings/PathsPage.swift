@@ -75,7 +75,7 @@ struct PathsPage: View {
                 Text("All Cities").tag(nil as City?)
                 
                 ForEach(cities) { city in
-                    Text(city.name!).tag(city as City?)
+                    Text(city.name).tag(city as City?)
                 }
             }
         }
