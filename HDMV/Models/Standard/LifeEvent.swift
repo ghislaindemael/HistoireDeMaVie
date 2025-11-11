@@ -19,6 +19,7 @@ final class LifeEvent: LogModel {
     var metrics: LifeEventMetrics?
     
     var parentInstanceRid: Int?
+    var parentTripRid: Int?
 
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -35,6 +36,9 @@ final class LifeEvent: LogModel {
     
     @Relationship(deleteRule: .nullify)
     var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
     
     // MARK: Init
     

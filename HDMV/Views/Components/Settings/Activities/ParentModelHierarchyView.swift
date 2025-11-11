@@ -5,12 +5,10 @@
 //  Created by Ghislain Demael on 09.10.2025.
 //
 
-// ActivityHierarchyView.swift (Final, Corrected Version)
-
 import SwiftUI
 
-struct ActivityHierarchyView: View {
-    let instance: ActivityInstance
+struct ParentModelHierarchyView: View {
+    let parent: any ParentModel
     let level: Int
     
     @EnvironmentObject var viewModel: MyActivitiesPageViewModel
@@ -28,26 +26,40 @@ struct ActivityHierarchyView: View {
     private let contentLeadingPadding: CGFloat = 4
     private let verticalPadding: CGFloat = 8
     
+    @ViewBuilder
+    private var rowView: some View {
+        if let instance = parent as? ActivityInstance {
+            ActivityInstanceRowView(instance: instance, selectedDate: viewModel.filterDate)
+        } else if let trip = parent as? Trip {
+            TripRowView(trip: trip, smallDisplay: settings.smallDisplay)
+        } else {
+            EmptyView()
+        }
+    }
+    
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             
-            ActivityInstanceRowView(
-                instance: instance,
-                selectedDate: viewModel.filterDate,
-            )
+            rowView
             .background(isDropTargeted ? Color.green.opacity(0.2) : Color.clear)
             .contentShape(Rectangle())
-            .onTapGesture { instanceToEdit = instance }
+            .onTapGesture(count: 2) {
+                if let instance = parent as? ActivityInstance {
+                    instanceToEdit = instance
+                } else if let trip = parent as? Trip {
+                    tripToEdit = trip
+                }
+            }
             .cornerRadius(8)
             .dropDestination(for: DraggableLogItem.self) { items, location in
                 guard let droppedItem = items.first else { return false }
-                viewModel.reparent(draggedItem: droppedItem, to: instance)
+                viewModel.reparent(draggedItem: droppedItem, to: parent)
                 return true
             } isTargeted: { isTargeted in
                 self.isDropTargeted = isTargeted
             }
-            .draggable(DraggableLogItem.activity(instance.persistentModelID))
+            .draggable(DraggableLogItem.activity(parent.persistentModelID))
             
             if !filteredAndSortedChildren.isEmpty {
                 HStack(alignment: .top, spacing: contentLeadingPadding) {
@@ -91,44 +103,43 @@ struct ActivityHierarchyView: View {
                 
             }
             
-            let hasActiveTrips = instance.trips?.contains { $0.timeEnd == nil } ?? false
-            let hasActiveInteractions = instance.interactions?.contains { $0.timeEnd == nil } ?? false
-            
-            if instance.timeEnd == nil || settings.planningMode == true {
-                if (instance.activity?.can(.create_trips) == true) {
-                    if !hasActiveTrips  {
-                        StartItemButton(title: "Start Trip") {
-                            viewModel.createTrip(parent: instance)
+            if parent.timeEnd == nil || settings.planningMode == true {
+                if let instance = parent as? ActivityInstance {
+                    
+                    if (instance.activity?.can(.create_trips) == true) {
+                        if !parent.hasActiveTrips()  {
+                            StartItemButton(title: "Start Trip") {
+                                viewModel.createTrip(parent: instance)
+                            }
+                            .padding(.bottom, 4)
                         }
-                        .padding(.bottom, 4)
                     }
+                    
                 }
-                
-                if instance.timeEnd == nil && !hasActiveTrips && !hasActiveInteractions {
-                    EndItemButton(title: "End Activity") {
+                if parent.timeEnd == nil && !parent.hasActiveChild(), let instance = parent as? ActivityInstance {
+                    EndItemButton(title: "End now") {
                         viewModel.endActivityInstance(instance: instance)
                     }
                 }
+                
             }
+                
             
         }
     }
     
     private var filteredAndSortedChildren: [any LogModel] {
-        let allSortedChildren = instance.sortedChildren
+        let all = parent.sortedChildren
+        guard let parentEnd = parent.timeEnd else { return [] }
+        let parentStart = parent.timeStart
         
         switch viewModel.filterMode {
             case .byDate:
-                let calendar = Calendar.current
-                let startOfDay = calendar.startOfDay(for: viewModel.filterDate)
-                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-                    return []
+                return all.filter { item in
+                    let end = item.timeEnd ?? parentEnd
+                    return item.timeStart >= parentStart && end <= parentEnd
                 }
-                let future = Date.distantFuture
-                
-                return allSortedChildren.filter { item in
-                    item.timeStart < endOfDay && (item.timeEnd ?? future) > startOfDay
-                }
+                .sorted { $0.timeStart < $1.timeStart }
                 
             case .byActivity:
                 return []
@@ -136,39 +147,16 @@ struct ActivityHierarchyView: View {
     }
     
     private var invalidChildren: [any LogModel] {
-        guard let parentEndTime = instance.timeEnd else {
-            return []
-        }
+        guard let parentEnd = parent.timeEnd else { return [] }
+        let parentStart = parent.timeStart
         
-        let parentStartTime = instance.timeStart
-        
-        return instance.sortedChildren.filter { item in
-            let startsAfterParentEnds = item.timeStart >= parentEndTime
-            
-            let endsBeforeParentStarts = (item.timeEnd ?? Date.distantFuture) <= parentStartTime
-            
+        return parent.sortedChildren.filter { item in
+            let end = item.timeEnd ?? .distantFuture
+            let startsAfterParentEnds = item.timeStart >= parentEnd
+            let endsBeforeParentStarts = end <= parentStart
             return startsAfterParentEnds || endsBeforeParentStarts
         }
     }
 }
 
-extension ActivityInstance {
-    var sortedChildren: [any LogModel] {
-        var allChildren: [any LogModel] = []
-        
-        if let childActivities = self.childActivities {
-            allChildren.append(contentsOf: childActivities)
-        }
-        if let trips = self.trips {
-            allChildren.append(contentsOf: trips)
-        }
-        if let interactions = self.interactions {
-            allChildren.append(contentsOf: interactions)
-        }
-        return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
-    }
-    
-    
-    
-    
-}
+

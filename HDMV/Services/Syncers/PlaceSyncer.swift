@@ -32,5 +32,20 @@ final class PlaceSyncer: BaseSyncer<Place, PlaceDTO, PlacePayload> {
         fatalError("City deletion not implemented")
     }
     
+    override func resolveRelationships() throws {
+        print("Resolving Place relationships...")
+        
+        let cityLookup: [Int: City] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: Place.self,
+            relationshipKeyPath: \Place.city,
+            ridKeyPath: \Place.cityRid,
+            lookupMap: cityLookup
+        )
+        
+        print("All Place relationships resolved.")
+    }
+    
 }
 

@@ -21,6 +21,7 @@ final class Interaction: LogModel {
     var personRid: Int?
     
     var parentInstanceRid: Int?
+    var parentTripRid: Int?
     
     
     var details: String?
@@ -37,6 +38,9 @@ final class Interaction: LogModel {
     
     @Relationship(deleteRule: .nullify)
     var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
 
     
     // MARK: Init

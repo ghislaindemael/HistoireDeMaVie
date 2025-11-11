@@ -14,7 +14,7 @@ struct TripRowView: View {
     let onEnd: (() -> Void)?
     private let smallDisplay: Bool
 
-    init(trip: Trip, smallDisplay: Bool = true, onEnd: (() -> Void)? = nil) {
+    init(trip: Trip, smallDisplay: Bool = false, onEnd: (() -> Void)? = nil) {
         self.trip = trip
         self.onEnd = onEnd
         self.smallDisplay = smallDisplay

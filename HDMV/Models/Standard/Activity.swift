@@ -129,7 +129,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         return self.children.contains(where: { $0.hasUnsyncedChanges })
     }
     
-    var optionalChildren: [Activity]? { children.isEmpty ? nil : children }
+    var optionalChildren: [Activity]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name}) }
 
     
 }

@@ -68,6 +68,17 @@ extension ActivityInstance: DebugViewable {
                 
             }
             
+            if let parentInstanceRid {
+                Text("Parent ActivityInstance RID: \(parentInstanceRid)")
+            } else if let parentTripRid {
+                Text("Parent Trip RID: \(parentTripRid)")
+            } else {
+                Text("Parent RID: Unset")
+                    .bold()
+                    .foregroundStyle(.orange)
+                
+            }
+            
             Text("Percentage: \(percentage)%")
             
             Text("Details: \(details ?? "N/A")")

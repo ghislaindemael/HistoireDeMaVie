@@ -19,3 +19,20 @@ enum DraggableLogItem: Codable, Transferable {
         CodableRepresentation(contentType: .data)
     }
 }
+
+extension DraggableLogItem {
+    var isActivity: Bool {
+        if case .activity = self { return true }
+        return false
+    }
+    
+    var isTrip: Bool {
+        if case .trip = self { return true }
+        return false
+    }
+    
+    var isInteraction: Bool {
+        if case .interaction = self { return true }
+        return false
+    }
+}

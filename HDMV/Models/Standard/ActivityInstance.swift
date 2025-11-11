@@ -20,6 +20,7 @@ final class ActivityInstance: LogModel {
     
     var activityRid: Int?
     var parentInstanceRid: Int?
+    var parentTripRid: Int?
     
     var details: String?
     var activity_details: Data?
@@ -37,17 +38,20 @@ final class ActivityInstance: LogModel {
     @Relationship(deleteRule: .nullify)
     var parentInstance: ActivityInstance?
     
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentInstance)
     var childActivities: [ActivityInstance]? = []
     
     @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
-    var trips: [Trip]? = nil
+    var childTrips: [Trip]? = nil
     
     @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
-    var interactions: [Interaction]? = nil
+    var childInteractions: [Interaction]? = nil
     
     @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentInstance)
-    var lifeEvents: [LifeEvent]? = nil
+    var childLifeEvents: [LifeEvent]? = nil
     
     // MARK: Init
 

@@ -18,6 +18,8 @@ final class Trip: LogModel {
     var timeEnd: Date?
     
     var parentInstanceRid: Int?
+    var parentTripRid: Int?
+    
     var placeStartRid: Int?
     var placeEndRid: Int?
     var vehicleRid: Int?
@@ -38,6 +40,9 @@ final class Trip: LogModel {
     var parentInstance: ActivityInstance?
     
     @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
+    @Relationship(deleteRule: .nullify)
     var placeStart: Place?
     
     @Relationship(deleteRule: .nullify)
@@ -48,6 +53,18 @@ final class Trip: LogModel {
     
     @Relationship(deleteRule: .nullify)
     var path: Path?
+    
+    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentTrip)
+    var childActivities: [ActivityInstance]? = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.parentTrip)
+    var childTrips: [Trip]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.parentTrip)
+    var childInteractions: [Interaction]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentTrip)
+    var childLifeEvents: [LifeEvent]? = nil
     
     
     // MARK: Relationship conformance

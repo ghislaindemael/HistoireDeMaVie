@@ -33,7 +33,6 @@ struct MyActivitiesPage: View {
     var body: some View {
         NavigationStack {
             mainListView
-                .navigationTitle("My Activities")
                 .onAppear(perform: onAppear)
                 .syncingOverlay(viewModel.isLoading)
                 .logPageToolbar(
@@ -78,6 +77,8 @@ struct MyActivitiesPage: View {
     
     private var mainListView: some View {
         VStack(spacing: 12) {
+            TitleLabel(title: "My Activities")
+
             FilterControlView(viewModel: viewModel)
             
             ScrollView {
@@ -85,8 +86,8 @@ struct MyActivitiesPage: View {
                     let topLevelInstances = viewModel.instances.filter { $0.parentInstance == nil }
                     
                     ForEach(topLevelInstances) { instance in
-                        ActivityHierarchyView(
-                            instance: instance,
+                        ParentModelHierarchyView(
+                            parent: instance,
                             level: 0,
                             instanceToEdit: $instanceToEdit,
                             tripToEdit: $tripToEdit,
