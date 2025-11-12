@@ -89,7 +89,7 @@ class PlacesPageViewModel: ObservableObject {
     func createPlace() {
         guard let context = modelContext else { return }
         let newPlace = Place(syncStatus: .local)
-        newPlace.relCity = selectedCity
+        newPlace.cityRid = selectedCity?.rid
         
         context.insert(newPlace)
         places.append(newPlace)

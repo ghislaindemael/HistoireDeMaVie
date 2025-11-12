@@ -19,24 +19,10 @@ final class ActivityInstance: LogModel {
     var percentage: Int
     
     var activityRid: Int?
-    @Relationship
-    var relActivity: Activity? {
-        didSet {
-            activityRid = relActivity?.rid
-        }
-    }
-    var parentRid: Int?
-    var parent: ActivityInstance? {
-        didSet {
-            parentRid = parent?.rid
-        }
-    }
-    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parent)
-    var childActivities: [ActivityInstance]? = []
-    @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
-    var trips: [Trip]? = nil
-    @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
-    var interactions: [Interaction]? = nil
+    var parentInstanceRid: Int?
+    var parentTripRid: Int?
+    var showChildren: Bool = true
+    
     var details: String?
     var activity_details: Data?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -45,6 +31,30 @@ final class ActivityInstance: LogModel {
     typealias Payload = ActivityInstancePayload
     typealias Editor = ActivityInstanceEditor
     
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var activity: Activity?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
+    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentInstance)
+    var childActivities: [ActivityInstance]? = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.parentInstance)
+    var childTrips: [Trip]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.parentInstance)
+    var childInteractions: [Interaction]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentInstance)
+    var childLifeEvents: [LifeEvent]? = nil
+    
+    // MARK: Init
 
     init(
         rid: Int? = nil,
@@ -53,9 +63,8 @@ final class ActivityInstance: LogModel {
         timed: Bool = true,
         percentage: Int = 100,
         activityRid: Int? = nil,
-        activity: Activity? = nil,
         parentRid: Int? = nil,
-        parent: ActivityInstance? = nil,
+        showChildren: Bool = true,
         details: String? = nil,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
@@ -63,9 +72,8 @@ final class ActivityInstance: LogModel {
         self.timeStart = timeStart
         self.timeEnd = timeEnd
         self.activityRid = activityRid
-        self.relActivity = activity
-        self.parentRid = parentRid
-        self.parent = parent
+        self.parentInstanceRid = parentRid
+        self.showChildren = showChildren
         self.details = details
         self.percentage = percentage
         self.syncStatus = syncStatus
@@ -88,7 +96,8 @@ final class ActivityInstance: LogModel {
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
-        self.parentRid = dto.parent_instance_id
+        self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.decodedActivityDetails = dto.activity_details
@@ -99,7 +108,8 @@ final class ActivityInstance: LogModel {
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
-        self.parentRid = dto.parent_instance_id
+        self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.decodedActivityDetails = dto.activity_details
@@ -118,6 +128,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let time_end: Date?
     let activity_id: Int?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
     let details: String?
     let percentage: Int?
     let activity_details: ActivityDetails?
@@ -133,6 +144,8 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let time_end: Date?
     let activity_id: Int?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
+    
     let details: String?
     let percentage: Int
     let activity_details: ActivityDetails?
@@ -146,7 +159,8 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.time_start = instance.timeStart
         self.time_end = instance.timeEnd
         self.activity_id = instance.activityRid
-        self.parent_instance_id = instance.parent?.rid
+        self.parent_instance_id = instance.parentInstanceRid
+        self.parent_trip_id = instance.parentTripRid
         self.details = instance.details
         self.percentage = instance.percentage
         
@@ -165,7 +179,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
     var timed: Bool
     var percentage: Int
     var activity: Activity?
-    var parent: ActivityInstance?
+    var parentInstance: ActivityInstance?
     var details: String?
     var decodedActivityDetails: ActivityDetails?
     
@@ -178,7 +192,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         self.timed = instance.timed
         self.percentage = instance.percentage
         self.activity = instance.activity
-        self.parent = instance.parent
+        self.parentInstance = instance.parentInstance
         self.details = instance.details
         self.decodedActivityDetails = instance.decodedActivityDetails
     }
@@ -190,7 +204,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         instance.percentage = self.percentage
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
-        instance.parent = self.parent
+        instance.parentInstance = self.parentInstance
         instance.details = self.details
         instance.decodedActivityDetails = self.decodedActivityDetails
     }

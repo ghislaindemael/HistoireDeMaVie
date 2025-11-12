@@ -15,7 +15,7 @@ struct CitySelectorView: View {
     @Binding var selectedCity: City?
     
     @Query(FetchDescriptor<City>(
-        predicate: #Predicate { $0.cache == true && $0.name != nil },
+        predicate: #Predicate { $0.cache == true },
             sortBy: [SortDescriptor(\.name)]))
     private var cities: [City]
     
@@ -24,7 +24,7 @@ struct CitySelectorView: View {
             Picker("City", selection: $selectedCity) {
                 Text("None").tag(nil as City?)
                 ForEach(cities) { city in
-                    Text(city.name!).tag(city as City?)
+                    Text(city.name).tag(city as City?)
                 }
             }
         }

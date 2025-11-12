@@ -10,6 +10,8 @@ import SwiftUI
 import SwiftData
 
 struct PlaceDisplayView: View {
+    
+    @Environment(\.modelContext) private var modelContext
     @Query private var places: [Place]
     
     private let placeRid: Int?
@@ -48,10 +50,11 @@ struct PlaceDisplayView: View {
                 if showMapPin {
                     IconView(iconString: "mappin.circle")
                 }
+                let cityName = place.city?.name ?? "—"
+                
                 if isSmall {
-                    Text(place.city?.name ?? "—")
+                    Text(cityName)
                 } else {
-                    let cityName = place.city?.name ?? "—"
                     Text("\(cityName) – \(place.name)")
                 }
             } else if let id = placeRid, id > 0 {

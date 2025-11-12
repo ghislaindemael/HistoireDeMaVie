@@ -13,11 +13,11 @@ struct CountryRowView: View {
     
     var body: some View {
         HStack {
-            Text(country.name ?? "Unset")
+            Text(country.name)
                 .font(.title3.bold())
                 .lineLimit(1)
-            
             Spacer()
+            SyncStatusIndicator(status: country.syncStatus)
         }
     }
         

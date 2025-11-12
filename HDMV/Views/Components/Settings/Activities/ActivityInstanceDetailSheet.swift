@@ -48,10 +48,10 @@ struct ActivityInstanceDetailSheet: View {
                 }
                 
                 
-                if viewModel.editor.parent != nil {
+                if viewModel.editor.parentInstance != nil {
                     Section("Hierarchy") {
                         Button("Remove from Parent", role: .destructive) {
-                            viewModel.editor.parent = nil
+                            viewModel.editor.parentInstance = nil
                         }
                     }
                 }
@@ -103,7 +103,7 @@ struct ActivityInstanceDetailSheet: View {
                     Text("Select Activity")
                     Spacer()
                     if let activity = selectedActivity {
-                        Text(activity.name ?? "TOSET")
+                        Text(activity.name)
                             .foregroundStyle(.secondary)
                     }
                 }

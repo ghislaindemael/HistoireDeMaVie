@@ -38,8 +38,7 @@ class ActivityInstanceDetailSheetViewModel: BaseDetailSheetViewModel<ActivityIns
     func claim(trip: Trip, for instance: ActivityInstance) {
         
         do {
-            trip.parentInstance = instance
-            trip.parentInstanceRid = instance.rid
+            trip.setParentInstance(instance)
             trip.markAsModified()
             try modelContext.save()
         } catch {
@@ -49,8 +48,7 @@ class ActivityInstanceDetailSheetViewModel: BaseDetailSheetViewModel<ActivityIns
     
     func claim(interaction: Interaction, for instance: ActivityInstance) {
         do {
-            interaction.parentInstance = instance
-            interaction.parentInstanceRid = instance.rid
+            interaction.setParentInstance(instance)
             interaction.markAsModified()
             try modelContext.save()
         } catch {

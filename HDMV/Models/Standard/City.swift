@@ -11,16 +11,11 @@ import SwiftData
 @Model
 final class City: CatalogueModel {
     
-    var rid: Int?
-    var slug: String?
-    var name: String?
+    @Attribute(.unique) var rid: Int?
+    @Attribute(.unique) var slug: String
+    @Attribute(.unique) var name: String
     var countryRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var country: Country? {
-        didSet {
-            self.countryRid = relCountry.rid
-        }
-    }
+
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -29,12 +24,21 @@ final class City: CatalogueModel {
     typealias DTO = CityDTO
     typealias Editor = CityEditor
     
-    // MARK: - Initializer
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var country: Country?
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Place.city)
+    var places: [Place]?
+    
+    // MARK: - Init
     init(
         rid: Int? = nil,
-        slug: String? = nil,
-        name: String? = nil,
-        country: Country? = nil,
+        slug: String = "unset",
+        name: String = "Unset",
         countryRid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,
@@ -43,7 +47,6 @@ final class City: CatalogueModel {
         self.slug = slug
         self.name = name
         self.rid = rid
-        self.country = country
         self.countryRid = countryRid
         self.cache = cache
         self.archived = archived
@@ -52,18 +55,7 @@ final class City: CatalogueModel {
     
     // MARK: - Convenience from DTO
     convenience init(fromDto dto: CityDTO) {
-        self.init(
-            rid: dto.id,
-            slug: dto.slug,
-            name: dto.name,
-            countryRid: dto.country_id,
-            cache: dto.cache,
-            archived: dto.archived,
-            syncStatus: SyncStatus.synced
-        )
-    }
-    
-    func update(fromDto dto: CityDTO) {
+        self.init()
         self.rid = dto.id
         self.slug = dto.slug
         self.name = dto.name
@@ -73,11 +65,17 @@ final class City: CatalogueModel {
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
+    func update(fromDto dto: CityDTO) {
+        self.slug = dto.slug
+        self.name = dto.name
+        self.countryRid = dto.country_id
+        self.cache = dto.cache
+        self.archived = dto.archived
+        self.syncStatusRaw = SyncStatus.synced.rawValue
+    }
+    
     func isValid() -> Bool {
-        guard let slug = slug, !slug.isEmpty,
-              let name = name, !name.isEmpty else {
-            return false
-        }
+        guard slug.isNotUnset(), name.isNotUnset() else { return false }
         return countryRid != nil
     }
 }
@@ -101,14 +99,12 @@ struct CityPayload: Codable, InitializableWithModel {
     
     init?(from city: City) {
         guard city.isValid(),
-              let slug = city.slug,
-              let name = city.name,
-              let countryRid = city.country?.rid ?? city.countryRid else {
+              let countryRid = city.countryRid else {
             return nil
         }
         
-        self.slug = slug
-        self.name = name
+        self.slug = city.slug
+        self.name = city.name
         self.country_id = countryRid
         self.cache = city.cache
         self.archived = city.archived
@@ -136,9 +132,10 @@ struct CityEditor: CachableModel, EditorProtocol {
         if let slug = self.slug { city.slug = slug }
         if let name = self.name { city.name = name }
         
-        if let selectedCountry = self.country {
-            city.country = selectedCountry
-            city.countryRid = selectedCountry.rid
+        if country != nil {
+            city.setCountry(country)
+        } else {
+            city.countryRid = self.countryRid
         }
         
         city.cache = self.cache

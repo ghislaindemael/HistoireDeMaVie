@@ -19,11 +19,8 @@ final class LifeEvent: LogModel {
     var metrics: LifeEventMetrics?
     
     var parentInstanceRid: Int?
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance.rid
-        }
-    }
+    var parentTripRid: Int?
+
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     var type: LifeEventType {
@@ -34,6 +31,16 @@ final class LifeEvent: LogModel {
     typealias DTO = LifeEventDTO
     typealias Payload = LifeEventPayload
     typealias Editor = LifeEventEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
+    // MARK: Init
     
     init(rid: Int? = nil,
          type: LifeEventType? = .unset,
@@ -63,6 +70,7 @@ final class LifeEvent: LogModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.syncStatus = .synced
     }
     
@@ -73,6 +81,7 @@ final class LifeEvent: LogModel {
         self.details = dto.details
         self.metrics = dto.metrics 
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.syncStatus = .synced
     }
     
@@ -90,6 +99,7 @@ struct LifeEventDTO: Identifiable, Codable, Sendable {
     let details: String?
     let metrics: LifeEventMetrics?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
 }
 
 
@@ -101,6 +111,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     let details: String?
     let metrics: LifeEventMetrics?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
     
     typealias Model = LifeEvent
     
@@ -114,7 +125,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         self.details = event.details
         self.metrics = event.metrics
         self.parent_instance_id = event.parentInstanceRid
-
+        self.parent_trip_id = event.parentTripRid
     }
     
 }

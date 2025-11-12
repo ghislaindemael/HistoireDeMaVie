@@ -65,12 +65,10 @@ struct LifeEventRowView: View {
                             Image(systemName: "arrow.right")
                             
                             if let timeEnd = event.timeEnd {
-                                if let endDateString = displayDateIfNeeded(for: timeEnd, comparedTo: selectedDate) {
+                                if let endDateString = displayDateIfNeeded(for: timeEnd, comparedTo: event.timeStart) {
                                     Text("\(endDateString) ")
                                 }
                                 Text(timeEnd, style: .time)
-                            } else {
-                                Text("—").foregroundStyle(.secondary)
                             }
                         }
                         .font(.subheadline)

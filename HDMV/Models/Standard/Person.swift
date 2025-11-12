@@ -11,9 +11,9 @@ import SwiftData
 @Model
 final class Person: CatalogueModel, EditableModel {
     @Attribute(.unique) var rid: Int?
-    var slug: String?
-    var name: String?
-    var familyName: String?
+    var slug: String
+    var name: String
+    var familyName: String
     var surname: String?
     var birthdate: Date?
     var cache: Bool = true
@@ -24,11 +24,18 @@ final class Person: CatalogueModel, EditableModel {
     typealias DTO = PersonDTO
     typealias Editor = PersonEditor
     
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.person)
+    var interactions: [Interaction]?
+    
+    // MARK: Init
+    
     init(
         rid: Int? = nil,
-        slug: String? = nil,
-        name: String? = nil,
-        familyName: String? = nil,
+        slug: String = "unset",
+        name: String = "Unset",
+        familyName: String = "Unset",
         surname: String? = nil,
         birthdate: Date? = nil,
         cache: Bool = true,
@@ -71,11 +78,11 @@ final class Person: CatalogueModel, EditableModel {
     }
     
     func isValid() -> Bool {
-        return slug != nil && name != nil  && familyName != nil
+        return slug.isNotUnset() && name.isNotUnset() && familyName.isNotUnset();
     }
     
     var fullName: String {
-        var str = "\(familyName ?? "TOSET") \(name ?? "TOSET")"
+        var str = "\(familyName) \(name)"
         if let surname = surname, !surname.isEmpty {
             str += " (\(surname))"
         }
@@ -108,15 +115,11 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
     typealias Model = Person
     
     init?(from person: Person) {
-        guard person.isValid(),
-              let name = person.name,
-              let slug = person.slug,
-              let familyName = person.familyName
-        else { return nil }
+        guard person.isValid() else { return nil }
         
-        self.slug = slug
-        self.name = name
-        self.family_name = familyName
+        self.slug = person.slug
+        self.name = person.name
+        self.family_name = person.familyName
         self.surname = person.surname
         self.birthdate = person.birthdate
         self.cache = person.cache

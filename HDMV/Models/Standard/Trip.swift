@@ -16,47 +16,63 @@ final class Trip: LogModel {
     var rid: Int?
     var timeStart: Date = Date()
     var timeEnd: Date?
-    var timed: Bool = true
-    var percentage: Int = 100
     
     var parentInstanceRid: Int?
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance.rid
-        }
-    }
+    var parentTripRid: Int?
+    var showChildren: Bool = true
     
     var placeStartRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var placeStart: Place? {
-        didSet {
-            placeStartRid = placeStart?.rid
-        }
-    }
     var placeEndRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var placeEnd: Place? {
-        didSet {
-            placeEndRid = placeEnd?.rid
-        }
-    }
     var vehicleRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var vehicle: Vehicle? {
-        didSet { vehicleRid = vehicle?.rid }
-    }
+
     var amDriver: Bool = false
     var pathRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var path: Path? {
-        didSet { pathRid = path?.rid }
-    }
+
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = TripDTO
     typealias Payload = TripPayload
     typealias Editor = TripEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
+    @Relationship(deleteRule: .nullify)
+    var placeStart: Place?
+    
+    @Relationship(deleteRule: .nullify)
+    var placeEnd: Place?
+    
+    @Relationship(deleteRule: .nullify)
+    var vehicle: Vehicle?
+    
+    @Relationship(deleteRule: .nullify)
+    var path: Path?
+    
+    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentTrip)
+    var childActivities: [ActivityInstance]? = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.parentTrip)
+    var childTrips: [Trip]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.parentTrip)
+    var childInteractions: [Interaction]? = nil
+    
+    @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentTrip)
+    var childLifeEvents: [LifeEvent]? = nil
+    
+    
+    // MARK: Relationship conformance
+    
+    
+    
+    // MARK: Init
 
     init(rid: Int? = nil,
          timeStart: Date = .now,
@@ -74,11 +90,8 @@ final class Trip: LogModel {
         self.timeStart = timeStart
         self.timeEnd = timeEnd
         self.parentInstance = parentInstance
-        self.placeStart = placeStart
-        self.placeEnd = placeEnd
-        self.vehicle = vehicle
+        self.parentInstanceRid = parentInstance?.rid
         self.amDriver = amDriver
-        self.path = path
         self.details = details
         self.syncStatus = syncStatus
     }
@@ -115,8 +128,7 @@ final class Trip: LogModel {
     }
     
     func isValid() -> Bool {
-        return timeEnd != nil
-        && parentInstanceRid != nil
+        return parentInstanceRid != nil
         && placeStartRid != nil
         && placeEndRid != nil
         && vehicleRid != nil
@@ -174,18 +186,24 @@ struct TripPayload: Codable, InitializableWithModel {
     
 }
 
-struct TripEditor: TimeTrackable, EditorProtocol {
+struct TripEditor: TimeBound, EditorProtocol {
     
     var timeStart: Date
     var timeEnd: Date?
-    var timed: Bool = true
-    var percentage: Int = 100
     
     var parentInstanceRid: Int?
     var parentInstance: ActivityInstance?
+    
+    var vehicleRid: Int?
     var vehicle: Vehicle?
+    
+    var placeStartRid: Int?
     var placeStart: Place?
+    
+    var placeEndRid: Int?
     var placeEnd: Place?
+    
+    var pathRid: Int?
     var path: Path?
     
     var amDriver: Bool
@@ -194,34 +212,40 @@ struct TripEditor: TimeTrackable, EditorProtocol {
     typealias Model = Trip
     
     init(from trip: Trip) {
-        self.parentInstance = trip.parentInstance
         self.timeStart = trip.timeStart
         self.timeEnd = trip.timeEnd
+        
+        self.parentInstanceRid = trip.parentInstanceRid
+        self.parentInstance = trip.parentInstance
+        
+        self.vehicleRid = trip.vehicleRid
+        self.vehicle = trip.vehicle
+        
+        self.placeStartRid = trip.placeStartRid
+        self.placeStart = trip.placeStart
+        
+        self.placeEndRid = trip.placeEndRid
+        self.placeEnd = trip.placeEnd
+        
+        self.pathRid = trip.pathRid
+        self.path = trip.path
+        
         self.amDriver = trip.amDriver
         self.details = trip.details
-        self.vehicle = trip.vehicle
-        self.placeStart = trip.placeStart
-        self.placeEnd = trip.placeEnd
-        self.path = trip.path
     }
     
     func apply(to trip: Trip) {
-
-        trip.timeStart = self.timeStart
-        trip.timeEnd = self.timeEnd
-        trip.parentInstance = self.parentInstance
-        trip.parentInstanceRid = self.parentInstanceRid
-        trip.placeStart = self.placeStart
-        trip.placeStartRid = self.placeStart?.rid
-        trip.placeEnd = self.placeEnd
-        trip.placeEndRid = self.placeEnd?.rid
-        trip.vehicle = self.vehicle
-        trip.vehicleRid = self.vehicle?.rid
-        trip.amDriver = self.amDriver
-        trip.path = self.path
-        trip.pathRid = self.path?.rid
-        trip.details = self.details
-
+        trip.timeStart = timeStart
+        trip.timeEnd = timeEnd
+        trip.amDriver = amDriver
+        trip.details = details
+        
+        trip.setParentInstance(parentInstance, fallbackRid: parentInstanceRid)
+        trip.setPlaceStart(placeStart, fallbackRid: placeStartRid)
+        trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
+        trip.setVehicle(vehicle, fallbackRid: vehicleRid)
+        trip.setPath(path, fallbackRid: pathRid)
+        
         trip.markAsModified()
     }
 }

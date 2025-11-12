@@ -32,5 +32,14 @@ final class CountrySyncer: BaseSyncer<Country, CountryDTO, CountryPayload> {
         fatalError("Country deletion not implemented")
     }
     
+    override func resolveRelationships(for model: Country) throws {
+        let cities = try modelContext.fetch(FetchDescriptor<City>())
+        
+        for city in cities where city.country?.persistentModelID == model.persistentModelID && city.countryRid == nil {
+            city.countryRid = model.rid
+            print("🔗 Fixed missing countryRid for City \(city.name) -> Country \(model.name)")
+        }
+    }
+    
 }
 

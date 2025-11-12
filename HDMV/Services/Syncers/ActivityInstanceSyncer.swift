@@ -41,11 +41,11 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
 
         let targetParentID = syncedInstance.id            
         let parentRelationshipPredicate = #Predicate<ActivityInstance> { child in
-            child.parent?.id == targetParentID
+            child.parentInstance?.id == targetParentID
         }
         
         let parentRidPredicate = #Predicate<ActivityInstance> { child in
-            child.parentRid == nil || child.parentRid != newParentRid
+            child.parentInstanceRid == nil || child.parentInstanceRid != newParentRid
         }
         
         let combinedPredicate = #Predicate<ActivityInstance> { child in
@@ -61,7 +61,7 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
         
         for child in childrenToFix {
             print("  -> Fixing stale parentRid for child instance \(child.id)")
-            child.parentRid = newParentRid
+            child.parentInstanceRid = newParentRid
             
             if child.syncStatus == .synced {
                 print("  -> Marking child \(child.id) as .local to push parentRid update.")
@@ -165,6 +165,37 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
         let startOfDay = calendar.startOfDay(for: start)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end))!
         return (startOfDay, endOfDay)
+    }
+    
+    override func resolveRelationships() throws {
+        print("Resolving ActivityInstance relationships...")
+        
+        let activityLookup: [Int: Activity] = try getLookupMap()
+        let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
+        let tripLookup: [Int: Trip] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: ActivityInstance.self,
+            relationshipKeyPath: \ActivityInstance.activity,
+            ridKeyPath: \ActivityInstance.activityRid,
+            lookupMap: activityLookup
+        )
+        
+        try resolveRelationship(
+            for: ActivityInstance.self,
+            relationshipKeyPath: \ActivityInstance.parentInstance,
+            ridKeyPath: \ActivityInstance.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: ActivityInstance.self,
+            relationshipKeyPath: \ActivityInstance.parentTrip,
+            ridKeyPath: \ActivityInstance.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        print("All ActivityInstance relationships resolved.")
     }
     
     

@@ -4,6 +4,7 @@
 //
 //  Created by Ghislain Demael on 17.06.2025.
 //
+
 import Foundation
 import SwiftData
 
@@ -21,12 +22,7 @@ final class Vehicle: CatalogueModel {
         } }
     }
     var cityRid: Int?
-    @Relationship
-    var city: City? {
-        didSet {
-            self.cityRid = city.rid
-        }
-    }
+
     var cache: Bool = true
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
@@ -34,6 +30,18 @@ final class Vehicle: CatalogueModel {
     typealias DTO = VehicleDTO
     typealias Payload = VehiclePayload
     typealias Editor = VehicleEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var city: City?
+    
+    // MARK: Relationship conformance
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.vehicle)
+    var trips: [Trip]?
+    
+    // MARK: Init
     
     init(rid: Int? = nil,
          name: String? = nil,
@@ -171,8 +179,7 @@ struct VehicleEditor: CachableModel, EditorProtocol {
         vehicle.type = self.type
         
         if let selectedCity = self.city {
-            vehicle.city = selectedCity
-            vehicle.cityRid = selectedCity.rid
+            vehicle.setCity(selectedCity)
         } else {
             vehicle.cityRid = self.cityRid
         }

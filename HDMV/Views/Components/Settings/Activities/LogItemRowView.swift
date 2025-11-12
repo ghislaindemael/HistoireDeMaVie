@@ -12,50 +12,40 @@ struct LogItemRowView: View {
     
     @EnvironmentObject var viewModel: MyActivitiesPageViewModel
     @ObservedObject var settings: SettingsStore = SettingsStore.shared
-
+    
     let item: any LogModel
     
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
-
+    
+    @State private var isTripDropTargeted = false
+    
     let level: Int
-
+    
     @ViewBuilder
     var body: some View {
         switch item {
-        case let activity as ActivityInstance:
-            ActivityHierarchyView(
-                instance: activity,
-                level: level,
-                instanceToEdit: $instanceToEdit,
-                tripToEdit: $tripToEdit,
-                interactionToEdit: $interactionToEdit
-            )
-            .draggable(DraggableLogItem.activity(activity.persistentModelID))
-
-        case let trip as Trip:
-                TripRowView(
-                    trip: trip,
-                    smallDisplay: settings.smallDisplay,
-                    onEnd: {
-                        viewModel.endTrip(trip: trip)
-                })
-                .onTapGesture {
-                    tripToEdit = trip
-                }
-                .draggable(DraggableLogItem.trip(trip.persistentModelID))
-
-        case let interaction as Interaction:
+            case let parentItem as any ParentModel:
+                ParentModelHierarchyView(
+                    parent: parentItem,
+                    level: level,
+                    instanceToEdit: $instanceToEdit,
+                    tripToEdit: $tripToEdit,
+                    interactionToEdit: $interactionToEdit
+                    
+                )
+                
+            case let interaction as Interaction:
                 InteractionRowView(interaction: interaction, onEnd: {
                     viewModel.endInteraction(interaction: interaction)
                 })
-                .onTapGesture {
+                .onTapGesture(count: 2){
                     interactionToEdit = interaction
                 }
                 .draggable(DraggableLogItem.interaction(interaction.persistentModelID))
-        default:
-            EmptyView()
+            default:
+                EmptyView()
         }
     }
 }

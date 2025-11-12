@@ -205,9 +205,9 @@ class MyActivitiesPageViewModel: ObservableObject {
             date = parent.timeStart
         }
         let newTrip = Trip(
-            timeStart: date,
-            parentInstance: parent
+            timeStart: date
         )
+        newTrip.setParentInstance(parent)
         context.insert(newTrip)
         do {
             try context.save()
@@ -296,43 +296,41 @@ class MyActivitiesPageViewModel: ObservableObject {
     }
     
 
-    func reparent(draggedItem: DraggableLogItem, to newParent: ActivityInstance) {
+    func reparent(draggedItem: DraggableLogItem, to newParent: any ParentModel) {
         guard let context = modelContext else {
             print("❌ Reparent failed: modelContext is nil.")
             return
         }
         
+        func move<T: LinkedParent & LogModel>(_ item: T) {
+            guard item.id != newParent.id else {
+                print("⚠️ SKIPPED: Cannot drop an item onto itself.")
+                return
+            }
+            
+            guard !isCircularDependency(moving: item, to: newParent) else {
+                print("❌ FAILED: Circular dependency detected!")
+                return
+            }
+            
+            print("✅ Re-parenting '\(item.id)' onto '\(newParent.id)'.")
+            item.setParent(newParent)
+            item.markAsModified()
+        }
+        
         switch draggedItem {
             case .activity(let childID):
-                guard let childToMove = context.model(for: childID) as? ActivityInstance else { return }
-                
-                guard childToMove.id != newParent.id else {
-                    print("⚠️ SKIPPED: Cannot drop an activity onto itself.")
-                    return
+                if let child = context.model(for: childID) as? ActivityInstance {
+                    move(child)
                 }
-                
-                guard !isCircularDependency(moving: childToMove, to: newParent) else {
-                    print("❌ FAILED: Circular dependency detected! Cannot move an item into one of its own descendants.")
-                    return
-                }
-                
-                print("✅ Re-parenting Activity '\(childToMove.id)' onto '\(newParent.id)'.")
-                childToMove.parent = newParent
-                childToMove.markAsModified()
-                
             case .trip(let childID):
-                guard let childToMove = context.model(for: childID) as? Trip else { return }
-                
-                print("✅ Re-parenting Trip '\(childToMove.id)' onto '\(newParent.id)'.")
-                childToMove.parentInstance = newParent
-                childToMove.markAsModified()
-                
+                if let child = context.model(for: childID) as? Trip {
+                    move(child)
+                }
             case .interaction(let childID):
-                guard let childToMove = context.model(for: childID) as? Interaction else { return }
-                
-                print("✅ Re-parenting Interaction '\(childToMove.id)' onto '\(newParent.id)'.")
-                childToMove.parentInstance = newParent
-                childToMove.markAsModified()
+                if let child = context.model(for: childID) as? Interaction {
+                    move(child)
+                }
         }
         
         do {
@@ -344,14 +342,14 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
-    private func isCircularDependency(moving child: ActivityInstance, to potentialParent: ActivityInstance) -> Bool {
-        var parentIterator: ActivityInstance? = potentialParent
+    private func isCircularDependency(moving child: any LogModel, to potentialParent: any ParentModel) -> Bool {
+        var parentIterator: (any LinkedParent)? = potentialParent as? LinkedParent
         
         while let currentParent = parentIterator {
-            if currentParent == child {
+            if let logParent = currentParent as? any ParentModel, logParent.id == child.id {
                 return true
             }
-            parentIterator = currentParent.parent
+            parentIterator = currentParent.parentInstance ?? currentParent.parentTrip
         }
         return false
     }

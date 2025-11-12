@@ -19,25 +19,31 @@ final class Interaction: LogModel {
     var percentage: Int = 100
     var inPerson: Bool = true
     var personRid: Int?
-    @Relationship
-    var person: Person? {
-        didSet {
-            personRid = person?.rid
-        }
-    }
+    
     var parentInstanceRid: Int?
-    @Relationship(deleteRule: .nullify)
-    var parentInstance: ActivityInstance? {
-        didSet {
-            parentInstanceRid = parentInstance?.rid
-        }
-    }
+    var parentTripRid: Int?
+    
+    
     var details: String?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = InteractionDTO
     typealias Payload = InteractionPayload
     typealias Editor = InteractionEditor
+    
+    // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var person: Person?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentInstance: ActivityInstance?
+    
+    @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+
+    
+    // MARK: Init
 
     init(
         rid: Int? = nil,
@@ -75,6 +81,7 @@ final class Interaction: LogModel {
         self.inPerson = dto.in_person
         self.details = dto.details
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.syncStatus = .synced
     }
     
@@ -85,6 +92,7 @@ final class Interaction: LogModel {
         self.percentage = dto.percentage ?? 100
 
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.personRid = dto.person_id
         self.timed = dto.timed
         self.inPerson = dto.in_person
@@ -122,6 +130,7 @@ struct InteractionDTO: Codable, Identifiable, Sendable {
     var person_id: Int
     var in_person: Bool
     var parent_instance_id: Int?
+    let parent_trip_id: Int?
     var details: String?
 }
 
@@ -137,6 +146,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
     var person_id: Int?
     var in_person: Bool
     var parent_instance_id: Int?
+    let parent_trip_id: Int?
     var details: String?
         
     /// Creates a payload directly from a Interaction model object.
@@ -151,6 +161,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
         self.time_start = interaction.timeStart
         self.time_end = interaction.timeEnd
         self.parent_instance_id = interaction.parentInstanceRid
+        self.parent_trip_id = interaction.parentTripRid
         self.person_id = personRid
         self.timed = interaction.timed
         self.in_person = interaction.inPerson

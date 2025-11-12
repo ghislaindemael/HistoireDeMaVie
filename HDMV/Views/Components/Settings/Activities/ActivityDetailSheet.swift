@@ -31,8 +31,8 @@ struct ActivityDetailSheet: View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: $viewModel.editor.name.orEmpty())
-                    TextField("Slug", text: $viewModel.editor.slug.orEmpty())
+                    TextField("Name", text: $viewModel.editor.name)
+                    TextField("Slug", text: $viewModel.editor.slug)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                     HStack {
