@@ -39,9 +39,17 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
     override func resolveRelationships() throws {
         print("Resolving Trip relationships...")
         
+        let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
         let placeLookup: [Int: Place] = try getLookupMap()
         let vehicleLookup: [Int: Vehicle] = try getLookupMap()
         let pathLookup: [Int: Path] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.parentInstance,
+            ridKeyPath: \Trip.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
         
         try resolveRelationship(
             for: Trip.self,

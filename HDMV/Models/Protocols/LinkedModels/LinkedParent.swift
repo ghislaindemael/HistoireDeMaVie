@@ -56,6 +56,18 @@ extension LinkedParent {
         parentTrip = nil
         parentTripRid = nil
     }
+    
+    func hasNoParent() -> Bool {
+        return parentInstance == nil
+            && parentInstanceRid == nil
+            && parentTrip == nil
+            && parentTripRid == nil
+    }
+    
+    func isOrphaned() -> Bool {
+        return parentInstance == nil
+            && parentTrip == nil
+    }
 }
 
 extension ActivityInstance: LinkedParent {}

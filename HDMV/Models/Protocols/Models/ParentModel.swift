@@ -13,10 +13,19 @@ protocol ParentModel: LogModel {
     var childTrips: [Trip]? { get set }
     var childInteractions: [Interaction]? { get set }
     var childLifeEvents: [LifeEvent]? { get set }
+    
+    var showChildren: Bool { get set }
         
 }
 
 extension ParentModel {
+    
+    func hasChildren() -> Bool {
+        return !(self.childActivities?.isEmpty ?? true) ||
+        !(self.childTrips?.isEmpty ?? true) ||
+        !(self.childInteractions?.isEmpty ?? true) ||
+        !(self.childLifeEvents?.isEmpty ?? true)
+    }
     
     func hasActiveChild() -> Bool {
         return hasActiveTrips() || hasActiveInteractions() || hasActiveInteractions()
@@ -65,6 +74,29 @@ extension ParentModel {
             
             return startsAfterParentEnds || endsBeforeParentStarts
         }
+    }
+    
+    func children(overlapping date: Date?) -> [any LogModel] {
+        let allChildren = self.sortedChildren
+        
+        guard let filterDate = date else {
+            return allChildren
+        }
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: filterDate)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return []
+        }
+        let future = Date.distantFuture
+        
+        return allChildren.filter { item in
+            item.timeStart < endOfDay && (item.timeEnd ?? future) > startOfDay
+        }
+    }
+    
+    func toggleShowChildren() {
+        self.showChildren = !self.showChildren
     }
     
 }

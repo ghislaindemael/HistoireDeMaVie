@@ -172,6 +172,7 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
         
         let activityLookup: [Int: Activity] = try getLookupMap()
         let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
+        let tripLookup: [Int: Trip] = try getLookupMap()
         
         try resolveRelationship(
             for: ActivityInstance.self,
@@ -185,6 +186,13 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
             relationshipKeyPath: \ActivityInstance.parentInstance,
             ridKeyPath: \ActivityInstance.parentInstanceRid,
             lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: ActivityInstance.self,
+            relationshipKeyPath: \ActivityInstance.parentTrip,
+            ridKeyPath: \ActivityInstance.parentTripRid,
+            lookupMap: tripLookup
         )
         
         print("All ActivityInstance relationships resolved.")

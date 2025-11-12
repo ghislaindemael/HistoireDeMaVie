@@ -40,6 +40,14 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
         
         let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
         let peopleLookup: [Int: Person] = try getLookupMap()
+        let tripLookup: [Int: Trip] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: Interaction.self,
+            relationshipKeyPath: \Interaction.parentTrip,
+            ridKeyPath: \Interaction.parentTripRid,
+            lookupMap: tripLookup
+        )
         
         try resolveRelationship(
             for: Interaction.self,

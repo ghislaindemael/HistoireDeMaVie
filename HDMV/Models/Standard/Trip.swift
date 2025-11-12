@@ -19,6 +19,7 @@ final class Trip: LogModel {
     
     var parentInstanceRid: Int?
     var parentTripRid: Int?
+    var showChildren: Bool = true
     
     var placeStartRid: Int?
     var placeEndRid: Int?

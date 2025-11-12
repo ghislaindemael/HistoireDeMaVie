@@ -83,7 +83,7 @@ struct MyActivitiesPage: View {
             
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    let topLevelInstances = viewModel.instances.filter { $0.parentInstance == nil }
+                    let topLevelInstances = viewModel.instances.filter { $0.hasNoParent() }
                     
                     ForEach(topLevelInstances) { instance in
                         ParentModelHierarchyView(

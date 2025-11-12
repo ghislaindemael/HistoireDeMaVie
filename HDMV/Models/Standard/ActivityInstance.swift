@@ -21,6 +21,7 @@ final class ActivityInstance: LogModel {
     var activityRid: Int?
     var parentInstanceRid: Int?
     var parentTripRid: Int?
+    var showChildren: Bool = true
     
     var details: String?
     var activity_details: Data?
@@ -63,6 +64,7 @@ final class ActivityInstance: LogModel {
         percentage: Int = 100,
         activityRid: Int? = nil,
         parentRid: Int? = nil,
+        showChildren: Bool = true,
         details: String? = nil,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
@@ -71,6 +73,7 @@ final class ActivityInstance: LogModel {
         self.timeEnd = timeEnd
         self.activityRid = activityRid
         self.parentInstanceRid = parentRid
+        self.showChildren = showChildren
         self.details = details
         self.percentage = percentage
         self.syncStatus = syncStatus
@@ -94,6 +97,7 @@ final class ActivityInstance: LogModel {
         self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.decodedActivityDetails = dto.activity_details
@@ -105,6 +109,7 @@ final class ActivityInstance: LogModel {
         self.timeEnd = dto.time_end
         self.activityRid = dto.activity_id
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.decodedActivityDetails = dto.activity_details
@@ -123,6 +128,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let time_end: Date?
     let activity_id: Int?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
     let details: String?
     let percentage: Int?
     let activity_details: ActivityDetails?
@@ -138,6 +144,8 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let time_end: Date?
     let activity_id: Int?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
+    
     let details: String?
     let percentage: Int
     let activity_details: ActivityDetails?
@@ -151,7 +159,8 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.time_start = instance.timeStart
         self.time_end = instance.timeEnd
         self.activity_id = instance.activityRid
-        self.parent_instance_id = instance.parentInstance?.rid
+        self.parent_instance_id = instance.parentInstanceRid
+        self.parent_trip_id = instance.parentTripRid
         self.details = instance.details
         self.percentage = instance.percentage
         
@@ -170,7 +179,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
     var timed: Bool
     var percentage: Int
     var activity: Activity?
-    var parent: ActivityInstance?
+    var parentInstance: ActivityInstance?
     var details: String?
     var decodedActivityDetails: ActivityDetails?
     
@@ -183,7 +192,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         self.timed = instance.timed
         self.percentage = instance.percentage
         self.activity = instance.activity
-        self.parent = instance.parentInstance
+        self.parentInstance = instance.parentInstance
         self.details = instance.details
         self.decodedActivityDetails = instance.decodedActivityDetails
     }
@@ -195,7 +204,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         instance.percentage = self.percentage
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
-        instance.parentInstance = self.parent
+        instance.parentInstance = self.parentInstance
         instance.details = self.details
         instance.decodedActivityDetails = self.decodedActivityDetails
     }

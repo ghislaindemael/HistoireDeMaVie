@@ -85,5 +85,29 @@ class LifeEventSyncer: BaseSyncer<LifeEvent, LifeEventDTO, LifeEventPayload> {
         }
     }
 
+    override func resolveRelationships() throws {
+        print("Resolving LifeEvent relationships...")
+        
+        let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
+        let tripLookup: [Int: Trip] = try getLookupMap()
+                
+        try resolveRelationship(
+            for: LifeEvent.self,
+            relationshipKeyPath: \LifeEvent.parentInstance,
+            ridKeyPath: \LifeEvent.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: LifeEvent.self,
+            relationshipKeyPath: \LifeEvent.parentTrip,
+            ridKeyPath: \LifeEvent.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        print("All LifeEvent relationships resolved.")
+    }
+    
+    
     
 }

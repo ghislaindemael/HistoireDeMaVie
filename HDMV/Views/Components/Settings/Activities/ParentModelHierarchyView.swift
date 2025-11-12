@@ -42,121 +42,133 @@ struct ParentModelHierarchyView: View {
         VStack(alignment: .leading, spacing: 4) {
             
             rowView
-            .background(isDropTargeted ? Color.green.opacity(0.2) : Color.clear)
-            .contentShape(Rectangle())
-            .onTapGesture(count: 2) {
-                if let instance = parent as? ActivityInstance {
-                    instanceToEdit = instance
-                } else if let trip = parent as? Trip {
-                    tripToEdit = trip
+                .background(isDropTargeted ? Color.green.opacity(0.2) : Color.clear)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    parent.toggleShowChildren()
                 }
-            }
-            .cornerRadius(8)
-            .dropDestination(for: DraggableLogItem.self) { items, location in
-                guard let droppedItem = items.first else { return false }
-                viewModel.reparent(draggedItem: droppedItem, to: parent)
-                return true
-            } isTargeted: { isTargeted in
-                self.isDropTargeted = isTargeted
-            }
-            .draggable(DraggableLogItem.activity(parent.persistentModelID))
+                .onTapGesture(count: 2) {
+                    if let instance = parent as? ActivityInstance {
+                        instanceToEdit = instance
+                    } else if let trip = parent as? Trip {
+                        tripToEdit = trip
+                    }
+                }
+                .cornerRadius(8)
+                .dropDestination(for: DraggableLogItem.self) { items, location in
+                    guard let droppedItem = items.first else { return false }
+                    viewModel.reparent(draggedItem: droppedItem, to: parent)
+                    return true
+                } isTargeted: { isTargeted in
+                    self.isDropTargeted = isTargeted
+                }
+                .draggable(DraggableLogItem.activity(parent.persistentModelID))
             
-            if !filteredAndSortedChildren.isEmpty {
-                HStack(alignment: .top, spacing: contentLeadingPadding) {
-                    
+            if parent.hasChildren() {
+                if parent.showChildren {
+                    childrenSection
+                } else {
                     indicatorColor
-                        .frame(width: indicatorWidth)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(filteredAndSortedChildren, id: \.id) { item in
-                            LogItemRowView(
-                                item: item,
-                                instanceToEdit: $instanceToEdit,
-                                tripToEdit: $tripToEdit,
-                                interactionToEdit: $interactionToEdit,
-                                level: level + 1
-                            )
-                        }
-                    }
-                    
+                        .cornerRadius(8)
                 }
             }
             
-            if !invalidChildren.isEmpty {
-                
-                HStack(alignment: .top, spacing: contentLeadingPadding) {
-                    Color.red
-                        .frame(width: indicatorWidth)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(invalidChildren, id: \.id) { item in
-                            LogItemRowView(
-                                item: item,
-                                instanceToEdit: $instanceToEdit,
-                                tripToEdit: $tripToEdit,
-                                interactionToEdit: $interactionToEdit,
-                                level: level + 1
-                            )
+            
+            if parent.timeEnd == nil || settings.planningMode == true,
+               let instance = parent as? ActivityInstance {
+                if (instance.activity?.can(.create_trips) == true) {
+                    if !parent.hasActiveTrips()  {
+                        StartItemButton(title: "Start Trip") {
+                            viewModel.createTrip(parent: instance)
                         }
+                        
                     }
                 }
                 
             }
             
-            if parent.timeEnd == nil || settings.planningMode == true {
-                if let instance = parent as? ActivityInstance {
-                    
-                    if (instance.activity?.can(.create_trips) == true) {
-                        if !parent.hasActiveTrips()  {
-                            StartItemButton(title: "Start Trip") {
-                                viewModel.createTrip(parent: instance)
-                            }
-                            .padding(.bottom, 4)
-                        }
-                    }
-                    
-                }
-                if parent.timeEnd == nil && !parent.hasActiveChild(), let instance = parent as? ActivityInstance {
-                    EndItemButton(title: "End now") {
+            if parent.timeEnd == nil, !parent.hasActiveChild() {
+                EndItemButton(title: "End now") {
+                    if let instance = parent as? ActivityInstance {
                         viewModel.endActivityInstance(instance: instance)
+                    } else if let trip = parent as? Trip {
+                        viewModel.endTrip(trip: trip)
                     }
                 }
-                
             }
-                
+            
             
         }
     }
     
-    private var filteredAndSortedChildren: [any LogModel] {
-        let all = parent.sortedChildren
-        guard let parentEnd = parent.timeEnd else { return [] }
-        let parentStart = parent.timeStart
+    @ViewBuilder
+    private var childrenSection: some View {
+        if !childrenToDisplay.isEmpty {
+            HStack(alignment: .top, spacing: contentLeadingPadding) {
+                indicatorColor
+                    .frame(width: indicatorWidth)
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(childrenToDisplay, id: \.id) { item in
+                        LogItemRowView(
+                            item: item,
+                            instanceToEdit: $instanceToEdit,
+                            tripToEdit: $tripToEdit,
+                            interactionToEdit: $interactionToEdit,
+                            level: level + 1
+                        )
+                    }
+                }
+            }
+        }
+        
+        
+        if !invalidChildren.isEmpty {
+            
+            HStack(alignment: .top, spacing: contentLeadingPadding) {
+                Color.red
+                    .frame(width: indicatorWidth)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(invalidChildren, id: \.id) { item in
+                        LogItemRowView(
+                            item: item,
+                            instanceToEdit: $instanceToEdit,
+                            tripToEdit: $tripToEdit,
+                            interactionToEdit: $interactionToEdit,
+                            level: level + 1
+                        )
+                    }
+                }
+            }
+            
+        }
+    }
+    
+    private var childrenToDisplay: [any LogModel] {
+        
+        let dateFilteredChildren: [any LogModel]
         
         switch viewModel.filterMode {
             case .byDate:
-                return all.filter { item in
-                    let end = item.timeEnd ?? parentEnd
-                    return item.timeStart >= parentStart && end <= parentEnd
-                }
-                .sorted { $0.timeStart < $1.timeStart }
-                
+                dateFilteredChildren = parent.children(overlapping: viewModel.filterDate)
             case .byActivity:
-                return []
+                dateFilteredChildren = []
         }
+        
+        let allInvalidChildren = self.invalidChildren
+        
+        let invalidIDs = Set(allInvalidChildren.map { $0.id })
+        
+        return dateFilteredChildren.filter { child in
+            !invalidIDs.contains(child.id)
+        }
+        
     }
     
     private var invalidChildren: [any LogModel] {
-        guard let parentEnd = parent.timeEnd else { return [] }
-        let parentStart = parent.timeStart
-        
-        return parent.sortedChildren.filter { item in
-            let end = item.timeEnd ?? .distantFuture
-            let startsAfterParentEnds = item.timeStart >= parentEnd
-            let endsBeforeParentStarts = end <= parentStart
-            return startsAfterParentEnds || endsBeforeParentStarts
-        }
+        parent.invalidChildren
     }
+    
 }
 
 
