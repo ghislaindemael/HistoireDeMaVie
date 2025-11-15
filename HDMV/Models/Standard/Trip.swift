@@ -19,7 +19,7 @@ final class Trip: LogModel {
     
     var parentInstanceRid: Int?
     var parentTripRid: Int?
-    var showChildren: Bool = true
+    @Attribute var childrenDisplayModeRaw: String = ChildrenDisplayMode.all.rawValue
     
     var placeStartRid: Int?
     var placeEndRid: Int?

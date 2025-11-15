@@ -7,6 +7,12 @@
 
 import Foundation
 
+enum ChildrenDisplayMode: String, CaseIterable, Codable {
+    case all
+    case ongoing
+    case none
+}
+
 protocol ParentModel: LogModel {
     
     var childActivities: [ActivityInstance]? { get set }
@@ -14,8 +20,8 @@ protocol ParentModel: LogModel {
     var childInteractions: [Interaction]? { get set }
     var childLifeEvents: [LifeEvent]? { get set }
     
-    var showChildren: Bool { get set }
-        
+    var childrenDisplayModeRaw: String { get set }
+    
 }
 
 extension ParentModel {
@@ -42,7 +48,7 @@ extension ParentModel {
     func hasActiveActivities() -> Bool {
         childActivities?.contains { $0.timeEnd == nil } ?? false
     }
-
+    
     var sortedChildren: [any LogModel] {
         var allChildren: [any LogModel] = []
         
@@ -95,8 +101,30 @@ extension ParentModel {
         }
     }
     
-    func toggleShowChildren() {
-        self.showChildren = !self.showChildren
+    func advanceDisplayMode() {
+        let all = ChildrenDisplayMode.allCases
+        
+        guard let currentIndex = all.firstIndex(of: childrenDisplayMode) else {
+            childrenDisplayMode = all.first ?? .all
+            return
+        }
+        
+        let nextIndex = all.index(after: currentIndex)
+        
+        if nextIndex == all.endIndex {
+            childrenDisplayMode = all.first!
+        } else {
+            childrenDisplayMode = all[nextIndex]
+        }
+    }
+    
+    var childrenDisplayMode: ChildrenDisplayMode {
+        get {
+            ChildrenDisplayMode(rawValue: childrenDisplayModeRaw) ?? .all
+        }
+        set {
+            childrenDisplayModeRaw = newValue.rawValue
+        }
     }
     
 }

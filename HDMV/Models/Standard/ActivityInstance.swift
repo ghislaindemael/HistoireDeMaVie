@@ -21,7 +21,7 @@ final class ActivityInstance: LogModel {
     var activityRid: Int?
     var parentInstanceRid: Int?
     var parentTripRid: Int?
-    var showChildren: Bool = true
+    @Attribute var childrenDisplayModeRaw: String = ChildrenDisplayMode.all.rawValue
     
     var details: String?
     var activity_details: Data?
@@ -64,7 +64,6 @@ final class ActivityInstance: LogModel {
         percentage: Int = 100,
         activityRid: Int? = nil,
         parentRid: Int? = nil,
-        showChildren: Bool = true,
         details: String? = nil,
         activity_details: ActivityDetails? = nil,
         syncStatus: SyncStatus = .local
@@ -73,7 +72,6 @@ final class ActivityInstance: LogModel {
         self.timeEnd = timeEnd
         self.activityRid = activityRid
         self.parentInstanceRid = parentRid
-        self.showChildren = showChildren
         self.details = details
         self.percentage = percentage
         self.syncStatus = syncStatus
