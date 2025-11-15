@@ -155,7 +155,7 @@ struct TripPayload: Codable, InitializableWithModel {
     typealias Model = Trip
     
     let time_start: Date
-    let time_end: Date
+    let time_end: Date?
     let parent_instance_id: Int
     let place_start_id: Int
     let place_end_id: Int
@@ -166,7 +166,6 @@ struct TripPayload: Codable, InitializableWithModel {
     
     init?(from trip: Trip) {
         guard trip.isValid(),
-              let timeEnd = trip.timeEnd,
               let parentId = trip.parentInstanceRid,
               let placeStartId = trip.placeStartRid,
               let placeEndId = trip.placeEndRid,
@@ -175,7 +174,7 @@ struct TripPayload: Codable, InitializableWithModel {
         
         self.parent_instance_id = parentId
         self.time_start = trip.timeStart
-        self.time_end = timeEnd
+        self.time_end = trip.timeEnd
         self.vehicle_id = vehicleId
         self.place_start_id = placeStartId
         self.place_end_id = placeEndId
