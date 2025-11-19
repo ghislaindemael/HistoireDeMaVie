@@ -32,5 +32,21 @@ final class VehicleSyncer: BaseSyncer<Vehicle, VehicleDTO, VehiclePayload> {
         fatalError("Vehicle deletion not implemented")
     }
     
+    override func resolveRelationships() throws {
+        print("Resolving Vehicle relationships...")
+        
+        let cityLookup: [Int: City] = try getLookupMap()
+        
+        try resolveRelationship(
+            for: Vehicle.self,
+            relationshipKeyPath: \Vehicle.city,
+            ridKeyPath: \Vehicle.cityRid,
+            lookupMap: cityLookup
+        )
+        
+        print("All Vehicle relationships resolved.")
+    }
+    
+    
 }
 

@@ -335,7 +335,7 @@ extension Vehicle: DebugViewable {
             }
             NamedStringDisplayView(name: "Name", value: name)
             NamedStringDisplayView(name: "TypeSlug", value: typeSlug)
-            NamedStringDisplayView(name: "Type", value: type?.rawValue)
+            NamedStringDisplayView(name: "Type", value: type.rawValue)
             LabeledContent("City RID", value: self.cityRid?.description ?? "nil")
             LabeledContent("City Loaded", value: self.city != nil ? "✅ Yes" : "❌ No")
             NamedStringDisplayView(name: "SyncStatus", value: syncStatusRaw)
