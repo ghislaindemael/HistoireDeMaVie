@@ -7,57 +7,56 @@
 
 import Foundation
 
+enum ChildrenDisplayMode: String, CaseIterable, Codable {
+    case all
+    case ongoing
+    case none
+}
+
 protocol ParentModel: LogModel {
     
-    var childActivities: [ActivityInstance]? { get set }
-    var childTrips: [Trip]? { get set }
-    var childInteractions: [Interaction]? { get set }
-    var childLifeEvents: [LifeEvent]? { get set }
+    var childActivities: [ActivityInstance] { get set }
+    var childTrips: [Trip] { get set }
+    var childInteractions: [Interaction] { get set }
+    var childLifeEvents: [LifeEvent] { get set }
     
-    var showChildren: Bool { get set }
-        
+    var childrenDisplayModeRaw: String { get set }
+    
 }
 
 extension ParentModel {
     
     func hasChildren() -> Bool {
-        return !(self.childActivities?.isEmpty ?? true) ||
-        !(self.childTrips?.isEmpty ?? true) ||
-        !(self.childInteractions?.isEmpty ?? true) ||
-        !(self.childLifeEvents?.isEmpty ?? true)
+        return !(self.childActivities.isEmpty) ||
+        !(self.childTrips.isEmpty) ||
+        !(self.childInteractions.isEmpty) ||
+        !(self.childLifeEvents.isEmpty)
     }
     
-    func hasActiveChild() -> Bool {
-        return hasActiveTrips() || hasActiveInteractions() || hasActiveInteractions()
+    func hasOngoingChild() -> Bool {
+        return hasOngoingTrips() || hasOngoingInteractions() || hasOngoingInstance()
     }
     
-    func hasActiveTrips() -> Bool {
-        childTrips?.contains { $0.timeEnd == nil } ?? false
+    func hasOngoingTrips() -> Bool {
+        self.childTrips.contains { $0.timeEnd == nil }
     }
     
-    func hasActiveInteractions() -> Bool {
-        childInteractions?.contains { $0.timeEnd == nil } ?? false
+    func hasOngoingInteractions() -> Bool {
+        self.childInteractions.contains { $0.timeEnd == nil }
     }
     
-    func hasActiveActivities() -> Bool {
-        childActivities?.contains { $0.timeEnd == nil } ?? false
+    func hasOngoingInstance() -> Bool {
+        self.childActivities.contains { $0.timeEnd == nil }
     }
-
+    
     var sortedChildren: [any LogModel] {
         var allChildren: [any LogModel] = []
         
-        if let childActivities = self.childActivities {
-            allChildren.append(contentsOf: childActivities)
-        }
-        if let trips = self.childTrips {
-            allChildren.append(contentsOf: trips)
-        }
-        if let interactions = self.childInteractions {
-            allChildren.append(contentsOf: interactions)
-        }
-        if let lifeEvents = self.childLifeEvents {
-            allChildren.append(contentsOf: lifeEvents)
-        }
+        allChildren.append(contentsOf: self.childActivities)
+        allChildren.append(contentsOf: self.childTrips)
+        allChildren.append(contentsOf: self.childInteractions)
+        allChildren.append(contentsOf: self.childLifeEvents)
+        
         return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
     }
     
@@ -95,8 +94,35 @@ extension ParentModel {
         }
     }
     
-    func toggleShowChildren() {
-        self.showChildren = !self.showChildren
+    func advanceDisplayMode() {
+        let all = ChildrenDisplayMode.allCases
+        
+        guard let currentIndex = all.firstIndex(of: childrenDisplayMode) else {
+            childrenDisplayMode = all.first ?? .all
+            return
+        }
+        
+        let nextIndex = all.index(after: currentIndex)
+        
+        if nextIndex == all.endIndex {
+            childrenDisplayMode = all.first!
+        } else {
+            childrenDisplayMode = all[nextIndex]
+        }
+                
+        if childrenDisplayMode == .ongoing && hasOngoingChild() == false {
+            advanceDisplayMode()
+        }
+
+    }
+    
+    var childrenDisplayMode: ChildrenDisplayMode {
+        get {
+            ChildrenDisplayMode(rawValue: childrenDisplayModeRaw) ?? .all
+        }
+        set {
+            childrenDisplayModeRaw = newValue.rawValue
+        }
     }
     
 }

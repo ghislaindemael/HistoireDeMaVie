@@ -9,9 +9,7 @@ import SwiftData
 
 @Model
 final class Path: CatalogueModel {
-    
-    
-    @Attribute(.unique) var id: Int
+        
     @Attribute(.unique) var rid: Int?
     @Attribute(.unique) var name: String?
     var details: String?
@@ -47,7 +45,7 @@ final class Path: CatalogueModel {
     
     /// Regular initializer
     init(
-        id: Int = Int.random(in: -999_999 ... -1),
+        rid: Int? = nil,
         name: String? = nil,
         details: String? = nil,
         placeStart: Place? = nil,
@@ -58,7 +56,7 @@ final class Path: CatalogueModel {
         archived: Bool = false,
         syncStatus: SyncStatus = .local
     ) {
-        self.id = id
+        self.rid = rid
         self.name = name
         self.details = details
         self.placeStart = placeStart
@@ -71,21 +69,23 @@ final class Path: CatalogueModel {
     }
     
     convenience init(fromDto dto: PathDTO) {
-        self.init(
-            id: dto.id,
-            name: dto.name,
-            details: dto.details,
-            metrics: dto.metrics,
-            geojsonTrack: dto.geojson_track,
-            cache: dto.cache,
-            archived: dto.archived,
-            syncStatus: .synced
-        )
+        self.init()
+        self.placeStartRid = dto.place_start_id
+        self.placeEndRid = dto.place_end_id
+        self.name = dto.name
+        self.details = dto.details
+        self.metrics = dto.metrics
+        self.geojsonTrack = dto.geojson_track
+        self.cache = dto.cache
+        self.archived = dto.archived
+        self.syncStatus = .synced
     }
     
     // MARK: - Update
     
     func update(fromDto dto: PathDTO) {
+        self.placeStartRid = dto.place_start_id
+        self.placeEndRid = dto.place_end_id
         self.name = dto.name
         self.details = dto.details
         self.metrics = dto.metrics
@@ -99,8 +99,8 @@ final class Path: CatalogueModel {
     
     func isValid() -> Bool {
         guard name != nil,
-              placeStart != nil,
-              placeEnd != nil
+              placeStartRid != nil,
+              placeEndRid != nil
         else {
             return false
         }
@@ -141,8 +141,8 @@ struct PathPayload: Codable, InitializableWithModel {
     
     init?(from path: Path) {
         guard path.isValid(),
-              let startId = path.placeStart?.rid,
-              let endId = path.placeEnd?.rid
+              let startId = path.placeStartRid,
+              let endId = path.placeEndRid
         else { return nil }
         
         self.name = path.name!

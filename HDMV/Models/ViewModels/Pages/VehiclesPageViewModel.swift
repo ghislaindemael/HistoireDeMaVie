@@ -83,8 +83,9 @@ class VehiclesPageViewModel: ObservableObject {
     // MARK: - User Actions
     
     func createVehicle() {
-        guard let context = modelContext else { return }
-        let newVehicle = Vehicle(type: selectedType, syncStatus: .local)
+        guard let context = modelContext, let type = selectedType else { return }
+
+        let newVehicle = Vehicle(type: type, syncStatus: .local)
         context.insert(newVehicle)
         vehicles.append(newVehicle)
         filteredVehicles.append(newVehicle)

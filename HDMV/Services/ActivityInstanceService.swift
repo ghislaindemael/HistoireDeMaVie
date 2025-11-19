@@ -8,7 +8,7 @@
 
 import Foundation
 
-class ActivityInstanceService: SupabaseDataService<ActivityInstanceDTO, ActivityInstancePayload > {
+class ActivityInstanceService: SupabaseDataService<ActivityInstanceDTO, ActivityInstancePayload> {
     
     init() {
         super.init(tableName: "my_activities")

@@ -29,8 +29,9 @@ struct PersonDetailSheet: View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: $viewModel.editor.name.orEmpty())
-                    TextField("Family Name", text: $viewModel.editor.familyName.orEmpty())
+                    TextField("Name", text: $viewModel.editor.name)
+                    TextField("Family Name", text: $viewModel.editor.familyName)
+                    TextField("Slug", text: $viewModel.editor.slug)
                     TextField("Surname", text: $viewModel.editor.surname.orEmpty())
                     DatePicker(
                         "Birthdate",

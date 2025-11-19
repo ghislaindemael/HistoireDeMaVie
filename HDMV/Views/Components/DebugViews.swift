@@ -165,7 +165,13 @@ extension Country: DebugViewable {
 extension Path: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("ID: \(id)")
+            if let rid = rid {
+                Text("Remote ID: \(rid)")
+            } else {
+                Text("Unsynced")
+                    .bold()
+                    .foregroundStyle(.orange)
+            }
             Text("Name: \(name ?? "Unset")")
             Text("Details: \(details ?? "Unset")")
             Text("Start place id: \(placeStart?.rid ?? -1)")
@@ -335,7 +341,7 @@ extension Vehicle: DebugViewable {
             }
             NamedStringDisplayView(name: "Name", value: name)
             NamedStringDisplayView(name: "TypeSlug", value: typeSlug)
-            NamedStringDisplayView(name: "Type", value: type?.rawValue)
+            NamedStringDisplayView(name: "Type", value: type.rawValue)
             LabeledContent("City RID", value: self.cityRid?.description ?? "nil")
             LabeledContent("City Loaded", value: self.city != nil ? "✅ Yes" : "❌ No")
             NamedStringDisplayView(name: "SyncStatus", value: syncStatusRaw)

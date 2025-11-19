@@ -45,7 +45,7 @@ struct ParentModelHierarchyView: View {
                 .background(isDropTargeted ? Color.green.opacity(0.2) : Color.clear)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    parent.toggleShowChildren()
+                    parent.advanceDisplayMode()
                 }
                 .onTapGesture(count: 2) {
                     if let instance = parent as? ActivityInstance {
@@ -65,11 +65,12 @@ struct ParentModelHierarchyView: View {
                 .draggable(DraggableLogItem.activity(parent.persistentModelID))
             
             if parent.hasChildren() {
-                if parent.showChildren {
-                    childrenSection
-                } else {
+                if parent.childrenDisplayMode != .all {
                     indicatorColor
                         .cornerRadius(8)
+                }
+                if parent.childrenDisplayMode != .none {
+                    childrenSection
                 }
             }
             
@@ -77,7 +78,7 @@ struct ParentModelHierarchyView: View {
             if parent.timeEnd == nil || settings.planningMode == true,
                let instance = parent as? ActivityInstance {
                 if (instance.activity?.can(.create_trips) == true) {
-                    if !parent.hasActiveTrips()  {
+                    if !parent.hasOngoingTrips()  {
                         StartItemButton(title: "Start Trip") {
                             viewModel.createTrip(parent: instance)
                         }
@@ -87,7 +88,7 @@ struct ParentModelHierarchyView: View {
                 
             }
             
-            if parent.timeEnd == nil, !parent.hasActiveChild() {
+            if parent.timeEnd == nil, !parent.hasOngoingChild() {
                 EndItemButton(title: "End now") {
                     if let instance = parent as? ActivityInstance {
                         viewModel.endActivityInstance(instance: instance)
@@ -146,11 +147,16 @@ struct ParentModelHierarchyView: View {
     
     private var childrenToDisplay: [any LogModel] {
         
-        let dateFilteredChildren: [any LogModel]
+        var dateFilteredChildren: [any LogModel]
         
         switch viewModel.filterMode {
             case .byDate:
                 dateFilteredChildren = parent.children(overlapping: viewModel.filterDate)
+                    
+            if parent.childrenDisplayMode == .ongoing {
+                dateFilteredChildren = dateFilteredChildren.filter { $0.timeEnd == nil }
+            }
+            
             case .byActivity:
                 dateFilteredChildren = []
         }
