@@ -56,16 +56,17 @@ final class Trip: LogModel {
     var path: Path?
     
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentTrip)
-    var childActivities: [ActivityInstance]? = []
+    var childActivities: [ActivityInstance] = []
     
+    // For protocol conformance, a Trip cannot hold another trip
     @Relationship(deleteRule: .nullify, inverse: \Trip.parentTrip)
-    var childTrips: [Trip]? = nil
+    var childTrips: [Trip] = []
     
     @Relationship(deleteRule: .nullify, inverse: \Interaction.parentTrip)
-    var childInteractions: [Interaction]? = nil
+    var childInteractions: [Interaction] = []
     
     @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentTrip)
-    var childLifeEvents: [LifeEvent]? = nil
+    var childLifeEvents: [LifeEvent] = []
     
     
     // MARK: Relationship conformance
