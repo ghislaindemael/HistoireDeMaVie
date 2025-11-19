@@ -10,7 +10,7 @@ import SwiftData
 
 struct PathDisplayView: View {
     @Query private var paths: [Path]
-    private let pathId: Int?
+    private let pathRid: Int?
     private let directPath: Path?
     
     private var resolvedPath: Path? {
@@ -18,12 +18,12 @@ struct PathDisplayView: View {
     }
     
     // MARK: - Init with pathId (query from DB)
-    init(pathId: Int?) {
-        self.pathId = pathId
+    init(pathRid: Int?) {
+        self.pathRid = pathRid
         self.directPath = nil
         
-        if let id = pathId {
-            _paths = Query(filter: #Predicate { $0.id == id })
+        if let id = pathRid {
+            _paths = Query(filter: #Predicate { $0.rid == id })
         } else {
             _paths = Query(filter: #Predicate { _ in false })
         }
@@ -31,7 +31,7 @@ struct PathDisplayView: View {
     
     // MARK: - Init with direct Path instance
     init(path: Path?) {
-        self.pathId = path?.id
+        self.pathRid = path?.rid
         self.directPath = path
         
         _paths = Query(filter: #Predicate { _ in false })
@@ -41,7 +41,7 @@ struct PathDisplayView: View {
     var body: some View {
         if let path = resolvedPath {
             PathRowView(path: path)
-        } else if pathId == nil {
+        } else if pathRid == nil {
             HStack {
                 Text("Unset path")
                 Spacer()
@@ -50,7 +50,7 @@ struct PathDisplayView: View {
             .foregroundColor(.red)
         } else {
             HStack {
-                Text("Uncached Path (ID: \(pathId ?? -1))")
+                Text("Uncached Path (ID: \(pathRid!))")
                 Spacer()
                 Image(systemName: "exclamationmark.triangle")
             }
