@@ -35,7 +35,7 @@ final class Person: CatalogueModel, EditableModel {
         rid: Int? = nil,
         slug: String = "unset",
         name: String = "Unset",
-        familyName: String = "Unset",
+        familyName: String = "unset",
         surname: String? = nil,
         birthdate: Date? = nil,
         cache: Bool = true,
@@ -60,7 +60,9 @@ final class Person: CatalogueModel, EditableModel {
         self.name = dto.name
         self.familyName = dto.family_name
         self.surname = dto.surname
-        self.birthdate = dto.birthdate
+        if let birthdateString = dto.birthdate {
+            self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
+        }
         self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
@@ -71,7 +73,9 @@ final class Person: CatalogueModel, EditableModel {
         self.name = dto.name
         self.familyName = dto.family_name
         self.surname = dto.surname
-        self.birthdate = dto.birthdate
+        if let birthdateString = dto.birthdate {
+            self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
+        }
         self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
@@ -98,7 +102,7 @@ struct PersonDTO: Codable, Identifiable, Sendable {
     var name: String
     var family_name: String
     var surname: String?
-    var birthdate: Date?
+    var birthdate: String?
     var cache: Bool
     var archived: Bool
 }
@@ -108,7 +112,7 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
     var name: String
     var family_name: String
     var surname: String?
-    var birthdate: Date?
+    var birthdate: String?
     var cache: Bool
     var archived: Bool
     
@@ -121,7 +125,9 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
         self.name = person.name
         self.family_name = person.familyName
         self.surname = person.surname
-        self.birthdate = person.birthdate
+        if let birthdate = person.birthdate {
+            self.birthdate = DateFormatter.dateOnly.string(from: birthdate)
+        }
         self.cache = person.cache
         self.archived = person.archived
     }
@@ -129,9 +135,9 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
 }
 
 struct PersonEditor: CachableModel, EditorProtocol {
-    var slug: String?
-    var name: String?
-    var familyName: String?
+    var slug: String
+    var name: String
+    var familyName: String
     var surname: String?
     var birthdate: Date?
     var cache: Bool
@@ -150,9 +156,9 @@ struct PersonEditor: CachableModel, EditorProtocol {
     }
     
     func apply(to person: Person) {
-        person.slug = self.slug ?? person.slug
-        person.name = self.name ?? person.name
-        person.familyName = self.familyName ?? person.familyName
+        person.slug = self.slug
+        person.name = self.name
+        person.familyName = self.familyName
         person.surname = self.surname
         person.birthdate = self.birthdate
         person.cache = self.cache
