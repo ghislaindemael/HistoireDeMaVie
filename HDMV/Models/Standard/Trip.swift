@@ -26,8 +26,10 @@ final class Trip: LogModel {
     var vehicleRid: Int?
 
     var amDriver: Bool = false
+    
     var pathRid: Int?
-
+    var pathMetricsData: Data?
+    
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -69,9 +71,17 @@ final class Trip: LogModel {
     var childLifeEvents: [LifeEvent] = []
     
     
-    // MARK: Relationship conformance
+    // MARK: Derived properties
     
-    
+    var pathMetrics: PathMetrics? {
+        get {
+            guard let data = pathMetricsData else { return nil }
+            return try? JSONDecoder().decode(PathMetrics.self, from: data)
+        }
+        set {
+            pathMetricsData = try? JSONEncoder().encode(newValue)
+        }
+    }
     
     // MARK: Init
 
@@ -147,6 +157,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let place_end_id: Int?
     let am_driver: Bool
     let path_id: Int?
+    let path_metrics: PathMetrics?
     let details: String?
 }
 
@@ -163,6 +174,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let vehicle_id: Int?
     let am_driver: Bool
     let path_id: Int?
+    let path_metrics: PathMetrics?
     let details: String?
     
     init?(from trip: Trip) {
@@ -181,6 +193,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.place_end_id = placeEndId
         self.am_driver = trip.amDriver
         self.path_id = trip.pathRid
+        self.path_metrics = trip.pathMetrics
         self.details = trip.details
     }
     
@@ -205,6 +218,7 @@ struct TripEditor: TimeBound, EditorProtocol {
     
     var pathRid: Int?
     var path: Path?
+    var pathMetrics: PathMetrics?
     
     var amDriver: Bool
     var details: String?
@@ -229,6 +243,7 @@ struct TripEditor: TimeBound, EditorProtocol {
         
         self.pathRid = trip.pathRid
         self.path = trip.path
+        self.pathMetrics = trip.pathMetrics
         
         self.amDriver = trip.amDriver
         self.details = trip.details
@@ -245,6 +260,7 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
+        trip.pathMetrics = self.pathMetrics
         
         trip.markAsModified()
     }

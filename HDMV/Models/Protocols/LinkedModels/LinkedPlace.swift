@@ -19,7 +19,7 @@ extension LinkedPlace {
     
     func setPlace(_ newPlace: Place?, fallbackRid: Int? = nil) {
         self.place = newPlace
-        self.placeRid = newPlace?.rid
+        self.placeRid = newPlace?.rid ?? fallbackRid
     }
     
     func clearPlace() {

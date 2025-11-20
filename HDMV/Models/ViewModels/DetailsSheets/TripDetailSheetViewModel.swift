@@ -13,6 +13,7 @@ import SwiftData
 class TripDetailSheetViewModel: BaseDetailSheetViewModel<Trip, TripEditor> {
     
     @Published var isShowingPathSelector = false
+    @Published var isShowingMetricsEditSheet = false
 
     func selectPath(path: Path) {
         editor.path = path

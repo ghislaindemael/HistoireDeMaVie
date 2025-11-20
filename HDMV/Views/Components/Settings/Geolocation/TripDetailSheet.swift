@@ -62,6 +62,14 @@ struct TripDetailSheet: View {
                     onPathSelected: viewModel.selectPath
                 )
             }
+            .sheet(isPresented: $viewModel.isShowingMetricsEditSheet) {
+                PathMetricsEditSheet(
+                    currentMetrics: viewModel.editor.pathMetrics,
+                    onSave: { newMetrics in
+                        viewModel.editor.pathMetrics = newMetrics
+                    }
+                )
+            }
         }
     }
     
@@ -77,11 +85,61 @@ struct TripDetailSheet: View {
     }
     
     private var pathSection: some View {
-        Section(header: Text("Path")) {
-            PathDisplayView(path: viewModel.editor.path)
             
-            Button(action: { viewModel.isShowingPathSelector = true }) {
-                Label("Select path", systemImage: "plus.circle.fill")
+           
+        Section(header: Text("Path & Metrics")) {
+            
+            PathSelector(
+                path: $viewModel.editor.path,
+                pathRid: $viewModel.editor.pathRid,
+                isShowingSelector: $viewModel.isShowingPathSelector
+            )
+            
+            if viewModel.editor.path == nil {
+                
+                if let metrics = viewModel.editor.pathMetrics {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Custom Metrics Set")
+                            .font(.headline)
+                        
+                        HStack(spacing: 12) {
+                            Label("\(metrics.distance.formatted()) m", systemImage: "ruler")
+                            Label("+\(metrics.elevationGain.formatted()) m", systemImage: "arrow.up.right")
+                            Label("-\(metrics.elevationLoss.formatted()) m", systemImage: "arrow.down.right")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        
+                        Divider().padding(.vertical, 4)
+                        
+                        HStack {
+                            Button("Edit") {
+                                viewModel.isShowingMetricsEditSheet = true
+                            }
+                            
+                            Spacer()
+                            
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    viewModel.editor.pathMetrics = nil
+                                }
+                            } label: {
+                                Text("Remove")
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .padding(.vertical, 4)
+                    
+                } else {
+                    Button {
+                        viewModel.isShowingMetricsEditSheet = true
+                    } label: {
+                        Label("Add Custom Metrics", systemImage: "plus.circle")
+                    }
+                }
+                
             }
         }
     }
