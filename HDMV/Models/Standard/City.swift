@@ -132,12 +132,8 @@ struct CityEditor: CachableModel, EditorProtocol {
         if let slug = self.slug { city.slug = slug }
         if let name = self.name { city.name = name }
         
-        if country != nil {
-            city.setCountry(country)
-        } else {
-            city.countryRid = self.countryRid
-        }
-        
+        city.setCountry(country, fallbackRid: countryRid)
+
         city.cache = self.cache
         city.archived = self.archived
     }

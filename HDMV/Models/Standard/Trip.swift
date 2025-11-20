@@ -162,7 +162,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let place_end_id: Int
     let vehicle_id: Int?
     let am_driver: Bool
-    let pathId: Int?
+    let path_id: Int?
     let details: String?
     
     init?(from trip: Trip) {
@@ -180,7 +180,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.place_start_id = placeStartId
         self.place_end_id = placeEndId
         self.am_driver = trip.amDriver
-        self.pathId = trip.pathRid
+        self.path_id = trip.pathRid
         self.details = trip.details
     }
     

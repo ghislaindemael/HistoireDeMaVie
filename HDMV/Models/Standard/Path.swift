@@ -70,6 +70,7 @@ final class Path: CatalogueModel {
     
     convenience init(fromDto dto: PathDTO) {
         self.init()
+        self.rid = dto.id
         self.placeStartRid = dto.place_start_id
         self.placeEndRid = dto.place_end_id
         self.name = dto.name
@@ -162,7 +163,9 @@ struct PathEditor : EditorProtocol {
     var rid: Int?
     var name: String?
     var details: String?
+    var placeStartRid: Int?
     var placeStart: Place?
+    var placeEndRid: Int?
     var placeEnd: Place?
     var distance: Double?
     var metrics: PathMetrics = PathMetrics()
@@ -177,7 +180,9 @@ struct PathEditor : EditorProtocol {
         self.name = path.name
         self.details = path.details
         self.placeStart = path.placeStart
+        self.placeStartRid = path.placeStartRid
         self.placeEnd = path.placeEnd
+        self.placeEndRid = path.placeEndRid
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
         self.cache = path.cache
@@ -187,8 +192,8 @@ struct PathEditor : EditorProtocol {
     func apply(to path: Path) {
         path.name = name
         path.details = details
-        path.placeStart = placeStart
-        path.placeEnd = placeEnd
+        path.setPlaceStart(self.placeStart, fallbackRid: self.placeStartRid)
+        path.setPlaceEnd(self.placeEnd, fallbackRid: self.placeEndRid)
         path.metrics = metrics
         path.geojsonTrack = geojson_track
         path.cache = cache
