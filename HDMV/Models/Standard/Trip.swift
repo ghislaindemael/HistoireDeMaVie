@@ -260,7 +260,10 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
-        trip.pathMetrics = self.pathMetrics
+        
+        if path == nil && pathRid == nil && pathMetrics != nil {
+            trip.pathMetrics = self.pathMetrics
+        }
         
         trip.markAsModified()
     }

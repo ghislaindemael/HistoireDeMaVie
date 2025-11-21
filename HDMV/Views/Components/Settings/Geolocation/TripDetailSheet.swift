@@ -90,47 +90,41 @@ struct TripDetailSheet: View {
         Section(header: Text("Path & Metrics")) {
             
             PathSelector(
-                path: $viewModel.editor.path,
-                pathRid: $viewModel.editor.pathRid,
-                isShowingSelector: $viewModel.isShowingPathSelector
+                path: viewModel.editor.path,
+                pathRid: viewModel.editor.pathRid,
+                isShowingSelector: $viewModel.isShowingPathSelector,
+                onSelect: { newPath, newRid in
+                    viewModel.editor.path = newPath
+                    viewModel.editor.pathRid = newRid
+                    viewModel.editor.pathMetrics = nil
+                },
+                onClear: {
+                    viewModel.editor.path = nil
+                    viewModel.editor.pathRid = nil
+                }
             )
             
-            if viewModel.editor.path == nil {
+            if viewModel.editor.path == nil || viewModel.editor.pathRid == nil {
                 
                 if let metrics = viewModel.editor.pathMetrics {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Custom Metrics Set")
-                            .font(.headline)
-                        
-                        HStack(spacing: 12) {
-                            Label("\(metrics.distance.formatted()) m", systemImage: "ruler")
-                            Label("+\(metrics.elevationGain.formatted()) m", systemImage: "arrow.up.right")
-                            Label("-\(metrics.elevationLoss.formatted()) m", systemImage: "arrow.down.right")
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        
-                        Divider().padding(.vertical, 4)
-                        
-                        HStack {
-                            Button("Edit") {
-                                viewModel.isShowingMetricsEditSheet = true
-                            }
+                    PathMetricsRowView(metrics: metrics)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.isShowingMetricsEditSheet = true
                             
-                            Spacer()
-                            
-                            Button(role: .destructive) {
-                                withAnimation {
-                                    viewModel.editor.pathMetrics = nil
-                                }
-                            } label: {
-                                Text("Remove")
-                                    .foregroundStyle(.red)
-                            }
                         }
-                        .buttonStyle(.borderless)
+                    
+                    
+                    Button(role: .destructive) {
+                        withAnimation {
+                            viewModel.editor.pathMetrics = nil
+                        }
+                    } label: {
+                        Label("Delete custom metrics", systemImage: "trash")
+                            .foregroundStyle(.red)
                     }
-                    .padding(.vertical, 4)
+                    .buttonStyle(.plain)
                     
                 } else {
                     Button {

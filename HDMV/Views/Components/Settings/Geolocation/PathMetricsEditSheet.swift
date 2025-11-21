@@ -11,14 +11,11 @@ import SwiftUI
 struct PathMetricsEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     
-    // Local state for editing (prevents view thrashing)
     @State private var metrics: PathMetrics
     
-    // Callback to return the saved value
     var onSave: (PathMetrics) -> Void
     
     init(currentMetrics: PathMetrics?, onSave: @escaping (PathMetrics) -> Void) {
-        // Initialize with existing metrics OR a blank object
         _metrics = State(initialValue: currentMetrics ?? PathMetrics())
         self.onSave = onSave
     }
@@ -30,7 +27,7 @@ struct PathMetricsEditSheet: View {
                     HStack {
                         Text("Distance")
                         Spacer()
-                        TextField("0", value: $metrics.distance, format: .number)
+                        TextField("", value: $metrics.distance, format: .number)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 100)
@@ -40,7 +37,7 @@ struct PathMetricsEditSheet: View {
                     HStack {
                         Text("Elevation Gain (+)")
                         Spacer()
-                        TextField("0", value: $metrics.elevationGain, format: .number)
+                        TextField("", value: $metrics.elevationGain, format: .number)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 100)
@@ -50,26 +47,25 @@ struct PathMetricsEditSheet: View {
                     HStack {
                         Text("Elevation Loss (-)")
                         Spacer()
-                        TextField("0", value: $metrics.elevationLoss, format: .number)
+                        TextField("", value: $metrics.elevationLoss, format: .number)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 100)
                         Text("m").foregroundStyle(.secondary)
                     }
+                    
+                    TextEditor(text: Binding<String>(
+                        get: { metrics.pathDescription ?? "" },
+                        set: { metrics.pathDescription = $0.isEmpty ? nil : $0 }
+                    ))
+                    .lineLimit(5)
                 }
             }
             .navigationTitle("Custom Metrics")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave(metrics) // Send data back
-                        dismiss()
-                    }
-                }
+            .standardSheetToolbar {
+                onSave(metrics)
+                dismiss()
             }
         }
     }

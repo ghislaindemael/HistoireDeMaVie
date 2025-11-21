@@ -55,22 +55,27 @@ struct TripRowView: View {
                         endDate: trip.timeEnd,
                         selectedDate: trip.timeStart
                     )
-                    PlaceDisplayView(placeRid: trip.placeStartRid, isSmall: smallDisplay)
-                    HStack {
-                        Image(systemName: "arrow.turn.down.right")
-                        PlaceDisplayView(placeRid: trip.placeEndRid, isSmall: smallDisplay)
+                    if let path = trip.path {
+                        PathDisplayView(path: path)
+                    } else {
+                        PlaceDisplayView(placeRid: trip.placeStartRid, isSmall: smallDisplay)
+                        HStack {
+                            Image(systemName: "arrow.turn.down.right")
+                            PlaceDisplayView(placeRid: trip.placeEndRid, isSmall: smallDisplay)
+                        }
+                        if let metrics = trip.pathMetrics {
+                            PathMetricsRowView(
+                                metrics: metrics,
+                                showTitle: false,
+                                bubble: false
+                            )
+                        }
                     }
+                    
                     if let details = trip.details, !details.isEmpty {
                         Text(details)
-                            .padding(8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.secondaryBackground)
-                            )
-                            .foregroundColor(Color.primary)
-                            .font(.body)
                     }
+                    
 
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

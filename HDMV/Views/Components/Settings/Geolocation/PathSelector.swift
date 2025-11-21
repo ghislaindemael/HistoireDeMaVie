@@ -9,30 +9,44 @@
 import SwiftUI
 
 struct PathSelector: View {
-    @Binding var path: Path?
-    @Binding var pathRid: Int?
+    let path: Path?
+    let pathRid: Int?
     @Binding var isShowingSelector: Bool
+    
+    var onSelect: (Path, Int) -> Void
+    var onClear: () -> Void
     
     var body: some View {
         if let selectedPath = path {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading) {
                 PathDisplayView(path: selectedPath)
                 
-                Button(role: .destructive,
-                       action: {
-                        withAnimation {
-                            path = nil
-                            pathRid = nil
-                        }}) {
-                            Label("Clear path", systemImage: "trash.fill")
-                                .foregroundStyle(.red)
-                        }
-               
+                Divider().padding(.vertical, 4)
+                
+                Button(role: .destructive) {
+                    withAnimation {
+                        onClear()
+                    }
+                } label: {
+                    Label("Clear path", systemImage: "trash.fill")
+                        .foregroundStyle(.red)
+                }
             }
+        } else if pathRid != nil {
+            HStack {
+                Image(systemName: "exclamationmark.triangle")
+                Spacer()
+                Text("Uncached Path (ID: \(pathRid!))")
+            }
+            .foregroundColor(.orange)
+            .fontWeight(.semibold)
         } else {
-            Button(action: { isShowingSelector = true }) {
+            Button {
+                isShowingSelector = true
+            } label: {
                 Label("Select Existing Path", systemImage: "map")
             }
         }
     }
 }
+

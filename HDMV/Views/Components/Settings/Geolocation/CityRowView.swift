@@ -15,7 +15,7 @@ struct CityRowView: View {
     var body: some View {
         VStack{
             HStack {
-                NamedStringDisplayView(name: "Name", value: city.name)
+                NamedStringDisplayView(name: "", value: city.name)
                 Spacer()
                 if !city.cache {
                     IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
