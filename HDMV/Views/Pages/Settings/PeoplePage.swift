@@ -35,7 +35,13 @@ struct PeoplePage: View {
                 Button(action: {
                     personToEdit = person
                 }) {
-                    PersonRowView(person: person)
+                    PersonRowView(person: person) { p in
+                        withAnimation(.snappy) {
+                            viewModel.updateModel(p) { concretePerson in
+                                concretePerson.cache.toggle()
+                            }
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
             }

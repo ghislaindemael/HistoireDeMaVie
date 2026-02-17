@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class City: CatalogueModel {
+final class City: CatalogueModel{
     
     @Attribute(.unique) var rid: Int?
     @Attribute(.unique) var slug: String
