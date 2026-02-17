@@ -9,19 +9,17 @@ import Foundation
 import SwiftData
 
 @MainActor
-class VehiclesPageViewModel: ObservableObject {
+class VehiclesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
     private var vehicleSyncer: VehicleSyncer?
     
-    @Published var isLoading = false
     @Published private var vehicles: [Vehicle] = []
     @Published var filteredVehicles: [Vehicle] = []
     @Published var selectedType: VehicleType? = .car
     
     // MARK: Initialization
     
-    func setup(modelContext: ModelContext) {
+    override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.vehicleSyncer = VehicleSyncer(modelContext: modelContext)
         fetchFromCache()

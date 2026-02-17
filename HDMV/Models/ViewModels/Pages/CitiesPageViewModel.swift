@@ -10,17 +10,15 @@ import Foundation
 import SwiftData
 
 @MainActor
-class CitiesPageViewModel: ObservableObject {
+class CitiesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
     private var citySyncer: CitySyncer?
     
-    @Published var isLoading = false
     @Published var selectedCountry: Country?
     
     // MARK: Initialization
     
-    func setup(modelContext: ModelContext) {
+    override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.citySyncer = CitySyncer(modelContext: modelContext)
     }

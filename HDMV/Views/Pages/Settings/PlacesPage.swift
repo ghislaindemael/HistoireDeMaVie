@@ -61,7 +61,13 @@ struct PlacesPage: View {
                 Button(action: {
                     placeToEdit = place
                 }) {
-                    PlaceRowView(place: place)
+                    PlaceRowView(place: place) { p in
+                        withAnimation(.snappy) {
+                            viewModel.updateModel(p) { concretePlace in
+                                concretePlace.cache.toggle()
+                            }
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
             }

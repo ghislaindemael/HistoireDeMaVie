@@ -11,15 +11,14 @@ import SwiftUI
 struct CityRowView: View {
     
     let city: City
+    let onToggle: (City) -> Void
     
     var body: some View {
         VStack{
             HStack {
-                NamedStringDisplayView(name: "Name", value: city.name)
+                Label("\(city.name)", systemImage: "")
                 Spacer()
-                if !city.cache {
-                    IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
-                }
+                CacheToggleButton(model: city, onToggle: onToggle)
                 SyncStatusIndicator(status: city.syncStatus)
             }
         }

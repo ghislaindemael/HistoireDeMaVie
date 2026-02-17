@@ -62,9 +62,15 @@ struct CitiesPage: View {
     private var citiesList: some View {
         if let selectedCountry = viewModel.selectedCountry {
             Section("Cities in \(selectedCountry.name)") {
-                ForEach(selectedCountry.cities ?? []) { city in
+                ForEach(selectedCountry.sortedCities) { city in
                     Button(action: { cityToEdit = city }) {
-                        CityRowView(city: city)
+                        CityRowView(city: city) { c in
+                            withAnimation(.snappy) {
+                                viewModel.updateModel(c) { concreteCity in
+                                    concreteCity.cache.toggle()
+                                }
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                 }
@@ -73,7 +79,13 @@ struct CitiesPage: View {
             Section("Cities (No Country)") {
                 ForEach(orphanedCities) { city in
                     Button(action: { cityToEdit = city }) {
-                        CityRowView(city: city)
+                        CityRowView(city: city) { c in
+                            withAnimation(.snappy) {
+                                viewModel.updateModel(c) { concreteCity in
+                                    concreteCity.cache.toggle()
+                                }
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                 }

@@ -1,5 +1,5 @@
 //
-//  ActivitiesPageViewModel.swift
+//  PathsPageViewModel.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 31.07.2025.
