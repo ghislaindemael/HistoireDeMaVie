@@ -36,29 +36,35 @@ struct InteractionRowView: View {
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
             
-            DateRangeDisplayView(
-                startDate: interaction.timeStart,
-                endDate: interaction.timeEnd,
-                selectedDate: interaction.timeStart
-            )
-            
             HStack {
-                if interaction.timed == false {
-                    Image(systemName: "clock")
-                        .foregroundStyle(.red)
-                        .bold()
-                }
                 if interaction.inPerson {
                     Image(systemName: "person.2")
                 } else {
                     Image(systemName: "phone")
                 }
-                GradientPercentageBarView(
-                    percentage: Double(interaction.percentage)
+                DateRangeDisplayView(
+                    startDate: interaction.timeStart,
+                    endDate: interaction.timeEnd,
+                    selectedDate: interaction.timeStart
                 )
-                .frame(height: 8)
-                .padding(.leading, 4)
             }
+            
+            if !interaction.timed {
+                HStack() {
+                    Image(systemName: "clock.badge.xmark")
+                        .foregroundStyle(.red)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(.red)
+                        .frame(maxWidth: .infinity, minHeight: 8, maxHeight: 8)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 1)
+            } else if interaction.percentage != 100 {
+                GradientPercentageBarView(percentage: Double(interaction.percentage))
+                    .frame(height: 10)
+            }
+            
             if let details = interaction.details, !details.isEmpty {
                 Text(details)
                     .padding(8)

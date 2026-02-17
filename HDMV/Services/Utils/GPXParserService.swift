@@ -37,9 +37,12 @@ class GPXParserService {
             }
         }
         
-        let metrics = PathMetrics(distance: totalDistance,
-                                  elevationGain: totalGain,
-                                  elevationLoss: totalLoss)
+        let metrics =
+            PathMetrics(
+                distance: totalDistance,
+                elevationGain: totalGain,
+                elevationLoss: totalLoss
+            )
         let geojsonTrack = GeoJSONLineString(coordinates: geojsonCoords)
         
         return ParsedGPXData(metrics: metrics, geojsonCoordinates: geojsonTrack)

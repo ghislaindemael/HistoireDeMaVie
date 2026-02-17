@@ -40,7 +40,7 @@ struct PathDisplayView: View {
     // MARK: - Body
     var body: some View {
         if let path = resolvedPath {
-            PathRowView(path: path)
+            PathRowView(path: path, bubble: false)
         } else if pathRid == nil {
             HStack {
                 Text("Unset path")

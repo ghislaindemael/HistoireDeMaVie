@@ -62,6 +62,14 @@ struct TripDetailSheet: View {
                     onPathSelected: viewModel.selectPath
                 )
             }
+            .sheet(isPresented: $viewModel.isShowingMetricsEditSheet) {
+                PathMetricsEditSheet(
+                    currentMetrics: viewModel.editor.pathMetrics,
+                    onSave: { newMetrics in
+                        viewModel.editor.pathMetrics = newMetrics
+                    }
+                )
+            }
         }
     }
     
@@ -77,11 +85,55 @@ struct TripDetailSheet: View {
     }
     
     private var pathSection: some View {
-        Section(header: Text("Path")) {
-            PathDisplayView(path: viewModel.editor.path)
             
-            Button(action: { viewModel.isShowingPathSelector = true }) {
-                Label("Select path", systemImage: "plus.circle.fill")
+           
+        Section(header: Text("Path & Metrics")) {
+            
+            PathSelector(
+                path: viewModel.editor.path,
+                pathRid: viewModel.editor.pathRid,
+                isShowingSelector: $viewModel.isShowingPathSelector,
+                onSelect: { newPath, newRid in
+                    viewModel.editor.path = newPath
+                    viewModel.editor.pathRid = newRid
+                    viewModel.editor.pathMetrics = nil
+                },
+                onClear: {
+                    viewModel.editor.path = nil
+                    viewModel.editor.pathRid = nil
+                }
+            )
+            
+            if viewModel.editor.path == nil || viewModel.editor.pathRid == nil {
+                
+                if let metrics = viewModel.editor.pathMetrics {
+                    PathMetricsRowView(metrics: metrics)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.isShowingMetricsEditSheet = true
+                            
+                        }
+                    
+                    
+                    Button(role: .destructive) {
+                        withAnimation {
+                            viewModel.editor.pathMetrics = nil
+                        }
+                    } label: {
+                        Label("Delete custom metrics", systemImage: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                    
+                } else {
+                    Button {
+                        viewModel.isShowingMetricsEditSheet = true
+                    } label: {
+                        Label("Add Custom Metrics", systemImage: "plus.circle")
+                    }
+                }
+                
             }
         }
     }

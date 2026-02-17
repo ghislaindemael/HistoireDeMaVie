@@ -104,10 +104,22 @@ struct ActivityInstanceRowView: View {
                     .font(.body)
             }
             
-            if instance.percentage != 100 {
+            if !instance.timed {
+                HStack() {
+                    Image(systemName: "clock.badge.xmark")
+                        .foregroundStyle(.red)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(.red)
+                        .frame(maxWidth: .infinity, minHeight: 8, maxHeight: 8)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 1)
+            } else if instance.percentage != 100 {
                 GradientPercentageBarView(percentage: Double(instance.percentage))
                     .frame(height: 10)
             }
+            
             if instance.activity?.can(.log_food) == true {
                 mealContentText
             }
