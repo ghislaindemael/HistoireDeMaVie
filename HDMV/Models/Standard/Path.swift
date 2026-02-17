@@ -20,7 +20,7 @@ final class Path: CatalogueModel {
     var metrics: PathMetrics = PathMetrics()
     var geojsonTrack: GeoJSONLineString?
     
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -77,7 +77,6 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -91,7 +90,6 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -121,7 +119,6 @@ struct PathDTO: Codable, Sendable, Identifiable {
     var metrics: PathMetrics
     var geojson_track: GeoJSONLineString?
     var path_ids: [Int]?
-    var cache: Bool
     var archived: Bool
 }
 
@@ -137,7 +134,6 @@ struct PathPayload: Codable, InitializableWithModel {
     var metrics: PathMetrics?
     var geojson_track: GeoJSONLineString?
     var path_ids: [Int]?
-    var cache: Bool
     var archived: Bool
     
     init?(from path: Path) {

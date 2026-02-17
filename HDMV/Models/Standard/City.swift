@@ -16,7 +16,7 @@ final class City: CatalogueModel{
     @Attribute(.unique) var name: String
     var countryRid: Int?
 
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
@@ -60,7 +60,6 @@ final class City: CatalogueModel{
         self.slug = dto.slug
         self.name = dto.name
         self.countryRid = dto.country_id
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -69,7 +68,6 @@ final class City: CatalogueModel{
         self.slug = dto.slug
         self.name = dto.name
         self.countryRid = dto.country_id
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -85,7 +83,6 @@ struct CityDTO: Codable, Identifiable, Sendable {
     var slug: String
     var name: String
     var country_id: Int
-    var cache: Bool
     var archived: Bool
 }
 
@@ -94,7 +91,6 @@ struct CityPayload: Codable, InitializableWithModel {
     var slug: String
     var name: String
     var country_id: Int
-    var cache: Bool
     var archived: Bool
     
     init?(from city: City) {
@@ -106,7 +102,6 @@ struct CityPayload: Codable, InitializableWithModel {
         self.slug = city.slug
         self.name = city.name
         self.country_id = countryRid
-        self.cache = city.cache
         self.archived = city.archived
     }
 }

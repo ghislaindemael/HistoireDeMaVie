@@ -16,7 +16,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
     var familyName: String
     var surname: String?
     var birthdate: Date?
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
@@ -63,7 +63,6 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         if let birthdateString = dto.birthdate {
             self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
         }
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -76,7 +75,6 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         if let birthdateString = dto.birthdate {
             self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
         }
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -103,7 +101,6 @@ struct PersonDTO: Codable, Identifiable, Sendable {
     var family_name: String
     var surname: String?
     var birthdate: String?
-    var cache: Bool
     var archived: Bool
 }
 
@@ -113,7 +110,6 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
     var family_name: String
     var surname: String?
     var birthdate: String?
-    var cache: Bool
     var archived: Bool
     
     typealias Model = Person

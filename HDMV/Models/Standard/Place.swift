@@ -17,7 +17,7 @@ final class Place: CatalogueModel, EditableModel {
     var name: String
     var cityRid: Int?
 
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
@@ -67,7 +67,6 @@ final class Place: CatalogueModel, EditableModel {
             rid: dto.id,
             name: dto.name,
             cityRid: dto.city_id,
-            cache: dto.cache,
             archived: dto.archived,
             syncStatus: SyncStatus.synced
         )
@@ -77,7 +76,6 @@ final class Place: CatalogueModel, EditableModel {
         self.rid = dto.id
         self.name = dto.name
         self.cityRid = dto.city_id
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -93,7 +91,6 @@ struct PlaceDTO: Codable, Identifiable, Sendable {
     var id: Int
     var name: String
     var city_id: Int
-    var cache: Bool
     var archived: Bool
 }
 
@@ -102,7 +99,6 @@ struct PlacePayload: Codable, InitializableWithModel {
     typealias Model = Place
     var name: String
     var city_id: Int
-    var cache: Bool
     var archived: Bool
     
     init?(from place: Place) {
@@ -111,7 +107,6 @@ struct PlacePayload: Codable, InitializableWithModel {
         }
         self.name = place.name
         self.city_id = cityRid
-        self.cache = place.cache
         self.archived = place.archived
     }
 }

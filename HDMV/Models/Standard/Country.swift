@@ -57,14 +57,13 @@ final class Country: CatalogueModel {
     }
     
     convenience init(fromDto dto: CountryDTO) {
-        self.init(slug: dto.slug, name: dto.name, rid: dto.id, cache: dto.cache, archived: dto.archived, syncStatus: .synced)
+        self.init(slug: dto.slug, name: dto.name, rid: dto.id, archived: dto.archived, syncStatus: .synced)
     }
     
     func update(fromDto dto: CountryDTO) {
         self.rid = dto.id
         self.slug = dto.slug
         self.name = dto.name
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -78,7 +77,6 @@ struct CountryDTO: Codable, Identifiable, Sendable {
     var id: Int
     var slug: String
     var name: String
-    var cache: Bool = true
     var archived: Bool = false
     
 }
@@ -87,14 +85,12 @@ struct CountryPayload: Codable, InitializableWithModel {
     typealias Model = Country
     var slug: String
     var name: String
-    var cache: Bool
     var archived: Bool
     
     init?(from country: Country) {
         guard country.isValid() else { return nil }
         self.slug = country.slug
         self.name = country.name
-        self.cache = country.cache
         self.archived = country.archived
     }
 }

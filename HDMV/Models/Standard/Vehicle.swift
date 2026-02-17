@@ -15,7 +15,7 @@ final class Vehicle: CatalogueModel {
     var typeSlug: String
     var cityRid: Int?
     
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.local.rawValue
     
@@ -63,7 +63,6 @@ final class Vehicle: CatalogueModel {
         self.name = dto.name
         self.typeSlug = dto.type_slug
         self.cityRid = dto.city_id
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -73,7 +72,6 @@ final class Vehicle: CatalogueModel {
         self.name = dto.name
         self.typeSlug = dto.type_slug
         self.cityRid = dto.city_id
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -121,7 +119,6 @@ struct VehicleDTO: Codable, Identifiable, Sendable {
     var name: String
     var type_slug: String
     var city_id: Int?
-    var cache: Bool
     var archived: Bool
 }
 
@@ -131,7 +128,6 @@ struct VehiclePayload: Codable, InitializableWithModel {
     var name: String
     var type_slug: String
     var city_id: Int?
-    var cache: Bool
     var archived: Bool
     
     init?(from vehicle: Vehicle) {
@@ -143,7 +139,6 @@ struct VehiclePayload: Codable, InitializableWithModel {
         self.name = name
         self.type_slug = vehicle.typeSlug
         self.city_id = vehicle.cityRid
-        self.cache = vehicle.cache
         self.archived = vehicle.archived
     }
 }
