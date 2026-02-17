@@ -59,6 +59,7 @@ final class Vehicle: CatalogueModel {
     
     convenience init(fromDto dto: VehicleDTO) {
         self.init()
+        self.rid = dto.id
         self.name = dto.name
         self.typeSlug = dto.type_slug
         self.cityRid = dto.city_id

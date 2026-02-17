@@ -29,7 +29,7 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
     }
     
     override func updateOnServer(rid: Int, payload: TripPayload) async throws -> TripDTO {
-        return try await tripsService.updateTrip(id: rid, payload: payload)
+        return try await tripsService.updateTrip(rid: rid, payload: payload)
     }
     
     override func deleteFromServer(_ id: Int) async throws {

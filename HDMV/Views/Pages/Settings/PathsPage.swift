@@ -53,8 +53,8 @@ struct PathsPage: View {
             }
             .navigationTitle("Paths")
             .logPageToolbar(
-                refreshAction: { await viewModel.syncWithServer() },
-                syncAction: { await viewModel.syncLocalChanges() },
+                refreshAction: { await viewModel.refreshFromServer() },
+                syncAction: { await viewModel.uploadLocalChanges() },
                 singleTapAction: { viewModel.createLocalPath() },
                 longPressAction: {}
             )

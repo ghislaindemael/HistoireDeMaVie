@@ -26,7 +26,7 @@ struct TripRowView: View {
             if smallDisplay {
                 VStack(alignment: .leading) {
                     HStack(spacing: 10) {
-                        VehicleDisplayView(vehicleRid: trip.vehicleRid, isSmall: smallDisplay)
+                        VehicleDisplayView(trip: trip, isSmall: smallDisplay)
                         
                         HStack {
                             PlaceDisplayView(placeRid: trip.placeStartRid, isSmall: smallDisplay)
@@ -45,7 +45,7 @@ struct TripRowView: View {
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        VehicleDisplayView(vehicleRid: trip.vehicleRid)
+                        VehicleDisplayView(trip: trip)
                         
                         Spacer()
                         SyncStatusIndicator(status: trip.syncStatus)

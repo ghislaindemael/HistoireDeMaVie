@@ -78,7 +78,7 @@ struct ParentModelHierarchyView: View {
             if parent.timeEnd == nil || settings.planningMode == true,
                let instance = parent as? ActivityInstance {
                 if (instance.activity?.can(.create_trips) == true) {
-                    if !parent.hasActiveTrips()  {
+                    if !parent.hasOngoingTrips()  {
                         StartItemButton(title: "Start Trip") {
                             viewModel.createTrip(parent: instance)
                         }
@@ -88,7 +88,7 @@ struct ParentModelHierarchyView: View {
                 
             }
             
-            if parent.timeEnd == nil, !parent.hasActiveChild() {
+            if parent.timeEnd == nil, !parent.hasOngoingChild() {
                 EndItemButton(title: "End now") {
                     if let instance = parent as? ActivityInstance {
                         viewModel.endActivityInstance(instance: instance)

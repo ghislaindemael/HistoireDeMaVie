@@ -4,61 +4,70 @@
 //
 //  Created by Ghislain Demael on 23.09.2025.
 //
+
 import SwiftUI
 import SwiftData
 
 struct VehicleDisplayView: View {
+    
+    let vehicle: Vehicle?
+    let vehicleRid: Int?
     let isSmall: Bool
     
-    @Query private var vehicles: [Vehicle]
+    // MARK: - Initializers
     
-    let vehicleRid: Int?
-    
-    init(vehicleRid: Int?, isSmall: Bool = false) {
+    init(vehicle: Vehicle?, vehicleRid: Int?, isSmall: Bool = false) {
+        self.vehicle = vehicle
         self.vehicleRid = vehicleRid
         self.isSmall = isSmall
-        
-        if let id = vehicleRid {
-            _vehicles = Query(filter: #Predicate { $0.rid == id })
-        } else {
-            _vehicles = Query(filter: #Predicate { _ in false })
-        }
     }
     
-    private var vehicle: Vehicle? {
-        vehicles.first
+    init(trip: Trip, isSmall: Bool = false) {
+        self.vehicle = trip.vehicle
+        self.vehicleRid = trip.vehicleRid
+        self.isSmall = isSmall
     }
-        
+    
+    // MARK: - Body
+    
     var body: some View {
-        if isSmall {
-            if vehicleRid == nil {
-                IconView(iconString: "questionmark.circle", size: 20, tint: .red)
-            } else if vehicle == nil {
-                IconView(iconString: "questionmark.circle", size: 20, tint: .orange)
-            } else if let vehicle = vehicle {
+        content
+    }
+    
+    @ViewBuilder
+    private var content: some View {
+        if let vehicle = vehicle {
+            if isSmall {
                 Text(String(vehicle.label.prefix(1)))
                     .fontWeight(.medium)
             } else {
-                IconView(iconString: "questionmark.circle", size: 20, tint: .gray)
+                Text(vehicle.label)
+                    .foregroundStyle(.primary)
             }
-        } else {
-            HStack(spacing: 4) {
-                if vehicleRid == nil {
-                    IconView(iconString: "questionmark.circle", size: 20, tint: .red)
-                    Text("Unset")
-                        .bold()
-                } else if vehicle == nil {
+            
+        } else if vehicleRid != nil {
+            if isSmall {
+                IconView(iconString: "questionmark.circle", size: 20, tint: .orange)
+            } else {
+                HStack(spacing: 4) {
                     IconView(iconString: "questionmark.circle", size: 20, tint: .orange)
                     Text("Uncached")
                         .bold()
-                } else if let vehicle = vehicle {
-                    Text(vehicle.label)
-                } else {
-                    Text("?")
+                        .foregroundStyle(.orange)
+                }
+            }
+            
+        } else {
+            if isSmall {
+                IconView(iconString: "questionmark.circle", size: 20, tint: .red)
+            } else {
+                HStack(spacing: 4) {
+                    IconView(iconString: "questionmark.circle", size: 20, tint: .red)
+                    Text("Unset")
                         .bold()
+                        .foregroundStyle(.red)
                 }
             }
         }
     }
-
 }
