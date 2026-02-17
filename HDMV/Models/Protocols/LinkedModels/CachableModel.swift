@@ -12,4 +12,5 @@ protocol CachableModel {
     var archived: Bool { get set }
 }
 
+protocol CachableObject: CachableModel, Observable, AnyObject {}
 

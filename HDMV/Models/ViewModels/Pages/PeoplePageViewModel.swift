@@ -9,35 +9,27 @@ import Foundation
 import SwiftData
 
 @MainActor
-class PeoplePageViewModel: ObservableObject {
+class PeoplePageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
     private var personSyncer: PersonSyncer?
     
-    @Published var isLoading = false
     @Published var people: [Person] = []
     
     
     // MARK: Init
     
-    func setup(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    override func setup(modelContext: ModelContext) {
+        super.setup(modelContext: modelContext)
         self.personSyncer = PersonSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
     // MARK: - Data Loading and Caching
     
-    private func fetchFromCache() {
+    func fetchFromCache() {
         guard let context = modelContext else { return }
-        do {
-            let peopleDescriptor = FetchDescriptor<Person>(
-                sortBy: [SortDescriptor(\.familyName), SortDescriptor(\.name)]
-            )
-            self.people = try context.fetch(peopleDescriptor)
-        } catch {
-            print("Failed to fetch from cache: \(error)")
-        }
+        let descriptor = FetchDescriptor<Person>(sortBy: [SortDescriptor(\.familyName), SortDescriptor(\.name)])
+        self.people = (try? context.fetch(descriptor)) ?? []
     }
     
     func refreshFromServer() async {

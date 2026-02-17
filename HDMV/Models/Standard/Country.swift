@@ -68,6 +68,10 @@ final class Country: CatalogueModel {
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
+    
+    var sortedCities: [City] {
+        cities?.sorted { $0.name < $1.name } ?? []
+    }
 }
 
 struct CountryDTO: Codable, Identifiable, Sendable {

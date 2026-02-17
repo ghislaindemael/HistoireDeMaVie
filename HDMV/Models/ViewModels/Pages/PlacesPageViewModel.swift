@@ -9,12 +9,10 @@ import Foundation
 import SwiftData
 
 @MainActor
-class PlacesPageViewModel: ObservableObject {
+class PlacesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
     private var placeSyncer: PlaceSyncer?
     
-    @Published var isLoading = false
     @Published private var places: [Place] = []
     @Published var filteredPlaces: [Place] = []
     
@@ -26,7 +24,7 @@ class PlacesPageViewModel: ObservableObject {
     
     // MARK: Initialization
     
-    func setup(modelContext: ModelContext) {
+    override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.placeSyncer = PlaceSyncer(modelContext: modelContext)
         fetchFromCache()

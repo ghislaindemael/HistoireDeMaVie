@@ -23,7 +23,7 @@ struct PathDisplayView: View {
         self.directPath = nil
         
         if let id = pathId {
-            _paths = Query(filter: #Predicate { $0.id == id })
+            _paths = Query(filter: #Predicate { $0.rid == id })
         } else {
             _paths = Query(filter: #Predicate { _ in false })
         }
@@ -31,7 +31,7 @@ struct PathDisplayView: View {
     
     // MARK: - Init with direct Path instance
     init(path: Path?) {
-        self.pathId = path?.id
+        self.pathId = path?.rid
         self.directPath = path
         
         _paths = Query(filter: #Predicate { _ in false })

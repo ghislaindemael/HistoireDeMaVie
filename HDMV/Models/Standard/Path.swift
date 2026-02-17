@@ -10,8 +10,6 @@ import SwiftData
 @Model
 final class Path: CatalogueModel {
     
-    
-    @Attribute(.unique) var id: Int
     @Attribute(.unique) var rid: Int?
     @Attribute(.unique) var name: String?
     var details: String?
@@ -47,7 +45,7 @@ final class Path: CatalogueModel {
     
     /// Regular initializer
     init(
-        id: Int = Int.random(in: -999_999 ... -1),
+        rid: Int? = nil,
         name: String? = nil,
         details: String? = nil,
         placeStart: Place? = nil,
@@ -58,7 +56,7 @@ final class Path: CatalogueModel {
         archived: Bool = false,
         syncStatus: SyncStatus = .local
     ) {
-        self.id = id
+        self.rid = rid
         self.name = name
         self.details = details
         self.placeStart = placeStart
@@ -72,7 +70,7 @@ final class Path: CatalogueModel {
     
     convenience init(fromDto dto: PathDTO) {
         self.init(
-            id: dto.id,
+            rid: dto.id,
             name: dto.name,
             details: dto.details,
             metrics: dto.metrics,

@@ -56,7 +56,13 @@ struct VehiclesPage: View {
                 Button(action: {
                     vehicleToEdit = vehicle
                 }) {
-                    VehicleRowView(vehicle: vehicle)
+                    VehicleRowView(vehicle: vehicle) { v in
+                        withAnimation(.snappy) {
+                            viewModel.updateModel(v) { concreteVehicle in
+                                concreteVehicle.cache.toggle()
+                            }
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
             }

@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class Person: CatalogueModel, EditableModel {
+final class Person: CatalogueModel, EditableModel, CachableObject {
     @Attribute(.unique) var rid: Int?
     var slug: String
     var name: String

@@ -9,22 +9,21 @@
 import SwiftUI
 
 struct PersonRowView: View {
-    
-    let person: Person
+    @Bindable var person: Person
+    let onCacheToggle: (Person) -> Void
     
     var body: some View {
-        VStack(alignment: .leading){
+        VStack(alignment: .leading) {
             HStack {
-                NamedStringDisplayView(name: "Slug", value: person.slug)
-                
+                Label("\(person.fullName)", systemImage: "")
                 Spacer()
-                if !person.cache {
-                    IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
+                
+                CacheToggleButton(model: person) { p in
+                    onCacheToggle(p)
                 }
+                
                 SyncStatusIndicator(status: person.syncStatus)
             }
-            NamedStringDisplayView(name: "Name", value: person.name)
-            NamedStringDisplayView(name: "Family Name", value: person.familyName)
         }
     }
 }

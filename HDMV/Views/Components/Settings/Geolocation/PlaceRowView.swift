@@ -11,6 +11,8 @@ import SwiftUI
 struct PlaceRowView: View {
     
     let place: Place
+    let onCacheToggle: (Place) -> Void
+
     
     var body: some View {
         VStack{
@@ -19,8 +21,8 @@ struct PlaceRowView: View {
                     .bold(place.name == "Unset")
                     .foregroundStyle(place.name == "Unset" ? .red : .primary)
                 Spacer()
-                if !place.cache {
-                    IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
+                CacheToggleButton(model: place) { p in
+                    onCacheToggle(p)
                 }
                 SyncStatusIndicator(status: place.syncStatus)
             }

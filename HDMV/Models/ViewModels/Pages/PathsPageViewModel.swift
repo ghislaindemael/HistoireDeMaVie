@@ -1,5 +1,5 @@
 //
-//  ActivitiesPageViewModel.swift
+//  PathsPageViewModel.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 31.07.2025.
@@ -24,20 +24,23 @@ class PathsPageViewModel: ObservableObject {
     // MARK: - Data Fetching and Management
     
     func syncWithServer() async {
-        
         guard let context = modelContext else { return }
         isLoading = true
         defer { isLoading = false }
 
-    
         do {
             let onlinePaths = try await tripsService.fetchPaths()
+            // Map by the server ID (rid)
             let onlineDict = Dictionary(uniqueKeysWithValues: onlinePaths.map { ($0.id, $0) })
             
             let descriptor = FetchDescriptor<Path>()
             let localPaths = try context.fetch(descriptor)
-            let localDict = Dictionary(uniqueKeysWithValues: localPaths.map { ($0.id, $0) })
             
+            // Map local paths by their rid
+            let localDict = Dictionary(uniqueKeysWithValues: localPaths.compactMap { p in
+                p.rid.map { ($0, p) }
+            })
+
             for dto in onlinePaths {
                 if let localPath = localDict[dto.id] {
                     if localPath.syncStatus == .synced {
@@ -48,45 +51,38 @@ class PathsPageViewModel: ObservableObject {
                 }
             }
             
+            // Pruning logic
             for localPath in localPaths {
-                if onlineDict[localPath.id] == nil && localPath.syncStatus == .synced {
+                if let rid = localPath.rid, onlineDict[rid] == nil && localPath.syncStatus == .synced {
                     context.delete(localPath)
                 }
             }
             
             try context.save()
-            
         } catch {
-            print("Failed to fetch paths from server: \(error)")
+            print("Error: \(error)")
         }
-        
     }
     
     // MARK: Synchronization
-    
+
     private func syncPath(path: Path, in context: ModelContext) async {
-        if let payload = PathPayload(from: path) {
-            do {
-                if path.id < 0 {
-                    let temporaryId = path.id
-                    let newDTO = try await self.tripsService.createPath(payload: payload)
-                    if let pathToUpdate = try context.fetch(FetchDescriptor<Path>()).first(where: { $0.id == temporaryId }) {
-                        pathToUpdate.id = newDTO.id
-                        pathToUpdate.syncStatus = SyncStatus.synced
-                    }
-                } else {
-                    _ = try await self.tripsService.updatePath(id: path.id, payload: payload)
-                }
+        guard let payload = PathPayload(from: path) else { return }
+        
+        do {
+            // rid is nil or < 0 for local items
+            if path.rid == nil {
+                let newDTO = try await self.tripsService.createPath(payload: payload)
+                // Update the rid from the server response
+                path.rid = newDTO.id
                 path.syncStatus = .synced
-            } catch {
-                path.syncStatus = .failed
-                print("Failed to sync path: \(error).")
+            } else {
+                _ = try await self.tripsService.updatePath(id: path.rid!, payload: payload)
+                path.syncStatus = .synced
             }
-        } else {
-            print("Invalid path, skipping sync.")
+        } catch {
+            path.syncStatus = .failed
         }
-        
-        
     }
     
     /// Uploads all activities marked as `.local` or `.failed` to the server.
@@ -132,10 +128,7 @@ class PathsPageViewModel: ObservableObject {
     func createLocalPath() {
         guard let context = modelContext else { return }
         let newPath =
-            Path(
-                id: TempIDGenerator.generate(for: Path.self, in: context),
-                syncStatus: .local
-            )
+            Path(syncStatus: .local)
         context.insert(newPath)
         do {
             try context.save()

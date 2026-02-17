@@ -11,6 +11,7 @@ import SwiftUI
 struct VehicleRowView: View {
     
     let vehicle: Vehicle
+    let onCacheToggle: (Vehicle) -> Void
     
     var body: some View {
         VStack{
@@ -23,8 +24,8 @@ struct VehicleRowView: View {
                         .foregroundStyle(.red)
                 }
                 Spacer()
-                if !vehicle.cache {
-                    IconView(iconString: "iphone.gen1.slash", size: 20, tint: .red)
+                CacheToggleButton(model: vehicle) { v in
+                    onCacheToggle(v)
                 }
                 SyncStatusIndicator(status: vehicle.syncStatus)
             }
