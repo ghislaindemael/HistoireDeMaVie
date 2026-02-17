@@ -40,9 +40,17 @@ struct MyInteractionsPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.refreshFromServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    singleTapAction: { viewModel.createInteraction() },
-                    longPressAction: { viewModel.createInteraction(date: viewModel.filterDate) },
-                )
+                    onAdd: { viewModel.createInteraction() }
+                ) {
+                    Section("Advanced") {
+                        Button(action: {
+                            print("Create Grouped Interaction - Coming Soon")
+                        }) {
+                            Label("Grouped Interaction", systemImage: "person.3.fill")
+                        }
+                        .disabled(true)
+                    }
+                }
                 .onChange(of: viewModel.filterDate) {
                     viewModel.fetchInteractions()
                     appNavigator.selectedDate = viewModel.filterDate

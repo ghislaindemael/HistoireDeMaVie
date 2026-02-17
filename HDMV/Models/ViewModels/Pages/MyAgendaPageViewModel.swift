@@ -5,7 +5,6 @@
 //  Created by Ghislain Demael on 11.06.2025.
 //
 
-
 import Foundation
 import SwiftUI
 import Combine
@@ -37,7 +36,6 @@ class MyAgendaPageViewModel: ObservableObject {
     func fetchDailyData() {
         self.agendaEntry = fetchLocalAgenda(for: filterDate)
         fetchLifeEvents()
-        // TODO: Pull lifevents
     }
     
     private func fetchLocalAgenda(for date: Date) -> AgendaEntry? {
@@ -69,35 +67,55 @@ class MyAgendaPageViewModel: ObservableObject {
             print("Error during interaction fetch: \(error)")
             self.lifeEvents = []
         }
-        
     }
     
+    // MARK: - Creation Logic
+    
     func createAgendaEntry() {
-        guard let context = modelContext else { return }
-        
-        if fetchLocalAgenda(for: filterDate) != nil {
-            print("Agenda entry already exists for this date.")
-            return
-        }
-        
-        print("Creating new local agenda entry for \(filterDate).")
-        let dateString = ISO8601DateFormatter.justDate.string(from: filterDate)
-        let dayNumber = DayCalculator.dayNumber(for: filterDate)
-        
-        let newEntry = AgendaEntry(
-            rid: dayNumber,
-            date: dateString,
-            syncStatus: SyncStatus.local
-        )
-        
-        context.insert(newEntry)
-        do {
-            try context.save()
-            self.agendaEntry = newEntry
-        } catch {
-            print("Failed to create new AgendaEntry: \(error)")
+        Task {
+            isLoading = true
+            defer { isLoading = false }
+            
+            if fetchLocalAgenda(for: filterDate) != nil {
+                print("Agenda entry already exists locally.")
+                return
+            }
+            
+            do {
+                try await agendaSyncer?.pullChanges(date: filterDate)
+            } catch {
+                print("⚠️ Warning: Could not check server for existing agenda (\(error)). Creating locally anyway.")
+            }
+            
+            if let downloadedEntry = fetchLocalAgenda(for: filterDate) {
+                print("Agenda entry found on server and downloaded.")
+                self.agendaEntry = downloadedEntry
+                return
+            }
+            
+            guard let context = modelContext else { return }
+            
+            print("Creating new local agenda entry for \(filterDate).")
+            let dateString = ISO8601DateFormatter.justDate.string(from: filterDate)
+            let dayNumber = DayCalculator.dayNumber(for: filterDate)
+            
+            let newEntry = AgendaEntry(
+                rid: dayNumber,
+                date: dateString,
+                syncStatus: SyncStatus.local
+            )
+            
+            context.insert(newEntry)
+            do {
+                try context.save()
+                self.agendaEntry = newEntry
+            } catch {
+                print("Failed to create new AgendaEntry: \(error)")
+            }
         }
     }
+    
+    // MARK: - Sync Logic
     
     func refreshFromServer() async {
         isLoading = true
@@ -117,16 +135,19 @@ class MyAgendaPageViewModel: ObservableObject {
     
     func createLifeEvent() {
         guard let context = modelContext else { return }
+        
+        let date = filterDate.smartCreationTime
+        
         let newEvent = LifeEvent(
-            timeStart: filterDate
+            timeStart: date
         )
         context.insert(newEvent)
         do {
             try context.save()
             self.lifeEvents.append(newEvent)
+            self.lifeEvents.sort { $0.timeStart > $1.timeStart }
         } catch {
             print("Failed to create lifeEvent: \(error)")
         }
     }
-    
 }

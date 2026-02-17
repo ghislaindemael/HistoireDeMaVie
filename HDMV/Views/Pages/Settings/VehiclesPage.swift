@@ -21,11 +21,10 @@ struct VehiclesPage: View {
                 vehiclesList
             }
             .navigationTitle("Vehicles")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createVehicle() },
-                longPressAction: {}
+                onAdd: { viewModel.createVehicle() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

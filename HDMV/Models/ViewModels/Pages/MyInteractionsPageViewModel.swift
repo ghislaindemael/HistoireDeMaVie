@@ -95,13 +95,15 @@ class MyInteractionsPageViewModel: ObservableObject {
         
     func createInteraction(date: Date? = nil) {
         guard let context = modelContext else { return }
+        let date = filterDate.smartCreationTime
         let newInteraction = Interaction(
-            timeStart: date ?? .now
+            timeStart: date
         )
         context.insert(newInteraction)
         do {
             try context.save()
             self.interactions.append(newInteraction)
+            self.interactions.sort { $0.timeStart > $1.timeStart }
         } catch {
             print("Failed to create interaction: \(error)")
         }

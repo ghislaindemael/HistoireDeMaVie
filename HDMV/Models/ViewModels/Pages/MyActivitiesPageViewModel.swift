@@ -63,6 +63,8 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let future = Date.distantFuture
                 
                 let predicate = #Predicate<ActivityInstance> {
+                    $0.parentInstance == nil &&
+                    $0.parentTrip == nil &&
                     $0.timeStart < endOfDay &&
                     ($0.timeEnd ?? future) > startOfDay
                 }
@@ -197,24 +199,45 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     // MARK: - Local Cache Creation
     
+    func createActivityInstance(date: Date? = nil) {
+        guard let context = modelContext else { return }
+        // USE YOUR EXTENSION HERE
+        let smartDate = (date ?? filterDate).smartCreationTime
+        
+        let newInstance = ActivityInstance(timeStart: smartDate, syncStatus: .local)
+        context.insert(newInstance)
+        saveContext()
+    }
+    
+    func createTransaction() {
+        guard let context = modelContext else { return }
+        let newTransaction = Transaction(timeStart: filterDate.smartCreationTime, syncStatus: .local)
+        context.insert(newTransaction)
+        saveContext()
+    }
+    
+    func createLifeEvent() {
+        guard let context = modelContext else { return }
+        let newEvent = LifeEvent(timeStart: filterDate.smartCreationTime, syncStatus: .local)
+        context.insert(newEvent)
+        saveContext()
+    }
+    
     func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
+        let date = settings.planningMode ? parent.timeStart : Date.now
         
-        var date = Date.now
-        if settings.planningMode {
-            date = parent.timeStart
-        }
-        let newTrip = Trip(
-            timeStart: date
-        )
+        let newTrip = Trip(timeStart: date)
         newTrip.setParentInstance(parent)
         context.insert(newTrip)
-        do {
-            try context.save()
-            self.trips.insert(newTrip, at: 0)
-        } catch {
-            print("Failed to create new trip: \(error)")
-        }
+        saveContext()
+    }
+    
+    func createInteraction(parent: ActivityInstance) {
+        guard let context = modelContext else { return }
+        let newInteraction = Interaction(timeStart: Date.now, parentInstance: parent)
+        context.insert(newInteraction)
+        saveContext()
     }
     
     func endTrip(trip: Trip){
@@ -233,30 +256,6 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
             
-    func createActivityInstance(date: Date? = nil) {
-        guard let context = modelContext else { return }
-        
-        let startTime: Date
-        if let specificDate = date {
-            startTime = Calendar.current.date(bySettingHour: 12, minute: 0, second: 0, of: specificDate) ?? specificDate
-        } else {
-            startTime = .now
-        }
-        
-        let newInstance = ActivityInstance(
-            timeStart: startTime,
-            syncStatus: .local
-        )
-        
-        context.insert(newInstance)
-        do {
-            try context.save()
-            self.instances.append(newInstance)
-            self.instances.sort { $0.timeStart > $1.timeStart }
-        } catch {
-            print("Failed to save new instance: \(error)")
-        }
-    }
     
     func endActivityInstance(instance: ActivityInstance){
         guard let context = modelContext else { return }
@@ -268,21 +267,7 @@ class MyActivitiesPageViewModel: ObservableObject {
             print("Failed to end activity.")
         }
     }
-    
-    func createInteraction(parent: ActivityInstance) {
-        guard let context = modelContext else { return }
-        let newInteraction = Interaction(
-            timeStart: .now,
-            parentInstance: parent
-        )
-        context.insert(newInteraction)
-        do {
-            try context.save()
-            self.interactions.append(newInteraction)
-        } catch {
-            print("Failed to create interaction: \(error)")
-        }
-    }
+
     
     func endInteraction(interaction: Interaction){
         guard let context = modelContext else { return }
@@ -292,6 +277,29 @@ class MyActivitiesPageViewModel: ObservableObject {
             try context.save()
         } catch {
             print("Failed to end interaction: \(error)")
+        }
+    }
+    
+    
+    
+    // MARK: - Helper Logic
+    
+    private func getSmartCreationDate() -> Date {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(filterDate) {
+            return Date.now
+        } else {
+            // Return noon on the selected filter date
+            return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: filterDate) ?? filterDate
+        }
+    }
+    
+    private func saveContext() {
+        do {
+            try modelContext?.save()
+            fetchDailyData()
+        } catch {
+            print("❌ Failed to create item: \(error)")
         }
     }
     

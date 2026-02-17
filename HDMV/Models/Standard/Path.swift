@@ -148,7 +148,6 @@ struct PathPayload: Codable, InitializableWithModel {
         self.place_end_id = endId
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
-        self.cache = path.cache
         self.archived = path.archived
     }
 }

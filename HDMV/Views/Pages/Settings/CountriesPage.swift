@@ -20,11 +20,10 @@ struct CountriesPage: View {
                 countriesList
             }
             .navigationTitle("Countries")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createCountry() },
-                longPressAction: {}
+                onAdd: { viewModel.createCountry() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

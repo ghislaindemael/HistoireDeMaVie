@@ -26,11 +26,10 @@ struct ActivitiesPage: View {
                 }
             }
             .navigationTitle("Activities")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createActivity() },
-                longPressAction: {}
+                onAdd: { viewModel.createActivity() }
             )
             .sheet(item: $activityToEdit) { activity in
                 ActivityDetailSheet(activity: activity, modelContext: modelContext)

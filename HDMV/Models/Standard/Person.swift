@@ -124,7 +124,6 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
         if let birthdate = person.birthdate {
             self.birthdate = DateFormatter.dateOnly.string(from: birthdate)
         }
-        self.cache = person.cache
         self.archived = person.archived
     }
 

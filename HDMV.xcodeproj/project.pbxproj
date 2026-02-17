@@ -34,11 +34,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		1566F6502F451D8500A6DA11 /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 15635EB02DF62DA900DE97E5 /* Resources */;
+			membershipExceptions = (
+				"Models/Utils/Date+Extensions.swift",
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		15635EB42DF62DA900DE97E5 /* HDMV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				158A5AC42DF75A1F00D003C2 /* Exceptions for "HDMV" folder in "HDMV" target */,
+				1566F6502F451D8500A6DA11 /* Exceptions for "HDMV" folder in "Copy Bundle Resources" phase from "HDMV" target */,
 			);
 			path = HDMV;
 			sourceTree = "<group>";
