@@ -1,32 +1,30 @@
 //
-//  ActivitiesPageViewModel.swift
+//  TransactionTypesPageViewModel.swift
 //  HDMV
 //
-//  Created by Ghislain Demael on 31.07.2025.
+//  Created by Ghislain Demael on 14.03.2026.
 //
 
 import Foundation
 import SwiftData
 
 @MainActor
-class ActivitiesPageViewModel: ObservableObject {
+class TransactionTypesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
-    private var activitySyncer: ActivitySyncer?
+    private var transactionTypesSyncer: TransactionTypesSyncer?
     
-    @Published var isLoading = false
-    @Published var activities: [Activity] = []
+    @Published var transactionTypes: [TransactionType] = []
     
     // MARK: - Computed Properties for Views
     var hasLocalChanges: Bool {
-        return activities.contains(where: { $0.hasUnsyncedChanges })
+        return transactionTypes.contains(where: { $0.hasUnsyncedChanges })
     }
     
     // MARK: Initialization
     
-    func setup(modelContext: ModelContext) {
+    override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        self.activitySyncer = ActivitySyncer(modelContext: modelContext)
+        self.transactionTypesSyncer = TransactionTypesSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
@@ -36,14 +34,14 @@ class ActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         
         do {
-            let predicate = #Predicate<Activity> { $0.parent == nil }
+            let predicate = #Predicate<TransactionType> { $0.parent == nil }
             
-            let descriptor = FetchDescriptor<Activity>(
+            let descriptor = FetchDescriptor<TransactionType>(
                 predicate: predicate,
                 sortBy: [SortDescriptor(\.name)]
             )
             
-            self.activities = try context.fetch(descriptor)
+            self.transactionTypes = try context.fetch(descriptor)
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
@@ -52,8 +50,8 @@ class ActivitiesPageViewModel: ObservableObject {
     func refreshFromServer() async {
         isLoading = true
         defer { isLoading = false }
-        guard let syncer = activitySyncer else {
-            print("⚠️ [ActivitiesPageViewModel] Syncer is nil")
+        guard let syncer = transactionTypesSyncer else {
+            print("⚠️ [TransactionTypesPageViewModel] Syncer is nil")
             return
         }
         do {
@@ -67,8 +65,8 @@ class ActivitiesPageViewModel: ObservableObject {
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }
-        guard let syncer = activitySyncer else {
-            print("⚠️ [ActivitiesPageViewModel] countriesSyncer is nil")
+        guard let syncer = transactionTypesSyncer else {
+            print("⚠️ [TransactionTypesPageViewModel] countriesSyncer is nil")
             return
         }
         do {
@@ -82,16 +80,16 @@ class ActivitiesPageViewModel: ObservableObject {
     
     // MARK: User Actions
     
-    func createActivity() {
+    func createTransactionType() {
         guard let context = modelContext else { return }
-        let newActivity = Activity(syncStatus: .unsynced)
+        let newType = TransactionType(syncStatus: .unsynced)
         
-        context.insert(newActivity)
-        activities.append(newActivity)
+        context.insert(newType)
+        transactionTypes.append(newType)
         do {
             try context.save()
         } catch {
-            print("Failed to create Activity: \(error)")
+            print("Failed to create Transaction Type: \(error)")
         }
     }
     

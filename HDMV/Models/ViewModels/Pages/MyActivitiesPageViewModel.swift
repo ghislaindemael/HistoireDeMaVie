@@ -201,24 +201,23 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createActivityInstance(date: Date? = nil) {
         guard let context = modelContext else { return }
-        // USE YOUR EXTENSION HERE
         let smartDate = (date ?? filterDate).smartCreationTime
         
-        let newInstance = ActivityInstance(timeStart: smartDate, syncStatus: .local)
+        let newInstance = ActivityInstance(timeStart: smartDate)
         context.insert(newInstance)
         saveContext()
     }
     
     func createTransaction() {
         guard let context = modelContext else { return }
-        let newTransaction = Transaction(timeStart: filterDate.smartCreationTime, syncStatus: .local)
+        let newTransaction = Transaction(timeStart: filterDate.smartCreationTime)
         context.insert(newTransaction)
         saveContext()
     }
     
     func createLifeEvent() {
         guard let context = modelContext else { return }
-        let newEvent = LifeEvent(timeStart: filterDate.smartCreationTime, syncStatus: .local)
+        let newEvent = LifeEvent(timeStart: filterDate.smartCreationTime)
         context.insert(newEvent)
         saveContext()
     }

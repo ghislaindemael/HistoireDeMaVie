@@ -156,6 +156,13 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
+                case is TransactionType.Type:
+                    let descriptor = FetchDescriptor<TransactionType>(
+                        sortBy: [SortDescriptor(\.name)]
+                    )
+                    let results = try modelContext.fetch(descriptor)
+                    items = results
+                    count = results.count
                 default:
                     print("Warning: Unhandled model type in fetchItems: \(modelType)")
                     items = []

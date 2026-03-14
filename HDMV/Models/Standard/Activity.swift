@@ -45,7 +45,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         requiredCapabilities: [ActivityCapability] = [],
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .undef
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.name = name

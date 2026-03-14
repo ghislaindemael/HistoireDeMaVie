@@ -34,8 +34,8 @@ final class Country: CatalogueModel {
     // MARK: Init
     
     init(
-        slug: String,
-        name: String,
+        slug: String = "Unset",
+        name: String = "unset",
         rid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,

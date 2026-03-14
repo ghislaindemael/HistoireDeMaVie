@@ -73,10 +73,7 @@ class CountriesPageViewModel: ObservableObject {
             
     func createCountry() {
         guard let context = modelContext else { return }
-        let newCountry = Country(
-            slug: "unset",
-            name: "Unset",
-            syncStatus: .local)
+        let newCountry = Country(syncStatus: .unsynced)
         context.insert(newCountry)
         do {
             try context.save()

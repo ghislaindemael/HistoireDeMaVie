@@ -23,7 +23,9 @@ struct HDMVApp: App {
             Person.self,
             Interaction.self,
             Trip.self,
-            Vehicle.self
+            Vehicle.self,
+            Transaction.self,
+            TransactionType.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

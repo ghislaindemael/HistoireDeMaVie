@@ -13,6 +13,7 @@ enum SyncStatus: String, Codable, Sendable {
     case local      // The object exists locally but has not been saved yet.
     case failed     // The last attempt to save the object to Supabase failed.
     case toDelete
+    case unsynced
     case undef
     
     static func safeInit(_ rawValue: String) -> SyncStatus {

@@ -109,6 +109,7 @@ struct MyActivitiesPage: View {
                     }
                 }
             }
+            .padding(8)
         }
     }
     

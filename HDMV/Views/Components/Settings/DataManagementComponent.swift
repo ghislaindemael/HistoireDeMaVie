@@ -24,7 +24,8 @@ struct DataManagementComponent: View {
         Person.self,
         Interaction.self,
         Trip.self,
-        Vehicle.self
+        Vehicle.self,
+        TransactionType.self
     ]
     
     init(expanded: Bool = false) {
