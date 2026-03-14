@@ -1,56 +1,26 @@
-//
-//  PeopleInteractionService.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 29.06.2025.
-//
-
-
 import Foundation
 
-class PeopleInteractionsService {
+class PeopleInteractionsService: SupabaseDataService<InteractionDTO, InteractionPayload> {
     
-    private let supabaseClient = SupabaseService.shared.client
-    private let settings = SettingsStore.shared
+    init() {
+        super.init(tableName: "my_people_interactions")
+    }
     
-    private let TABLE_NAME = "my_people_interactions"
+    // MARK: - Semantic methods
     
     func fetchInteractions(for date: Date) async throws -> [InteractionDTO] {
-        guard let supabaseClient = supabaseClient else { return [] }
-        
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-        
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .select()
-            .gte("time_start", value: ISO8601DateFormatter().string(from: startOfDay))
-            .lt("time_start", value: ISO8601DateFormatter().string(from: endOfDay))
-            .order("time_start", ascending: false)
-            .execute()
-            .value
+        try await fetchForDate(date: date)
     }
     
     func createInteraction(_ payload: InteractionPayload) async throws -> InteractionDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .insert(payload, returning: .representation)
-            .select()
-            .single()
-            .execute()
-            .value
+        try await create(payload: payload)
     }
     
     func updateInteraction(id: Int, payload: InteractionPayload) async throws -> InteractionDTO {
-        guard let supabaseClient = supabaseClient else { throw URLError(.badURL) }
-        return try await supabaseClient
-            .from(TABLE_NAME)
-            .update(payload)
-            .eq("id", value: id)
-            .select()
-            .single()
-            .execute()
-            .value
+        try await update(rid: id, payload: payload)
+    }
+    
+    func deleteInteraction(id: Int) async throws -> Bool {
+        try await delete(rid: id)
     }
 }

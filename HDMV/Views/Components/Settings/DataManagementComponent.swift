@@ -19,13 +19,13 @@ struct DataManagementComponent: View {
         AgendaEntry.self,
         Country.self,
         City.self,
+        Interaction.self,
         Path.self,
         Place.self,
         Person.self,
-        Interaction.self,
+        Transaction.self,
         Trip.self,
         Vehicle.self,
-        TransactionType.self
     ]
     
     init(expanded: Bool = false) {

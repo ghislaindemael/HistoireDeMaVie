@@ -156,9 +156,9 @@ struct DataWipeDetailView: View {
                     let results = try modelContext.fetch(descriptor)
                     items = results
                     count = results.count
-                case is TransactionType.Type:
-                    let descriptor = FetchDescriptor<TransactionType>(
-                        sortBy: [SortDescriptor(\.name)]
+                case is Transaction.Type:
+                    let descriptor = FetchDescriptor<Transaction>(
+                        sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                     )
                     let results = try modelContext.fetch(descriptor)
                     items = results

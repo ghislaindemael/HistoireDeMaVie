@@ -1,5 +1,5 @@
 //
-//  VehicleDataManagementComponent.swift
+//  ConfigPageLinksComponent.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 19.06.2025.

@@ -40,6 +40,12 @@ final class Transaction: LogModel {
     typealias Payload = TransactionPayload
     typealias Editor = TransactionEditor
     
+    // MARK: - Semantic Helpers
+    @Transient var transactionTime: Date {
+        get { timeStart }
+        set { timeStart = newValue }
+    }
+    
     // MARK: Relationships
     
     @Relationship(deleteRule: .nullify)
@@ -100,37 +106,37 @@ final class Transaction: LogModel {
     convenience init(fromDto dto: TransactionDTO) {
         self.init()
         self.rid = dto.id
-        self.timeStart = dto.time_start
-        self.executionDate = dto.execution_date
+        self.timeStart = dto.time
+        self.executionDate = dto.execution_time
         self.amount = dto.amount
         self.realAmount = dto.real_amount
         self.currency = dto.currency
         self.myCost = dto.my_cost
         self.bankAmount = dto.bank_amount
         self.bankCurrency = dto.bank_currency
-        self.isCash = dto.is_cash
+        self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.payerRid = dto.payer_id
-        self.contextRid = dto.context_id
+        self.contextRid = nil
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
     func update(fromDto dto: TransactionDTO) {
-        self.timeStart = dto.time_start
-        self.executionDate = dto.execution_date
+        self.timeStart = dto.time
+        self.executionDate = dto.execution_time
         self.amount = dto.amount
         self.realAmount = dto.real_amount
         self.currency = dto.currency
         self.myCost = dto.my_cost
         self.bankAmount = dto.bank_amount
         self.bankCurrency = dto.bank_currency
-        self.isCash = dto.is_cash
+        self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.payerRid = dto.payer_id
-        self.contextRid = dto.context_id
+        self.contextRid = nil
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -142,8 +148,9 @@ final class Transaction: LogModel {
 
 struct TransactionDTO: Codable, Identifiable {
     let id: Int
-    let time_start: Date
-    let execution_date: Date?
+    
+    let time: Date
+    let execution_time: Date?
     
     let amount: Decimal?
     let real_amount: Decimal?
@@ -153,22 +160,20 @@ struct TransactionDTO: Codable, Identifiable {
     let bank_amount: Decimal?
     let bank_currency: String?
     
-    let is_cash: Bool
+    let cash: Bool
     
     let type_id: Int?
     let parent_instance_id: Int?
     let payer_id: Int?
-    let context_id: Int?
-    
+        
     let details: String?
 }
 
 struct TransactionPayload: Codable, InitializableWithModel {
-    
     typealias Model = Transaction
     
-    let time_start: Date
-    let execution_date: Date?
+    let time: Date
+    let execution_time: Date?
     
     let amount: Decimal?
     let real_amount: Decimal?
@@ -178,12 +183,11 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let bank_amount: Decimal?
     let bank_currency: String?
     
-    let is_cash: Bool
+    let cash: Bool
     
     let type_id: Int?
     let parent_instance_id: Int?
     let payer_id: Int?
-    let context_id: Int?
     
     let details: String?
     
@@ -193,8 +197,8 @@ struct TransactionPayload: Codable, InitializableWithModel {
             return nil
         }
         
-        self.time_start = transaction.timeStart
-        self.execution_date = transaction.executionDate
+        self.time = transaction.timeStart
+        self.execution_time = transaction.executionDate
         
         self.amount = transaction.amount
         self.real_amount = transaction.realAmount
@@ -204,12 +208,11 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.bank_amount = transaction.bankAmount
         self.bank_currency = transaction.bankCurrency
         
-        self.is_cash = transaction.isCash
+        self.cash = transaction.isCash
         
         self.type_id = transaction.typeRid
         self.parent_instance_id = transaction.parentInstanceRid
         self.payer_id = transaction.payerRid
-        self.context_id = transaction.contextRid
         
         self.details = transaction.details
     }
@@ -219,7 +222,6 @@ struct TransactionPayload: Codable, InitializableWithModel {
 struct TransactionEditor: EditorProtocol {
     
     var timeStart: Date
-    var timeEnd: Date?
     var executionDate: Date?
     
     var amount: Decimal?
@@ -236,7 +238,6 @@ struct TransactionEditor: EditorProtocol {
     var parentInstance: ActivityInstance?
     var payer: Person?
     
-    // Helper RIDs for saving
     var typeRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
@@ -244,19 +245,21 @@ struct TransactionEditor: EditorProtocol {
     
     var details: String?
     
+    var isIncome: Bool = false
+    
     typealias Model = Transaction
     
     init(from transaction: Transaction) {
-        self.timeStart = transaction.timeStart
-        self.timeEnd = transaction.timeEnd
+        self.timeStart = transaction.transactionTime
         self.executionDate = transaction.executionDate
         
-        self.amount = transaction.amount
-        self.realAmount = transaction.realAmount
+        self.isIncome = (transaction.amount ?? -1) > 0
+
+        self.amount = transaction.amount.map { abs($0) }
+        self.myCost = transaction.myCost.map { abs($0) }
+        self.realAmount = transaction.realAmount.map { abs($0) }
+        self.bankAmount = transaction.bankAmount.map { abs($0) }
         self.currency = transaction.currency
-        self.myCost = transaction.myCost
-        
-        self.bankAmount = transaction.bankAmount
         self.bankCurrency = transaction.bankCurrency
         
         self.isCash = transaction.isCash
@@ -276,22 +279,26 @@ struct TransactionEditor: EditorProtocol {
         self.details = transaction.details
     }
     
+    func applySign(to value: Decimal?) -> Decimal? {
+        guard let rawValue = value else { return nil }
+        let absoluteValue = abs(rawValue)
+        return self.isIncome ? absoluteValue : -absoluteValue
+    }
+    
     func apply(to transaction: Transaction) {
         transaction.timeStart = self.timeStart
-        transaction.timeEnd = self.timeEnd
         transaction.executionDate = self.executionDate
         
-        transaction.amount = self.amount
-        transaction.realAmount = self.realAmount
-        transaction.currency = self.currency
-        transaction.myCost = self.myCost
+        transaction.amount = applySign(to: self.amount)
+        transaction.realAmount = applySign(to: self.realAmount)
+        transaction.myCost = applySign(to: self.myCost)
+        transaction.bankAmount = applySign(to: self.bankAmount)
         
-        transaction.bankAmount = self.bankAmount
+        transaction.currency = self.currency
         transaction.bankCurrency = self.bankCurrency
         
         transaction.isCash = self.isCash
         
-        // Apply relationships (Object + RID)
         transaction.type = self.type
         transaction.typeRid = self.type?.rid ?? self.typeRid
         
@@ -304,5 +311,11 @@ struct TransactionEditor: EditorProtocol {
         transaction.contextRid = self.contextRid
         
         transaction.details = self.details
+    }
+    
+    // MARK: - Semantic Helpers
+    @Transient var transactionTime: Date {
+        get { timeStart }
+        set { timeStart = newValue }
     }
 }

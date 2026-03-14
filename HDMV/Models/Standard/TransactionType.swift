@@ -108,6 +108,11 @@ final class TransactionType: Identifiable, Hashable, SyncableModel, EditableMode
     }
     
     var optionalChildren: [TransactionType]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name}) }
+    
+    var cachedOptionalChildren: [TransactionType]? {
+        let cached = children.filter { $0.cache == true }
+        return cached.isEmpty ? nil : cached.sorted(by: { $0.name < $1.name })
+    }
 
     
 }

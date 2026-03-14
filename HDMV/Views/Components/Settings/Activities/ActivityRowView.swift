@@ -10,14 +10,15 @@ import SwiftUI
 struct ActivityRowView: View {
     
     let activity: Activity
-    
+    let onCacheToggle: (Activity) -> Void
+
     var body: some View {
         HStack {
             IconView(iconString: activity.icon ?? "")
             Text(activity.name)
             Spacer()
-            if !activity.cache {
-                IconView(iconString: "iphone.gen1.slash", tint: .red)
+            CacheToggleButton(model: activity) { a in
+                onCacheToggle(a)
             }
             SyncStatusIndicator(status: activity.syncStatus)
         }

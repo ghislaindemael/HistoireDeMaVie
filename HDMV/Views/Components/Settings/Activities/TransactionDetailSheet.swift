@@ -1,10 +1,3 @@
-//
-//  TransactionDetailSheet.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 17.02.2026.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -14,7 +7,11 @@ struct TransactionDetailSheet: View {
     
     @StateObject var viewModel: TransactionDetailSheetViewModel
     
-    // Formatter for currency input
+    private var isStandardCurrency: Bool {
+        let cur = viewModel.editor.currency ?? "CHF"
+        return cur == "CHF" || cur == "EUR"
+    }
+    
     private let currencyFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -30,61 +27,142 @@ struct TransactionDetailSheet: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
+                
+                // MARK: - 1. Time & Details
                 Section("Basics") {
-                    DatePicker("Date", selection: $viewModel.editor.timeStart, displayedComponents: [.date, .hourAndMinute])
+                    FullTimePicker(
+                        label: "Transaction Date",
+                        selection: $viewModel.editor.timeStart
+                    )
                     
-                    TextField("Description", text: Binding(
+                    FullTimePicker(
+                        label: "Execution Date",
+                        selection: $viewModel.editor.executionDate
+                    )
+                    
+                    TextField("Description / Notes", text: Binding(
                         get: { viewModel.editor.details ?? "" },
                         set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }
-                    ))
+                    ), axis: .vertical)
                 }
                 
-                Section("Amounts") {
+                // MARK: - 2. Categorization & Context
+                Section("Context") {
+                    NavigationLink(destination: TransactionTypeSelectorView(
+                        selectedType: $viewModel.editor.type
+                    )) {
+                        HStack {
+                            Text("Category / Type")
+                            Spacer()
+                            if let activity = viewModel.editor.type {
+                                Text(activity.name)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Required")
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                    }
+                    
+                    PersonSelectorView(selectedPerson: $viewModel.editor.payer)
+                }
+                
+                // MARK: - 3. Primary Amount
+                Section("Primary Amount") {
+                    
+                    Picker("Type", selection: $viewModel.editor.isIncome) {
+                        Text("Expense").tag(false)
+                        Text("Income").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom, 4)
+                    
                     HStack {
                         TextField("Amount", value: $viewModel.editor.amount, formatter: currencyFormatter)
                             .keyboardType(.decimalPad)
                             .font(.headline)
+                            .foregroundStyle(viewModel.editor.isIncome ? .green : .primary)
                         
                         Divider()
                         
-                        TextField("CUR", text: Binding(
-                            get: { viewModel.editor.currency ?? "CHF" },
-                            set: { viewModel.editor.currency = $0.uppercased() }
-                        ))
-                        .frame(width: 60)
-                        .textInputAutocapitalization(.characters)
+                        Picker("Currency", selection: Binding(
+                            get: { isStandardCurrency ? (viewModel.editor.currency ?? "CHF") : "Other" },
+                            set: { newValue in
+                                if newValue == "Other" {
+                                    viewModel.editor.currency = ""
+                                } else {
+                                    viewModel.editor.currency = newValue
+                                }
+                            }
+                        )) {
+                            Text("CHF").tag("CHF")
+                            Text("EUR").tag("EUR")
+                            Text("Other").tag("Other")
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 100)
+                    }
+                    
+                    if !isStandardCurrency {
+                        HStack {
+                            Text("Custom Currency:")
+                                .foregroundStyle(.secondary)
+                            TextField("e.g. USD", text: Binding(
+                                get: { viewModel.editor.currency ?? "" },
+                                set: { viewModel.editor.currency = $0.uppercased() }
+                            ))
+                            .textInputAutocapitalization(.characters)
+                            .multilineTextAlignment(.trailing)
+                        }
                     }
                     
                     Toggle("Paid in Cash", isOn: $viewModel.editor.isCash)
                 }
                 
-                Section("Context") {
-                    Picker("Payer", selection: $viewModel.editor.payer) {
-                        Text("Me").tag(nil as Person?)
-                        ForEach(viewModel.availablePeople) { person in
-                            Text(person.name).tag(person as Person?)
-                        }
+                // MARK: - 4. Advanced Accounting
+                Section("Advanced Accounting") {
+                    HStack {
+                        Text("Real Amount")
+                        Spacer()
+                        TextField("0.00", value: $viewModel.editor.realAmount, formatter: currencyFormatter)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
                     }
                     
                     HStack {
-                        Text("My Share")
+                        Text("My Share (Cost)")
                         Spacer()
-                        TextField("Full Amount", value: $viewModel.editor.myCost, formatter: currencyFormatter)
+                        TextField("0.00", value: $viewModel.editor.myCost, formatter: currencyFormatter)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
-                            .foregroundStyle(viewModel.editor.myCost == nil ? .secondary : .primary)
                     }
-                    .help("Leave empty if you paid for yourself (100%)")
+                    .help("How much of this transaction actually comes out of your pocket.")
                 }
                 
-                // 4. CATEGORIZATION (Optional)
-                /*
-                Section("Category") {
-                    // Your TransactionType Picker would go here
+                // MARK: - 5. Bank Clearance
+                Section("Bank Reconciliation") {
+                    HStack {
+                        Text("Bank Amount")
+                        Spacer()
+                        TextField("0.00", value: $viewModel.editor.bankAmount, formatter: currencyFormatter)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    
+                    HStack {
+                        Text("Bank Currency")
+                        Spacer()
+                        TextField("CUR", text: Binding(
+                            get: { viewModel.editor.bankCurrency ?? "" },
+                            set: { viewModel.editor.bankCurrency = $0.isEmpty ? nil : $0.uppercased() }
+                        ))
+                        .textInputAutocapitalization(.characters)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 60)
+                    }
                 }
-                */
             }
             .navigationTitle("Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)
@@ -97,6 +175,7 @@ struct TransactionDetailSheet: View {
                         viewModel.onDone()
                         dismiss()
                     }
+                    .disabled(viewModel.editor.amount == nil || viewModel.editor.type == nil)
                 }
             }
         }

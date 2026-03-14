@@ -9,38 +9,37 @@ import SwiftUI
 import SwiftData
 
 struct ActivitySelectorView: View {
-    @Environment(\.dismiss) private var dismiss
     @Binding var selectedActivity: Activity?
-    
     @Query var activityTree: [Activity]
     
     init(selectedActivity: Binding<Activity?>) {
-        _selectedActivity = selectedActivity        
-        let predicate = #Predicate<Activity> { $0.parentRid == nil }
+        _selectedActivity = selectedActivity
+        let predicate = #Predicate<Activity> { $0.parentRid == nil && $0.cache == true }
         _activityTree = Query(filter: predicate, sort: \.name)
     }
     
+    var body: some View {
+        GenericTreeSelectorView(
+            items: activityTree,
+            childrenKeyPath: \.cachedOptionalChildren,
+            selection: $selectedActivity,
+            title: "Select an Activity",
+            noneButtonText: "None"
+        )
+    }
+}
+
+struct ParentActivitySelector: View {
+    let activities: [Activity]
+    @Binding var selectedParent: Activity?
     
     var body: some View {
-        List {
-            Button("None") {
-                selectedActivity = nil
-                dismiss()
-            }
-            
-            OutlineGroup(activityTree, children: \.optionalChildren) { activity in
-                Button(action: {
-                    selectedActivity = activity
-                    dismiss()
-                }) {
-                    HStack {
-                        IconView(iconString: activity.icon ?? "")
-                        Text(activity.name)
-                    }
-                    .foregroundStyle(.primary)
-                }
-            }
-        }
-        .navigationTitle("Select an Activity")
+        GenericTreeSelectorView(
+            items: activities,
+            childrenKeyPath: \.cachedOptionalChildren,
+            selection: $selectedParent,
+            title: "Select Parent",
+            noneButtonText: "Top Level (No Parent)"
+        )
     }
 }

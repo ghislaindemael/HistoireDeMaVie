@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable {
+final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable, CachableObject {
     
     var rid: Int?
     var name: String
@@ -128,6 +128,11 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     }
     
     var optionalChildren: [Activity]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name}) }
+    
+    var cachedOptionalChildren: [Activity]? {
+        let cached = children.filter { $0.cache == true }
+        return cached.isEmpty ? nil : cached.sorted(by: { $0.name < $1.name })
+    }
 
     
 }

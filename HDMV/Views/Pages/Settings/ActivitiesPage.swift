@@ -1,43 +1,35 @@
-//
-//  ActivitiesPage.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 31.07.2025.
-//
-
-
 import SwiftUI
 
 struct ActivitiesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = ActivitiesPageViewModel()
-    @State private var activityToEdit: Activity?
     
     var body: some View {
         NavigationStack {
-            List {
-                OutlineGroup(viewModel.activities, children: \.optionalChildren) { activity in
-                    Button(action: {
-                        activityToEdit = activity
-                    }) {
-                        ActivityRowView(activity: activity)
+            GenericTreePageView(
+                title: "Activities",
+                items: viewModel.activities,
+                childrenKeyPath: \.optionalChildren,
+                isLoading: viewModel.isLoading,
+                onRefresh: { await viewModel.refreshFromServer() },
+                onSync: { await viewModel.uploadLocalChanges() },
+                onAdd: { viewModel.createActivity() },
+                rowContent: { activity in
+                    ActivityRowView(activity: activity) { act in
+                        withAnimation(.snappy) {
+                            viewModel.updateModel(act) { concreteAct in
+                                concreteAct.cache.toggle()
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
+                },
+                sheetContent: { activity in
+                    ActivityDetailSheet(activity: activity, modelContext: modelContext)
                 }
-            }
-            .navigationTitle("Activities")
-            .simpleLogToolbar(
-                refreshAction: { await viewModel.refreshFromServer() },
-                syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createActivity() }
             )
-            .sheet(item: $activityToEdit) { activity in
-                ActivityDetailSheet(activity: activity, modelContext: modelContext)
-            }
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .syncingOverlay(viewModel.isLoading)
         }
     }
 }
