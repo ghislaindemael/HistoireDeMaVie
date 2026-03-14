@@ -15,7 +15,6 @@ struct PlaceDisplayView: View {
     @Query private var places: [Place]
     
     private let placeRid: Int?
-    private let isSmall: Bool
     private let showMapPin: Bool
     private let color: Color
     private let fontWeight: Font.Weight
@@ -26,13 +25,11 @@ struct PlaceDisplayView: View {
 
     init(
         placeRid: Int?,
-        isSmall: Bool = false,
         showMapPin: Bool = false,
         color: Color? = .red,
         fontWeight: Font.Weight? = .regular
     ) {
         self.placeRid = placeRid
-        self.isSmall = isSmall
         self.showMapPin = showMapPin
         self.color = color ?? .red
         self.fontWeight = fontWeight ?? .regular
@@ -52,20 +49,17 @@ struct PlaceDisplayView: View {
                 }
                 let cityName = place.city?.name ?? "—"
                 
-                if isSmall {
-                    Text(cityName)
-                } else {
-                    Text("\(cityName) – \(place.name)")
-                }
+                Text("\(cityName) – \(place.name)")
+
             } else if let id = placeRid, id > 0 {
                 if showMapPin {
                     IconView(iconString: "mappin.circle", tint: .orange)
                 }
-                Text(isSmall == false ? "Place uncached" : "Uncached")
+                Text("Place uncached")
                     .foregroundStyle(.orange)
             } else {
                 if showMapPin { IconView(iconString: "mappin.circle", tint: color) }
-                Text(isSmall ? "Unset" : "Place unset")
+                Text("Place unset")
                     .foregroundStyle(color)
                     .fontWeight(fontWeight)
             }
