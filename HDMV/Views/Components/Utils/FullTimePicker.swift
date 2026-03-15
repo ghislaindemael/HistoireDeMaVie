@@ -172,7 +172,7 @@ struct FullTimePicker: View {
                 mergeDateOnly(newDate)
             }
             
-            Text(DateFormatter.timeOnly.string(from: selection!))
+            Text(DateFormatter.timeWithSeconds.string(from: selection!))
                 .font(.body)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)

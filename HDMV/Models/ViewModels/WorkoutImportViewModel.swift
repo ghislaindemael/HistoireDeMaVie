@@ -49,8 +49,11 @@ class WorkoutImportViewModel: ObservableObject {
     }
     
     func isImported(_ workout: HKWorkout) -> Bool {
-        localTrips.contains { trip in
-            trip.timeStart == workout.startDate
+        let tolerance: TimeInterval = 60
+        
+        return localTrips.contains { trip in
+            let diff = abs(trip.timeStart.timeIntervalSince(workout.startDate))
+            return diff <= tolerance
         }
     }
     

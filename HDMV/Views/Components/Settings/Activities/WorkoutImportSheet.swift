@@ -124,10 +124,10 @@ struct WorkoutRow: View {
                     .font(.headline)
                 
                 HStack(spacing: 6) {
-                    Text(workout.startDate, style: .time)
+                    Text(DateFormatter.timeWithSeconds.string(from:workout.startDate))
                     Image(systemName: "arrow.right")
                         .font(.caption2)
-                    Text(workout.endDate, style: .time)
+                    Text(DateFormatter.timeWithSeconds.string(from:workout.endDate))
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
