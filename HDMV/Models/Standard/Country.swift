@@ -20,7 +20,7 @@ final class Country: CatalogueModel {
     var name: String
     var cache: Bool = true
     var archived: Bool = false
-    var syncStatusRaw: String = SyncStatus.local.rawValue
+    var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias Payload = CountryPayload
     typealias DTO = CountryDTO
@@ -34,12 +34,12 @@ final class Country: CatalogueModel {
     // MARK: Init
     
     init(
-        slug: String,
-        name: String,
+        slug: String = "Unset",
+        name: String = "unset",
         rid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.slug = slug
         self.name = name
@@ -57,14 +57,13 @@ final class Country: CatalogueModel {
     }
     
     convenience init(fromDto dto: CountryDTO) {
-        self.init(slug: dto.slug, name: dto.name, rid: dto.id, cache: dto.cache, archived: dto.archived, syncStatus: .synced)
+        self.init(slug: dto.slug, name: dto.name, rid: dto.id, archived: dto.archived, syncStatus: .synced)
     }
     
     func update(fromDto dto: CountryDTO) {
         self.rid = dto.id
         self.slug = dto.slug
         self.name = dto.name
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -78,7 +77,6 @@ struct CountryDTO: Codable, Identifiable, Sendable {
     var id: Int
     var slug: String
     var name: String
-    var cache: Bool = true
     var archived: Bool = false
     
 }
@@ -87,14 +85,12 @@ struct CountryPayload: Codable, InitializableWithModel {
     typealias Model = Country
     var slug: String
     var name: String
-    var cache: Bool
     var archived: Bool
     
     init?(from country: Country) {
         guard country.isValid() else { return nil }
         self.slug = country.slug
         self.name = country.name
-        self.cache = country.cache
         self.archived = country.archived
     }
 }

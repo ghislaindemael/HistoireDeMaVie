@@ -95,7 +95,7 @@ final class Trip: LogModel {
          amDriver: Bool = false,
          path: Path? = nil,
          details: String? = nil,
-         syncStatus: SyncStatus = .local)
+         syncStatus: SyncStatus = .unsynced)
     {
         self.rid = rid
         self.timeStart = timeStart

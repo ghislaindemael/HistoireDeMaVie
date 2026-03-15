@@ -13,11 +13,10 @@ struct PeoplePage: View {
                 peopleList
             }
             .navigationTitle("People")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createPerson() },
-                longPressAction: {}
+                onAdd: { viewModel.createPerson() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

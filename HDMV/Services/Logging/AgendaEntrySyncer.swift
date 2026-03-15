@@ -33,9 +33,10 @@ final class AgendaEntrySyncer: BaseSyncer<AgendaEntry, AgendaEntryDTO, AgendaEnt
     }
     
     override func pushChanges() async throws {
+        let unsyncedItems = try fetchLocalModels(with: SyncStatus.unsynced)
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
-        let itemsToSync = localItems + failedItems
+        let itemsToSync = localItems + failedItems + unsyncedItems
         
         guard !itemsToSync.isEmpty else { return }
         print("AgendaSyncer: Found \(itemsToSync.count) items to push.")

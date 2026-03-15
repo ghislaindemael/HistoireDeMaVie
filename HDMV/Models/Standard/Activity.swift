@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable {
+final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable, CachableObject {
     
     var rid: Int?
     var name: String
@@ -45,7 +45,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         requiredCapabilities: [ActivityCapability] = [],
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .undef
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.name = name
@@ -73,7 +73,6 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         self.parentRid = dto.parent_id
         self.icon = dto.icon
         self.selectable = dto.selectable
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = SyncStatus.synced
         
@@ -97,7 +96,6 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         self.parentRid = dto.parent_id
         self.icon = dto.icon
         self.selectable = dto.selectable
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
         
@@ -130,6 +128,11 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     }
     
     var optionalChildren: [Activity]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name}) }
+    
+    var cachedOptionalChildren: [Activity]? {
+        let cached = children.filter { $0.cache == true }
+        return cached.isEmpty ? nil : cached.sorted(by: { $0.name < $1.name })
+    }
 
     
 }
@@ -145,7 +148,6 @@ struct ActivityDTO: Codable, Identifiable {
     let allowed_capabilities: [String]?
     let required_capabilities: [String]?
     let selectable: Bool
-    let cache: Bool
     let archived: Bool
     
 }
@@ -158,7 +160,6 @@ struct ActivityPayload: Codable, InitializableWithModel {
     let allowed_capabilities: [String]
     let required_capabilities: [String]
     let selectable: Bool
-    let cache: Bool
     let archived: Bool
     
     typealias Model = Activity
@@ -173,7 +174,6 @@ struct ActivityPayload: Codable, InitializableWithModel {
         self.allowed_capabilities = activity.allowedCapabilities.map { $0.rawValue }
         self.required_capabilities = activity.requiredCapabilities.map { $0.rawValue }
         self.selectable = activity.selectable
-        self.cache = activity.cache
         self.archived = activity.archived
     }
 }

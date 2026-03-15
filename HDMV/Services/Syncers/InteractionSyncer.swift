@@ -1,11 +1,3 @@
-//
-//  InteractionSyncer.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 09.10.2025.
-//
-
-
 import Foundation
 import SwiftData
 
@@ -13,7 +5,7 @@ import SwiftData
 class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionPayload> {
     
     private let interactionService = PeopleInteractionsService()
-
+    
     // MARK: - Implemented Network Methods
     
     override func fetchRemoteModels(date: Date?) async throws -> [InteractionDTO] {
@@ -22,7 +14,7 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
         }
         fatalError("No date passed in fetchRemoteModels")
     }
-        
+    
     override func createOnServer(payload: InteractionPayload) async throws -> InteractionDTO {
         return try await interactionService.createInteraction(payload)
     }
@@ -32,8 +24,10 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
     }
     
     override func deleteFromServer(_ id: Int) async throws {
-        //try await instanceService.deleteActivityInstance(id: id)
+        _ = try await interactionService.deleteInteraction(id: id)
     }
+    
+    // MARK: - Relationship Resolution
     
     override func resolveRelationships() throws {
         print("Resolving Interaction relationships...")
@@ -65,5 +59,4 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
         
         print("All Interaction relationships resolved.")
     }
-
 }

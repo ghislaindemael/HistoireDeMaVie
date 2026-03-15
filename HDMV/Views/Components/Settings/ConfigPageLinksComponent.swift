@@ -1,5 +1,5 @@
 //
-//  VehicleDataManagementComponent.swift
+//  ConfigPageLinksComponent.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 19.06.2025.
@@ -27,7 +27,8 @@ struct ConfigPageLinksComponent: View {
         ConfigPageLink(title: "Paths", destination: AnyView(PathsPage())),
         ConfigPageLink(title: "Places", destination: AnyView(PlacesPage())),
         ConfigPageLink(title: "People", destination: AnyView(PeoplePage())),
-        ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage()))
+        ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
+        ConfigPageLink(title: "Transaction Types", destination: AnyView(TransactionTypesPage()))
     ]
     
     init(expanded: Bool = false) {
@@ -38,7 +39,6 @@ struct ConfigPageLinksComponent: View {
         DisclosureGroup("Configuration", isExpanded: $isExpanded) {
             VStack(spacing: 4) {
                 Toggle("Fetch archived", isOn: $settings.includeArchived)
-                Toggle("Small displays", isOn: $settings.smallDisplay)
                 ForEach(configPages.indices, id: \.self) { index in
                     let page = configPages[index]
                     

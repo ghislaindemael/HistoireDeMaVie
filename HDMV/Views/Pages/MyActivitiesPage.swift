@@ -18,6 +18,7 @@ struct MyActivitiesPage: View {
     @State private var instanceToEdit: ActivityInstance?
     @State private var tripToEdit: Trip?
     @State private var interactionToEdit: Interaction?
+    @State private var transactionToEdit: Transaction?
     
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
@@ -38,9 +39,17 @@ struct MyActivitiesPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    singleTapAction: { viewModel.createActivityInstance() },
-                    longPressAction: { viewModel.createActivityInstance(date: viewModel.filterDate) },
-                )
+                    onAdd: { viewModel.createActivityInstance() }
+                ) {
+                    Section("Create New") {
+                        Button(action: { viewModel.createTransaction() }) {
+                            Label("Transaction", systemImage: "banknote")
+                        }
+                        Button(action: { viewModel.createLifeEvent() }) {
+                            Label("Life Event", systemImage: "star.fill")
+                        }
+                    }
+                }
                 .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
                 .onChange(of: viewModel.filterDate) {
                     viewModel.fetchDailyData()
@@ -71,6 +80,12 @@ struct MyActivitiesPage: View {
                         modelContext: modelContext
                     )
                 }
+                .sheet(item: $transactionToEdit) { transaction in
+                    TransactionDetailSheet(
+                        transaction: transaction,
+                        modelContext: modelContext
+                    )
+                }
         }
         .environmentObject(viewModel)
     }
@@ -83,9 +98,7 @@ struct MyActivitiesPage: View {
             
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    let topLevelInstances = viewModel.instances.filter { $0.hasNoParent() }
-                    
-                    ForEach(topLevelInstances) { instance in
+                    ForEach(viewModel.instances, id: \.persistentModelID) { instance in
                         ParentModelHierarchyView(
                             parent: instance,
                             level: 0,
@@ -95,8 +108,8 @@ struct MyActivitiesPage: View {
                         )
                     }
                 }
-                .padding(.horizontal)
             }
+            .padding(8)
         }
     }
     

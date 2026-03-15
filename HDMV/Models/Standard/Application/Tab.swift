@@ -14,6 +14,7 @@ enum Tab: CaseIterable {
     case activities
     case agenda
     case settings
+    case transactions
     case test
     
     var title: String {
@@ -23,6 +24,7 @@ enum Tab: CaseIterable {
             case .activities: return "Activities"
             case .agenda: return "Agenda"
             case .settings: return "Settings"
+            case .transactions: return "Finances"
             case .test: return "Test"
         }
     }
@@ -34,6 +36,7 @@ enum Tab: CaseIterable {
             case .activities: return "flowchart.fill"
             case .agenda: return "calendar.and.person"
             case .settings: return "gearshape.fill"
+            case .transactions: return "banknote.fill"
             case .test: return "testtube.2"
         }
     }
@@ -51,6 +54,7 @@ enum Tab: CaseIterable {
                 MyAgendaPage()
             case .settings:
                 SettingsPage()
+            case .transactions: MyTransactionsPage()
             case .test:
                 TestPage()
         }

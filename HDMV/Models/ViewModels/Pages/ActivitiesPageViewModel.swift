@@ -9,12 +9,10 @@ import Foundation
 import SwiftData
 
 @MainActor
-class ActivitiesPageViewModel: ObservableObject {
+class ActivitiesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
     private var activitySyncer: ActivitySyncer?
     
-    @Published var isLoading = false
     @Published var activities: [Activity] = []
     
     // MARK: - Computed Properties for Views
@@ -24,7 +22,7 @@ class ActivitiesPageViewModel: ObservableObject {
     
     // MARK: Initialization
     
-    func setup(modelContext: ModelContext) {
+    override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.activitySyncer = ActivitySyncer(modelContext: modelContext)
         fetchFromCache()
@@ -84,7 +82,7 @@ class ActivitiesPageViewModel: ObservableObject {
     
     func createActivity() {
         guard let context = modelContext else { return }
-        let newActivity = Activity(syncStatus: .local)
+        let newActivity = Activity(syncStatus: .unsynced)
         
         context.insert(newActivity)
         activities.append(newActivity)

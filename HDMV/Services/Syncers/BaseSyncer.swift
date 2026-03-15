@@ -46,9 +46,16 @@ Payload.Model == Model
     
     /// Pushes local creations, updates, and deletions to the server.
     func pushChanges() async throws {
+        let unsyncedItems = try fetchLocalModels(with: SyncStatus.unsynced)
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
-        let itemsToSync = localItems + failedItems
+        
+        let itemsToSync = unsyncedItems + localItems + failedItems
+        
+        print("🔍 PUSH CHECK [\(Model.self)]:")
+        print("   - Unsynced (New): \(unsyncedItems.count)")
+        print("   - Local (Edited): \(localItems.count)")
+        print("   - Failed (Retry): \(failedItems.count)")
         
         guard !itemsToSync.isEmpty else { return }
         

@@ -7,45 +7,33 @@
 
 import SwiftUI
 
-/// A reusable ViewModifier that applies a standard toolbar for the MyActivitiesPage.
-struct LogPageToolbar: ViewModifier {
-    /// An async closure for the "Refresh" action.
+struct LogPageToolbar<MenuContent: View>: ViewModifier {
     let refreshAction: () async -> Void
-    /// An async closure for the "Save" (sync) action.
     let syncAction: () async -> Void
-    /// A closure for the single-tap action.
-    let singleTapAction: () -> Void
-    /// A closure for the long-press action.
-    let longPressAction: () -> Void
+    let primaryAddAction: () -> Void
+    
+    let hasExtraOptions: Bool
+    let extraMenuOptions: MenuContent
     
     @ObservedObject private var settings = SettingsStore.shared
-
-
+    
     func body(content: Content) -> some View {
         content
             .toolbar {
-                // MARK: - Leading Menu
+                // MARK: - Leading Menu (Settings/Sync)
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button(action: { Task { await refreshAction() } }) {
                             Label("Refresh from Server", systemImage: "icloud.and.arrow.down")
                         }
-                        
                         Button(action: { Task { await syncAction() } }) {
                             Label("Sync local changes", systemImage: "icloud.and.arrow.up")
                         }
-                        
-                        Button(action: {
-                            settings.planningMode.toggle()
-                        }) {
+                        Button(action: { settings.planningMode.toggle() }) {
                             Label {
                                 Text("\(settings.planningMode ? "Exit": "Enter") Planning Mode")
                             } icon: {
-                                if settings.planningMode {
-                                    Image(systemName: "calendar.badge.minus")
-                                } else {
-                                    Image(systemName: "calendar.badge.plus")
-                                }
+                                Image(systemName: settings.planningMode ? "calendar.badge.minus" : "calendar.badge.plus")
                             }
                         }
                     } label: {
@@ -53,36 +41,66 @@ struct LogPageToolbar: ViewModifier {
                     }
                 }
                 
-                // MARK: - Trailing Add Button
+                // MARK: - Trailing Actions
                 ToolbarItem(placement: .topBarTrailing) {
-                    Image(systemName: "plus")
-                        .onLongPressGesture {
-                            longPressAction()
+                    HStack(spacing: 8) {
+                        Button(action: primaryAddAction) {
+                            Image(systemName: "plus")
+                                .fontWeight(.semibold)
+                                .frame(width: 40, height: 40)
+                                .contentShape(Rectangle())
                         }
-                    
-                        .onTapGesture {
-                            singleTapAction()
+                        .buttonStyle(.plain)
+                        
+                        if hasExtraOptions {
+                            Menu {
+                                extraMenuOptions
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .frame(width: 30, height: 40)
+                                    .contentShape(Rectangle())
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                    }
                 }
             }
     }
 }
 
-// MARK: - View Extension
 extension View {
-    /// Applies a standard toolbar for the My Activities page.
-    func logPageToolbar(
+    
+    /// For pages that need the "Long Press" menu (Activities, Agenda)
+    func logPageToolbar<Content: View>(
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
-        singleTapAction: @escaping () -> Void,
-        longPressAction: @escaping () -> Void,
+        onAdd: @escaping () -> Void,
+        @ViewBuilder menuOptions: @escaping () -> Content
     ) -> some View {
         self.modifier(
             LogPageToolbar(
                 refreshAction: refreshAction,
                 syncAction: syncAction,
-                singleTapAction: singleTapAction,
-                longPressAction: longPressAction
+                primaryAddAction: onAdd,
+                hasExtraOptions: true,
+                extraMenuOptions: menuOptions()
+            )
+        )
+    }
+    
+    /// For simple catalogue pages (Paths, People, Interactions)
+    func simpleLogToolbar(
+        refreshAction: @escaping () async -> Void,
+        syncAction: @escaping () async -> Void,
+        onAdd: @escaping () -> Void
+    ) -> some View {
+        self.modifier(
+            LogPageToolbar(
+                refreshAction: refreshAction,
+                syncAction: syncAction,
+                primaryAddAction: onAdd,
+                hasExtraOptions: false,
+                extraMenuOptions: EmptyView()
             )
         )
     }

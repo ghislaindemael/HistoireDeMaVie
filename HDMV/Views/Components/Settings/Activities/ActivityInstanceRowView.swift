@@ -318,7 +318,7 @@ struct PreviewWrapperView: View {
             timeEnd: nil,
             percentage: 75,
             activityRid: nil,
-            syncStatus: .local
+            syncStatus: .unsynced
         )
         
         let travelInstance = ActivityInstance(
@@ -327,7 +327,7 @@ struct PreviewWrapperView: View {
             timeEnd: nil,
             percentage: 50,
             activityRid: travelActivity.rid,
-            syncStatus: .local
+            syncStatus: .unsynced
         )
         
         let completedTrip = Trip(

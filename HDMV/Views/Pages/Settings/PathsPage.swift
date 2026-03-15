@@ -52,11 +52,10 @@ struct PathsPage: View {
                 pathsList
             }
             .navigationTitle("Paths")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createLocalPath() },
-                longPressAction: {}
+                onAdd: { viewModel.createLocalPath() }
             )
             .sheet(item: $pathToEdit) { path in
                 PathDetailSheet(path: path, modelContext: modelContext)

@@ -31,11 +31,10 @@ struct CitiesPage: View {
                 citiesList
             }
             .navigationTitle("Cities")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createCity() },
-                longPressAction: {}
+                onAdd: { viewModel.createCity() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

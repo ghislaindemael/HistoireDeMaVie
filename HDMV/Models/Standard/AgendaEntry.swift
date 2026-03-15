@@ -17,7 +17,7 @@ final class AgendaEntry: LogModel {
     var daySummary: String = ""
     var mood: Int = 5
     var moodComments: String = ""
-    @Attribute var syncStatusRaw: String = SyncStatus.local.rawValue
+    @Attribute var syncStatusRaw: String = SyncStatus.unsynced.rawValue
         
     var timeStart: Date {
         get {
@@ -55,7 +55,7 @@ final class AgendaEntry: LogModel {
         daySummary: String = "",
         mood: Int = 5,
         moodComments: String = "",
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.date = date ?? Self.dateFormatter.string(from: .now)

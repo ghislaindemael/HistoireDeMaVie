@@ -26,13 +26,17 @@ extension SyncableModel {
     
     func markAsModified() {
         Task { @MainActor in
-            syncStatus = .local
+            if self.rid == nil {
+                self.syncStatus = .unsynced
+            } else {
+                self.syncStatus = .local
+            }
         }
     }
     
     var syncPriority: Int {
         switch SyncStatus.safeInit(syncStatusRaw) {
-            case .local, .failed:
+            case .local, .failed, .unsynced:
                 return 0
             case .syncing:
                 return 1

@@ -86,7 +86,7 @@ class PlacesPageViewModel: BasePageViewModel {
     
     func createPlace() {
         guard let context = modelContext else { return }
-        let newPlace = Place(syncStatus: .local)
+        let newPlace = Place(syncStatus: .unsynced)
         newPlace.cityRid = selectedCity?.rid
         
         context.insert(newPlace)

@@ -55,7 +55,7 @@ final class Interaction: LogModel {
         person: Person? = nil,
         in_person: Bool = true,
         details: String? = nil,
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.timeStart = timeStart

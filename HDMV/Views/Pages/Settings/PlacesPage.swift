@@ -26,11 +26,10 @@ struct PlacesPage: View {
                 placesList
             }
             .navigationTitle("Places")
-            .logPageToolbar(
+            .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                singleTapAction: { viewModel.createPlace() },
-                longPressAction: {}
+                onAdd: { viewModel.createPlace() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

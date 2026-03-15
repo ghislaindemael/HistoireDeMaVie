@@ -68,7 +68,7 @@ final class ActivityInstance: LogModel {
         parentRid: Int? = nil,
         details: String? = nil,
         activity_details: ActivityDetails? = nil,
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.timeStart = timeStart
         self.timeEnd = timeEnd

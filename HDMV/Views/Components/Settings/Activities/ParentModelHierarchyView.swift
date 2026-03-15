@@ -31,7 +31,7 @@ struct ParentModelHierarchyView: View {
         if let instance = parent as? ActivityInstance {
             ActivityInstanceRowView(instance: instance, selectedDate: viewModel.filterDate)
         } else if let trip = parent as? Trip {
-            TripRowView(trip: trip, smallDisplay: settings.smallDisplay)
+            TripRowView(trip: trip)
         } else {
             EmptyView()
         }

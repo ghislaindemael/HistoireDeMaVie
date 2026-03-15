@@ -16,7 +16,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
     var familyName: String
     var surname: String?
     var birthdate: Date?
-    var cache: Bool = true
+    var cache: Bool = false
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
 
@@ -40,7 +40,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         birthdate: Date? = nil,
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .undef
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid;
         self.slug = slug;
@@ -50,7 +50,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         self.birthdate = birthdate;
         self.cache = cache;
         self.archived = archived
-        self.syncStatus = .local
+        self.syncStatus = .unsynced
     }
     
     convenience init(fromDto dto: DTO){
@@ -63,7 +63,6 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         if let birthdateString = dto.birthdate {
             self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
         }
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -76,7 +75,6 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         if let birthdateString = dto.birthdate {
             self.birthdate = DateFormatter.dateOnly.date(from: birthdateString)
         }
-        self.cache = dto.cache
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -103,7 +101,6 @@ struct PersonDTO: Codable, Identifiable, Sendable {
     var family_name: String
     var surname: String?
     var birthdate: String?
-    var cache: Bool
     var archived: Bool
 }
 
@@ -113,7 +110,6 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
     var family_name: String
     var surname: String?
     var birthdate: String?
-    var cache: Bool
     var archived: Bool
     
     typealias Model = Person
@@ -128,7 +124,6 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
         if let birthdate = person.birthdate {
             self.birthdate = DateFormatter.dateOnly.string(from: birthdate)
         }
-        self.cache = person.cache
         self.archived = person.archived
     }
 

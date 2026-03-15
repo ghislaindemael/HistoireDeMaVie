@@ -20,6 +20,9 @@ struct SyncStatusIndicator: View {
             case .synced:
                 IconView(iconString: "checkmark.icloud.fill", tint: .green)
                 
+            case .unsynced:
+                IconView(iconString: "xmark.icloud.fill", tint: .gray)
+                
             case .syncing:
                 IconView(iconString: "arrow.trianglehead.2.clockwise.rotate.90.icloud.fill", tint: .blue)
                 
@@ -33,7 +36,7 @@ struct SyncStatusIndicator: View {
                 IconView(iconString: "xmark.icloud.fill", tint: .red)
                 
             case .undef:
-                IconView(iconString: "xmark.icloud.fill", tint: .gray)
+                IconView(iconString: "icloud.fill", tint: .gray)
         }
     }
 }
