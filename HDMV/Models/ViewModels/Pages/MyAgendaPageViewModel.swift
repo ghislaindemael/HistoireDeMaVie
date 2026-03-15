@@ -102,7 +102,7 @@ class MyAgendaPageViewModel: ObservableObject {
             let newEntry = AgendaEntry(
                 rid: dayNumber,
                 date: dateString,
-                syncStatus: SyncStatus.local
+                syncStatus: SyncStatus.unsynced
             )
             
             context.insert(newEntry)

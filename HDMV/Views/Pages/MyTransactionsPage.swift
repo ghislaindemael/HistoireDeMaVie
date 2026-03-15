@@ -75,7 +75,6 @@ struct MyTransactionsPage: View {
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(viewModel.transactions) { transaction in
-                        // You will need to build this RowView
                         TransactionRowView(transaction: transaction)
                             .onTapGesture {
                                 transactionToEdit = transaction

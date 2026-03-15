@@ -40,7 +40,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         birthdate: Date? = nil,
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .undef
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid;
         self.slug = slug;
@@ -50,7 +50,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         self.birthdate = birthdate;
         self.cache = cache;
         self.archived = archived
-        self.syncStatus = .local
+        self.syncStatus = .unsynced
     }
     
     convenience init(fromDto dto: DTO){

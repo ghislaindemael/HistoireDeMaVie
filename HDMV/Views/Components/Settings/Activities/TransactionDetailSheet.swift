@@ -12,18 +12,36 @@ struct TransactionDetailSheet: View {
         return cur == "CHF" || cur == "EUR"
     }
     
-    private let currencyFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 2
-        return formatter
-    }()
+    private var isStandardBankCurrency: Bool {
+        let cur = viewModel.editor.bankCurrency ?? "CHF"
+        return cur == "CHF" || cur == "EUR"
+    }
     
     init(transaction: Transaction, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: TransactionDetailSheetViewModel(
             model: transaction,
             modelContext: modelContext
         ))
+    }
+    
+    // MARK: - The Magic Fix for Disappearing Decimals
+    private func decimalBinding(for value: Binding<Decimal?>) -> Binding<String> {
+        Binding(
+            get: {
+                if let decimal = value.wrappedValue {
+                    return NSDecimalNumber(decimal: decimal).stringValue
+                }
+                return ""
+            },
+            set: { newValue in
+                let sanitized = newValue.replacingOccurrences(of: ",", with: ".")
+                if sanitized.isEmpty {
+                    value.wrappedValue = nil
+                } else if let newDecimal = Decimal(string: sanitized) {
+                    value.wrappedValue = newDecimal
+                }
+            }
+        )
     }
     
     var body: some View {
@@ -80,7 +98,7 @@ struct TransactionDetailSheet: View {
                     .padding(.bottom, 4)
                     
                     HStack {
-                        TextField("Amount", value: $viewModel.editor.amount, formatter: currencyFormatter)
+                        TextField("Amount", text: decimalBinding(for: $viewModel.editor.amount))
                             .keyboardType(.decimalPad)
                             .font(.headline)
                             .foregroundStyle(viewModel.editor.isIncome ? .green : .primary)
@@ -126,7 +144,7 @@ struct TransactionDetailSheet: View {
                     HStack {
                         Text("Real Amount")
                         Spacer()
-                        TextField("0.00", value: $viewModel.editor.realAmount, formatter: currencyFormatter)
+                        TextField("0.00", text: decimalBinding(for: $viewModel.editor.realAmount))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                     }
@@ -134,7 +152,7 @@ struct TransactionDetailSheet: View {
                     HStack {
                         Text("My Share (Cost)")
                         Spacer()
-                        TextField("0.00", value: $viewModel.editor.myCost, formatter: currencyFormatter)
+                        TextField("0.00", text: decimalBinding(for: $viewModel.editor.myCost))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                     }
@@ -144,23 +162,40 @@ struct TransactionDetailSheet: View {
                 // MARK: - 5. Bank Clearance
                 Section("Bank Reconciliation") {
                     HStack {
-                        Text("Bank Amount")
-                        Spacer()
-                        TextField("0.00", value: $viewModel.editor.bankAmount, formatter: currencyFormatter)
+                        TextField("Bank Amount", text: decimalBinding(for: $viewModel.editor.bankAmount))
                             .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                        
+                        Divider()
+                        
+                        Picker("Bank Currency", selection: Binding(
+                            get: { isStandardBankCurrency ? (viewModel.editor.bankCurrency ?? "CHF") : "Other" },
+                            set: { newValue in
+                                if newValue == "Other" {
+                                    viewModel.editor.bankCurrency = ""
+                                } else {
+                                    viewModel.editor.bankCurrency = newValue
+                                }
+                            }
+                        )) {
+                            Text("CHF").tag("CHF")
+                            Text("EUR").tag("EUR")
+                            Text("Other").tag("Other")
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 100)
                     }
                     
-                    HStack {
-                        Text("Bank Currency")
-                        Spacer()
-                        TextField("CUR", text: Binding(
-                            get: { viewModel.editor.bankCurrency ?? "" },
-                            set: { viewModel.editor.bankCurrency = $0.isEmpty ? nil : $0.uppercased() }
-                        ))
-                        .textInputAutocapitalization(.characters)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 60)
+                    if !isStandardBankCurrency {
+                        HStack {
+                            Text("Custom Bank Cur:")
+                                .foregroundStyle(.secondary)
+                            TextField("e.g. USD", text: Binding(
+                                get: { viewModel.editor.bankCurrency ?? "" },
+                                set: { viewModel.editor.bankCurrency = $0.uppercased() }
+                            ))
+                            .textInputAutocapitalization(.characters)
+                            .multilineTextAlignment(.trailing)
+                        }
                     }
                 }
             }
@@ -172,10 +207,11 @@ struct TransactionDetailSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        
                         viewModel.onDone()
                         dismiss()
                     }
-                    .disabled(viewModel.editor.amount == nil || viewModel.editor.type == nil)
                 }
             }
         }

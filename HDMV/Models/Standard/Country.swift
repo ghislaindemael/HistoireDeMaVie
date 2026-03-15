@@ -20,7 +20,7 @@ final class Country: CatalogueModel {
     var name: String
     var cache: Bool = true
     var archived: Bool = false
-    var syncStatusRaw: String = SyncStatus.local.rawValue
+    var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias Payload = CountryPayload
     typealias DTO = CountryDTO
@@ -39,7 +39,7 @@ final class Country: CatalogueModel {
         rid: Int? = nil,
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.slug = slug
         self.name = name

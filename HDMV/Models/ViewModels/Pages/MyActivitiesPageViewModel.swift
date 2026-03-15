@@ -259,8 +259,13 @@ class MyActivitiesPageViewModel: ObservableObject {
     func endActivityInstance(instance: ActivityInstance){
         guard let context = modelContext else { return }
         do {
-            instance.timeEnd = .now
-            instance.syncStatus = .local
+            let now = Date.now
+            if now > instance.timeStart {
+                instance.timeEnd = now
+            } else {
+                instance.timeEnd = instance.timeStart
+            }
+            instance.markAsModified()
             try context.save()
         } catch {
             print("Failed to end activity.")

@@ -76,7 +76,7 @@ final class Transaction: LogModel {
         payerRid: Int? = nil,
         contextRid: Int? = nil,
         details: String? = nil,
-        syncStatus: SyncStatus = SyncStatus.local,
+        syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
         payer: Person? = nil,
         type: TransactionType? = nil
@@ -97,7 +97,7 @@ final class Transaction: LogModel {
         self.payerRid = payerRid
         self.contextRid = contextRid
         self.details = details
-        self.syncStatusRaw = syncStatusRaw
+        self.syncStatus = syncStatus
         self.parentInstance = parentInstance
         self.payer = payer
         self.type = type
@@ -259,8 +259,8 @@ struct TransactionEditor: EditorProtocol {
         self.myCost = transaction.myCost.map { abs($0) }
         self.realAmount = transaction.realAmount.map { abs($0) }
         self.bankAmount = transaction.bankAmount.map { abs($0) }
-        self.currency = transaction.currency
-        self.bankCurrency = transaction.bankCurrency
+        self.currency = transaction.currency ?? "CHF"
+        self.bankCurrency = transaction.bankCurrency ?? "CHF"
         
         self.isCash = transaction.isCash
         

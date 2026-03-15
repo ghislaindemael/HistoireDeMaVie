@@ -54,7 +54,7 @@ final class Path: CatalogueModel {
         geojsonTrack: GeoJSONLineString? = nil,
         cache: Bool = true,
         archived: Bool = false,
-        syncStatus: SyncStatus = .local
+        syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.name = name

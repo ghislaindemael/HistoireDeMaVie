@@ -17,7 +17,7 @@ final class Vehicle: CatalogueModel {
     
     var cache: Bool = false
     var archived: Bool = false
-    var syncStatusRaw: String = SyncStatus.local.rawValue
+    var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias DTO = VehicleDTO
     typealias Payload = VehiclePayload
@@ -43,7 +43,7 @@ final class Vehicle: CatalogueModel {
          city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
-         syncStatus: SyncStatus = .local) {
+         syncStatus: SyncStatus = .unsynced) {
         self.rid = rid
         self.name = name
         self.typeSlug = typeSlug

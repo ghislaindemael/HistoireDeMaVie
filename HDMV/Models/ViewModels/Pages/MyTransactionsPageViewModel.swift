@@ -40,7 +40,6 @@ class MyTransactionsPageViewModel: ObservableObject {
             let calendar = Calendar.current
             let startOfDay = calendar.startOfDay(for: filterDate)
             guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-            let future = Date.distantFuture
             
             let predicate = #Predicate<Transaction> {
                 $0.timeStart >= startOfDay && $0.timeStart < endOfDay

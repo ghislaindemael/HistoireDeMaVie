@@ -19,7 +19,7 @@ final class Place: CatalogueModel, EditableModel {
 
     var cache: Bool = false
     var archived: Bool = false
-    var syncStatusRaw: String = SyncStatus.local.rawValue
+    var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias DTO = PlaceDTO
     typealias Payload = PlacePayload
@@ -53,7 +53,7 @@ final class Place: CatalogueModel, EditableModel {
          city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
-         syncStatus: SyncStatus = .local) {
+         syncStatus: SyncStatus = .unsynced) {
         self.rid = rid
         self.name = name
         self.cityRid = cityRid

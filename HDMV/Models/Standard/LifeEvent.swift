@@ -49,7 +49,7 @@ final class LifeEvent: LogModel {
          details: String? = nil,
          metrics: LifeEventMetrics? = nil,
          parentInstance: ActivityInstance? = nil,
-         syncStatus: SyncStatus = .local
+         syncStatus: SyncStatus = .unsynced
     ){
         self.rid = rid
         self.type = type ?? .unset

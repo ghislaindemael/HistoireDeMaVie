@@ -83,7 +83,7 @@ class VehiclesPageViewModel: BasePageViewModel {
     func createVehicle() {
         guard let context = modelContext, let type = selectedType else { return }
 
-        let newVehicle = Vehicle(type: type, syncStatus: .local)
+        let newVehicle = Vehicle(type: type, syncStatus: .unsynced)
         context.insert(newVehicle)
         vehicles.append(newVehicle)
         filteredVehicles.append(newVehicle)

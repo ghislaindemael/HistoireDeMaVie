@@ -71,7 +71,7 @@ class PeoplePageViewModel: BasePageViewModel {
             slug: "unset",
             name: "Unset",
             familyName: "Unset",
-            syncStatus: .local)
+            syncStatus: .unsynced)
         context.insert(newPerson)
         do {
             try context.save()

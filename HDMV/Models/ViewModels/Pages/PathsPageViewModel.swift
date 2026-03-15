@@ -75,7 +75,7 @@ class PathsPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         let newPath =
             Path(
-                syncStatus: .local
+                syncStatus: .unsynced
             )
         context.insert(newPath)
         do {
