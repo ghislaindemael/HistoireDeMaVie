@@ -1,11 +1,3 @@
-//
-//  WorkoutImportSheet.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 15.03.2026.
-//
-
-
 import SwiftUI
 import HealthKit
 import SwiftData
@@ -20,29 +12,55 @@ struct WorkoutImportSheet: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                DatePicker("Select Date", selection: $viewModel.filterDate, displayedComponents: .date)
+            List {
+                // MARK: - 1. Date Selector Section
+                Section {
+                    DatePicker(
+                        "Workout Date",
+                        selection: $viewModel.filterDate,
+                        displayedComponents: .date
+                    )
                     .datePickerStyle(.compact)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
+                }
                 
-                List {
+                // MARK: - 2. Workouts List
+                Section {
                     if viewModel.workouts.isEmpty && !viewModel.isLoading {
-                        Text("No workouts found in Apple Health for this date.")
-                            .foregroundStyle(.secondary)
-                            .listRowBackground(Color.clear)
-                    }
-                    
-                    ForEach(viewModel.workouts, id: \.uuid) { workout in
-                        WorkoutRow(
-                            workout: workout,
-                            isImported: viewModel.isImported(workout),
-                            onImport: { viewModel.importWorkout(workout) }
+                        ContentUnavailableView(
+                            "No Workouts",
+                            systemImage: "figure.run.slash",
+                            description: Text("We couldn't find any Apple Health workouts for this date.")
                         )
+                        .listRowBackground(Color.clear)
+                        .padding(.vertical, 20)
+                    } else {
+                        ForEach(viewModel.workouts, id: \.uuid) { workout in
+                            WorkoutRow(
+                                workout: workout,
+                                isImported: viewModel.isImported(workout),
+                                onImport: {
+                                    Task {
+                                        withAnimation(.snappy) {
+                                            viewModel.isLoading = true
+                                        }
+                                        
+                                        await viewModel.importWorkout(workout)
+                                        
+                                        withAnimation(.snappy) {
+                                            viewModel.isLoading = false
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                } header: {
+                    if !viewModel.workouts.isEmpty {
+                        Text("Available to Import")
                     }
                 }
-                .listStyle(.insetGrouped)
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Import Workouts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -58,41 +76,74 @@ struct WorkoutImportSheet: View {
             }
             .overlay {
                 if viewModel.isLoading {
-                    ProgressView()
+                    ProgressView("Syncing with Health...")
                         .padding()
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
     }
 }
 
-// Custom Row for the Workouts
+// MARK: - Polished Row View
 struct WorkoutRow: View {
     let workout: HKWorkout
     let isImported: Bool
     let onImport: () -> Void
     
+    private var durationString: String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: workout.duration) ?? ""
+    }
+    
+    private var workoutIcon: String {
+        switch workout.workoutActivityType {
+            case .running: return "figure.run"
+            case .walking: return "figure.walk"
+            case .cycling: return "figure.outdoor.cycle"
+            case .swimming: return "figure.pool.swim"
+            case .elliptical: return "figure.elliptical"
+            case .hiking: return "figure.hiking"
+            default: return "figure.run.circle.fill"
+        }
+    }
+    
     var body: some View {
-        HStack {
+        HStack(spacing: 16) {
+            
+            Image(systemName: workoutIcon)
+                .font(.title2)
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Color.blue.gradient, in: Circle())
+            
             VStack(alignment: .leading, spacing: 4) {
                 Text(workout.workoutActivityType.name)
                     .font(.headline)
                 
-                HStack {
+                HStack(spacing: 6) {
                     Text(workout.startDate, style: .time)
                     Image(systemName: "arrow.right")
+                        .font(.caption2)
                     Text(workout.endDate, style: .time)
                 }
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 
-                if let distance = workout.totalDistance?.doubleValue(for: .meter()) {
-                    Text("\(String(format: "%.2f", distance / 1000)) km")
-                        .font(.caption)
-                        .bold()
-                        .foregroundStyle(.blue)
+                HStack(spacing: 12) {
+                    Label(durationString, systemImage: "clock")
+                        .foregroundStyle(.primary)
+                    
+                    if let distance = workout.totalDistance?.doubleValue(for: .meter()), distance > 0 {
+                        Label("\(String(format: "%.2f", distance / 1000)) km", systemImage: "location.fill")
+                            .foregroundStyle(.blue)
+                    }
                 }
+                .font(.caption)
+                .bold()
+                .padding(.top, 2)
             }
             
             Spacer()
@@ -101,11 +152,11 @@ struct WorkoutRow: View {
                 Text(isImported ? "Imported" : "Import")
                     .font(.subheadline)
                     .bold()
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(isImported ? Color.gray.opacity(0.2) : Color.blue)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(isImported ? Color(.systemGray5) : Color.blue)
                     .foregroundColor(isImported ? .secondary : .white)
-                    .cornerRadius(20)
+                    .clipShape(Capsule())
             }
             .disabled(isImported)
             .buttonStyle(.plain)

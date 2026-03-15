@@ -7,6 +7,7 @@
 
 import Foundation
 import HealthKit
+import CoreLocation
 
 class HealthKitService {
     
@@ -17,12 +18,11 @@ class HealthKitService {
     
     // MARK: - 1. Authorization
     func requestAuthorization() async throws {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            throw NSError(domain: "HealthKitService", code: 1, userInfo: [NSLocalizedDescriptionKey: "HealthKit is not available on this device."])
-        }
+        guard HKHealthStore.isHealthDataAvailable() else { throw URLError(.cannotConnectToHost) }
         
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.workoutType()
+            HKObjectType.workoutType(),
+            HKSeriesType.workoutRoute()
         ]
         
         try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
@@ -59,6 +59,46 @@ class HealthKitService {
                 continuation.resume(returning: workouts)
             }
             
+            healthStore.execute(query)
+        }
+    }
+    
+    // MARK: - 3. Fetching GPS Route
+    /// Fetches all GPS coordinates for a specific workout
+    func fetchRouteLocations(for workout: HKWorkout) async throws -> [CLLocation] {
+        let routeType = HKSeriesType.workoutRoute()
+        let predicate = HKQuery.predicateForObjects(from: workout)
+        
+        let routes: [HKWorkoutRoute] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(sampleType: routeType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                continuation.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+            healthStore.execute(query)
+        }
+        
+        guard let route = routes.first else { return [] }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            var allLocations: [CLLocation] = []
+            
+            let query = HKWorkoutRouteQuery(route: route) { query, locationsOrNil, done, errorOrNil in
+                if let error = errorOrNil {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                if let locations = locationsOrNil {
+                    allLocations.append(contentsOf: locations)
+                }
+                
+                if done {
+                    continuation.resume(returning: allLocations)
+                }
+            }
             healthStore.execute(query)
         }
     }

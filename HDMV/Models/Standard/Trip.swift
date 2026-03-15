@@ -29,6 +29,7 @@ final class Trip: LogModel {
     
     var pathRid: Int?
     var pathMetricsData: Data?
+    var geojsonTrackData: Data?
     
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -80,6 +81,16 @@ final class Trip: LogModel {
         }
         set {
             pathMetricsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+    
+    var geojsonTrack: GeoJSONLineString? {
+        get {
+            guard let data = geojsonTrackData else { return nil }
+            return try? JSONDecoder().decode(GeoJSONLineString.self, from: data)
+        }
+        set {
+            geojsonTrackData = try? JSONEncoder().encode(newValue)
         }
     }
     
@@ -158,6 +169,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let am_driver: Bool
     let path_id: Int?
     let path_metrics: PathMetrics?
+    let geojson_track: GeoJSONLineString?
     let details: String?
 }
 
@@ -175,6 +187,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let am_driver: Bool
     let path_id: Int?
     let path_metrics: PathMetrics?
+    let geojson_track: GeoJSONLineString?
     let details: String?
     
     init?(from trip: Trip) {
@@ -194,6 +207,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.am_driver = trip.amDriver
         self.path_id = trip.pathRid
         self.path_metrics = trip.pathMetrics
+        self.geojson_track = trip.geojsonTrack
         self.details = trip.details
     }
     
@@ -219,6 +233,7 @@ struct TripEditor: TimeBound, EditorProtocol {
     var pathRid: Int?
     var path: Path?
     var pathMetrics: PathMetrics?
+    var geojsonTrack: GeoJSONLineString?
     
     var amDriver: Bool
     var details: String?
@@ -244,6 +259,7 @@ struct TripEditor: TimeBound, EditorProtocol {
         self.pathRid = trip.pathRid
         self.path = trip.path
         self.pathMetrics = trip.pathMetrics
+        self.geojsonTrack = trip.geojsonTrack
         
         self.amDriver = trip.amDriver
         self.details = trip.details
@@ -261,8 +277,12 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
         
-        if path == nil && pathRid == nil && pathMetrics != nil {
+        if self.path == nil && self.pathRid == nil {
             trip.pathMetrics = self.pathMetrics
+            trip.geojsonTrack = self.geojsonTrack
+        } else {
+            trip.pathMetrics = nil
+            trip.geojsonTrack = nil
         }
         
         trip.markAsModified()

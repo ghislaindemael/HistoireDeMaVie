@@ -70,6 +70,18 @@ struct TripDetailSheet: View {
                     }
                 )
             }
+            .alert("Name Your Route", isPresented: $viewModel.isShowingPathPromotionAlert) {
+                TextField("e.g. Morning Commute", text: $viewModel.newPathName)
+                Button("Cancel", role: .cancel) {
+                    viewModel.newPathName = ""
+                }
+                Button("Save Path") {
+                    viewModel.promoteToReusablePath()
+                }
+                .disabled(viewModel.newPathName.trimmingCharacters(in: .whitespaces).isEmpty)
+            } message: {
+                Text("This will save the GPS track and metrics as a reusable path in your library.")
+            }
         }
     }
     
@@ -85,8 +97,6 @@ struct TripDetailSheet: View {
     }
     
     private var pathSection: some View {
-            
-           
         Section(header: Text("Path & Metrics")) {
             
             PathSelector(
@@ -97,6 +107,7 @@ struct TripDetailSheet: View {
                     viewModel.editor.path = newPath
                     viewModel.editor.pathRid = newRid
                     viewModel.editor.pathMetrics = nil
+                    viewModel.editor.geojsonTrack = nil
                 },
                 onClear: {
                     viewModel.editor.path = nil
@@ -104,7 +115,17 @@ struct TripDetailSheet: View {
                 }
             )
             
-            if viewModel.editor.path == nil || viewModel.editor.pathRid == nil {
+            if viewModel.editor.path == nil && viewModel.editor.pathRid == nil {
+                
+                if viewModel.editor.geojsonTrack != nil {
+                    Button {
+                        // TODO: Open a full-screen map to view the route
+                        print("Show Map View")
+                    } label: {
+                        Label("View GPS Track", systemImage: "map")
+                            .foregroundStyle(.blue)
+                    }
+                }
                 
                 if let metrics = viewModel.editor.pathMetrics {
                     PathMetricsRowView(metrics: metrics)
@@ -112,13 +133,24 @@ struct TripDetailSheet: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             viewModel.isShowingMetricsEditSheet = true
-                            
                         }
                     
+                    Button {
+                        if viewModel.canPromoteToPath {
+                            viewModel.isShowingPathPromotionAlert = true
+                        } else {
+                            print("Cannot promote: Missing Start Place, End Place, or Metrics.")
+                        }
+                    } label: {
+                        Label("Save as Reusable Path", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                            .foregroundStyle(viewModel.canPromoteToPath ? .green : .gray)
+                    }
+                    .disabled(!viewModel.canPromoteToPath)
                     
                     Button(role: .destructive) {
                         withAnimation {
                             viewModel.editor.pathMetrics = nil
+                            viewModel.editor.geojsonTrack = nil
                         }
                     } label: {
                         Label("Delete custom metrics", systemImage: "trash")
@@ -133,7 +165,6 @@ struct TripDetailSheet: View {
                         Label("Add Custom Metrics", systemImage: "plus.circle")
                     }
                 }
-                
             }
         }
     }
