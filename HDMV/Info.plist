@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -15,21 +13,25 @@
 			</array>
 		</dict>
 	</array>
-	<key>SUPABASE_URL</key>
-	<string>$(SUPABASE_URL)</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UTExportedTypeDeclarations</key>
+	<array/>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.topografix.gpx</string>
-			<key>UTTypeDescription</key>
-			<string>GPS Exchange Format</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.xml</string>
 			</array>
+			<key>UTTypeDescription</key>
+			<string>GPS Exchange Format</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.topografix.gpx</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -41,9 +43,5 @@
 			</dict>
 		</dict>
 	</array>
-	<key>UIFileSharingEnabled</key>
-	<true/>
-	<key>UTExportedTypeDeclarations</key>
-	<array/>
 </dict>
 </plist>

@@ -1,26 +1,22 @@
-//
-//  LogPageToolbar.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 01.08.2025.
-//
-
 import SwiftUI
 
-struct LogPageToolbar<MenuContent: View>: ViewModifier {
+struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier {
     let refreshAction: () async -> Void
     let syncAction: () async -> Void
     let primaryAddAction: () -> Void
     
-    let hasExtraOptions: Bool
-    let extraMenuOptions: MenuContent
+    let hasLeadingOptions: Bool
+    let leadingMenuOptions: LeadingContent
+    
+    let hasTrailingOptions: Bool
+    let trailingMenuOptions: TrailingContent
     
     @ObservedObject private var settings = SettingsStore.shared
     
     func body(content: Content) -> some View {
         content
             .toolbar {
-                // MARK: - Leading Menu (Settings/Sync)
+                // MARK: - Leading Menu (Settings/Sync + Extras)
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button(action: { Task { await refreshAction() } }) {
@@ -36,6 +32,12 @@ struct LogPageToolbar<MenuContent: View>: ViewModifier {
                                 Image(systemName: settings.planningMode ? "calendar.badge.minus" : "calendar.badge.plus")
                             }
                         }
+                        
+                        if hasLeadingOptions {
+                            Divider()
+                            leadingMenuOptions
+                        }
+                        
                     } label: {
                         Label("Actions", systemImage: "ellipsis.circle")
                     }
@@ -52,9 +54,9 @@ struct LogPageToolbar<MenuContent: View>: ViewModifier {
                         }
                         .buttonStyle(.plain)
                         
-                        if hasExtraOptions {
+                        if hasTrailingOptions {
                             Menu {
-                                extraMenuOptions
+                                trailingMenuOptions
                             } label: {
                                 Image(systemName: "ellipsis")
                                     .frame(width: 30, height: 40)
@@ -70,25 +72,28 @@ struct LogPageToolbar<MenuContent: View>: ViewModifier {
 
 extension View {
     
-    /// For pages that need the "Long Press" menu (Activities, Agenda)
-    func logPageToolbar<Content: View>(
+    /// For pages that need extra menus. You can provide leading options, trailing options, or both!
+    func logPageToolbar<LeadingContent: View, TrailingContent: View>(
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
         onAdd: @escaping () -> Void,
-        @ViewBuilder menuOptions: @escaping () -> Content
+        @ViewBuilder leadingOptions: @escaping () -> LeadingContent = { EmptyView() },
+        @ViewBuilder trailingOptions: @escaping () -> TrailingContent = { EmptyView() }
     ) -> some View {
         self.modifier(
             LogPageToolbar(
                 refreshAction: refreshAction,
                 syncAction: syncAction,
                 primaryAddAction: onAdd,
-                hasExtraOptions: true,
-                extraMenuOptions: menuOptions()
+                hasLeadingOptions: LeadingContent.self != EmptyView.self,
+                leadingMenuOptions: leadingOptions(),
+                hasTrailingOptions: TrailingContent.self != EmptyView.self,
+                trailingMenuOptions: trailingOptions()
             )
         )
     }
     
-    /// For simple catalogue pages (Paths, People, Interactions)
+    /// For simple catalogue pages (Paths, People, Interactions) that don't need any extra menus
     func simpleLogToolbar(
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
@@ -99,8 +104,10 @@ extension View {
                 refreshAction: refreshAction,
                 syncAction: syncAction,
                 primaryAddAction: onAdd,
-                hasExtraOptions: false,
-                extraMenuOptions: EmptyView()
+                hasLeadingOptions: false,
+                leadingMenuOptions: EmptyView(),
+                hasTrailingOptions: false,
+                trailingMenuOptions: EmptyView()
             )
         )
     }
