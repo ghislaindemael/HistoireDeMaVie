@@ -38,13 +38,13 @@ struct WorkoutImportSheet: View {
                             WorkoutRow(
                                 workout: workout,
                                 isImported: viewModel.isImported(workout),
-                                onImport: {
+                                onImport: { target in
                                     Task {
                                         withAnimation(.snappy) {
                                             viewModel.isLoading = true
                                         }
                                         
-                                        await viewModel.importWorkout(workout)
+                                        await viewModel.importWorkout(workout, as: target)
                                         
                                         withAnimation(.snappy) {
                                             viewModel.isLoading = false
@@ -89,7 +89,7 @@ struct WorkoutImportSheet: View {
 struct WorkoutRow: View {
     let workout: HKWorkout
     let isImported: Bool
-    let onImport: () -> Void
+    let onImport: (ImportTarget) -> Void
     
     private var durationString: String {
         let formatter = DateComponentsFormatter()
@@ -97,7 +97,7 @@ struct WorkoutRow: View {
         formatter.unitsStyle = .abbreviated
         return formatter.string(from: workout.duration) ?? ""
     }
-    
+        
     private var workoutIcon: String {
         switch workout.workoutActivityType {
             case .running: return "figure.run"
@@ -106,6 +106,7 @@ struct WorkoutRow: View {
             case .swimming: return "figure.pool.swim"
             case .elliptical: return "figure.elliptical"
             case .hiking: return "figure.hiking"
+            case .tennis, .tableTennis, .badminton, .squash, .pickleball: return "figure.tennis"
             default: return "figure.run.circle.fill"
         }
     }
@@ -148,18 +149,34 @@ struct WorkoutRow: View {
             
             Spacer()
             
-            Button(action: onImport) {
-                Text(isImported ? "Imported" : "Import")
-                    .font(.subheadline)
-                    .bold()
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(isImported ? Color(.systemGray5) : Color.blue)
-                    .foregroundColor(isImported ? .secondary : .white)
+            if isImported {
+                Text("Imported")
+                    .font(.subheadline).bold()
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(Color(.systemGray5))
+                    .foregroundColor(.secondary)
                     .clipShape(Capsule())
+            } else {
+                Menu {
+                    Button {
+                        onImport(.trip)
+                    } label: {
+                        Label("Import as Trip", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                    }
+                    Button {
+                        onImport(.activity)
+                    } label: {
+                        Label("Import as Activity", systemImage: "square.stack.3d.up.fill")
+                    }
+                } label: {
+                    Text("Import")
+                        .font(.subheadline).bold()
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
+                }
             }
-            .disabled(isImported)
-            .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
     }

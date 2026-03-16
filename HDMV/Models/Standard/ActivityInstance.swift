@@ -11,7 +11,7 @@ import SwiftUI
 
 @Model
 final class ActivityInstance: LogModel {
-        
+    
     @Attribute(.unique) var rid: Int?
     var timeStart: Date
     var timeEnd: Date?
@@ -25,6 +25,9 @@ final class ActivityInstance: LogModel {
     
     var details: String?
     var activity_details: Data?
+    
+    var fitFilePath: String?
+    
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = ActivityInstanceDTO
@@ -57,7 +60,7 @@ final class ActivityInstance: LogModel {
     //MARK: Relationship conformance
     
     // MARK: Init
-
+    
     init(
         rid: Int? = nil,
         timeStart: Date = .now,
@@ -68,6 +71,7 @@ final class ActivityInstance: LogModel {
         parentRid: Int? = nil,
         details: String? = nil,
         activity_details: ActivityDetails? = nil,
+        fitFilePath: String? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
         self.timeStart = timeStart
@@ -76,6 +80,7 @@ final class ActivityInstance: LogModel {
         self.parentInstanceRid = parentRid
         self.details = details
         self.percentage = percentage
+        self.fitFilePath = fitFilePath
         self.syncStatus = syncStatus
         self.decodedActivityDetails = activity_details
     }
@@ -100,6 +105,7 @@ final class ActivityInstance: LogModel {
         self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
+        self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
@@ -112,6 +118,7 @@ final class ActivityInstance: LogModel {
         self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
+        self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
@@ -131,8 +138,8 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let parent_trip_id: Int?
     let details: String?
     let percentage: Int?
+    let fit_file_path: String?
     let activity_details: ActivityDetails?
-
 }
 
 
@@ -148,8 +155,9 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     
     let details: String?
     let percentage: Int
+    let fit_file_path: String?
     let activity_details: ActivityDetails?
-
+    
     init?(from instance: ActivityInstance) {
         guard instance.isValid() else {
             print("-> ActivityInstance \(instance.id) is invalid.")
@@ -163,6 +171,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.parent_trip_id = instance.parentTripRid
         self.details = instance.details
         self.percentage = instance.percentage
+        self.fit_file_path = instance.fitFilePath
         
         if var details = instance.decodedActivityDetails {
             details.removeFields()
@@ -181,6 +190,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
     var activity: Activity?
     var parentInstance: ActivityInstance?
     var details: String?
+    var fitFilePath: String?
     var decodedActivityDetails: ActivityDetails?
     
     typealias Model = ActivityInstance
@@ -194,6 +204,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         self.activity = instance.activity
         self.parentInstance = instance.parentInstance
         self.details = instance.details
+        self.fitFilePath = instance.fitFilePath
         self.decodedActivityDetails = instance.decodedActivityDetails
     }
     
@@ -206,8 +217,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         instance.activityRid = self.activity?.rid
         instance.parentInstance = self.parentInstance
         instance.details = self.details
+        instance.fitFilePath = self.fitFilePath
         instance.decodedActivityDetails = self.decodedActivityDetails
     }
-    
-
 }
