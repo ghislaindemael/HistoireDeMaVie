@@ -149,33 +149,35 @@ struct WorkoutRow: View {
             
             Spacer()
             
-            if isImported {
-                Text("Imported")
-                    .font(.subheadline).bold()
-                    .padding(.horizontal, 16).padding(.vertical, 8)
-                    .background(Color(.systemGray5))
-                    .foregroundColor(.secondary)
-                    .clipShape(Capsule())
-            } else {
-                Menu {
-                    Button {
-                        onImport(.trip)
-                    } label: {
-                        Label("Import as Trip", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                    }
-                    Button {
-                        onImport(.activity)
-                    } label: {
-                        Label("Import as Activity", systemImage: "square.stack.3d.up.fill")
-                    }
+            Menu {
+                Button {
+                    onImport(.trip)
                 } label: {
-                    Text("Import")
-                        .font(.subheadline).bold()
-                        .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
+                    Label("Import as Trip", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
                 }
+                Button {
+                    onImport(.activity)
+                } label: {
+                    Label("Import as Activity", systemImage: "square.stack.3d.up.fill")
+                }
+                
+                if isImported {
+                    Divider()
+                    Text("A similar record already exists.")
+                        .font(.caption)
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(isImported ? "Imported" : "Import")
+                    if isImported {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                    }
+                }
+                .font(.subheadline).bold()
+                .padding(.horizontal, 16).padding(.vertical, 8)
+                .background(isImported ? Color(.systemGray4) : Color.blue, in: Capsule())
+                .foregroundColor(isImported ? .secondary : .white)
             }
         }
         .padding(.vertical, 4)
