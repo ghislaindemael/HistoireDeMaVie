@@ -82,8 +82,12 @@ class WorkoutImportViewModel: ObservableObject {
         let durationStr = durationFormatter.string(from: workout.duration) ?? ""
         
         let totalDistanceMeters = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
-        let activeEnergy = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0
-        
+        var activeEnergy: Double = 0
+        if let energyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned),
+           let energyStat = workout.statistics(for: energyType),
+           let sum = energyStat.sumQuantity() {
+            activeEnergy = sum.doubleValue(for: .kilocalorie())
+        }
         var detailsText = "Imported from Apple Health (\(workout.workoutActivityType.name))\nDuration: \(durationStr)"
         
         if target == .activity {

@@ -45,77 +45,15 @@ struct VaultLinkerSheet: View {
         }
     }
     
+    // MARK: - Main Body
+    
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    HStack {
-                        Image(systemName: "doc.zipper")
-                            .font(.largeTitle)
-                            .foregroundColor(.blue)
-                        VStack(alignment: .leading) {
-                            Text(fileURL.lastPathComponent)
-                                .font(.headline)
-                                .lineLimit(1)
-                            Text("Select a record to attach this file to.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-                
-                Section("Search Date") {
-                    DatePicker(
-                        "Showing records for:",
-                        selection: $targetDate,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.compact)
-                }
-                
-                Section {
-                    Picker("Target", selection: $selectedTarget) {
-                        Text("Trips").tag(VaultLinkTarget.trip)
-                        Text("Activities").tag(VaultLinkTarget.activity)
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
-                
-                Section("\(selectedTarget == .trip ? "Trips" : "Activities") on \(targetDate.formatted(date: .abbreviated, time: .omitted))") {
-                    
-                    if selectedTarget == .trip {
-                        if matchingTrips.isEmpty {
-                            Text("No synced trips found for this date.")
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(matchingTrips) { trip in
-                                Button {
-                                    Task { await attachAndUpload(to: trip) }
-                                } label: {
-                                    TripRowSimple(trip: trip)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    } else {
-                        if matchingActivities.isEmpty {
-                            Text("No synced activities found for this date.")
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(matchingActivities) { activity in
-                                Button {
-                                    Task { await attachAndUpload(toActivity: activity) }
-                                } label: {
-                                    ActivityRowSimple(activity: activity)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
+                headerSection
+                searchDateSection
+                targetPickerSection
+                resultsSection
             }
             .navigationTitle("Vault File")
             .navigationBarTitleDisplayMode(.inline)
@@ -131,22 +69,112 @@ struct VaultLinkerSheet: View {
                 autoDetectFileDate()
             }
             .overlay {
-                if isUploading {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Uploading to Vault...")
-                            .font(.headline)
-                    }
-                    .padding(32)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-                }
+                uploadOverlay
             }
             .alert("Upload Failed", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
             }
+        }
+    }
+    
+    // MARK: - UI Components (Extracted for compilation speed)
+    
+    @ViewBuilder
+    private var headerSection: some View {
+        Section {
+            HStack {
+                Image(systemName: "doc.zipper")
+                    .font(.largeTitle)
+                    .foregroundColor(.blue)
+                VStack(alignment: .leading) {
+                    Text(fileURL.lastPathComponent)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text("Select a record to attach this file to.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+    
+    @ViewBuilder
+    private var searchDateSection: some View {
+        Section("Search Date") {
+            DatePicker(
+                "Showing records for:",
+                selection: $targetDate,
+                displayedComponents: .date
+            )
+            .datePickerStyle(.compact)
+        }
+    }
+    
+    @ViewBuilder
+    private var targetPickerSection: some View {
+        Section {
+            Picker("Target", selection: $selectedTarget) {
+                Text("Trips").tag(VaultLinkTarget.trip)
+                Text("Activities").tag(VaultLinkTarget.activity)
+            }
+            .pickerStyle(.segmented)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+        }
+    }
+    
+    @ViewBuilder
+    private var resultsSection: some View {
+        let sectionTitle = selectedTarget == .trip ? "Trips" : "Activities"
+        let dateString = targetDate.formatted(date: .abbreviated, time: .omitted)
+        
+        Section("\(sectionTitle) on \(dateString)") {
+            if selectedTarget == .trip {
+                if matchingTrips.isEmpty {
+                    Text("No synced trips found for this date.")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(matchingTrips) { trip in
+                        Button {
+                            Task { await attachAndUpload(to: trip) }
+                        } label: {
+                            TripRowView(trip: trip)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            } else {
+                if matchingActivities.isEmpty {
+                    Text("No synced activities found for this date.")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(matchingActivities) { activity in
+                        Button {
+                            Task { await attachAndUpload(toActivity: activity) }
+                        } label: {
+                            ActivityInstanceRowView(instance: activity)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var uploadOverlay: some View {
+        if isUploading {
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                Text("Uploading to Vault...")
+                    .font(.headline)
+            }
+            .padding(32)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         }
     }
     
@@ -239,39 +267,6 @@ struct VaultLinkerSheet: View {
             
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-}
-
-// MARK: - Simple Row Helpers
-struct TripRowSimple: View {
-    let trip: Trip
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(trip.timeStart, style: .time).font(.headline)
-                if let details = trip.details {
-                    Text(details).font(.caption).lineLimit(1).foregroundColor(.secondary)
-                }
-            }
-            Spacer()
-            if trip.fitFilePath != nil { Image(systemName: "checkmark.icloud.fill").foregroundColor(.green) }
-        }
-    }
-}
-
-struct ActivityRowSimple: View {
-    let activity: ActivityInstance
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(activity.timeStart, style: .time).font(.headline)
-                if let details = activity.details {
-                    Text(details).font(.caption).lineLimit(1).foregroundColor(.secondary)
-                }
-            }
-            Spacer()
-            if activity.fitFilePath != nil { Image(systemName: "checkmark.icloud.fill").foregroundColor(.green) }
         }
     }
 }
