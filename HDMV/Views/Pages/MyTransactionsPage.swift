@@ -38,17 +38,15 @@ struct MyTransactionsPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.refreshFromServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    onAdd: { viewModel.createTransaction() }
-                ) {
-                    Section("Advanced") {
-                        Button(action: {
-                            print("Import Bank CSV - Coming Soon")
-                        }) {
-                            Label("Import Bank Data", systemImage: "arrow.down.doc.fill")
+                    onAdd: { viewModel.createTransaction() },
+                    trailingOptions: {
+                        Section("Advanced") {
+                            Button(action: { print("Import Bank CSV") }) {
+                                Label("Import Bank Data", systemImage: "arrow.down.doc.fill")
+                            }
                         }
-                        .disabled(true)
                     }
-                }
+                )
                 .onChange(of: viewModel.filterDate) {
                     viewModel.fetchTransactions()
                     appNavigator.selectedDate = viewModel.filterDate

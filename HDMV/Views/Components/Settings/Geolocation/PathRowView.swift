@@ -10,28 +10,27 @@ import SwiftUI
 
 struct PathRowView: View {
     let path: Path
-    let showTitle: Bool
+    let showSyncStatus: Bool
     let bubble: Bool
     
-    init(path: Path, showTitle: Bool = false, bubble: Bool = false) {
+    init(path: Path, showSyncStatus: Bool = false, bubble: Bool = false) {
         self.path = path
-        self.showTitle = showTitle
+        self.showSyncStatus = showSyncStatus
         self.bubble = bubble
     }
     
     
     var body: some View {
         VStack (alignment: .leading) {
-            if showTitle {
-                HStack {
-                    if let name = path.name {
-                        Text(name)
-                    } else {
-                        Text("Name unset")
-                            .bold()
-                            .foregroundStyle(.red)
-                    }
-                    
+            HStack {
+                if let name = path.name {
+                    Text(name)
+                } else {
+                    Text("Name unset")
+                        .bold()
+                        .foregroundStyle(.red)
+                }
+                if(showSyncStatus){
                     Spacer()
                     SyncStatusIndicator(status: path.syncStatus)
                 }

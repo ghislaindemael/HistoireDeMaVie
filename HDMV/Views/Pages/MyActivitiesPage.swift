@@ -19,6 +19,7 @@ struct MyActivitiesPage: View {
     @State private var tripToEdit: Trip?
     @State private var interactionToEdit: Interaction?
     @State private var transactionToEdit: Transaction?
+    @State private var showingImporter = false
     
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
@@ -31,6 +32,7 @@ struct MyActivitiesPage: View {
         viewModel.fetchDailyData()
     }
     
+    // MARK: - Main Body (Kept lightweight for the compiler)
     var body: some View {
         NavigationStack {
             mainListView
@@ -39,7 +41,14 @@ struct MyActivitiesPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.syncWithServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    onAdd: { viewModel.createActivityInstance() }
+                    onAdd: { viewModel.createActivityInstance() },
+                    leadingOptions: {
+                        Section("Integrations") {
+                            Button(action: { showingImporter = true }) {
+                                Label("Apple Health", systemImage: "heart.text.square.fill")
+                            }
+                        }
+                    }
                 ) {
                     Section("Create New") {
                         Button(action: { viewModel.createTransaction() }) {
@@ -50,50 +59,15 @@ struct MyActivitiesPage: View {
                         }
                     }
                 }
-                .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.filterDate) {
-                    viewModel.fetchDailyData()
-                    appNavigator.selectedDate = viewModel.filterDate
-                }
-                .onChange(of: viewModel.filterActivity) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
-                .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
-                .sheet(item: $instanceToEdit,
-                       onDismiss: {viewModel.fetchDailyData()}
-                ) { instance in
-                    ActivityInstanceDetailSheet(
-                        instance: instance,
-                        modelContext: modelContext,
-                        availableTrips: viewModel.trips,
-                        availableInteractions: viewModel.interactions
-                    )
-                }
-                .sheet(item: $tripToEdit) { trip in
-                    TripDetailSheet(
-                        trip: trip,
-                        modelContext: modelContext
-                    )
-                }
-                .sheet(item: $interactionToEdit) { interaction in
-                    InteractionDetailSheet(
-                        interaction: interaction,
-                        modelContext: modelContext
-                    )
-                }
-                .sheet(item: $transactionToEdit) { transaction in
-                    TransactionDetailSheet(
-                        transaction: transaction,
-                        modelContext: modelContext
-                    )
-                }
         }
         .environmentObject(viewModel)
     }
     
+    // MARK: - View Components (Sheets & Observers attached here to split compile time)
     private var mainListView: some View {
         VStack(spacing: 12) {
             TitleLabel(title: "My Activities")
-
+            
             FilterControlView(viewModel: viewModel)
             
             ScrollView {
@@ -111,8 +85,43 @@ struct MyActivitiesPage: View {
             }
             .padding(8)
         }
+        .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
+        .onChange(of: viewModel.filterDate) {
+            viewModel.fetchDailyData()
+            appNavigator.selectedDate = viewModel.filterDate
+        }
+        .onChange(of: viewModel.filterActivity) { viewModel.fetchDailyData() }
+        .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
+        .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
+        
+        .sheet(item: $instanceToEdit, onDismiss: { viewModel.fetchDailyData() }) { instance in
+            ActivityInstanceDetailSheet(
+                instance: instance,
+                modelContext: modelContext,
+                availableTrips: viewModel.trips,
+                availableInteractions: viewModel.interactions
+            )
+        }
+        .sheet(item: $tripToEdit) { trip in
+            TripDetailSheet(
+                trip: trip,
+                modelContext: modelContext
+            )
+        }
+        .sheet(item: $interactionToEdit) { interaction in
+            InteractionDetailSheet(
+                interaction: interaction,
+                modelContext: modelContext
+            )
+        }
+        .sheet(item: $transactionToEdit) { transaction in
+            TransactionDetailSheet(
+                transaction: transaction,
+                modelContext: modelContext
+            )
+        }
+        .sheet(isPresented: $showingImporter) {
+            WorkoutImportSheet(modelContext: modelContext)
+        }
     }
-    
-    
 }
-

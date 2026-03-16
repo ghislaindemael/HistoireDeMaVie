@@ -39,14 +39,15 @@ struct MyAgendaPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.refreshFromServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    onAdd: { viewModel.createLifeEvent() }
-                ) {
-                    Section("Create New") {
-                        Button(action: { viewModel.createAgendaEntry() }) {
-                            Label("Agenda Entry", systemImage: "book.pages")
+                    onAdd: { viewModel.createLifeEvent() },
+                    trailingOptions: {
+                        Section("Create New") {
+                            Button(action: { viewModel.createAgendaEntry() }) {
+                                Label("Agenda Entry", systemImage: "book.pages")
+                            }
                         }
                     }
-                }
+                )
                 .syncingOverlay(viewModel.isLoading)
                 .onAppear(perform: onAppear)
                 .onChange(of: viewModel.filterDate) {

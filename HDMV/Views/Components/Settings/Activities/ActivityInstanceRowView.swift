@@ -17,10 +17,10 @@ struct ActivityInstanceRowView: View {
     
     init(
         instance: ActivityInstance,
-        selectedDate: Date,
+        selectedDate: Date? = nil,
     ) {
         self.instance = instance
-        self.selectedDate = selectedDate
+        self.selectedDate = selectedDate ?? instance.timeStart
     }
     
     

@@ -88,7 +88,7 @@ struct PathsPage: View {
                 Button(action: {
                     pathToEdit = path
                 }) {
-                    PathRowView(path: path, showTitle: true)
+                    PathRowView(path: path, showSyncStatus:true)
                     
                 }
                 .buttonStyle(.plain)
