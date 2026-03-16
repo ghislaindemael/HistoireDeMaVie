@@ -5,14 +5,13 @@
 //  Created by Ghislain Demael on 22.06.2025.
 //
 
-
 import Foundation
 import SwiftData
 
 // MARK: - SwiftData Model
 @Model
 final class Trip: LogModel {
-        
+    
     var rid: Int?
     var timeStart: Date = Date()
     var timeEnd: Date?
@@ -24,12 +23,14 @@ final class Trip: LogModel {
     var placeStartRid: Int?
     var placeEndRid: Int?
     var vehicleRid: Int?
-
+    
     var amDriver: Bool = false
     
     var pathRid: Int?
     var pathMetricsData: Data?
     var geojsonTrackData: Data?
+    
+    var fitFilePath: String?
     
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -95,7 +96,7 @@ final class Trip: LogModel {
     }
     
     // MARK: Init
-
+    
     init(rid: Int? = nil,
          timeStart: Date = .now,
          timeEnd: Date? = nil,
@@ -105,6 +106,7 @@ final class Trip: LogModel {
          vehicle: Vehicle? = nil,
          amDriver: Bool = false,
          path: Path? = nil,
+         fitFilePath: String? = nil,
          details: String? = nil,
          syncStatus: SyncStatus = .unsynced)
     {
@@ -114,6 +116,7 @@ final class Trip: LogModel {
         self.parentInstance = parentInstance
         self.parentInstanceRid = parentInstance?.rid
         self.amDriver = amDriver
+        self.fitFilePath = fitFilePath
         self.details = details
         self.syncStatus = syncStatus
     }
@@ -129,6 +132,7 @@ final class Trip: LogModel {
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
+        self.fitFilePath = dto.fit_file_path
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -145,6 +149,7 @@ final class Trip: LogModel {
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
+        self.fitFilePath = dto.fit_file_path
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -170,12 +175,13 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let path_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
+    let fit_file_path: String?
     let details: String?
 }
 
 
 struct TripPayload: Codable, InitializableWithModel {
-
+    
     typealias Model = Trip
     
     let time_start: Date
@@ -188,6 +194,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let path_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
+    let fit_file_path: String?
     let details: String?
     
     init?(from trip: Trip) {
@@ -208,6 +215,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.path_id = trip.pathRid
         self.path_metrics = trip.pathMetrics
         self.geojson_track = trip.geojsonTrack
+        self.fit_file_path = trip.fitFilePath
         self.details = trip.details
     }
     
@@ -235,6 +243,8 @@ struct TripEditor: TimeBound, EditorProtocol {
     var pathMetrics: PathMetrics?
     var geojsonTrack: GeoJSONLineString?
     
+    var fitFilePath: String?
+    
     var amDriver: Bool
     var details: String?
     
@@ -261,6 +271,8 @@ struct TripEditor: TimeBound, EditorProtocol {
         self.pathMetrics = trip.pathMetrics
         self.geojsonTrack = trip.geojsonTrack
         
+        self.fitFilePath = trip.fitFilePath
+        
         self.amDriver = trip.amDriver
         self.details = trip.details
     }
@@ -270,6 +282,7 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.timeEnd = timeEnd
         trip.amDriver = amDriver
         trip.details = details
+        trip.fitFilePath = fitFilePath
         
         trip.setParentInstance(parentInstance, fallbackRid: parentInstanceRid)
         trip.setPlaceStart(placeStart, fallbackRid: placeStartRid)
@@ -277,13 +290,8 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
         
-        if self.path == nil && self.pathRid == nil {
-            trip.pathMetrics = self.pathMetrics
-            trip.geojsonTrack = self.geojsonTrack
-        } else {
-            trip.pathMetrics = nil
-            trip.geojsonTrack = nil
-        }
+        trip.pathMetrics = self.pathMetrics
+        trip.geojsonTrack = self.geojsonTrack
         
         trip.markAsModified()
     }

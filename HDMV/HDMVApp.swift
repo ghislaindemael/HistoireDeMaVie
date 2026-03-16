@@ -39,14 +39,24 @@ struct HDMVApp: App {
     
     @StateObject var settings = SettingsStore.shared
     @StateObject var appNavigator = AppNavigator.shared
+    @StateObject private var vaultService = VaultImportService.shared
 
     var body: some Scene {
         WindowGroup {
             AppView()
                 .onAppear {}
+                .onOpenURL { url in
+                    vaultService.handleIncomingURL(url)
+                }
+                .sheet(isPresented: $vaultService.isShowingVaultLinker) {
+                    if let fileURL = vaultService.incomingFileURL {
+                        VaultLinkerSheet(fileURL: fileURL)
+                    }
+                }
         }
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)
         .environmentObject(appNavigator)
+        
     }
 }
