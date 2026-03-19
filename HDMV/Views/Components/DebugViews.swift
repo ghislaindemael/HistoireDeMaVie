@@ -392,6 +392,8 @@ extension Trip: DebugViewable {
                 LabeledContent("Place End RID", value: self.placeEndRid?.description ?? "nil")
                 
                 LabeledContent("Path RID", value: self.pathRid?.description ?? "nil")
+                
+                LabeledContent("GeoJSON track proints", value: self.geojsonTrack?.coordinates.count.description ?? "nil")
             }
             
             // MARK: - Details

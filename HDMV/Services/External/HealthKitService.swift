@@ -20,45 +20,42 @@ class HealthKitService {
     func requestAuthorization() async throws {
         guard HKHealthStore.isHealthDataAvailable() else { throw URLError(.cannotConnectToHost) }
         
-        let typesToRead: Set<HKObjectType> = [
-            HKObjectType.workoutType(),
-            HKSeriesType.workoutRoute()
-        ]
-        
+        let typesToRead: Set = [
+                HKObjectType.workoutType(),
+                HKSeriesType.workoutRoute(),
+                HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
+                HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
+                HKObjectType.quantityType(forIdentifier: .distanceCycling)!
+            ]
+            
         try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
+        
     }
     
     // MARK: - 2. Fetching Workouts
     /// Fetches all workouts that overlap with the given date
     func fetchWorkouts(for date: Date) async throws -> [HKWorkout] {
         let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return [] }
+        let start = calendar.startOfDay(for: date)
+        let end = calendar.date(byAdding: .day, value: 1, to: start)
         
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
         
         return try await withCheckedThrowingContinuation { continuation in
             let query = HKSampleQuery(
-                sampleType: HKObjectType.workoutType(),
+                sampleType: .workoutType(),
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [sortDescriptor]
-            ) { query, samples, error in
-                
+            ) { _, samples, error in
                 if let error = error {
                     continuation.resume(throwing: error)
-                    return
+                } else {
+                    continuation.resume(returning: samples as? [HKWorkout] ?? [])
                 }
-                
-                guard let workouts = samples as? [HKWorkout] else {
-                    continuation.resume(returning: [])
-                    return
-                }
-                
-                continuation.resume(returning: workouts)
             }
-            
             healthStore.execute(query)
         }
     }

@@ -22,7 +22,7 @@ struct WorkoutImportSheet: View {
                     )
                     .datePickerStyle(.compact)
                 }
-                
+
                 // MARK: - 2. Workouts List
                 Section {
                     if viewModel.workouts.isEmpty && !viewModel.isLoading {
@@ -68,11 +68,9 @@ struct WorkoutImportSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .onChange(of: viewModel.filterDate) {
-                Task { await viewModel.loadData() }
-            }
-            .onAppear {
-                Task { await viewModel.loadData() }
+            .task(id: viewModel.filterDate) {
+                print("DEBUG: Loading data for \(viewModel.filterDate)")
+                await viewModel.loadData()
             }
             .overlay {
                 if viewModel.isLoading {

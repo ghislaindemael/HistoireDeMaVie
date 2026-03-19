@@ -5,14 +5,15 @@
 //  Created by Ghislain Demael on 08.10.2025.
 //
 
-
 import Foundation
 import CoreLocation
 import CoreGPX
 
 class GPXParserService {
     
-    /// Parses a GPX file and returns distance/elevation metrics + GeoJSON coordinates
+    static let shared = GPXParserService()
+    
+    /// Parses a GPX file and returns distance/elevation metrics, GeoJSON coordinates, and timestamps.
     func parse(url: URL) -> ParsedGPXData? {
         guard let gpx = GPXParser(withURL: url)?.parsedData() else {
             print("❌ CoreGPX failed to parse the file at \(url.path)")
@@ -26,6 +27,10 @@ class GPXParserService {
         var totalLoss: Double = 0.0
         var geojsonCoords: [[Double]] = []
         
+        let allPoints = gpx.tracks.flatMap { $0.segments }.flatMap { $0.points }
+        let timeStart = gpx.metadata?.time ?? allPoints.first?.time ?? .now
+        let timeEnd = allPoints.last?.time ?? timeStart
+        
         for track in gpx.tracks {
             for segment in track.segments {
                 let metrics = calculateMetrics(for: segment.points)
@@ -37,15 +42,20 @@ class GPXParserService {
             }
         }
         
-        let metrics =
-            PathMetrics(
-                distance: totalDistance,
-                elevationGain: totalGain,
-                elevationLoss: totalLoss
-            )
+        let metrics = PathMetrics(
+            distance: totalDistance,
+            elevationGain: totalGain,
+            elevationLoss: totalLoss
+        )
+        
         let geojsonTrack = GeoJSONLineString(coordinates: geojsonCoords)
         
-        return ParsedGPXData(metrics: metrics, geojsonCoordinates: geojsonTrack)
+        return ParsedGPXData(
+            metrics: metrics,
+            geojsonCoordinates: geojsonTrack,
+            timeStart: timeStart,
+            timeEnd: timeEnd
+        )
     }
     
     // MARK: - Helpers
@@ -88,7 +98,10 @@ class GPXParserService {
         var coords: [[Double]] = []
         for point in points {
             if let lat = point.latitude, let lon = point.longitude {
-                coords.append([lon, lat]) // GeoJSON format
+                let alt = point.elevation ?? 0.0
+                let timestamp = point.time?.timeIntervalSince1970 ?? 0.0
+                
+                coords.append([lon, lat, alt, timestamp])
             }
         }
         return coords

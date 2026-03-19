@@ -31,6 +31,8 @@ struct VaultLinkerSheet: View {
     @State private var errorMessage: String?
     @State private var targetDate: Date = .now
     
+    // MARK: - Computed Filters
+    
     private var matchingTrips: [Trip] {
         let calendar = Calendar.current
         return allTrips.filter { trip in
@@ -44,6 +46,12 @@ struct VaultLinkerSheet: View {
             activity.rid != nil && calendar.isDate(activity.timeStart, inSameDayAs: targetDate)
         }
     }
+    
+    private var unlinkedTrips: [Trip] { matchingTrips.filter { $0.fitFilePath == nil } }
+    private var linkedTrips: [Trip] { matchingTrips.filter { $0.fitFilePath != nil } }
+    
+    private var unlinkedActivities: [ActivityInstance] { matchingActivities.filter { $0.fitFilePath == nil } }
+    private var linkedActivities: [ActivityInstance] { matchingActivities.filter { $0.fitFilePath != nil } }
     
     // MARK: - Main Body
     
@@ -128,40 +136,71 @@ struct VaultLinkerSheet: View {
     
     @ViewBuilder
     private var resultsSection: some View {
-        let sectionTitle = selectedTarget == .trip ? "Trips" : "Activities"
-        let dateString = targetDate.formatted(date: .abbreviated, time: .omitted)
-        
-        Section("\(sectionTitle) on \(dateString)") {
-            if selectedTarget == .trip {
-                if matchingTrips.isEmpty {
+        if selectedTarget == .trip {
+            if matchingTrips.isEmpty {
+                Section {
                     Text("No synced trips found for this date.")
                         .foregroundColor(.secondary)
-                } else {
-                    ForEach(matchingTrips) { trip in
-                        Button {
-                            Task { await attachAndUpload(to: trip) }
-                        } label: {
-                            TripRowView(trip: trip)
-                        }
-                        .buttonStyle(.plain)
-                    }
                 }
             } else {
-                if matchingActivities.isEmpty {
+                if !unlinkedTrips.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedTrips) { trip in
+                            tripRow(for: trip)
+                        }
+                    }
+                }
+                if !linkedTrips.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedTrips) { trip in
+                            tripRow(for: trip)
+                        }
+                    }
+                }
+            }
+        } else {
+            if matchingActivities.isEmpty {
+                Section {
                     Text("No synced activities found for this date.")
                         .foregroundColor(.secondary)
-                } else {
-                    ForEach(matchingActivities) { activity in
-                        Button {
-                            Task { await attachAndUpload(toActivity: activity) }
-                        } label: {
-                            ActivityInstanceRowView(instance: activity)
+                }
+            } else {
+                if !unlinkedActivities.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedActivities) { activity in
+                            activityRow(for: activity)
                         }
-                        .buttonStyle(.plain)
+                    }
+                }
+                if !linkedActivities.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedActivities) { activity in
+                            activityRow(for: activity)
+                        }
                     }
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func tripRow(for trip: Trip) -> some View {
+        Button {
+            Task { await attachAndUpload(to: trip) }
+        } label: {
+            TripRowView(trip: trip)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    @ViewBuilder
+    private func activityRow(for activity: ActivityInstance) -> some View {
+        Button {
+            Task { await attachAndUpload(toActivity: activity) }
+        } label: {
+            ActivityInstanceRowView(instance: activity)
+        }
+        .buttonStyle(.plain)
     }
     
     @ViewBuilder

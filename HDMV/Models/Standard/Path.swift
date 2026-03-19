@@ -19,6 +19,7 @@ final class Path: CatalogueModel {
     
     var metrics: PathMetrics = PathMetrics()
     var geojsonTrack: GeoJSONLineString?
+    var gpxFilePath: String?
     
     var cache: Bool = false
     var archived: Bool = false
@@ -52,6 +53,7 @@ final class Path: CatalogueModel {
         placeEnd: Place? = nil,
         metrics: PathMetrics = PathMetrics(),
         geojsonTrack: GeoJSONLineString? = nil,
+        gpxFilePath: String? = nil,
         cache: Bool = true,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
@@ -63,6 +65,7 @@ final class Path: CatalogueModel {
         self.placeEnd = placeEnd
         self.metrics = metrics
         self.geojsonTrack = geojsonTrack
+        self.gpxFilePath = gpxFilePath
         self.cache = cache
         self.archived = archived
         self.syncStatus = syncStatus
@@ -77,6 +80,7 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
+        self.gpxFilePath = dto.gpx_file_path
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -90,6 +94,7 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
+        self.gpxFilePath = dto.gpx_file_path
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -118,6 +123,7 @@ struct PathDTO: Codable, Sendable, Identifiable {
     var distance: Double?
     var metrics: PathMetrics
     var geojson_track: GeoJSONLineString?
+    var gpx_file_path: String?
     var path_ids: [Int]?
     var archived: Bool
 }
@@ -133,6 +139,7 @@ struct PathPayload: Codable, InitializableWithModel {
     var distance: Double?
     var metrics: PathMetrics?
     var geojson_track: GeoJSONLineString?
+    var gpx_file_path: String?
     var path_ids: [Int]?
     var archived: Bool
     
@@ -148,6 +155,7 @@ struct PathPayload: Codable, InitializableWithModel {
         self.place_end_id = endId
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
+        self.gpx_file_path = path.gpxFilePath
         self.archived = path.archived
     }
 }
@@ -165,6 +173,7 @@ struct PathEditor : EditorProtocol {
     var distance: Double?
     var metrics: PathMetrics = PathMetrics()
     var geojson_track: GeoJSONLineString?
+    var gpxFilePath: String?
     var path_ids: [Int]?
     var cache: Bool
     var archived: Bool
@@ -180,6 +189,7 @@ struct PathEditor : EditorProtocol {
         self.placeEndRid = path.placeEndRid
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
+        self.gpxFilePath = path.gpxFilePath
         self.cache = path.cache
         self.archived = path.archived
     }
@@ -191,6 +201,7 @@ struct PathEditor : EditorProtocol {
         path.setPlaceEnd(self.placeEnd, fallbackRid: self.placeEndRid)
         path.metrics = metrics
         path.geojsonTrack = geojson_track
+        path.gpxFilePath = gpxFilePath
         path.cache = cache
         path.archived = archived
     }
