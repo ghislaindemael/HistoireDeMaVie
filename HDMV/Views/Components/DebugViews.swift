@@ -172,7 +172,7 @@ extension Path: DebugViewable {
                     .bold()
                     .foregroundStyle(.orange)
             }
-            Text("Name: \(name ?? "Unset")")
+            NamedStringDisplayView(name: "Name", value: name)
             Text("Details: \(details ?? "Unset")")
             Text("Start place id: \(placeStart?.rid ?? -1)")
             Text("End place id: \(placeEnd?.rid ?? -1)")
