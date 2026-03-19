@@ -290,8 +290,8 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
         
-        trip.pathMetrics = self.pathMetrics
-        trip.geojsonTrack = self.geojsonTrack
+        trip.pathMetrics = pathMetrics
+        trip.geojsonTrack = geojsonTrack
         
         trip.markAsModified()
     }

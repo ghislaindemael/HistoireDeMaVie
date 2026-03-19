@@ -19,39 +19,11 @@ struct VaultLinkerSheet: View {
     
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
-    @Query(sort: \Trip.timeStart, order: .reverse)
-    private var allTrips: [Trip]
-    
-    @Query(sort: \ActivityInstance.timeStart, order: .reverse)
-    private var allActivities: [ActivityInstance]
-    
+        
     @State private var selectedTarget: VaultLinkTarget = .trip
     @State private var isUploading = false
     @State private var errorMessage: String?
     @State private var targetDate: Date = .now
-    
-    // MARK: - Computed Filters
-    
-    private var matchingTrips: [Trip] {
-        let calendar = Calendar.current
-        return allTrips.filter { trip in
-            trip.rid != nil && calendar.isDate(trip.timeStart, inSameDayAs: targetDate)
-        }
-    }
-    
-    private var matchingActivities: [ActivityInstance] {
-        let calendar = Calendar.current
-        return allActivities.filter { activity in
-            activity.rid != nil && calendar.isDate(activity.timeStart, inSameDayAs: targetDate)
-        }
-    }
-    
-    private var unlinkedTrips: [Trip] { matchingTrips.filter { $0.fitFilePath == nil } }
-    private var linkedTrips: [Trip] { matchingTrips.filter { $0.fitFilePath != nil } }
-    
-    private var unlinkedActivities: [ActivityInstance] { matchingActivities.filter { $0.fitFilePath == nil } }
-    private var linkedActivities: [ActivityInstance] { matchingActivities.filter { $0.fitFilePath != nil } }
     
     // MARK: - Main Body
     
@@ -61,7 +33,17 @@ struct VaultLinkerSheet: View {
                 headerSection
                 searchDateSection
                 targetPickerSection
-                resultsSection
+                
+                VaultFilteredResultsView(
+                    targetDate: targetDate,
+                    selectedTarget: selectedTarget,
+                    onTripSelected: { trip in
+                        Task { await attachAndUpload(to: trip) }
+                    },
+                    onActivitySelected: { activity in
+                        Task { await attachAndUpload(toActivity: activity) }
+                    }
+                )
             }
             .navigationTitle("Vault File")
             .navigationBarTitleDisplayMode(.inline)
@@ -87,7 +69,7 @@ struct VaultLinkerSheet: View {
         }
     }
     
-    // MARK: - UI Components (Extracted for compilation speed)
+    // MARK: - UI Components
     
     @ViewBuilder
     private var headerSection: some View {
@@ -135,75 +117,6 @@ struct VaultLinkerSheet: View {
     }
     
     @ViewBuilder
-    private var resultsSection: some View {
-        if selectedTarget == .trip {
-            if matchingTrips.isEmpty {
-                Section {
-                    Text("No synced trips found for this date.")
-                        .foregroundColor(.secondary)
-                }
-            } else {
-                if !unlinkedTrips.isEmpty {
-                    Section("Needs File") {
-                        ForEach(unlinkedTrips) { trip in
-                            tripRow(for: trip)
-                        }
-                    }
-                }
-                if !linkedTrips.isEmpty {
-                    Section("Already Vaulted") {
-                        ForEach(linkedTrips) { trip in
-                            tripRow(for: trip)
-                        }
-                    }
-                }
-            }
-        } else {
-            if matchingActivities.isEmpty {
-                Section {
-                    Text("No synced activities found for this date.")
-                        .foregroundColor(.secondary)
-                }
-            } else {
-                if !unlinkedActivities.isEmpty {
-                    Section("Needs File") {
-                        ForEach(unlinkedActivities) { activity in
-                            activityRow(for: activity)
-                        }
-                    }
-                }
-                if !linkedActivities.isEmpty {
-                    Section("Already Vaulted") {
-                        ForEach(linkedActivities) { activity in
-                            activityRow(for: activity)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func tripRow(for trip: Trip) -> some View {
-        Button {
-            Task { await attachAndUpload(to: trip) }
-        } label: {
-            TripRowView(trip: trip)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    @ViewBuilder
-    private func activityRow(for activity: ActivityInstance) -> some View {
-        Button {
-            Task { await attachAndUpload(toActivity: activity) }
-        } label: {
-            ActivityInstanceRowView(instance: activity)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    @ViewBuilder
     private var uploadOverlay: some View {
         if isUploading {
             VStack(spacing: 16) {
@@ -225,7 +138,6 @@ struct VaultLinkerSheet: View {
             
             if let creationDate = attributes[.creationDate] as? Date {
                 self.targetDate = creationDate
-                print("Auto-detected file date: \(creationDate)")
             } else if let modDate = attributes[.modificationDate] as? Date {
                 self.targetDate = modDate
             }
@@ -259,7 +171,7 @@ struct VaultLinkerSheet: View {
             try await client.storage.from("vault").upload(
                 storagePath,
                 data: fileData,
-                options: FileOptions(contentType: "application/octet-stream")
+                options: FileOptions(contentType: "application/octet-stream", upsert: true)
             )
             
             trip.fitFilePath = storagePath
@@ -296,7 +208,7 @@ struct VaultLinkerSheet: View {
             try await client.storage.from("vault").upload(
                 storagePath,
                 data: fileData,
-                options: FileOptions(contentType: "application/octet-stream")
+                options: FileOptions(contentType: "application/octet-stream", upsert: true)
             )
             
             activity.fitFilePath = storagePath
@@ -306,6 +218,92 @@ struct VaultLinkerSheet: View {
             
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+}
+
+// MARK: - Query Subview
+
+struct VaultFilteredResultsView: View {
+    var selectedTarget: VaultLinkTarget
+    
+    @Query private var trips: [Trip]
+    @Query private var activities: [ActivityInstance]
+    
+    let onTripSelected: (Trip) -> Void
+    let onActivitySelected: (ActivityInstance) -> Void
+    
+    init(targetDate: Date, selectedTarget: VaultLinkTarget, onTripSelected: @escaping (Trip) -> Void, onActivitySelected: @escaping (ActivityInstance) -> Void) {
+        self.selectedTarget = selectedTarget
+        self.onTripSelected = onTripSelected
+        self.onActivitySelected = onActivitySelected
+        
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: targetDate)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        let tripPredicate = #Predicate<Trip> { $0.timeStart >= startOfDay && $0.timeStart < endOfDay && $0.rid != nil }
+        _trips = Query(filter: tripPredicate, sort: \.timeStart, order: .reverse)
+        
+        let activityPredicate = #Predicate<ActivityInstance> { $0.timeStart >= startOfDay && $0.timeStart < endOfDay && $0.rid != nil }
+        _activities = Query(filter: activityPredicate, sort: \.timeStart, order: .reverse)
+    }
+    
+    private var unlinkedTrips: [Trip] { trips.filter { $0.fitFilePath == nil } }
+    private var linkedTrips: [Trip] { trips.filter { $0.fitFilePath != nil } }
+    
+    private var unlinkedActivities: [ActivityInstance] { activities.filter { $0.fitFilePath == nil } }
+    private var linkedActivities: [ActivityInstance] { activities.filter { $0.fitFilePath != nil } }
+    
+    var body: some View {
+        if selectedTarget == .trip {
+            if trips.isEmpty {
+                Section {
+                    Text("No synced trips found for this date.")
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                if !unlinkedTrips.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedTrips) { trip in
+                            Button { onTripSelected(trip) } label: { TripRowView(trip: trip) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !linkedTrips.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedTrips) { trip in
+                            Button { onTripSelected(trip) } label: { TripRowView(trip: trip) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        } else {
+            if activities.isEmpty {
+                Section {
+                    Text("No synced activities found for this date.")
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                if !unlinkedActivities.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedActivities) { act in
+                            Button { onActivitySelected(act) } label: { ActivityInstanceRowView(instance: act) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !linkedActivities.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedActivities) { act in
+                            Button { onActivitySelected(act) } label: { ActivityInstanceRowView(instance: act) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
         }
     }
 }

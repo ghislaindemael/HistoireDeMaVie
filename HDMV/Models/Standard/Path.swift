@@ -11,7 +11,7 @@ import SwiftData
 final class Path: CatalogueModel {
         
     @Attribute(.unique) var rid: Int?
-    @Attribute(.unique) var name: String?
+    @Attribute(.unique) var name: String = "Unset"
     var details: String?
     
     var placeStartRid: Int?
@@ -47,7 +47,7 @@ final class Path: CatalogueModel {
     /// Regular initializer
     init(
         rid: Int? = nil,
-        name: String? = nil,
+        name: String = "Unset",
         details: String? = nil,
         placeStart: Place? = nil,
         placeEnd: Place? = nil,
@@ -102,7 +102,7 @@ final class Path: CatalogueModel {
     // MARK: - Validation
     
     func isValid() -> Bool {
-        guard name != nil,
+        guard name.isNotUnset(),
               placeStartRid != nil,
               placeEndRid != nil
         else {
@@ -149,7 +149,7 @@ struct PathPayload: Codable, InitializableWithModel {
               let endId = path.placeEndRid
         else { return nil }
         
-        self.name = path.name!
+        self.name = path.name
         self.details = path.details
         self.place_start_id = startId
         self.place_end_id = endId
@@ -164,7 +164,7 @@ struct PathPayload: Codable, InitializableWithModel {
 struct PathEditor : EditorProtocol {
     
     var rid: Int?
-    var name: String?
+    var name: String
     var details: String?
     var placeStartRid: Int?
     var placeStart: Place?
