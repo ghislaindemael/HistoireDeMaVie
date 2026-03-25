@@ -1,38 +1,50 @@
 //
-//  FullTimePickerSheetView.swift
+//  FullTimePicker.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 24.06.2025.
 //
 
+
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FullTimePicker: View {
     let label: String
     @Binding var selection: Date?
+    let minimumDate: Date?
     
     private let placeholderColor = Color(.systemGray4)
-    private let placeholderCornerRadius: CGFloat = 5
+    private let placeholderCornerRadius: CGFloat = 8
     
     @State private var isExpanded = false
     
-    @State private var hour: Int = 0
-    @State private var minute: Int = 0
-    @State private var second: Int = 0
+    private let hourBase = 24
+    private let minuteBase = 60
     
+    @State private var hourVirtualIndex: Int = 24
+    @State private var minuteVirtualIndex: Int = 60
+    @State private var secondVirtualIndex: Int = 60
     @State private var selectedDateOnly: Date = Date()
-
-    init(label: String, selection: Binding<Date?>) {
+    
+    private var hour: Int { hourVirtualIndex % 24 }
+    private var minute: Int { minuteVirtualIndex % 60 }
+    private var second: Int { secondVirtualIndex % 60 }
+    
+    // MARK: - Initializers updated to accept minimumDate
+    init(label: String, selection: Binding<Date?>, minimumDate: Date? = nil) {
         self.label = label
         self._selection = selection
+        self.minimumDate = minimumDate
     }
     
-    init(label: String, selection: Binding<Date>) {
+    init(label: String, selection: Binding<Date>, minimumDate: Date? = nil) {
         self.label = label
         self._selection = Binding<Date?>(
             get: { selection.wrappedValue },
             set: { selection.wrappedValue = $0 ?? selection.wrappedValue }
         )
+        self.minimumDate = minimumDate
     }
     
     var body: some View {
@@ -45,9 +57,8 @@ struct FullTimePicker: View {
                 } else {
                     placeholder
                 }
-                
             }
-            .animation(nil, value: isExpanded)
+            .animation(.snappy, value: isExpanded)
             
             if isExpanded && selection != nil {
                 timeWheels
@@ -58,64 +69,41 @@ struct FullTimePicker: View {
             updateComponentStates(from: selection)
         }
         .onChange(of: selection) { _, newDate in
-            updateComponentStates(from: newDate)
+            if !isExpanded {
+                updateComponentStates(from: newDate)
+            }
             if newDate == nil { isExpanded = false }
         }
+    }
+    
+    // MARK: - State Management
+    
+    // Determines whether to use Date() or the minimumDate if Date() is in the past
+    private var safeDefaultDate: Date {
+        let now = Date()
+        if let minDate = minimumDate, minDate > now {
+            return minDate
+        }
+        return now
     }
     
     private func updateComponentStates(from date: Date?) {
         let calendar = Calendar.current
         let dateForComponents = date ?? Date()
-        hour = calendar.component(.hour, from: dateForComponents)
-        minute = calendar.component(.minute, from: dateForComponents)
-        second = calendar.component(.second, from: dateForComponents)
+        
+        let actualHour = calendar.component(.hour, from: dateForComponents)
+        let actualMinute = calendar.component(.minute, from: dateForComponents)
+        let actualSecond = calendar.component(.second, from: dateForComponents)
+        
+        hourVirtualIndex = hourBase + actualHour
+        minuteVirtualIndex = minuteBase + actualMinute
+        secondVirtualIndex = minuteBase + actualSecond
+        
         selectedDateOnly = calendar.startOfDay(for: dateForComponents)
     }
     
-    private func mergeDateOnly(_ newDateOnlyPart: Date) {
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: newDateOnlyPart)
-        components.hour = self.hour
-        components.minute = self.minute
-        components.second = self.second
-        
-        if let mergedDate = calendar.date(from: components) {
-            if selection != mergedDate {
-                selection = mergedDate
-            }
-        }
-    }
-    
-    private func updateTimeFromWheels() {
-        guard let baseDate = selection else {
-            print("Warning: updateTimeFromWheels called when selection is nil. Ignoring.")
-            return
-        }
-        
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
-        components.hour = hour
-        components.minute = minute
-        components.second = second
-        
-        if let newDate = calendar.date(from: components), newDate != baseDate {
-            selection = newDate
-        }
-    }
-    
-    private func updatePickerState(from date: Date?) {
-        let calendar = Calendar.current
-        let current = date ?? Date()
-        hour = calendar.component(.hour, from: current)
-        minute = calendar.component(.minute, from: current)
-        second = calendar.component(.second, from: current)
-    }
-    
-    private func updateDate() {
-        guard let existingDate = selection else {
-            print("Warning: updateDate called when selection is nil. Ignoring.")
-            return
-        }
+    private func updateDateFromWheels() {
+        guard isExpanded, let existingDate = selection else { return }
         
         let calendar = Calendar.current
         var components = calendar.dateComponents([.year, .month, .day], from: existingDate)
@@ -128,92 +116,97 @@ struct FullTimePicker: View {
         }
     }
     
-    private func setTimeToNow() {
-        let now = Date()
-        let calendar = Calendar.current
-        let baseDate = selection ?? now
-        var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
-        let nowComponents = calendar.dateComponents([.hour, .minute, .second], from: now)
-        
-        components.hour = nowComponents.hour
-        components.minute = nowComponents.minute
-        components.second = nowComponents.second
-        
-        if let newDate = calendar.date(from: components) {
-            selection = newDate
-            updateComponentStates(from: newDate)
+    private func recenterWheelsIfNeeded() {
+        DispatchQueue.main.async {
+            if hourVirtualIndex < 24 || hourVirtualIndex >= 48 {
+                hourVirtualIndex = 24 + (hourVirtualIndex % 24)
+            }
+            if minuteVirtualIndex < 60 || minuteVirtualIndex >= 120 {
+                minuteVirtualIndex = 60 + (minuteVirtualIndex % 60)
+            }
+            if secondVirtualIndex < 60 || secondVirtualIndex >= 120 {
+                secondVirtualIndex = 60 + (secondVirtualIndex % 60)
+            }
         }
     }
     
-    private func setTimeTo(hour: Int, minute: Int, second: Int) {
+    private func mergeDateOnly(_ newDateOnlyPart: Date) {
         let calendar = Calendar.current
-        let baseDate = selection ?? Date()
-        var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
+        var components = calendar.dateComponents([.year, .month, .day], from: newDateOnlyPart)
         components.hour = hour
         components.minute = minute
         components.second = second
         
-        if let newDate = calendar.date(from: components) {
-            selection = newDate
-            updateComponentStates(from: newDate)
+        if let mergedDate = calendar.date(from: components) {
+            selection = mergedDate
+        }
+    }
+    
+    private func setTimeToNow() {
+        // Uses the safe default so double-tapping "Now" doesn't put the time before the start time
+        let targetDate = safeDefaultDate
+        
+        withAnimation {
+            selection = targetDate
+            updateComponentStates(from: targetDate)
+        }
+    }
+    
+    // MARK: - View Components
+    
+    @ViewBuilder
+    private var nativeDatePicker: some View {
+        // Restricts the calendar popup to hide days before the minimum date
+        if let minDate = minimumDate {
+            DatePicker("", selection: $selectedDateOnly, in: minDate..., displayedComponents: .date)
+        } else {
+            DatePicker("", selection: $selectedDateOnly, displayedComponents: .date)
         }
     }
     
     @ViewBuilder
     private var picker: some View {
         HStack {
-            DatePicker(
-                "",
-                selection: $selectedDateOnly,
-                displayedComponents: .date
-            )
-            .labelsHidden()
-            .onChange(of: selectedDateOnly) { _, newDate in
-                mergeDateOnly(newDate)
-            }
+            nativeDatePicker
+                .labelsHidden()
+                .onChange(of: selectedDateOnly) { _, newDate in
+                    mergeDateOnly(newDate)
+                }
             
             Text(DateFormatter.timeWithSeconds.string(from: selection!))
                 .font(.body)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(placeholderColor))
-                )
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color(placeholderColor)))
                 .fixedSize(horizontal: true, vertical: false)
                 .contentShape(Rectangle())
+                .contextMenu {
+                    Button(action: copyTimeToClipboard) {
+                        Label("Copy Date & Time", systemImage: "doc.on.doc")
+                    }
+                    if hasTimeInClipboard() {
+                        Button(action: pasteTimeFromClipboard) {
+                            Label("Paste Date & Time", systemImage: "clipboard")
+                        }
+                    }
+                }
                 .gesture(
+                    TapGesture(count: 3)
+                        .onEnded {
+                            withAnimation {
+                                isExpanded = false
+                                selection = nil
+                            }
+                        }
+                )
+                .highPriorityGesture(
                     TapGesture(count: 2)
                         .onEnded {
                             setTimeToNow()
                         }
-                        .exclusively(
-                            before:
-                                DragGesture(minimumDistance: 20, coordinateSpace: .local)
-                                .onEnded { value in
-                                    if value.translation.width < -20 {
-                                        setTimeTo(hour: 0, minute: 0, second: 0)
-                                    } else if value.translation.width > 20 {
-                                        setTimeTo(hour: 23, minute: 59, second: 59)
-                                    } else {
-                                        withAnimation(.snappy) {
-                                            isExpanded.toggle()
-                                        }
-                                    }
-                                }
-                        )
                 )
                 .onTapGesture(count: 1) {
-                    updatePickerState(from: selection)
-                    withAnimation {
-                        isExpanded.toggle()
-                    }
-                }
-                .onTapGesture(count: 3) {
-                    withAnimation {
-                        isExpanded = false
-                        selection = nil
-                    }
+                    withAnimation { isExpanded.toggle() }
                 }
         }
     }
@@ -221,32 +214,41 @@ struct FullTimePicker: View {
     @ViewBuilder
     private var timeWheels: some View {
         HStack(spacing: 0) {
-            Picker("Hour", selection: $hour) {
-                ForEach(0..<24) { i in
-                    Text("\(i, specifier: "%02d")").tag(i)
+            Picker("Hour", selection: $hourVirtualIndex) {
+                ForEach(0..<72, id: \.self) { i in
+                    Text("\(i % 24, specifier: "%02d")").tag(i)
                 }
             }
-            .pickerStyle(WheelPickerStyle())
+            .pickerStyle(.wheel)
             
-            Picker("Minute", selection: $minute) {
-                ForEach(0..<60) { i in
-                    Text("\(i, specifier: "%02d")").tag(i)
+            Picker("Minute", selection: $minuteVirtualIndex) {
+                ForEach(0..<180, id: \.self) { i in
+                    Text("\(i % 60, specifier: "%02d")").tag(i)
                 }
             }
-            .pickerStyle(WheelPickerStyle())
+            .pickerStyle(.wheel)
             
-            Picker("Second", selection: $second) {
-                ForEach(0..<60) { i in
-                    Text("\(i, specifier: "%02d")").tag(i)
+            Picker("Second", selection: $secondVirtualIndex) {
+                ForEach(0..<180, id: \.self) { i in
+                    Text("\(i % 60, specifier: "%02d")").tag(i)
                 }
             }
-            .pickerStyle(WheelPickerStyle())
+            .pickerStyle(.wheel)
         }
         .frame(height: 110)
         .frame(maxWidth: .infinity)
-        .onChange(of: hour) { _, _ in updateDate() }
-        .onChange(of: minute) { _, _ in updateDate() }
-        .onChange(of: second) { _, _ in updateDate() }
+        .onChange(of: hourVirtualIndex) { _, _ in
+            updateDateFromWheels()
+            recenterWheelsIfNeeded()
+        }
+        .onChange(of: minuteVirtualIndex) { _, _ in
+            updateDateFromWheels()
+            recenterWheelsIfNeeded()
+        }
+        .onChange(of: secondVirtualIndex) { _, _ in
+            updateDateFromWheels()
+            recenterWheelsIfNeeded()
+        }
         .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
     }
     
@@ -257,13 +259,50 @@ struct FullTimePicker: View {
             Rectangle()
                 .fill(placeholderColor)
                 .frame(width: 80, height: 30)
-                .overlay { Text("--:--:--")}
+                .overlay { Text("--:--:--") }
                 .cornerRadius(placeholderCornerRadius)
                 .contentShape(Rectangle())
+                .contextMenu {
+                    if hasTimeInClipboard() {
+                        Button(action: pasteTimeFromClipboard) {
+                            Label("Paste Date & Time", systemImage: "clipboard")
+                        }
+                    }
+                }
                 .onTapGesture {
-                    selection = Date()
+                    selection = safeDefaultDate
+                    updateComponentStates(from: safeDefaultDate)
+                    withAnimation { isExpanded = true }
                 }
         }
     }
-
+    
+    // MARK: - Copy / Paste Logic
+    
+    private var clipboardFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter
+    }
+    
+    private func copyTimeToClipboard() {
+        guard let date = selection else { return }
+        UIPasteboard.general.string = clipboardFormatter.string(from: date)
+    }
+    
+    private func hasTimeInClipboard() -> Bool {
+        return UIPasteboard.general.hasStrings
+    }
+    
+    private func pasteTimeFromClipboard() {
+        guard let string = UIPasteboard.general.string,
+              let newDate = clipboardFormatter.date(from: string) else {
+            return
+        }
+        
+        withAnimation {
+            selection = newDate
+            updateComponentStates(from: newDate)
+        }
+    }
 }

@@ -45,11 +45,16 @@ struct TimeSection<Editor: TimeBound>: View {
             }
         )
     }
-
+    
     var body: some View {
         Section("Time") {
             FullTimePicker(label: "Start Time", selection: $editor.timeStart)
-            FullTimePicker(label: "End Time", selection: $editor.timeEnd)
+            
+            FullTimePicker(
+                label: "End Time",
+                selection: $editor.timeEnd,
+                minimumDate: editor.timeStart
+            )
             
             if isTrackable {
                 Toggle("Timed ?", isOn: timedBinding)
