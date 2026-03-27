@@ -17,6 +17,15 @@ struct InteractionRowView: View {
         self.onEnd = onEnd
     }
     
+    // MARK: - Smart Name Formatting
+    private var groupNames: String {
+        let names = interaction.persons.map { $0.name }
+        if names.isEmpty { return "Unknown" }
+        if names.count == 1 { return names[0] }
+        if names.count == 2 { return "\(names[0]) & \(names[1])" }
+        return "\(names[0]), \(names[1]) & \(names.count - 2) others"
+    }
+    
     var body: some View {
         content
             .padding(8)
@@ -24,14 +33,16 @@ struct InteractionRowView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primaryBackground)
             )
-                   
     }
     
     @ViewBuilder
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
+            
             HStack {
-                PersonDisplayView(interaction: interaction)
+                Label(groupNames, systemImage: interaction.persons.count > 1 ? "person.2.fill" : "person.fill")
+                    .font(.headline)
+                    .foregroundStyle(interaction.persons.isEmpty ? .red : .primary)
                 Spacer()
                 SyncStatusIndicator(status: interaction.syncStatus)
             }

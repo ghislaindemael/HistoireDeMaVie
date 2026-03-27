@@ -19,10 +19,6 @@ struct PersonDisplayView: View {
         self.person = person
     }
     
-    init(interaction: Interaction) {
-        self.init(personRid: interaction.personRid, person: interaction.person)
-    }
-    
     private var iconColor: Color {
         if person != nil {
             return .primary

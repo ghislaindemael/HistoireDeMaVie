@@ -1,5 +1,5 @@
 //
-//  NewInteractionSheet.swift
+//  InteractionDetailSheet.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 29.06.2025.
@@ -12,14 +12,21 @@ struct InteractionDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
-        
+    
     init(interaction: Interaction, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: InteractionDetailSheetViewModel(
             model: interaction,
             modelContext: modelContext
         ))
     }
-
+    
+    private var groupNamesForEditor: String {
+        let names = viewModel.editor.persons.map { $0.name }
+        if names.isEmpty { return "None Selected" }
+        if names.count == 1 { return names[0] }
+        if names.count == 2 { return "\(names[0]) & \(names[1])" }
+        return "\(names[0]), \(names[1]) & \(names.count - 2) others"
+    }
     
     var body: some View {
         NavigationStack {
@@ -40,9 +47,8 @@ struct InteractionDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar(onDone: {
                 viewModel.onDone()
-                    dismiss()
-                }
-            )
+                dismiss()
+            })
         }
     }
     
@@ -51,9 +57,20 @@ struct InteractionDetailSheet: View {
     private var basicsSection: some View {
         Section("Basics") {
             
-            PersonSelectorView(selectedPerson: $viewModel.editor.person)
+            NavigationLink {
+                MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
+            } label: {
+                HStack {
+                    Text("People")
+                    Spacer()
+                    Text(groupNamesForEditor)
+                        .foregroundStyle(viewModel.editor.persons.isEmpty ? .red : .secondary)
+                        .lineLimit(1)
+                }
+            }
+            
             FullTimePicker(label: "Start Time", selection: $viewModel.editor.time_start)
-            FullTimePicker(label: "End Time", selection: $viewModel.editor.time_end)
+            FullTimePicker(label: "End Time", selection: $viewModel.editor.time_end, minimumDate: viewModel.editor.time_start)
             
         }
     }
@@ -64,14 +81,19 @@ struct InteractionDetailSheet: View {
             Toggle("Timed", isOn: $viewModel.editor.timed)
             
             Slider(
-                value: $viewModel.editor.percentage.or100Double(),
+                value: Binding(
+                    get: { Double(viewModel.editor.percentage ?? 100) },
+                    set: { viewModel.editor.percentage = Int($0) }
+                ),
                 in: 0...100,
                 step: 1
             )
-            TextEditor(text: $viewModel.editor.details.orEmpty())
-                .frame(height: 80)
+            TextEditor(text: Binding(
+                get: { viewModel.editor.details ?? "" },
+                set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }
+            ))
+            .frame(height: 80)
             .lineLimit(3...)
         }
     }
 }
-

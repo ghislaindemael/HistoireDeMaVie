@@ -26,7 +26,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
     
     // MARK: Relationship conformance
     
-    @Relationship(deleteRule: .nullify, inverse: \Interaction.person)
+    @Relationship(deleteRule: .nullify, inverse: \Interaction.persons)
     var interactions: [Interaction]?
     
     // MARK: Init
