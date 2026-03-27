@@ -17,15 +17,6 @@ struct InteractionRowView: View {
         self.onEnd = onEnd
     }
     
-    // MARK: - Smart Name Formatting
-    private var groupNames: String {
-        let names = interaction.persons.map { $0.name }
-        if names.isEmpty { return "Unknown" }
-        if names.count == 1 { return names[0] }
-        if names.count == 2 { return "\(names[0]) & \(names[1])" }
-        return "\(names[0]), \(names[1]) & \(names.count - 2) others"
-    }
-    
     var body: some View {
         content
             .padding(8)
@@ -40,7 +31,7 @@ struct InteractionRowView: View {
         VStack(alignment: .leading, spacing: 8) {
             
             HStack {
-                Label(groupNames, systemImage: interaction.persons.count > 1 ? "person.2.fill" : "person.fill")
+                Label(interaction.persons.formattedNames(), systemImage: interaction.persons.count > 1 ? "person.2.fill" : "person.fill")
                     .font(.headline)
                     .foregroundStyle(interaction.persons.isEmpty ? .red : .primary)
                 Spacer()

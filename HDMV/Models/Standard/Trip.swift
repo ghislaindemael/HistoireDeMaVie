@@ -32,6 +32,9 @@ final class Trip: LogModel {
     
     var fitFilePath: String?
     
+    var persons: [Person] = []
+    var personRids: [Int] = []
+    
     var details: String?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -132,6 +135,7 @@ final class Trip: LogModel {
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
+        self.personRids = dto.person_ids ?? []
         self.fitFilePath = dto.fit_file_path
         self.details = dto.details
         self.syncStatus = .synced
@@ -150,6 +154,15 @@ final class Trip: LogModel {
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
         self.fitFilePath = dto.fit_file_path
+        
+        self.personRids = dto.person_ids ?? []
+        
+        let currentRids = Set(self.persons.compactMap { $0.rid })
+        let newRids = Set(dto.person_ids ?? [])
+        if currentRids != newRids {
+            self.persons = []
+        }
+        
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -176,6 +189,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
+    let person_ids: [Int]?
     let details: String?
 }
 
@@ -195,6 +209,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
+    let person_ids: [Int]
     let details: String?
     
     init?(from trip: Trip) {
@@ -217,6 +232,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.geojson_track = trip.geojsonTrack
         self.fit_file_path = trip.fitFilePath
         self.details = trip.details
+        self.person_ids = trip.personRids
     }
     
 }
@@ -248,6 +264,9 @@ struct TripEditor: TimeBound, EditorProtocol {
     var amDriver: Bool
     var details: String?
     
+    var persons: [Person] = []
+    var personRids: [Int] = []
+    
     typealias Model = Trip
     
     init(from trip: Trip) {
@@ -275,6 +294,9 @@ struct TripEditor: TimeBound, EditorProtocol {
         
         self.amDriver = trip.amDriver
         self.details = trip.details
+        
+        self.persons = trip.persons
+        self.personRids = trip.personRids
     }
     
     func apply(to trip: Trip) {
@@ -292,6 +314,9 @@ struct TripEditor: TimeBound, EditorProtocol {
         
         trip.pathMetrics = pathMetrics
         trip.geojsonTrack = geojsonTrack
+        
+        trip.persons = self.persons
+        trip.personRids = self.persons.compactMap { $0.rid }
         
         trip.markAsModified()
     }

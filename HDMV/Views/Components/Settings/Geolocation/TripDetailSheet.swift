@@ -41,6 +41,20 @@ struct TripDetailSheet: View {
                 pathSection
                 detailsSection
                 
+                Section("Companions") {
+                    NavigationLink {
+                        MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
+                    } label: {
+                        HStack {
+                            Text("With")
+                            Spacer()
+                            Text(viewModel.editor.persons.formattedNames(emptyFallback: "None"))
+                                .foregroundStyle(viewModel.editor.persons.isEmpty ? .secondary : .primary)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                
                 if viewModel.editor.parentInstance != nil || viewModel.editor.parentInstanceRid != nil {
                     Section("Hierarchy") {
                         Button("Remove from Parent", role: .destructive) {

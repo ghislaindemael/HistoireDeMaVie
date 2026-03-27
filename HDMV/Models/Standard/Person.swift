@@ -29,6 +29,12 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
     @Relationship(deleteRule: .nullify, inverse: \Interaction.persons)
     var interactions: [Interaction]?
     
+    @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.persons)
+    var activityInstances: [ActivityInstance]?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Trip.persons)
+    var trips: [Trip]?
+    
     // MARK: Init
     
     init(

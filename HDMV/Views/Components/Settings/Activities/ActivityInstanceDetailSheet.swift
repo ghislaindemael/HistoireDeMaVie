@@ -35,6 +35,7 @@ struct ActivityInstanceDetailSheet: View {
         ))
     }
     
+
     var body: some View {
         NavigationView {
             Form {
@@ -106,6 +107,18 @@ struct ActivityInstanceDetailSheet: View {
                         Text(activity.name)
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+            
+            NavigationLink {
+                MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
+            } label: {
+                HStack {
+                    Text("Companions")
+                    Spacer()
+                    Text(viewModel.editor.persons.formattedNames(emptyFallback: "None"))
+                        .foregroundStyle(viewModel.editor.persons.isEmpty ? .secondary : .primary)
+                        .lineLimit(1)
                 }
             }
         }

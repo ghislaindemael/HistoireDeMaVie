@@ -17,7 +17,8 @@ struct TripRowView: View {
         self.trip = trip
         self.onEnd = onEnd
     }
-        
+    
+    
     var body: some View {
         VStack {
             VStack(alignment: .leading, spacing: 4) {
@@ -47,6 +48,11 @@ struct TripRowView: View {
                             bubble: false
                         )
                     }
+                }
+                
+                if !trip.persons.isEmpty {
+                    Label(trip.persons.formattedNames(), systemImage: trip.persons.count > 1 ? "person.2.fill" : "person.fill")
+                        .font(.headline)
                 }
                 
                 if let details = trip.details, !details.isEmpty {

@@ -28,6 +28,9 @@ final class ActivityInstance: LogModel {
     
     var fitFilePath: String?
     
+    var persons: [Person] = []
+    var personRids: [Int] = []
+    
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = ActivityInstanceDTO
@@ -57,8 +60,8 @@ final class ActivityInstance: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentInstance)
     var childLifeEvents: [LifeEvent] = []
     
-    //MARK: Relationship conformance
-    
+    // MARK: Relationship conformance
+
     // MARK: Init
     
     init(
@@ -107,6 +110,7 @@ final class ActivityInstance: LogModel {
         self.percentage = dto.percentage ?? 100
         self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
+        self.personRids = dto.person_ids ?? []
         self.syncStatus = .synced
     }
     
@@ -120,6 +124,14 @@ final class ActivityInstance: LogModel {
         self.percentage = dto.percentage ?? 100
         self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
+        self.personRids = dto.person_ids ?? []
+        
+        let currentRids = Set(self.persons.compactMap { $0.rid })
+        let newRids = Set(dto.person_ids ?? [])
+        if currentRids != newRids {
+            self.persons = []
+        }
+        
         self.syncStatus = .synced
     }
     
@@ -140,6 +152,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let percentage: Int?
     let fit_file_path: String?
     let activity_details: ActivityDetails?
+    let person_ids: [Int]?
 }
 
 
@@ -157,6 +170,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let percentage: Int
     let fit_file_path: String?
     let activity_details: ActivityDetails?
+    let person_ids: [Int]
     
     init?(from instance: ActivityInstance) {
         guard instance.isValid() else {
@@ -172,6 +186,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.details = instance.details
         self.percentage = instance.percentage
         self.fit_file_path = instance.fitFilePath
+        self.person_ids = instance.personRids
         
         if var details = instance.decodedActivityDetails {
             details.removeFields()
@@ -193,6 +208,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
     var fitFilePath: String?
     var decodedActivityDetails: ActivityDetails?
     
+    var persons: [Person] = []
+    var personRids: [Int] = []
+    
     typealias Model = ActivityInstance
     
     /// Initializes an editor from an existing ActivityInstance.
@@ -206,6 +224,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         self.details = instance.details
         self.fitFilePath = instance.fitFilePath
         self.decodedActivityDetails = instance.decodedActivityDetails
+        
+        self.persons = instance.persons
+        self.personRids = instance.personRids
     }
     
     func apply(to instance: ActivityInstance) {
@@ -219,5 +240,8 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         instance.details = self.details
         instance.fitFilePath = self.fitFilePath
         instance.decodedActivityDetails = self.decodedActivityDetails
+        
+        instance.persons = self.persons
+        instance.personRids = self.persons.compactMap { $0.rid }
     }
 }

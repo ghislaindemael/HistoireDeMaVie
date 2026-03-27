@@ -20,14 +20,6 @@ struct InteractionDetailSheet: View {
         ))
     }
     
-    private var groupNamesForEditor: String {
-        let names = viewModel.editor.persons.map { $0.name }
-        if names.isEmpty { return "None Selected" }
-        if names.count == 1 { return names[0] }
-        if names.count == 2 { return "\(names[0]) & \(names[1])" }
-        return "\(names[0]), \(names[1]) & \(names.count - 2) others"
-    }
-    
     var body: some View {
         NavigationStack {
             Form {
@@ -63,7 +55,7 @@ struct InteractionDetailSheet: View {
                 HStack {
                     Text("People")
                     Spacer()
-                    Text(groupNamesForEditor)
+                    Text(viewModel.editor.persons.formattedNames())
                         .foregroundStyle(viewModel.editor.persons.isEmpty ? .red : .secondary)
                         .lineLimit(1)
                 }
