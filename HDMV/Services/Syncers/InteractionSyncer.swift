@@ -50,10 +50,10 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
             lookupMap: instanceLookup
         )
         
-        try resolveRelationship(
+        try resolveToManyRelationship(
             for: Interaction.self,
-            relationshipKeyPath: \Interaction.person,
-            ridKeyPath: \Interaction.personRid,
+            relationshipKeyPath: \Interaction.persons,
+            ridArrayKeyPath: \Interaction.personRids,
             lookupMap: peopleLookup
         )
         

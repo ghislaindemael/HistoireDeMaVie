@@ -179,9 +179,18 @@ struct DataWipeDetailView: View {
     /// Performs the deletion of all objects for the current model type.
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: modelType)
+            for item in items {
+                modelContext.delete(item)
+            }
+            
+            try modelContext.save()
+            
             print("Successfully deleted all \(modelName) objects.")
+            
+            items.removeAll()
+            count = 0
             fetchItems()
+            
         } catch {
             print("Failed to delete \(modelName) objects: \(error)")
         }

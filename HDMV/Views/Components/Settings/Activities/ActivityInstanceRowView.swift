@@ -23,7 +23,6 @@ struct ActivityInstanceRowView: View {
         self.selectedDate = selectedDate ?? instance.timeStart
     }
     
-    
     var body: some View {
         VStack {
             basicsSection
@@ -37,6 +36,7 @@ struct ActivityInstanceRowView: View {
         )
         
     }
+    
     
     @ViewBuilder
     private var basicsSection: some View {
@@ -75,6 +75,8 @@ struct ActivityInstanceRowView: View {
                         }
                         .font(.subheadline)
                         
+        
+                        
                     }
                     Spacer()
                     
@@ -82,6 +84,7 @@ struct ActivityInstanceRowView: View {
                 
             }
             .padding(.vertical, 4)
+            
             
             SyncStatusIndicator(status: instance.syncStatus)
                 .padding([.top, .trailing], 0)
@@ -91,6 +94,11 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var detailsSection: some View {
         VStack {
+            
+            if !instance.persons.isEmpty {
+                Label(instance.persons.formattedNames(), systemImage: instance.persons.count > 1 ? "person.2.fill" : "person.fill")
+                    .font(.headline)
+            }
             
             if let details = instance.details, !details.isEmpty {
                 Text(details)

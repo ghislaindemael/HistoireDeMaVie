@@ -184,7 +184,7 @@ extension Interaction: DebugViewable {
     var debugView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Start: \(timeStart.formatted(date: .abbreviated, time: .shortened))")                
+                Text("Start: \(timeStart.formatted(date: .abbreviated, time: .shortened))")
                 Spacer()
                 SyncStatusIndicator(status: syncStatus)
             }
@@ -201,22 +201,24 @@ extension Interaction: DebugViewable {
                 Text("Independent interaction")
             }
             
-            if let pid = personRid  {
-                Text("Person RID: \(pid)")
-            } else {
-                Text("Person RID : Unset")
+            // MARK: Updated to handle Arrays
+            if personRids.isEmpty  {
+                Text("Person RIDs : Empty")
                     .bold()
                     .foregroundStyle(.red)
-            }
-            if let person = person  {
-                Text("Person: \(person.fullName)")
             } else {
-                Text("Person : Unset")
-                    .bold()
-                    .foregroundStyle(.red)
+                Text("Person RIDs: \(personRids.map { String($0) }.joined(separator: ", "))")
             }
             
-            Text("Percentage: \((percentage))%")
+            if persons.isEmpty  {
+                Text("Persons : Empty")
+                    .bold()
+                    .foregroundStyle(.red)
+            } else {
+                Text("Persons: \(persons.map { $0.fullName }.joined(separator: ", "))")
+            }
+            
+            Text("Percentage: \(percentage)%")
             Text("Details: \(details ?? "N/A")")
             
         }

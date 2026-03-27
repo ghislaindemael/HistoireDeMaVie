@@ -230,6 +230,36 @@ Payload.Model == Model
         }
     }
     
+    @MainActor
+    final func resolveToManyRelationship<Child: PersistentModel, Parent: PersistentModel & SyncableModel>(
+        for children: Child.Type,
+        relationshipKeyPath: WritableKeyPath<Child, [Parent]>,
+        ridArrayKeyPath: KeyPath<Child, [Int]>,
+        lookupMap: [Int: Parent]
+    ) throws {
+        
+        let allChildren = try modelContext.fetch(FetchDescriptor<Child>())
+        var fixedCount = 0
+        
+        for var child in allChildren {
+            let rids = child[keyPath: ridArrayKeyPath]
+            let currentParents = child[keyPath: relationshipKeyPath]
+            
+            let currentParentRids = Set(currentParents.compactMap { $0.rid })
+            let targetParentRids = Set(rids)
+            
+            if currentParentRids != targetParentRids {
+                let resolvedParents = rids.compactMap { lookupMap[$0] }
+                child[keyPath: relationshipKeyPath] = resolvedParents
+                fixedCount += 1
+            }
+        }
+        
+        if fixedCount > 0 {
+            print("Resolving \(fixedCount) broken relationships for \(Child.self) -> [\(Parent.self)]")
+        }
+    }
+    
     
     func fetchLocalModels(with status: SyncStatus) throws -> [Model] {
         let predicate = #Predicate<Model> { $0.syncStatusRaw == status.rawValue }

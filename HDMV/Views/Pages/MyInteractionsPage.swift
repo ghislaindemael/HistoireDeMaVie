@@ -121,7 +121,7 @@ struct MyInteractionsPage: View {
                 timeStart: .now.addingTimeInterval(-1000),
                 timeEnd: .now.addingTimeInterval(-720),
                 percentage: 100,
-                person: matthieuC,
+                persons: [matthieuC],
                 in_person: true,
                 details: "Test",
             )
@@ -131,7 +131,7 @@ struct MyInteractionsPage: View {
                 timeStart: .now.addingTimeInterval(-1000),
                 timeEnd: nil,
                 percentage: 50,
-                person: matthieuD,
+                persons: [matthieuD],
                 in_person: false,
                 details: "Test",
             )

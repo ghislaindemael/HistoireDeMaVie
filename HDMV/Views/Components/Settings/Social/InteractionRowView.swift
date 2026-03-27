@@ -24,14 +24,16 @@ struct InteractionRowView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primaryBackground)
             )
-                   
     }
     
     @ViewBuilder
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
+            
             HStack {
-                PersonDisplayView(interaction: interaction)
+                Label(interaction.persons.formattedNames(), systemImage: interaction.persons.count > 1 ? "person.2.fill" : "person.fill")
+                    .font(.headline)
+                    .foregroundStyle(interaction.persons.isEmpty ? .red : .primary)
                 Spacer()
                 SyncStatusIndicator(status: interaction.syncStatus)
             }
