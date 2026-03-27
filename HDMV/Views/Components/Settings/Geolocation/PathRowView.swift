@@ -23,13 +23,9 @@ struct PathRowView: View {
     var body: some View {
         VStack (alignment: .leading) {
             HStack {
-                if let name = path.name {
-                    Text(name)
-                } else {
-                    Text("Name unset")
-                        .bold()
-                        .foregroundStyle(.red)
-                }
+                Text(path.name)
+                    .bold(path.name == "Unset")
+                    .foregroundStyle(path.name == "Unset" ? .red : .primary)
                 if(showSyncStatus){
                     Spacer()
                     SyncStatusIndicator(status: path.syncStatus)

@@ -15,6 +15,7 @@ class VaultImportService: ObservableObject {
     
     @Published var incomingFileURL: URL?
     @Published var isShowingVaultLinker: Bool = false
+    @Published var isShowingGPXImporter: Bool = false
     
     private init() {}
     
@@ -38,9 +39,18 @@ class VaultImportService: ObservableObject {
             try FileManager.default.copyItem(at: url, to: safeLocalURL)
             
             self.incomingFileURL = safeLocalURL
-            self.isShowingVaultLinker = true
             
-            print("VaultImportService: Successfully grabbed and secured file: \(safeLocalURL.lastPathComponent)")
+            let fileExtension = safeLocalURL.pathExtension.lowercased()
+            
+            if fileExtension == "fit" {
+                self.isShowingVaultLinker = true
+                print("VaultImportService: Successfully routed .fit file to Vault Linker.")
+            } else if fileExtension == "gpx" {
+                self.isShowingGPXImporter = true
+                print("VaultImportService: Successfully routed .gpx file to GPX Importer.")
+            } else {
+                print("VaultImportService: Unsupported file extension -> \(fileExtension)")
+            }
             
         } catch {
             print("VaultImportService: Failed to copy incoming file: \(error.localizedDescription)")
@@ -49,9 +59,13 @@ class VaultImportService: ObservableObject {
     
     /// Call this when you're done uploading to clean up local storage
     func cleanupFile() {
-        guard let url = incomingFileURL else { return }
-        try? FileManager.default.removeItem(at: url)
-        self.incomingFileURL = nil
+        if let url = incomingFileURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        
         self.isShowingVaultLinker = false
+        self.isShowingGPXImporter = false
+        
+        self.incomingFileURL = nil
     }
 }

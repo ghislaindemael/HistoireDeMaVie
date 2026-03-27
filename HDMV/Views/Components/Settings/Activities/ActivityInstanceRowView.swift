@@ -128,6 +128,13 @@ struct ActivityInstanceRowView: View {
                 linkedPlaceView
             }
             
+            if instance.fitFilePath != nil {
+                Label("Vaulted", systemImage: "archivebox.fill")
+                    .padding(8)
+                    .background(Color.green.opacity(0.2), in: Capsule())
+                    .foregroundColor(.green)
+            }
+            
         }
     }
     

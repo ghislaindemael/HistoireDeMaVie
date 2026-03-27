@@ -172,7 +172,7 @@ extension Path: DebugViewable {
                     .bold()
                     .foregroundStyle(.orange)
             }
-            Text("Name: \(name ?? "Unset")")
+            NamedStringDisplayView(name: "Name", value: name)
             Text("Details: \(details ?? "Unset")")
             Text("Start place id: \(placeStart?.rid ?? -1)")
             Text("End place id: \(placeEnd?.rid ?? -1)")
@@ -392,6 +392,8 @@ extension Trip: DebugViewable {
                 LabeledContent("Place End RID", value: self.placeEndRid?.description ?? "nil")
                 
                 LabeledContent("Path RID", value: self.pathRid?.description ?? "nil")
+                
+                LabeledContent("GeoJSON track proints", value: self.geojsonTrack?.coordinates.count.description ?? "nil")
             }
             
             // MARK: - Details

@@ -25,7 +25,8 @@ struct HDMVApp: App {
             Trip.self,
             Vehicle.self,
             Transaction.self,
-            TransactionType.self
+            TransactionType.self,
+            VaultTask.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -43,17 +44,22 @@ struct HDMVApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppView()
-                .onAppear {}
-                .onOpenURL { url in
-                    vaultService.handleIncomingURL(url)
+                    AppView()
+                        .onAppear {}
+                        .onOpenURL { url in
+                            vaultService.handleIncomingURL(url)
+                        }
+                        .sheet(isPresented: $vaultService.isShowingVaultLinker) {
+                            if let fileURL = vaultService.incomingFileURL {
+                                VaultLinkerSheet(fileURL: fileURL)
+                            }
+                        }
+                        .sheet(isPresented: $vaultService.isShowingGPXImporter) {
+                            if let fileURL = vaultService.incomingFileURL {
+                                GPXImportSheet(fileURL: fileURL)
+                            }
+                        }
                 }
-                .sheet(isPresented: $vaultService.isShowingVaultLinker) {
-                    if let fileURL = vaultService.incomingFileURL {
-                        VaultLinkerSheet(fileURL: fileURL)
-                    }
-                }
-        }
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)
         .environmentObject(appNavigator)

@@ -11,7 +11,7 @@ import SwiftData
 final class Path: CatalogueModel {
         
     @Attribute(.unique) var rid: Int?
-    @Attribute(.unique) var name: String?
+    @Attribute(.unique) var name: String = "Unset"
     var details: String?
     
     var placeStartRid: Int?
@@ -19,6 +19,7 @@ final class Path: CatalogueModel {
     
     var metrics: PathMetrics = PathMetrics()
     var geojsonTrack: GeoJSONLineString?
+    var gpxFilePath: String?
     
     var cache: Bool = false
     var archived: Bool = false
@@ -46,12 +47,13 @@ final class Path: CatalogueModel {
     /// Regular initializer
     init(
         rid: Int? = nil,
-        name: String? = nil,
+        name: String = "Unset",
         details: String? = nil,
         placeStart: Place? = nil,
         placeEnd: Place? = nil,
         metrics: PathMetrics = PathMetrics(),
         geojsonTrack: GeoJSONLineString? = nil,
+        gpxFilePath: String? = nil,
         cache: Bool = true,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
@@ -63,6 +65,7 @@ final class Path: CatalogueModel {
         self.placeEnd = placeEnd
         self.metrics = metrics
         self.geojsonTrack = geojsonTrack
+        self.gpxFilePath = gpxFilePath
         self.cache = cache
         self.archived = archived
         self.syncStatus = syncStatus
@@ -77,6 +80,7 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
+        self.gpxFilePath = dto.gpx_file_path
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -90,6 +94,7 @@ final class Path: CatalogueModel {
         self.details = dto.details
         self.metrics = dto.metrics
         self.geojsonTrack = dto.geojson_track
+        self.gpxFilePath = dto.gpx_file_path
         self.archived = dto.archived
         self.syncStatus = .synced
     }
@@ -97,7 +102,7 @@ final class Path: CatalogueModel {
     // MARK: - Validation
     
     func isValid() -> Bool {
-        guard name != nil,
+        guard name.isNotUnset(),
               placeStartRid != nil,
               placeEndRid != nil
         else {
@@ -118,6 +123,7 @@ struct PathDTO: Codable, Sendable, Identifiable {
     var distance: Double?
     var metrics: PathMetrics
     var geojson_track: GeoJSONLineString?
+    var gpx_file_path: String?
     var path_ids: [Int]?
     var archived: Bool
 }
@@ -133,6 +139,7 @@ struct PathPayload: Codable, InitializableWithModel {
     var distance: Double?
     var metrics: PathMetrics?
     var geojson_track: GeoJSONLineString?
+    var gpx_file_path: String?
     var path_ids: [Int]?
     var archived: Bool
     
@@ -142,12 +149,13 @@ struct PathPayload: Codable, InitializableWithModel {
               let endId = path.placeEndRid
         else { return nil }
         
-        self.name = path.name!
+        self.name = path.name
         self.details = path.details
         self.place_start_id = startId
         self.place_end_id = endId
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
+        self.gpx_file_path = path.gpxFilePath
         self.archived = path.archived
     }
 }
@@ -156,7 +164,7 @@ struct PathPayload: Codable, InitializableWithModel {
 struct PathEditor : EditorProtocol {
     
     var rid: Int?
-    var name: String?
+    var name: String
     var details: String?
     var placeStartRid: Int?
     var placeStart: Place?
@@ -165,6 +173,7 @@ struct PathEditor : EditorProtocol {
     var distance: Double?
     var metrics: PathMetrics = PathMetrics()
     var geojson_track: GeoJSONLineString?
+    var gpxFilePath: String?
     var path_ids: [Int]?
     var cache: Bool
     var archived: Bool
@@ -180,6 +189,7 @@ struct PathEditor : EditorProtocol {
         self.placeEndRid = path.placeEndRid
         self.metrics = path.metrics
         self.geojson_track = path.geojsonTrack
+        self.gpxFilePath = path.gpxFilePath
         self.cache = path.cache
         self.archived = path.archived
     }
@@ -191,6 +201,7 @@ struct PathEditor : EditorProtocol {
         path.setPlaceEnd(self.placeEnd, fallbackRid: self.placeEndRid)
         path.metrics = metrics
         path.geojsonTrack = geojson_track
+        path.gpxFilePath = gpxFilePath
         path.cache = cache
         path.archived = archived
     }

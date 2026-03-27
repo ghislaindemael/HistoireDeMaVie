@@ -20,9 +20,6 @@ class TripDetailSheetViewModel: BaseDetailSheetViewModel<Trip, TripEditor> {
     func selectPath(path: Path) {
         editor.path = path
         editor.pathRid = path.rid
-        
-        editor.pathMetrics = nil
-        editor.geojsonTrack = nil
     }
     
     // MARK: - Path Promotion

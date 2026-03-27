@@ -115,57 +115,56 @@ struct TripDetailSheet: View {
                 }
             )
             
-            if viewModel.editor.path == nil && viewModel.editor.pathRid == nil {
                 
-                if viewModel.editor.geojsonTrack != nil {
-                    Button {
-                        // TODO: Open a full-screen map to view the route
-                        print("Show Map View")
-                    } label: {
-                        Label("View GPS Track", systemImage: "map")
-                            .foregroundStyle(.blue)
-                    }
-                }
-                
-                if let metrics = viewModel.editor.pathMetrics {
-                    PathMetricsRowView(metrics: metrics)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            viewModel.isShowingMetricsEditSheet = true
-                        }
-                    
-                    Button {
-                        if viewModel.canPromoteToPath {
-                            viewModel.isShowingPathPromotionAlert = true
-                        } else {
-                            print("Cannot promote: Missing Start Place, End Place, or Metrics.")
-                        }
-                    } label: {
-                        Label("Save as Reusable Path", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
-                            .foregroundStyle(viewModel.canPromoteToPath ? .green : .gray)
-                    }
-                    .disabled(!viewModel.canPromoteToPath)
-                    
-                    Button(role: .destructive) {
-                        withAnimation {
-                            viewModel.editor.pathMetrics = nil
-                            viewModel.editor.geojsonTrack = nil
-                        }
-                    } label: {
-                        Label("Delete custom metrics", systemImage: "trash")
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.plain)
-                    
-                } else {
-                    Button {
-                        viewModel.isShowingMetricsEditSheet = true
-                    } label: {
-                        Label("Add Custom Metrics", systemImage: "plus.circle")
-                    }
+            if viewModel.editor.geojsonTrack != nil {
+                Button {
+                    // TODO: Open a full-screen map to view the route
+                    print("Show Map View")
+                } label: {
+                    Label("View GPS Track", systemImage: "map")
+                        .foregroundStyle(.blue)
                 }
             }
+                
+            if let metrics = viewModel.editor.pathMetrics {
+                PathMetricsRowView(metrics: metrics)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        viewModel.isShowingMetricsEditSheet = true
+                    }
+                    
+                Button {
+                    if viewModel.canPromoteToPath {
+                        viewModel.isShowingPathPromotionAlert = true
+                    } else {
+                        print("Cannot promote: Missing Start Place, End Place, or Metrics.")
+                    }
+                } label: {
+                    Label("Save as Reusable Path", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                        .foregroundStyle(viewModel.canPromoteToPath ? .green : .gray)
+                }
+                .disabled(!viewModel.canPromoteToPath)
+                    
+                Button(role: .destructive) {
+                    withAnimation {
+                        viewModel.editor.pathMetrics = nil
+                        viewModel.editor.geojsonTrack = nil
+                    }
+                } label: {
+                    Label("Delete custom metrics", systemImage: "trash")
+                        .foregroundStyle(.red)
+                }
+                    .buttonStyle(.plain)
+                    
+            } else {
+                Button {
+                    viewModel.isShowingMetricsEditSheet = true
+                } label: {
+                    Label("Add Custom Metrics", systemImage: "plus.circle")
+                }
+            }
+            
         }
     }
     

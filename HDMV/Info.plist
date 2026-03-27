@@ -1,74 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-    <dict>
-        <key>CFBundleDocumentTypes</key>
-        <array>
-            <dict>
-                <key>CFBundleTypeName</key>
-                <string>FIT File</string>
-                <key>LSHandlerRank</key>
-                <string>Default</string>
-                <key>LSItemContentTypes</key>
-                <array>
-                    <string>com.garmin.fit</string>
-                </array>
-            </dict>
-            <dict>
-                <key>CFBundleTypeName</key>
-                <string>GPX File</string>
-                <key>LSHandlerRank</key>
-                <string>Default</string>
-                <key>LSItemContentTypes</key>
-                <array>
-                    <string>com.topografix.gpx</string>
-                </array>
-            </dict>
-        </array>
-        <key>SUPABASE_ANON_KEY</key>
-        <string>$(SUPABASE_ANON_KEY)</string>
-        <key>SUPABASE_URL</key>
-        <string>$(SUPABASE_URL)</string>
-        <key>UIFileSharingEnabled</key>
-        <true/>
-        <key>UTImportedTypeDeclarations</key>
-        <array>
-            <dict>
-                <key>UTTypeConformsTo</key>
-                <array>
-                    <string>public.data</string>
-                </array>
-                <key>UTTypeDescription</key>
-                <string>FIT Workout File</string>
-                <key>UTTypeIdentifier</key>
-                <string>com.garmin.fit</string>
-                <key>UTTypeTagSpecification</key>
-                <dict>
-                    <key>public.filename-extension</key>
-                    <array>
-                        <string>fit</string>
-                    </array>
-                </dict>
-            </dict>
-            <dict>
-                <key>UTTypeConformsTo</key>
-                <array>
-                    <string>public.xml</string>
-                </array>
-                <key>UTTypeDescription</key>
-                <string>GPX Map File</string>
-                <key>UTTypeIdentifier</key>
-                <string>com.topografix.gpx</string>
-                <key>UTTypeTagSpecification</key>
-                <dict>
-                    <key>public.filename-extension</key>
-                    <array>
-                        <string>gpx</string>
-                    </array>
-                    <key>public.mime-type</key>
-                    <string>application/gpx+xml</string>
-                </dict>
-            </dict>
-        </array>
-    </dict>
+<dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>FIT File</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.garmin.fit</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>GPX File</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.topografix.gpx</string>
+			</array>
+		</dict>
+	</array>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>$(SUPABASE_ANON_KEY)</string>
+	<key>SUPABASE_URL</key>
+	<string>$(SUPABASE_URL)</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>FIT Workout File</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.garmin.fit</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>fit</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.xml</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>GPX Map File</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.topografix.gpx</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>gpx</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/gpx+xml</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
 </plist>

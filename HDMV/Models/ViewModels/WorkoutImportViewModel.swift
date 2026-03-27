@@ -31,11 +31,15 @@ class WorkoutImportViewModel: ObservableObject {
     }
     
     func loadData() async {
+        print("DEBUG: loadData() started")
         isLoading = true
         defer { isLoading = false }
         
         do {
             try await HealthKitService.shared.requestAuthorization()
+            
+            let status = HealthKitService.shared.healthStore.authorizationStatus(for: .workoutType())
+            print("Health Auth Status: \(status.rawValue)")
             
             workouts = try await HealthKitService.shared.fetchWorkouts(for: filterDate)
             
@@ -164,4 +168,5 @@ class WorkoutImportViewModel: ObservableObject {
             print("Failed to save imported workout: \(error)")
         }
     }
+    
 }

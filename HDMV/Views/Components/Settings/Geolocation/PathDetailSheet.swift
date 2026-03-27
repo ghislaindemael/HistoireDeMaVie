@@ -28,7 +28,7 @@ struct PathDetailSheet: View {
         NavigationView {
             Form {
                 Section("Basics") {
-                    TextField("Name", text: $viewModel.editor.name.orEmpty())
+                    TextField("Name", text: $viewModel.editor.name)
                     TextField("Details", text: $viewModel.editor.details.orEmpty())
                 }
                 Section("Start place"){
