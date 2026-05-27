@@ -189,7 +189,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                     $0.parentInstance == nil &&
                     $0.parentTrip == nil &&
                     $0.timeStart < endOfDay &&
-                    ($0.timeEnd ?? future) > startOfDay
+                    ($0.timeEnd ?? $0.timeStart) >= startOfDay
                 }
                 descriptor = FetchDescriptor<LifeEvent>(
                     predicate: predicate,
@@ -398,6 +398,10 @@ class MyActivitiesPageViewModel: ObservableObject {
                 }
             case .interaction(let childID):
                 if let child = context.model(for: childID) as? Interaction {
+                    move(child)
+                }
+            case .lifeEvent(let childID):
+                if let child = context.model(for: childID) as? LifeEvent {
                     move(child)
                 }
         }

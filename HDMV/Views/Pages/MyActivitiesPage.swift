@@ -80,13 +80,15 @@ struct MyActivitiesPage: View {
                                 level: 0,
                                 instanceToEdit: $instanceToEdit,
                                 tripToEdit: $tripToEdit,
-                                interactionToEdit: $interactionToEdit
+                                interactionToEdit: $interactionToEdit,
+                                lifeEventToEdit: $lifeEventToEdit
                             )
                         } else if let lifeEvent = item as? LifeEvent {
                             LifeEventRowView(event: lifeEvent, selectedDate: viewModel.filterDate)
                                 .onTapGesture(count: 2) {
                                     lifeEventToEdit = lifeEvent
                                 }
+                                .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
                         }
                     }
                 }

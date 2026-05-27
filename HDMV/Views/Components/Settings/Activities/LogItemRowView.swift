@@ -18,6 +18,7 @@ struct LogItemRowView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var lifeEventToEdit: LifeEvent?
     
     @State private var isTripDropTargeted = false
     
@@ -48,7 +49,8 @@ struct LogItemRowView: View {
                     level: level,
                     instanceToEdit: $instanceToEdit,
                     tripToEdit: $tripToEdit,
-                    interactionToEdit: $interactionToEdit
+                    interactionToEdit: $interactionToEdit,
+                    lifeEventToEdit: $lifeEventToEdit
                 )
                 
             case let interaction as Interaction:
@@ -59,6 +61,14 @@ struct LogItemRowView: View {
                     interactionToEdit = interaction
                 }
                 .draggable(DraggableLogItem.interaction(interaction.persistentModelID))
+                
+            case let lifeEvent as LifeEvent:
+                LifeEventRowView(event: lifeEvent, selectedDate: viewModel.filterDate)
+                    .onTapGesture(count: 2) {
+                        lifeEventToEdit = lifeEvent
+                    }
+                    .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
+                    
             default:
                 EmptyView()
         }

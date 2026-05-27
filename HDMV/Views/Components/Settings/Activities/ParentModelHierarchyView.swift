@@ -19,6 +19,7 @@ struct ParentModelHierarchyView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var lifeEventToEdit: LifeEvent?
     
     private let indentationAmount: CGFloat = 20
     private let indicatorWidth: CGFloat = 2
@@ -138,6 +139,7 @@ struct ParentModelHierarchyView: View {
                         instanceToEdit: $instanceToEdit,
                         tripToEdit: $tripToEdit,
                         interactionToEdit: $interactionToEdit,
+                        lifeEventToEdit: $lifeEventToEdit,
                         level: level + 1
                     )
                     .padding(.bottom, index == children.count - 1 ? 0 : 4)
@@ -197,7 +199,13 @@ struct ParentModelHierarchyView: View {
         let parentStart = parent.timeStart
         let parentEnd = parent.timeEnd ?? Date.distantFuture
         let childStart = child.timeStart
-        let childEnd = child.timeEnd ?? Date.distantFuture
+        
+        let childEnd: Date
+        if child is LifeEvent && child.timeEnd == nil {
+            childEnd = childStart
+        } else {
+            childEnd = child.timeEnd ?? Date.distantFuture
+        }
         
         let completelyOutside = childEnd <= parentStart || childStart >= parentEnd
         if completelyOutside {
