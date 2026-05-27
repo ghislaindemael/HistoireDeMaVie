@@ -186,7 +186,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let cash: Bool
     
     let type_id: Int?
-    let parent_instance_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
     let payer_id: Int?
     
     let details: String?

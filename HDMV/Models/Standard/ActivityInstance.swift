@@ -162,9 +162,9 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     
     let time_start: Date
     let time_end: Date?
-    let activity_id: Int?
-    let parent_instance_id: Int?
-    let parent_trip_id: Int?
+    @ExplicitNull var activity_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     
     let details: String?
     let percentage: Int

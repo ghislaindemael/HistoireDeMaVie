@@ -25,6 +25,22 @@ struct LogItemRowView: View {
     
     @ViewBuilder
     var body: some View {
+        ZStack(alignment: .topTrailing) {
+            content
+            
+            if let linked = item as? any LinkedParent, linked.hasAmbiguousParents {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.yellow)
+                    .padding(4)
+                    .background(Color.black.opacity(0.6))
+                    .clipShape(Circle())
+                    .offset(x: -4, y: 4)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var content: some View {
         switch item {
             case let parentItem as any ParentModel:
                 ParentModelHierarchyView(
@@ -33,7 +49,6 @@ struct LogItemRowView: View {
                     instanceToEdit: $instanceToEdit,
                     tripToEdit: $tripToEdit,
                     interactionToEdit: $interactionToEdit
-                    
                 )
                 
             case let interaction as Interaction:

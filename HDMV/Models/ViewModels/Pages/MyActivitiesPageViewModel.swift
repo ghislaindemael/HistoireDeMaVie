@@ -35,6 +35,12 @@ class MyActivitiesPageViewModel: ObservableObject {
     @Published var instances: [ActivityInstance] = []
     @Published var trips: [Trip] = []
     @Published var interactions: [Interaction] = []
+    @Published var lifeEvents: [LifeEvent] = []
+    
+    var timelineItems: [any LogModel] {
+        let combined: [any LogModel] = (instances as [any LogModel]) + (lifeEvents as [any LogModel])
+        return combined.sorted { $0.timeStart > $1.timeStart }
+    }
     
     @Published var activityTree: [Activity] = []
     
@@ -47,6 +53,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         fetchInstances()
         fetchTrips()
         fetchInteractions()
+        fetchLifeEvents()
     }
  
     /// A single, powerful function to fetch instances based on the current filter mode.
@@ -166,6 +173,41 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
+    func fetchLifeEvents() {
+        guard let context = modelContext else { return }
+        
+        let descriptor: FetchDescriptor<LifeEvent>
+        
+        switch filterMode {
+            case .byDate:
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                let future = Date.distantFuture
+                
+                let predicate = #Predicate<LifeEvent> {
+                    $0.parentInstance == nil &&
+                    $0.parentTrip == nil &&
+                    $0.timeStart < endOfDay &&
+                    ($0.timeEnd ?? future) > startOfDay
+                }
+                descriptor = FetchDescriptor<LifeEvent>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+            case .byActivity:
+                self.lifeEvents = []
+                return
+        }
+        
+        do {
+            self.lifeEvents = try context.fetch(descriptor)
+        } catch {
+            print("Failed to fetch life events: \(error)")
+        }
+    }
+    
     
     
     
@@ -205,6 +247,21 @@ class MyActivitiesPageViewModel: ObservableObject {
         
         let newInstance = ActivityInstance(timeStart: smartDate)
         context.insert(newInstance)
+        saveContext()
+    }
+    
+    func createParentAndChildActivity(date: Date? = nil) {
+        guard let context = modelContext else { return }
+        let smartDate = (date ?? filterDate).smartCreationTime
+        
+        let parentInstance = ActivityInstance(timeStart: smartDate)
+        
+        let childDate = smartDate.addingTimeInterval(1)
+        let childInstance = ActivityInstance(timeStart: childDate)
+        childInstance.parentInstance = parentInstance
+        
+        context.insert(parentInstance)
+        context.insert(childInstance)
         saveContext()
     }
     

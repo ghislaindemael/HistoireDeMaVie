@@ -145,8 +145,8 @@ struct InteractionPayload: Codable, InitializableWithModel {
     var percentage: Int
     var person_ids: [Int]
     var in_person: Bool
-    var parent_instance_id: Int?
-    let parent_trip_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     var details: String?
     
     init?(from interaction: Interaction) {

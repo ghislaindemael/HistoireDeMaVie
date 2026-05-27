@@ -8,10 +8,64 @@
 import SwiftUI
 import SwiftData
 
+extension PersistentModel {
+    static func fetchAllErased(from context: ModelContext, limit: Int? = nil, offset: Int? = nil) throws -> [any PersistentModel] {
+        var descriptor = FetchDescriptor<Self>()
+        if let limit = limit { descriptor.fetchLimit = limit }
+        if let offset = offset { descriptor.fetchOffset = offset }
+        return try context.fetch(descriptor)
+    }
+    
+    static func chunkedDelete(from context: ModelContext, filter: DataWipeDetailView.FilterOption) throws {
+        if filter == .all {
+            try context.delete(model: Self.self)
+            try context.save()
+            return
+        }
+        
+        var offset = 0
+        let batchSize = 500
+        while true {
+            var descriptor = FetchDescriptor<Self>()
+            descriptor.fetchLimit = batchSize
+            descriptor.fetchOffset = offset
+            let batch = try context.fetch(descriptor)
+            if batch.isEmpty { break }
+            
+            var deletedCount = 0
+            for item in batch {
+                if let syncable = item as? any SyncableModel {
+                    let isSynced = syncable.syncStatus == .synced
+                    let matches = (filter == .synced && isSynced) || (filter == .unsynced && !isSynced)
+                    if matches {
+                        context.delete(item)
+                        deletedCount += 1
+                    }
+                }
+            }
+            
+            if deletedCount > 0 {
+                try context.save()
+                // If we deleted items, the remaining items shifted up, so we don't increase offset
+            } else {
+                offset += batchSize
+            }
+        }
+    }
+}
+
 struct DataWipeDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var appNavigator: AppNavigator
     @Environment(\.dismiss) private var dismiss
+    
+    enum FilterOption: String, CaseIterable, Identifiable {
+        case all = "All"
+        case synced = "Synced"
+        case unsynced = "Unsynced"
+        
+        var id: String { self.rawValue }
+    }
     
     @State private var items: [any PersistentModel] = []
     
@@ -20,7 +74,11 @@ struct DataWipeDetailView: View {
     let modelType: any PersistentModel.Type
     
     @State private var count: Int = 0
+    @State private var selectedFilter: FilterOption = .all
     @State private var isShowingConfirmAlert = false
+    
+    @State private var currentPage: Int = 0
+    private let pageSize: Int = 50
     
     private var modelName: String {
         String(describing: modelType)
@@ -31,10 +89,34 @@ struct DataWipeDetailView: View {
         return syncableItems.filter { $0.syncStatus != .synced }.count
     }
     
+    private var filteredItems: [any PersistentModel] {
+        switch selectedFilter {
+        case .all:
+            return items
+        case .synced:
+            return items.filter { ($0 as? any SyncableModel)?.syncStatus == .synced }
+        case .unsynced:
+            return items.filter {
+                if let syncable = $0 as? any SyncableModel {
+                    return syncable.syncStatus != .synced
+                }
+                return false
+            }
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
+            Picker("Status Filter", selection: $selectedFilter) {
+                ForEach(FilterOption.allCases) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            
             List {
-                ForEach(items, id: \.persistentModelID) { item in
+                ForEach(filteredItems, id: \.persistentModelID) { item in
                     Button(action: {
                         navigateToItem(item)
                     }) {
@@ -48,8 +130,37 @@ struct DataWipeDetailView: View {
                             Label("Delete", systemImage: "trash")
                         }
                     }
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
             }
+            .listStyle(.plain)
+            
+            HStack {
+                Button("Previous") {
+                    if currentPage > 0 {
+                        currentPage -= 1
+                        fetchItems()
+                    }
+                }
+                .disabled(currentPage == 0)
+                
+                Spacer()
+                Text("Page \(currentPage + 1)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                
+                Button("Next") {
+                    if (currentPage + 1) * pageSize < count {
+                        currentPage += 1
+                        fetchItems()
+                    }
+                }
+                .disabled((currentPage + 1) * pageSize >= count)
+            }
+            .padding(.horizontal)
             
             HStack {
                 Text("Total objects: ")
@@ -67,132 +178,89 @@ struct DataWipeDetailView: View {
             Button(role: .destructive) {
                 isShowingConfirmAlert = true
             } label: {
-                Label("Delete All \(modelName) Objects", systemImage: "trash.fill")
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity)
+                if selectedFilter == .synced {
+                    Label("Delete Synced Objects (\(filteredItems.count))", systemImage: "trash.fill")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                } else if selectedFilter == .unsynced {
+                    Label("Delete Unsynced Objects (\(filteredItems.count))", systemImage: "trash.fill")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Label("Delete All \(modelName) Objects (\(count))", systemImage: "trash.fill")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(count == 0)
+            .disabled(filteredItems.isEmpty)
         }
         .padding()
         .navigationTitle(modelName)
         .onAppear(perform: fetchItems)
         .alert("Are you sure?", isPresented: $isShowingConfirmAlert) {
-            Button("Delete All", role: .destructive, action: deleteAllData)
+            Button("Delete", role: .destructive, action: deleteAllData)
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("You are about to permanently delete \(count) \(modelName) objects. This action cannot be undone.")
+            if selectedFilter == .all {
+                Text("You are about to permanently delete \(filteredItems.count) \(modelName) objects. This action cannot be undone.")
+            } else {
+                Text("You are about to permanently delete \(filteredItems.count) \(selectedFilter.rawValue) \(modelName) objects. This action cannot be undone.")
+            }
         }
     }
     
     /// Fetches the count of objects for the current model type.
     private func fetchItems() {
         do {
-            switch modelType {
-                case is Activity.Type:
-                    let descriptor = FetchDescriptor<Activity>(
-                        sortBy: [SortDescriptor(\Activity.name)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is ActivityInstance.Type:
-                    let descriptor = FetchDescriptor<ActivityInstance>(
-                        sortBy: [SortDescriptor(\ActivityInstance.timeStart, order: .reverse)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is AgendaEntry.Type:
-                    let descriptor = FetchDescriptor<AgendaEntry>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Trip.Type:
-                    let descriptor = FetchDescriptor<Trip>(
-                        sortBy: [SortDescriptor(\Trip.timeStart, order: .reverse)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Country.Type:
-                    let descriptor = FetchDescriptor<Country>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is City.Type:
-                    let descriptor = FetchDescriptor<City>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Path.Type:
-                    let descriptor = FetchDescriptor<Path>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Place.Type:
-                    let descriptor = FetchDescriptor<Place>(
-                        sortBy: [SortDescriptor(\.name)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Person.Type:
-                    let descriptor = FetchDescriptor<Person>()
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Interaction.Type:
-                    let descriptor = FetchDescriptor<Interaction>(
-                        sortBy: [SortDescriptor(\Interaction.timeStart, order: .reverse)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Vehicle.Type:
-                    let descriptor = FetchDescriptor<Vehicle>(
-                        sortBy: [SortDescriptor(\.name)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                case is Transaction.Type:
-                    let descriptor = FetchDescriptor<Transaction>(
-                        sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
-                    )
-                    let results = try modelContext.fetch(descriptor)
-                    items = results
-                    count = results.count
-                default:
-                    print("Warning: Unhandled model type in fetchItems: \(modelType)")
-                    items = []
-                    count = 0
+            let results = try modelType.fetchAllErased(from: modelContext, limit: pageSize, offset: currentPage * pageSize)
+            
+            // Apply dynamic sorting if applicable
+            if let timeTrackable = results as? [any TimeTrackable] {
+                self.items = timeTrackable.sorted { $0.timeStart > $1.timeStart } as! [any PersistentModel]
+            } else if let activites = results as? [Activity] {
+                self.items = activites.sorted { $0.name < $1.name }
+            } else if let places = results as? [Place] {
+                self.items = places.sorted { $0.name < $1.name }
+            } else if let vehicles = results as? [Vehicle] {
+                self.items = vehicles.sorted { ($0.name ?? "") < ($1.name ?? "") }
+            } else {
+                self.items = results
             }
+            
+            // Re-fetch the total count to ensure accurate pagination bounds
+            self.count = fetchTotalCount()
+            
         } catch {
-            print("Failed to fetch items: \(error)")
-            items = []
-            count = 0
+            print("Failed to fetch items for \(modelName): \(error)")
+            self.items = []
+            self.count = 0
         }
     }
     
+    private func fetchTotalCount() -> Int {
+        do {
+            let results = try modelType.fetchAllErased(from: modelContext, limit: nil, offset: nil)
+            return results.count
+        } catch {
+            return 0
+        }
+    }
+
     
-    /// Performs the deletion of all objects for the current model type.
+    
+    /// Performs the deletion of objects based on the current filter.
     private func deleteAllData() {
         do {
-            for item in items {
-                modelContext.delete(item)
-            }
+            try modelType.chunkedDelete(from: modelContext, filter: selectedFilter)
+            print("Successfully executed batch wipe for \(modelName).")
             
-            try modelContext.save()
-            
-            print("Successfully deleted all \(modelName) objects.")
-            
-            items.removeAll()
-            count = 0
+            // Reset to page 0 after mass delete
+            currentPage = 0
             fetchItems()
             
         } catch {
-            print("Failed to delete \(modelName) objects: \(error)")
+            print("Failed to batch delete \(modelName) objects: \(error)")
         }
     }
     
@@ -241,6 +309,11 @@ struct DataWipeDetailView: View {
         }
         if let trip = item as? Trip {
             appNavigator.selectedDate = trip.timeStart
+            appNavigator.selectedTab = .activities
+            dismiss()
+        }
+        if let lifeEvent = item as? LifeEvent {
+            appNavigator.selectedDate = lifeEvent.timeStart
             appNavigator.selectedTab = .activities
             dismiss()
         }

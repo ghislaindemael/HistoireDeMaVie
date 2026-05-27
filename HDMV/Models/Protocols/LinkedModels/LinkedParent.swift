@@ -11,11 +11,18 @@ protocol LinkedParent: AnyObject {
     
     var parentTrip: Trip? { get set }
     var parentTripRid: Int? { get set }
+    
+    var hasAmbiguousParents: Bool { get }
 }
 
 extension LinkedParent {
     
+    var hasAmbiguousParents: Bool {
+        return (parentInstance != nil || parentInstanceRid != nil) && (parentTrip != nil || parentTripRid != nil)
+    }
+
     func setParentInstance(_ newParent: ActivityInstance?, fallbackRid: Int? = nil) {
+        clearParents()
         parentInstance = newParent
         parentInstanceRid = newParent?.rid ?? fallbackRid
     }
@@ -26,6 +33,7 @@ extension LinkedParent {
     }
     
     func setParentTrip(_ newParent: Trip?, fallbackRid: Int? = nil) {
+        clearParents()
         parentTrip = newParent
         parentTripRid = newParent?.rid ?? fallbackRid
     }
@@ -40,13 +48,10 @@ extension LinkedParent {
         
         if let instanceParent = newParent as? ActivityInstance {
             parentInstance = instanceParent
-            parentInstanceRid = instanceParent.rid
+            parentInstanceRid = instanceParent.rid ?? fallbackRid
         } else if let tripParent = newParent as? Trip {
             parentTrip = tripParent
-            parentTripRid = tripParent.rid
-        } else {
-            parentInstanceRid = fallbackRid
-            parentTripRid = fallbackRid
+            parentTripRid = tripParent.rid ?? fallbackRid
         }
     }
     

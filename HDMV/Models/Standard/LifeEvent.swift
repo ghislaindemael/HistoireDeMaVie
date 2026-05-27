@@ -110,8 +110,8 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     let time_end: Date?
     let details: String?
     let metrics: LifeEventMetrics?
-    let parent_instance_id: Int?
-    let parent_trip_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     
     typealias Model = LifeEvent
     

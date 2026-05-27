@@ -19,6 +19,7 @@ struct MyActivitiesPage: View {
     @State private var tripToEdit: Trip?
     @State private var interactionToEdit: Interaction?
     @State private var transactionToEdit: Transaction?
+    @State private var lifeEventToEdit: LifeEvent?
     @State private var showingImporter = false
     
     private func onAppear() {
@@ -51,8 +52,8 @@ struct MyActivitiesPage: View {
                     }
                 ) {
                     Section("Create New") {
-                        Button(action: { viewModel.createTransaction() }) {
-                            Label("Transaction", systemImage: "banknote")
+                        Button(action: { viewModel.createParentAndChildActivity() }) {
+                            Label("Parent + Child", systemImage: "arrow.down.right.square")
                         }
                         Button(action: { viewModel.createLifeEvent() }) {
                             Label("Life Event", systemImage: "star.fill")
@@ -72,14 +73,21 @@ struct MyActivitiesPage: View {
             
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    ForEach(viewModel.instances, id: \.persistentModelID) { instance in
-                        ParentModelHierarchyView(
-                            parent: instance,
-                            level: 0,
-                            instanceToEdit: $instanceToEdit,
-                            tripToEdit: $tripToEdit,
-                            interactionToEdit: $interactionToEdit
-                        )
+                    ForEach(viewModel.timelineItems, id: \.id) { item in
+                        if let instance = item as? ActivityInstance {
+                            ParentModelHierarchyView(
+                                parent: instance,
+                                level: 0,
+                                instanceToEdit: $instanceToEdit,
+                                tripToEdit: $tripToEdit,
+                                interactionToEdit: $interactionToEdit
+                            )
+                        } else if let lifeEvent = item as? LifeEvent {
+                            LifeEventRowView(event: lifeEvent, selectedDate: viewModel.filterDate)
+                                .onTapGesture(count: 2) {
+                                    lifeEventToEdit = lifeEvent
+                                }
+                        }
                     }
                 }
             }
@@ -117,6 +125,12 @@ struct MyActivitiesPage: View {
         .sheet(item: $transactionToEdit) { transaction in
             TransactionDetailSheet(
                 transaction: transaction,
+                modelContext: modelContext
+            )
+        }
+        .sheet(item: $lifeEventToEdit, onDismiss: { viewModel.fetchDailyData() }) { lifeEvent in
+            LifeEventDetailSheet(
+                lifeEvent: lifeEvent,
                 modelContext: modelContext
             )
         }

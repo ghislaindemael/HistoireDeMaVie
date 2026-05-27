@@ -20,6 +20,7 @@ struct DataManagementComponent: View {
         Country.self,
         City.self,
         Interaction.self,
+        LifeEvent.self,
         Path.self,
         Place.self,
         Person.self,
