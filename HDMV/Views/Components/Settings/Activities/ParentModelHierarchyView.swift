@@ -171,7 +171,7 @@ struct ParentModelHierarchyView: View {
             combined = combined.filter { $0.timeEnd == nil }
         }
         
-        return combined.sorted { $0.timeStart > $1.timeStart }
+        return combined.sorted { $0.timeStart < $1.timeStart }
     }
     
     private var hiddenChildrenCount: Int {

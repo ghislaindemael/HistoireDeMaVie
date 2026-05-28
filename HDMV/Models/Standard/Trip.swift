@@ -237,13 +237,16 @@ struct TripPayload: Codable, InitializableWithModel {
     
 }
 
-struct TripEditor: TimeBound, EditorProtocol {
+struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     
     var timeStart: Date
     var timeEnd: Date?
     
     var parentInstanceRid: Int?
     var parentInstance: ActivityInstance?
+    
+    var parentTripRid: Int?
+    var parentTrip: Trip?
     
     var vehicleRid: Int?
     var vehicle: Vehicle?
@@ -276,6 +279,9 @@ struct TripEditor: TimeBound, EditorProtocol {
         self.parentInstanceRid = trip.parentInstanceRid
         self.parentInstance = trip.parentInstance
         
+        self.parentTripRid = trip.parentTripRid
+        self.parentTrip = trip.parentTrip
+        
         self.vehicleRid = trip.vehicleRid
         self.vehicle = trip.vehicle
         
@@ -306,7 +312,10 @@ struct TripEditor: TimeBound, EditorProtocol {
         trip.details = details
         trip.fitFilePath = fitFilePath
         
-        trip.setParentInstance(parentInstance, fallbackRid: parentInstanceRid)
+        trip.parentInstance = parentInstance
+        trip.parentInstanceRid = parentInstance?.rid ?? parentInstanceRid
+        trip.parentTrip = parentTrip
+        trip.parentTripRid = parentTrip?.rid ?? parentTripRid
         trip.setPlaceStart(placeStart, fallbackRid: placeStartRid)
         trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)

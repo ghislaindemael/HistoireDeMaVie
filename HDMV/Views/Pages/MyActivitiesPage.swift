@@ -107,9 +107,7 @@ struct MyActivitiesPage: View {
         .sheet(item: $instanceToEdit, onDismiss: { viewModel.fetchDailyData() }) { instance in
             ActivityInstanceDetailSheet(
                 instance: instance,
-                modelContext: modelContext,
-                availableTrips: viewModel.trips,
-                availableInteractions: viewModel.interactions
+                modelContext: modelContext
             )
         }
         .sheet(item: $tripToEdit) { trip in

@@ -168,7 +168,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
 
 // MARK: - Editor
 
-struct InteractionEditor: EditorProtocol {
+struct InteractionEditor: EditorProtocol, LinkedParent {
     
     var time_start: Date
     var time_end: Date?
@@ -179,6 +179,8 @@ struct InteractionEditor: EditorProtocol {
     var in_person: Bool
     var parentInstanceRid: Int?
     var parentInstance: ActivityInstance?
+    var parentTripRid: Int?
+    var parentTrip: Trip?
     var details: String?
     
     typealias Model = Interaction
@@ -205,6 +207,8 @@ struct InteractionEditor: EditorProtocol {
         self.personRids = interaction.personRids
         self.parentInstance = interaction.parentInstance
         self.parentInstanceRid = interaction.parentInstanceRid
+        self.parentTrip = interaction.parentTrip
+        self.parentTripRid = interaction.parentTripRid
         self.details = interaction.details
     }
     
@@ -219,7 +223,9 @@ struct InteractionEditor: EditorProtocol {
         interaction.personRids = self.persons.compactMap { $0.rid }
         interaction.inPerson = self.in_person
         interaction.parentInstance = self.parentInstance
-        interaction.parentInstanceRid = self.parentInstance?.rid
+        interaction.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
+        interaction.parentTrip = self.parentTrip
+        interaction.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         interaction.details = self.details
         
         interaction.markAsModified()

@@ -67,13 +67,11 @@ struct DataWipeDetailView: View {
         var id: String { self.rawValue }
     }
     
-    @State private var items: [any PersistentModel] = []
-    
+    @State private var allItems: [any PersistentModel] = []
     
     /// The specific model type this view will manage (e.g., Meal.self).
     let modelType: any PersistentModel.Type
     
-    @State private var count: Int = 0
     @State private var selectedFilter: FilterOption = .all
     @State private var isShowingConfirmAlert = false
     
@@ -85,24 +83,28 @@ struct DataWipeDetailView: View {
     }
     
     private var unsyncedItemsCount: Int {
-        let syncableItems = items.compactMap { $0 as? any SyncableModel }
+        let syncableItems = allItems.compactMap { $0 as? any SyncableModel }
         return syncableItems.filter { $0.syncStatus != .synced }.count
     }
     
     private var filteredItems: [any PersistentModel] {
         switch selectedFilter {
         case .all:
-            return items
+            return allItems
         case .synced:
-            return items.filter { ($0 as? any SyncableModel)?.syncStatus == .synced }
+            return allItems.filter { ($0 as? any SyncableModel)?.syncStatus == .synced }
         case .unsynced:
-            return items.filter {
+            return allItems.filter {
                 if let syncable = $0 as? any SyncableModel {
                     return syncable.syncStatus != .synced
                 }
                 return false
             }
         }
+    }
+    
+    private var paginatedItems: [any PersistentModel] {
+        Array(filteredItems.dropFirst(currentPage * pageSize).prefix(pageSize))
     }
     
     var body: some View {
@@ -114,9 +116,12 @@ struct DataWipeDetailView: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
+            .onChange(of: selectedFilter) {
+                currentPage = 0
+            }
             
             List {
-                ForEach(filteredItems, id: \.persistentModelID) { item in
+                ForEach(paginatedItems, id: \.persistentModelID) { item in
                     Button(action: {
                         navigateToItem(item)
                     }) {
@@ -141,7 +146,6 @@ struct DataWipeDetailView: View {
                 Button("Previous") {
                     if currentPage > 0 {
                         currentPage -= 1
-                        fetchItems()
                     }
                 }
                 .disabled(currentPage == 0)
@@ -153,19 +157,18 @@ struct DataWipeDetailView: View {
                 Spacer()
                 
                 Button("Next") {
-                    if (currentPage + 1) * pageSize < count {
+                    if (currentPage + 1) * pageSize < filteredItems.count {
                         currentPage += 1
-                        fetchItems()
                     }
                 }
-                .disabled((currentPage + 1) * pageSize >= count)
+                .disabled((currentPage + 1) * pageSize >= filteredItems.count)
             }
             .padding(.horizontal)
             
             HStack {
                 Text("Total objects: ")
                 Spacer()
-                Text("\(count)")
+                Text("\(filteredItems.count)")
                     .font(.title2.bold())
             }
             HStack {
@@ -187,7 +190,7 @@ struct DataWipeDetailView: View {
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                 } else {
-                    Label("Delete All \(modelName) Objects (\(count))", systemImage: "trash.fill")
+                    Label("Delete All \(modelName) Objects (\(filteredItems.count))", systemImage: "trash.fill")
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                 }
@@ -213,37 +216,24 @@ struct DataWipeDetailView: View {
     /// Fetches the count of objects for the current model type.
     private func fetchItems() {
         do {
-            let results = try modelType.fetchAllErased(from: modelContext, limit: pageSize, offset: currentPage * pageSize)
+            let results = try modelType.fetchAllErased(from: modelContext, limit: nil, offset: nil)
             
             // Apply dynamic sorting if applicable
             if let timeTrackable = results as? [any TimeTrackable] {
-                self.items = timeTrackable.sorted { $0.timeStart > $1.timeStart } as! [any PersistentModel]
+                self.allItems = timeTrackable.sorted { $0.timeStart > $1.timeStart } as! [any PersistentModel]
             } else if let activites = results as? [Activity] {
-                self.items = activites.sorted { $0.name < $1.name }
+                self.allItems = activites.sorted { $0.name < $1.name }
             } else if let places = results as? [Place] {
-                self.items = places.sorted { $0.name < $1.name }
+                self.allItems = places.sorted { $0.name < $1.name }
             } else if let vehicles = results as? [Vehicle] {
-                self.items = vehicles.sorted { ($0.name ?? "") < ($1.name ?? "") }
+                self.allItems = vehicles.sorted { ($0.name ?? "") < ($1.name ?? "") }
             } else {
-                self.items = results
+                self.allItems = results
             }
-            
-            // Re-fetch the total count to ensure accurate pagination bounds
-            self.count = fetchTotalCount()
-            
+                        
         } catch {
             print("Failed to fetch items for \(modelName): \(error)")
-            self.items = []
-            self.count = 0
-        }
-    }
-    
-    private func fetchTotalCount() -> Int {
-        do {
-            let results = try modelType.fetchAllErased(from: modelContext, limit: nil, offset: nil)
-            return results.count
-        } catch {
-            return 0
+            self.allItems = []
         }
     }
 

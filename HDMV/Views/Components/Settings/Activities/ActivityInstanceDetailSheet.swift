@@ -22,16 +22,12 @@ struct ActivityInstanceDetailSheet: View {
     
     init(
         instance: ActivityInstance,
-        modelContext: ModelContext,
-        availableTrips: [Trip],
-        availableInteractions: [Interaction]
+        modelContext: ModelContext
     ) {
         self.instance = instance
         _viewModel = StateObject(wrappedValue: ActivityInstanceDetailSheetViewModel(
             model: instance,
-            modelContext: modelContext,
-            trips: availableTrips,
-            interactions: availableInteractions
+            modelContext: modelContext
         ))
     }
     
@@ -49,39 +45,18 @@ struct ActivityInstanceDetailSheet: View {
                 }
                 
                 
-                if viewModel.editor.parentInstance != nil {
-                    Section("Hierarchy") {
-                        Button("Remove from Parent", role: .destructive) {
-                            viewModel.editor.parentInstance = nil
-                        }
+                HierarchySectionView(
+                    model: instance,
+                    hasParent: !viewModel.editor.hasNoParent(),
+                    onRemoveFromParent: {
+                        viewModel.editor.clearParents()
                     }
-                }
+                )
                 
-                if !viewModel.unclaimedTrips.isEmpty && selectedActivity?.can(.create_trips) == true {
-                    Section("Claim Trips") {
-                        ForEach(viewModel.unclaimedTrips) { trip in
-                            TripRowView(trip: trip)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    viewModel.claim(trip: trip, for: instance)
-                                }
-                        }
-                    }
-                }
-                
-                if !viewModel.unclaimedInteractions.isEmpty &&
-                    selectedActivity?.can(.create_interactions) == true
-                    {
-                    Section("Claim Interactions") {
-                        ForEach(viewModel.unclaimedInteractions) { interaction in
-                            InteractionRowView(interaction: interaction)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    viewModel.claim(interaction: interaction, for: instance)
-                                }
-                        }
-                    }
-                }
+                OrphanLogItemConnector(
+                    parent: instance,
+                    activity: selectedActivity
+                )
 
             }
             .navigationTitle(selectedActivity?.name ?? "Edit Instance")
@@ -143,7 +118,10 @@ struct ActivityInstanceDetailSheet: View {
             }
             
             if selectedActivity!.can(.link_place) {
-                PlaceSelectorView(selectedPlace: detailsPlaceBinding)
+                PlaceSelectorView(
+                    selectedPlace: detailsPlaceBinding,
+                    linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId
+                )
             }
         }
     }

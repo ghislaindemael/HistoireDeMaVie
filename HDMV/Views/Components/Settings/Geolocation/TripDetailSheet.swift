@@ -13,7 +13,10 @@ struct TripDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailSheetViewModel
 
+    let trip: Trip
+    
     init(trip: Trip, modelContext: ModelContext) {
+        self.trip = trip
         _viewModel = StateObject(wrappedValue: TripDetailSheetViewModel(
             model: trip,
             modelContext: modelContext
@@ -55,14 +58,20 @@ struct TripDetailSheet: View {
                     }
                 }
                 
-                if viewModel.editor.parentInstance != nil || viewModel.editor.parentInstanceRid != nil {
-                    Section("Hierarchy") {
-                        Button("Remove from Parent", role: .destructive) {
-                            viewModel.editor.parentInstance = nil
-                            viewModel.editor.parentInstanceRid = nil
-                        }
+                HierarchySectionView(
+                    model: trip,
+                    hasParent: !viewModel.editor.hasNoParent(),
+                    onRemoveFromParent: {
+                        viewModel.editor.clearParents()
                     }
-                }
+                )
+                
+                OrphanLogItemConnector(
+                    parent: trip,
+                    showTrips: false,
+                    showInteractions: true,
+                    showLifeEvents: true
+                )
             }
             .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {
@@ -188,7 +197,6 @@ struct TripDetailSheet: View {
                 .frame(minHeight: 100)
         }
     }
-    
     
     
 }

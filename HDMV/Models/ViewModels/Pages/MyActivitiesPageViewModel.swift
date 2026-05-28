@@ -183,7 +183,6 @@ class MyActivitiesPageViewModel: ObservableObject {
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: filterDate)
                 guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-                let future = Date.distantFuture
                 
                 let predicate = #Predicate<LifeEvent> {
                     $0.parentInstance == nil &&
@@ -283,7 +282,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         let date = settings.planningMode ? parent.timeStart : Date.now
         
-        let newTrip = Trip(timeStart: date)
+        var newTrip = Trip(timeStart: date)
         newTrip.setParentInstance(parent)
         context.insert(newTrip)
         saveContext()
@@ -372,6 +371,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
         
         func move<T: LinkedParent & LogModel>(_ item: T) {
+            var item = item
             guard item.id != newParent.id else {
                 print("⚠️ SKIPPED: Cannot drop an item onto itself.")
                 return

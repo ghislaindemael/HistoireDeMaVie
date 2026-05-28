@@ -13,7 +13,10 @@ struct InteractionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
     
+    let interaction: Interaction
+    
     init(interaction: Interaction, modelContext: ModelContext) {
+        self.interaction = interaction
         _viewModel = StateObject(wrappedValue: InteractionDetailSheetViewModel(
             model: interaction,
             modelContext: modelContext
@@ -26,14 +29,13 @@ struct InteractionDetailSheet: View {
                 basicsSection
                 detailsSection
                 
-                if viewModel.editor.parentInstance != nil {
-                    Section("Hierarchy") {
-                        Button("Remove from Parent", role: .destructive) {
-                            viewModel.editor.parentInstance = nil
-                            viewModel.editor.parentInstanceRid = nil
-                        }
+                HierarchySectionView(
+                    model: interaction,
+                    hasParent: !viewModel.editor.hasNoParent(),
+                    onRemoveFromParent: {
+                        viewModel.editor.clearParents()
                     }
-                }
+                )
             }
             .navigationTitle("Edit Interaction")
             .navigationBarTitleDisplayMode(.inline)
