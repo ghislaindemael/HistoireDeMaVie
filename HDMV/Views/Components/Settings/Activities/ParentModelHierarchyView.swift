@@ -168,7 +168,7 @@ struct ParentModelHierarchyView: View {
         }
         
         if parent.childrenDisplayMode == .ongoing {
-            combined = combined.filter { $0.timeEnd == nil }
+            combined = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }
         }
         
         return combined.sorted { $0.timeStart < $1.timeStart }
@@ -188,7 +188,7 @@ struct ParentModelHierarchyView: View {
         if parent.childrenDisplayMode == .none {
             return combined.count
         } else if parent.childrenDisplayMode == .ongoing {
-            let ongoingCount = combined.filter { $0.timeEnd == nil }.count
+            let ongoingCount = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }.count
             return max(0, combined.count - ongoingCount)
         } else {
             return 0

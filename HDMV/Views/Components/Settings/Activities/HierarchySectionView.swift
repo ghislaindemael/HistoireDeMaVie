@@ -10,12 +10,10 @@ struct HierarchySectionView: View {
     
     var body: some View {
         Section("Hierarchy") {
-            if hasParent {
-                Button("Remove from Parent", role: .destructive) {
-                    onRemoveFromParent()
-                }
+            Button("Remove from Parent", role: .destructive) {
+                onRemoveFromParent()
             }
-            
+            .disabled(!hasParent)
             if let parentModel = model as? any ParentModel {
                 Button("Create Child Trip") {
                     createChildTrip(parent: parentModel)

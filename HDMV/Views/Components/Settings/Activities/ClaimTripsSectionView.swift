@@ -3,7 +3,8 @@ import SwiftData
 
 struct ClaimTripsSectionView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var unclaimedTrips: [Trip]
+    @Query private var dayTrips: [Trip]
+    @State private var showAll: Bool = false
     
     let parent: any ParentModel
     
@@ -12,16 +13,25 @@ struct ClaimTripsSectionView: View {
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: parent.timeStart)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? Date.now
+        let endBoundDate = parent.timeEnd ?? Date.now
+        let startOfEndBoundDay = calendar.startOfDay(for: endBoundDate)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfEndBoundDay) ?? Date.distantFuture
         let future = Date.distantFuture
         
         let predicate = #Predicate<Trip> { trip in
-            trip.parentInstance == nil &&
             trip.timeStart < endOfDay &&
             (trip.timeEnd ?? future) > startOfDay
         }
         
-        _unclaimedTrips = Query(filter: predicate, sort: \.timeStart, order: .reverse)
+        _dayTrips = Query(filter: predicate, sort: \.timeStart, order: .reverse)
+    }
+    
+    private var unclaimedTrips: [Trip] {
+        dayTrips.filter { $0.parentInstanceRid == nil && $0.parentInstance == nil }
+    }
+    
+    private var displayedTrips: [Trip] {
+        showAll ? dayTrips : unclaimedTrips
     }
     
     private func claim(trip: Trip) {
@@ -33,16 +43,31 @@ struct ClaimTripsSectionView: View {
     
     var body: some View {
         Section("Claim Trips") {
-            if unclaimedTrips.isEmpty {
-                Text("No unclaimed trips available")
+            if displayedTrips.isEmpty {
+                Text(showAll ? "No trips recorded today" : "No unclaimed trips available")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(unclaimedTrips) { trip in
+                ForEach(displayedTrips) { trip in
                     TripRowView(trip: trip)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             claim(trip: trip)
+                            showAll = false // Reset after claiming if desired, or keep open
                         }
+                }
+            }
+            
+            if !showAll {
+                Button("Show all trips of the day") {
+                    withAnimation {
+                        showAll = true
+                    }
+                }
+            } else {
+                Button("Hide claimed trips") {
+                    withAnimation {
+                        showAll = false
+                    }
                 }
             }
         }

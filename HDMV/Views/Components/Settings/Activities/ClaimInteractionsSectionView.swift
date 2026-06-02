@@ -12,7 +12,9 @@ struct ClaimInteractionsSectionView: View {
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: parent.timeStart)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? Date.now
+        let endBoundDate = parent.timeEnd ?? Date.now
+        let startOfEndBoundDay = calendar.startOfDay(for: endBoundDate)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfEndBoundDay) ?? Date.distantFuture
         let future = Date.distantFuture
         
         let predicate = #Predicate<Interaction> { interaction in
