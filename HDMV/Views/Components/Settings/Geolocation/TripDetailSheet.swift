@@ -85,6 +85,11 @@ struct TripDetailSheet: View {
                     onPathSelected: viewModel.selectPath
                 )
             }
+            .sheet(isPresented: $viewModel.isShowingTransitLineSelector) {
+                TransitLineSelectorSheet(
+                    onSelect: viewModel.selectTransitLine
+                )
+            }
             .sheet(isPresented: $viewModel.isShowingMetricsEditSheet) {
                 PathMetricsEditSheet(
                     currentMetrics: viewModel.editor.pathMetrics,
@@ -127,10 +132,7 @@ struct TripDetailSheet: View {
                 pathRid: viewModel.editor.pathRid,
                 isShowingSelector: $viewModel.isShowingPathSelector,
                 onSelect: { newPath, newRid in
-                    viewModel.editor.path = newPath
-                    viewModel.editor.pathRid = newRid
-                    viewModel.editor.pathMetrics = nil
-                    viewModel.editor.geojsonTrack = nil
+                    viewModel.selectPath(path: newPath)
                 },
                 onClear: {
                     viewModel.editor.path = nil
@@ -138,7 +140,20 @@ struct TripDetailSheet: View {
                 }
             )
             
-                
+            if viewModel.editor.path == nil && viewModel.editor.pathRid == nil {
+                TransitLineSelector(
+                    transitLine: viewModel.editor.transitLine,
+                    transitLineRid: viewModel.editor.transitLineRid,
+                    isShowingSelector: $viewModel.isShowingTransitLineSelector,
+                    onSelect: { newLine, newRid in
+                        viewModel.selectTransitLine(line: newLine)
+                    },
+                    onClear: {
+                        viewModel.editor.transitLine = nil
+                        viewModel.editor.transitLineRid = nil
+                    }
+                )
+            }
             if viewModel.editor.geojsonTrack != nil {
                 Button {
                     // TODO: Open a full-screen map to view the route
@@ -185,6 +200,15 @@ struct TripDetailSheet: View {
                     viewModel.isShowingMetricsEditSheet = true
                 } label: {
                     Label("Add Custom Metrics", systemImage: "plus.circle")
+                }
+                
+                if viewModel.canCalculateDistanceFromTransit {
+                    Button {
+                        viewModel.calculateDistanceFromTransit()
+                    } label: {
+                        Label("Calculate Distance from Line", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                            .foregroundStyle(.blue)
+                    }
                 }
             }
             
