@@ -14,17 +14,20 @@ struct PlaceSelectorView: View {
     
     @Binding var selectedPlace: Place?
     var linkedPlaceRid: Int?
+    var selectedVehicle: Vehicle?
     
     @State private var displayCityId: Int?
     @State private var initialPlace: Place?
     @State private var uncachedPlaceholder: Place?
     @State private var uncachedCity: City?
+    @State private var showAllPlaces: Bool = false
     
     // MARK: - Init
     
-    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil) {
+    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil, selectedVehicle: Vehicle? = nil) {
         self._selectedPlace = selectedPlace
         self.linkedPlaceRid = linkedPlaceRid
+        self.selectedVehicle = selectedVehicle
     }
     
     private func initializeState() {
@@ -49,6 +52,9 @@ struct PlaceSelectorView: View {
         sortBy: [SortDescriptor(\.name)]))
     private var cities: [City]
     
+    @Query(FetchDescriptor<TransitLine>())
+    private var transitLines: [TransitLine]
+    
     private var placesForSelectedCity: [Place] {
         guard let cityId = displayCityId else { return [] }
         let predicate = #Predicate<Place> {
@@ -56,7 +62,46 @@ struct PlaceSelectorView: View {
             $0.cache == true
         }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Place.name)])
-        return (try? modelContext.fetch(descriptor)) ?? []
+        let allPlacesInCity = (try? modelContext.fetch(descriptor)) ?? []
+        
+        return filterPlacesByVehicle(allPlacesInCity)
+    }
+    
+    private func filterPlacesByVehicle(_ places: [Place]) -> [Place] {
+        guard !showAllPlaces else { return places }
+        guard let vehicle = selectedVehicle else { return places }
+        
+        // Rule 1: Transit Line
+        if let vRid = vehicle.rid {
+            let matchingTransitLines = transitLines.filter { $0.allowedVehicleRids?.contains(vRid) == true }
+            if !matchingTransitLines.isEmpty {
+                // This is a Transit vehicle. Only allow places linked to its stations.
+                let allowedPlaceRids = matchingTransitLines.flatMap { $0.stops ?? [] }
+                    .compactMap { $0.station?.placeRid }
+                return places.filter { p in p.rid != nil && allowedPlaceRids.contains(p.rid!) }
+            }
+        }
+        
+        // Rule 2, 3, 4: Generic Filtering
+        return places.filter { place in
+            let emptyIds = place.allowedVehicleRids.isEmpty
+            let emptySlugs = place.allowedVehicleTypeSlugs.isEmpty
+            
+            // Rule 2: Both empty
+            if emptyIds && emptySlugs { return true }
+            
+            // Rule 3: Specific ID
+            if let vRid = vehicle.rid, place.allowedVehicleRids.contains(vRid) {
+                return true
+            }
+            
+            // Rule 4: Broad Type
+            if place.allowedVehicleTypeSlugs.contains(vehicle.typeSlug) {
+                return true
+            }
+            
+            return false
+        }
     }
 
     
@@ -78,6 +123,13 @@ struct PlaceSelectorView: View {
             
             if displayCityId != nil {
                 placePicker
+                
+                if selectedVehicle != nil {
+                    Toggle("Show all places (ignore vehicle restrictions)", isOn: $showAllPlaces)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                }
             }
         }
         .onAppear(perform: initializeState)
@@ -106,6 +158,11 @@ struct PlaceSelectorView: View {
                 Text(city.name).tag(city.rid as Int?)
             }
         }
+        .onChange(of: displayCityId) { oldId, newId in
+            if oldId != nil && oldId != newId {
+                selectedPlace = nil
+            }
+        }
     }
     
     private var placePicker: some View {
@@ -113,7 +170,9 @@ struct PlaceSelectorView: View {
             Text("Select a Place").tag(nil as Place?)
             
             if let selected = selectedPlace, !placesForSelectedCity.contains(where: { $0.id == selected.id }) {
-                Text("\(selected.name) (Uncached)").tag(selected as Place?)
+                if selected.cityRid == displayCityId {
+                    Text("\(selected.name) (Uncached)").tag(selected as Place?)
+                }
             }
             
             let favorites = placesForSelectedCity.filter { $0.isFavorite }

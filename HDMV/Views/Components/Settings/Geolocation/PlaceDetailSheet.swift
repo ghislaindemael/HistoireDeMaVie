@@ -29,7 +29,10 @@ struct PlaceDetailSheet: View {
                     TextField("Name", text: $viewModel.editor.name)
                     CitySelectorView(selectedCity: Binding(
                         get: { viewModel.editor.city },
-                        set: { viewModel.editor.city = $0 }
+                        set: { newCity in
+                            viewModel.editor.city = newCity
+                            viewModel.editor.cityRid = newCity?.rid
+                        }
                     ))
                 }
 
@@ -37,6 +40,30 @@ struct PlaceDetailSheet: View {
                     Toggle("Favorite", isOn: $viewModel.editor.isFavorite)
                     Toggle("Cached", isOn: $viewModel.editor.cache)
                     Toggle("Archived", isOn: $viewModel.editor.archived)
+                }
+                
+                Section("Restrictions") {
+                    NavigationLink {
+                        MultiVehicleSelectorView(selectedRids: $viewModel.editor.allowedVehicleRids)
+                    } label: {
+                        HStack {
+                            Text("Allowed Specific Vehicles")
+                            Spacer()
+                            Text("\(viewModel.editor.allowedVehicleRids.count) selected")
+                                .foregroundStyle(viewModel.editor.allowedVehicleRids.isEmpty ? .secondary : .primary)
+                        }
+                    }
+                    
+                    NavigationLink {
+                        MultiVehicleTypeSelectorView(selectedSlugs: $viewModel.editor.allowedVehicleTypeSlugs)
+                    } label: {
+                        HStack {
+                            Text("Allowed Generic Types")
+                            Spacer()
+                            Text("\(viewModel.editor.allowedVehicleTypeSlugs.count) selected")
+                                .foregroundStyle(viewModel.editor.allowedVehicleTypeSlugs.isEmpty ? .secondary : .primary)
+                        }
+                    }
                 }
                 
             }
