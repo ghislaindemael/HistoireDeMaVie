@@ -59,6 +59,7 @@ struct ActivityInstanceDetailSheet: View {
                 )
 
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(selectedActivity?.name ?? "Edit Instance")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
@@ -70,8 +71,17 @@ struct ActivityInstanceDetailSheet: View {
     
     // MARK: - UI Sections
     
+    private func headerView(_ title: String) -> some View {
+        Text(title)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+    }
+    
     private var basicsSection: some View {
-        Section("Basics") {
+        Section(header: headerView("Basics")) {
             NavigationLink(destination: ActivitySelectorView(
                 selectedActivity: $viewModel.editor.activity
             )) {
@@ -100,12 +110,12 @@ struct ActivityInstanceDetailSheet: View {
     }
     
     private var detailsSection: some View {
-        Section("Details") {
-            TextEditor(text: Binding(
+        Section(header: headerView("Details")) {
+            TextField("Details", text: Binding(
                 get: { viewModel.editor.details ?? "" },
                 set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }
-            ))
-            .lineLimit(3...)
+            ), axis: .vertical)
+            .lineLimit(4...)
         }
     }
     

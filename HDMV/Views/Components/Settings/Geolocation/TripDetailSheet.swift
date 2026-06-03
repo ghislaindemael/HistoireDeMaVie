@@ -29,14 +29,14 @@ struct TripDetailSheet: View {
                 TimeSection(editor: $viewModel.editor)
                 vehicleSection
                 
-                Section("Start Place") {
+                Section(header: headerView("Start Place")) {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeStart,
                         linkedPlaceRid: viewModel.editor.placeStartRid,
                         selectedVehicle: viewModel.editor.vehicle
                     )
                 }
-                Section("End Place") {
+                Section(header: headerView("End Place")) {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeEnd,
                         linkedPlaceRid: viewModel.editor.placeEndRid,
@@ -46,7 +46,7 @@ struct TripDetailSheet: View {
                 pathSection
                 detailsSection
                 
-                Section("Companions") {
+                Section(header: headerView("Companions")) {
                     NavigationLink {
                         MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
                     } label: {
@@ -75,6 +75,7 @@ struct TripDetailSheet: View {
                     showLifeEvents: true
                 )
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {
                 viewModel.onDone()
@@ -118,7 +119,7 @@ struct TripDetailSheet: View {
     // MARK: - UI Sections
     
     private var vehicleSection: some View {
-        Section("Vehicle") {
+        Section(header: headerView("Vehicle")) {
             VehicleSelectorView(
                 selectedVehicle: $viewModel.editor.vehicle,
                 amDriver: $viewModel.editor.amDriver
@@ -126,8 +127,17 @@ struct TripDetailSheet: View {
         }
     }
     
+    private func headerView(_ title: String) -> some View {
+        Text(title)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+    }
+    
     private var pathSection: some View {
-        Section(header: Text("Path & Metrics")) {
+        Section(header: headerView("Path & Metrics")) {
             
             PathSelector(
                 path: viewModel.editor.path,
@@ -218,9 +228,9 @@ struct TripDetailSheet: View {
     }
     
     private var detailsSection: some View {
-        Section(header: Text("Details")) {
-            TextEditor(text: $viewModel.editor.details.bound)
-                .frame(minHeight: 100)
+        Section(header: headerView("Details")) {
+            TextField("Details", text: $viewModel.editor.details.bound, axis: .vertical)
+                .lineLimit(4...)
         }
     }
     

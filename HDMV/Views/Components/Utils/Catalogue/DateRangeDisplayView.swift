@@ -15,11 +15,12 @@ struct DateRangeDisplayView: View {
     var body: some View {
         HStack(spacing: 4) {
             DateDisplayView(date: startDate, selectedDate: selectedDate)
-            Image(systemName: "arrow.right")
-
-            if let end = endDate {
+            
+            if let end = endDate, end != startDate {
+                Image(systemName: "arrow.right")
                 DateDisplayView(date: end, selectedDate: selectedDate)
-            } else {
+            } else if endDate == nil {
+                Image(systemName: "arrow.right")
                 Text("—")
                     .foregroundStyle(.secondary)
             }

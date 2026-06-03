@@ -273,9 +273,8 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createLifeEvent() {
         guard let context = modelContext else { return }
-        let newEvent = LifeEvent(timeStart: filterDate.smartCreationTime)
-        context.insert(newEvent)
-        saveContext()
+        LifeEvent.create(in: context, date: filterDate)
+        fetchDailyData()
     }
     
     func createTrip(parent: ActivityInstance) {

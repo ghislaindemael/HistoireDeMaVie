@@ -172,3 +172,15 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     }
 }
 
+extension LifeEvent {
+    @discardableResult
+    static func create(in context: ModelContext, date: Date) -> LifeEvent {
+        let smartDate = date.smartCreationTime
+        let newEvent = LifeEvent(timeStart: smartDate, timeEnd: smartDate)
+        context.insert(newEvent)
+        try? context.save()
+        return newEvent
+    }
+}
+
+
