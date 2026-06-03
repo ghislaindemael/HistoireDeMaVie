@@ -63,7 +63,7 @@ struct ParentModelHierarchyView: View {
                 } isTargeted: { isTargeted in
                     self.isDropTargeted = isTargeted
                 }
-                .draggable(DraggableLogItem.activity(parent.persistentModelID))
+                .draggable(parent is Trip ? DraggableLogItem.trip(parent.persistentModelID) : DraggableLogItem.activity(parent.persistentModelID))
             
             if parent.hasChildren() {
                 if parent.childrenDisplayMode != .all {

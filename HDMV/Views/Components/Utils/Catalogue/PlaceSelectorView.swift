@@ -123,13 +123,6 @@ struct PlaceSelectorView: View {
             
             if displayCityId != nil {
                 placePicker
-                
-                if selectedVehicle != nil {
-                    Toggle("Show all places (ignore vehicle restrictions)", isOn: $showAllPlaces)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-                }
             }
         }
         .onAppear(perform: initializeState)
@@ -187,6 +180,11 @@ struct PlaceSelectorView: View {
             
             ForEach(others) { place in
                 Text(place.name).tag(place as Place?)
+            }
+            
+            if selectedVehicle != nil {
+                Divider()
+                Toggle("Show all places", isOn: $showAllPlaces)
             }
         }
         .onChange(of: selectedPlace) { _, newPlace in
