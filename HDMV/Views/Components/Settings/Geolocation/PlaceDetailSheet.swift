@@ -34,6 +34,7 @@ struct PlaceDetailSheet: View {
                 }
 
                 Section("Usage") {
+                    Toggle("Favorite", isOn: $viewModel.editor.isFavorite)
                     Toggle("Cached", isOn: $viewModel.editor.cache)
                     Toggle("Archived", isOn: $viewModel.editor.archived)
                 }

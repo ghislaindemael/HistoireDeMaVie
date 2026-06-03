@@ -116,7 +116,17 @@ struct PlaceSelectorView: View {
                 Text("\(selected.name) (Uncached)").tag(selected as Place?)
             }
             
-            ForEach(placesForSelectedCity) { place in
+            let favorites = placesForSelectedCity.filter { $0.isFavorite }
+            let others = placesForSelectedCity.filter { !$0.isFavorite }
+            
+            if !favorites.isEmpty {
+                ForEach(favorites) { place in
+                    Text(place.name).tag(place as Place?)
+                }
+                Divider()
+            }
+            
+            ForEach(others) { place in
                 Text(place.name).tag(place as Place?)
             }
         }

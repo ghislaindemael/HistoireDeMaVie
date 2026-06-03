@@ -55,22 +55,50 @@ struct PlacesPage: View {
     
     @ViewBuilder
     private var placesList: some View {
-        Section("Places") {
-            ForEach(viewModel.filteredPlaces) { place in
-                Button(action: {
-                    placeToEdit = place
-                }) {
-                    PlaceRowView(place: place) { p in
-                        withAnimation(.snappy) {
-                            viewModel.updateModel(p) { concretePlace in
-                                concretePlace.cache.toggle()
-                            }
+        let favorites = viewModel.filteredPlaces.filter { $0.isFavorite }
+        let others = viewModel.filteredPlaces.filter { !$0.isFavorite }
+        
+        if !favorites.isEmpty {
+            Section("Favorites") {
+                ForEach(favorites) { place in
+                    placeRow(place)
+                }
+            }
+        }
+        
+        if !others.isEmpty {
+            Section(favorites.isEmpty ? "Places" : "Other Places") {
+                ForEach(others) { place in
+                    placeRow(place)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func placeRow(_ place: Place) -> some View {
+        Button(action: {
+            placeToEdit = place
+        }) {
+            PlaceRowView(
+                place: place,
+                onCacheToggle: { p in
+                    withAnimation(.snappy) {
+                        viewModel.updateModel(p) { concretePlace in
+                            concretePlace.cache.toggle()
+                        }
+                    }
+                },
+                onFavoriteToggle: { p in
+                    withAnimation(.snappy) {
+                        viewModel.updateModel(p) { concretePlace in
+                            concretePlace.isFavorite.toggle()
                         }
                     }
                 }
-                .buttonStyle(.plain)
-            }
+            )
         }
+        .buttonStyle(.plain)
     }
     
 }

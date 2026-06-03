@@ -12,6 +12,7 @@ struct PlaceRowView: View {
     
     let place: Place
     let onCacheToggle: (Place) -> Void
+    var onFavoriteToggle: ((Place) -> Void)? = nil
 
     
     var body: some View {
@@ -21,6 +22,15 @@ struct PlaceRowView: View {
                     .bold(place.name == "Unset")
                     .foregroundStyle(place.name == "Unset" ? .red : .primary)
                 Spacer()
+                if let onFav = onFavoriteToggle {
+                    Button {
+                        onFav(place)
+                    } label: {
+                        Image(systemName: place.isFavorite ? "star.fill" : "star")
+                            .foregroundColor(place.isFavorite ? .yellow : .gray)
+                    }
+                    .buttonStyle(.plain)
+                }
                 CacheToggleButton(model: place) { p in
                     onCacheToggle(p)
                 }

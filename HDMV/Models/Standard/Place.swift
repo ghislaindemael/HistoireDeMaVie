@@ -19,6 +19,7 @@ final class Place: CatalogueModel, EditableModel {
 
     var cache: Bool = false
     var archived: Bool = false
+    var isFavorite: Bool = false
     var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias DTO = PlaceDTO
@@ -53,12 +54,14 @@ final class Place: CatalogueModel, EditableModel {
          city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
+         isFavorite: Bool = false,
          syncStatus: SyncStatus = .unsynced) {
         self.rid = rid
         self.name = name
         self.cityRid = cityRid
         self.cache = cache
         self.archived = archived
+        self.isFavorite = isFavorite
         self.syncStatusRaw = syncStatus.rawValue
     }
     
@@ -119,6 +122,7 @@ struct PlaceEditor: CachableModel, EditorProtocol {
     var city: City?
     var cache: Bool
     var archived: Bool
+    var isFavorite: Bool
     
     typealias Model = Place
     
@@ -128,6 +132,7 @@ struct PlaceEditor: CachableModel, EditorProtocol {
         self.cityRid = place.cityRid
         self.cache = place.cache
         self.archived = place.archived
+        self.isFavorite = place.isFavorite
     }
     
     func apply(to place: Place) {
@@ -136,5 +141,6 @@ struct PlaceEditor: CachableModel, EditorProtocol {
         place.cityRid = self.cityRid
         place.cache = self.cache
         place.archived = self.archived
+        place.isFavorite = self.isFavorite
     }
 }
