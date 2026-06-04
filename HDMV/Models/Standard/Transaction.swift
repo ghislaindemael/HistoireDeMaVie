@@ -30,7 +30,7 @@ final class Transaction: LogModel {
     var typeRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
-    var contextRid: Int?
+    var contextRids: [Int] = []
     
     var details: String?
     
@@ -74,7 +74,7 @@ final class Transaction: LogModel {
         typeRid: Int? = nil,
         parentInstanceRid: Int? = nil,
         payerRid: Int? = nil,
-        contextRid: Int? = nil,
+        contextRids: [Int] = [],
         details: String? = nil,
         syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
@@ -95,7 +95,7 @@ final class Transaction: LogModel {
         self.typeRid = typeRid
         self.parentInstanceRid = parentInstanceRid
         self.payerRid = payerRid
-        self.contextRid = contextRid
+        self.contextRids = contextRids
         self.details = details
         self.syncStatus = syncStatus
         self.parentInstance = parentInstance
@@ -118,7 +118,7 @@ final class Transaction: LogModel {
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.payerRid = dto.payer_id
-        self.contextRid = nil
+        self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -136,7 +136,7 @@ final class Transaction: LogModel {
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.payerRid = dto.payer_id
-        self.contextRid = nil
+        self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -165,6 +165,7 @@ struct TransactionDTO: Codable, Identifiable {
     let type_id: Int?
     let parent_instance_id: Int?
     let payer_id: Int?
+    let context_ids: [Int]?
         
     let details: String?
 }
@@ -188,6 +189,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let type_id: Int?
     @ExplicitNull var parent_instance_id: Int?
     let payer_id: Int?
+    let context_ids: [Int]
     
     let details: String?
     
@@ -213,6 +215,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.type_id = transaction.typeRid
         self.parent_instance_id = transaction.parentInstanceRid
         self.payer_id = transaction.payerRid
+        self.context_ids = transaction.contextRids
         
         self.details = transaction.details
     }
@@ -241,7 +244,7 @@ struct TransactionEditor: EditorProtocol {
     var typeRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
-    var contextRid: Int?
+    var contextRids: [Int] = []
     
     var details: String?
     
@@ -274,7 +277,7 @@ struct TransactionEditor: EditorProtocol {
         self.payer = transaction.payer
         self.payerRid = transaction.payerRid
         
-        self.contextRid = transaction.contextRid
+        self.contextRids = transaction.contextRids
         
         self.details = transaction.details
     }
@@ -308,7 +311,7 @@ struct TransactionEditor: EditorProtocol {
         transaction.payer = self.payer
         transaction.payerRid = self.payer?.rid ?? self.payerRid
         
-        transaction.contextRid = self.contextRid
+        transaction.contextRids = self.contextRids
         
         transaction.details = self.details
     }

@@ -62,6 +62,17 @@ struct LifeEventDetailSheet: View {
                     Text(type.name).tag(type as LifeEventType)
                 }
             }
+            
+            NavigationLink {
+                MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
+            } label: {
+                HStack {
+                    Text("Contexts")
+                    Spacer()
+                    Text("\(viewModel.editor.contextRids.count) selected")
+                        .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
+                }
+            }
             TextEditor(text: Binding(
                 get: { viewModel.editor.details ?? "" },
                 set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }

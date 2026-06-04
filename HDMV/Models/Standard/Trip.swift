@@ -20,6 +20,8 @@ final class Trip: LogModel {
     var parentTripRid: Int?
     @Attribute var childrenDisplayModeRaw: String = ChildrenDisplayMode.all.rawValue
     
+    var contextRids: [Int] = []
+    
     var placeStartRid: Int?
     var placeEndRid: Int?
     var vehicleRid: Int?
@@ -116,6 +118,7 @@ final class Trip: LogModel {
          path: Path? = nil,
          transitLine: TransitLine? = nil,
          fitFilePath: String? = nil,
+         contextRids: [Int] = [],
          details: String? = nil,
          syncStatus: SyncStatus = .unsynced)
     {
@@ -127,6 +130,7 @@ final class Trip: LogModel {
         self.amDriver = amDriver
         self.transitLineRid = transitLine?.rid
         self.fitFilePath = fitFilePath
+        self.contextRids = contextRids
         self.details = details
         self.syncStatus = syncStatus
     }
@@ -145,6 +149,7 @@ final class Trip: LogModel {
         self.transitLineRid = dto.transit_line_id
         self.personRids = dto.person_ids ?? []
         self.fitFilePath = dto.fit_file_path
+        self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -172,6 +177,7 @@ final class Trip: LogModel {
             self.persons = []
         }
         
+        self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatus = .synced
     }
@@ -200,6 +206,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
     let person_ids: [Int]?
+    let context_ids: [Int]?
     let details: String?
 }
 
@@ -221,6 +228,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
     let person_ids: [Int]
+    let context_ids: [Int]
     let details: String?
     
     init?(from trip: Trip) {
@@ -245,6 +253,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.fit_file_path = trip.fitFilePath
         self.details = trip.details
         self.person_ids = trip.personRids
+        self.context_ids = trip.contextRids
     }
     
 }
@@ -283,6 +292,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     
     var persons: [Person] = []
     var personRids: [Int] = []
+    var contextRids: [Int] = []
     
     typealias Model = Trip
     
@@ -319,6 +329,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         
         self.persons = trip.persons
         self.personRids = trip.personRids
+        self.contextRids = trip.contextRids
     }
     
     func apply(to trip: Trip) {
@@ -343,6 +354,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         
         trip.persons = self.persons
         trip.personRids = self.persons.compactMap { $0.rid }
+        trip.contextRids = self.contextRids
         
         trip.markAsModified()
     }

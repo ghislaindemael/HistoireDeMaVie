@@ -46,7 +46,7 @@ struct TripDetailSheet: View {
                 pathSection
                 detailsSection
                 
-                Section(header: headerView("Companions")) {
+                Section(header: headerView("Companions & Context")) {
                     NavigationLink {
                         MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
                     } label: {
@@ -56,6 +56,17 @@ struct TripDetailSheet: View {
                             Text(viewModel.editor.persons.formattedNames(emptyFallback: "None"))
                                 .foregroundStyle(viewModel.editor.persons.isEmpty ? .secondary : .primary)
                                 .lineLimit(1)
+                        }
+                    }
+                    
+                    NavigationLink {
+                        MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
+                    } label: {
+                        HStack {
+                            Text("Contexts")
+                            Spacer()
+                            Text("\(viewModel.editor.contextRids.count) selected")
+                                .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
                         }
                     }
                 }

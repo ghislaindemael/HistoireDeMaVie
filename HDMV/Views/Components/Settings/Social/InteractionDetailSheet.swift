@@ -63,6 +63,17 @@ struct InteractionDetailSheet: View {
                 }
             }
             
+            NavigationLink {
+                MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
+            } label: {
+                HStack {
+                    Text("Contexts")
+                    Spacer()
+                    Text("\(viewModel.editor.contextRids.count) selected")
+                        .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
+                }
+            }
+            
             FullTimePicker(label: "Start Time", selection: $viewModel.editor.time_start)
             FullTimePicker(label: "End Time", selection: $viewModel.editor.time_end, minimumDate: viewModel.editor.time_start)
             

@@ -143,6 +143,8 @@ struct ActivityInstanceRowView: View {
                     .foregroundColor(.green)
             }
             
+            LifeContextsDisplayView(contextRids: instance.contextRids)
+            
         }
     }
     
