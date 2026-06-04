@@ -90,6 +90,7 @@ struct TripDetailSheet: View {
             }
             .sheet(isPresented: $viewModel.isShowingTransitLineSelector) {
                 TransitLineSelectorSheet(
+                    selectedVehicle: viewModel.editor.vehicle,
                     onSelect: viewModel.selectTransitLine
                 )
             }

@@ -71,19 +71,20 @@ struct PlaceSelectorView: View {
         guard !showAllPlaces else { return places }
         guard let vehicle = selectedVehicle else { return places }
         
-        // Rule 1: Transit Line
-        if let vRid = vehicle.rid {
-            let matchingTransitLines = transitLines.filter { $0.allowedVehicleRids?.contains(vRid) == true }
-            if !matchingTransitLines.isEmpty {
-                // This is a Transit vehicle. Only allow places linked to its stations.
-                let allowedPlaceRids = matchingTransitLines.flatMap { $0.stops ?? [] }
-                    .compactMap { $0.station?.placeRid }
-                return places.filter { p in p.rid != nil && allowedPlaceRids.contains(p.rid!) }
-            }
-        }
-        
-        // Rule 2, 3, 4: Generic Filtering
         return places.filter { place in
+            // Rule 1: Transit Line
+            if let vRid = vehicle.rid {
+                let matchingTransitLines = transitLines.filter { $0.allowedVehicleRids?.contains(vRid) == true }
+                if !matchingTransitLines.isEmpty {
+                    let allowedPlaceRids = matchingTransitLines.flatMap { $0.stops ?? [] }
+                        .compactMap { $0.station?.placeRid }
+                    if place.rid != nil && allowedPlaceRids.contains(place.rid!) {
+                        return true
+                    }
+                }
+            }
+            
+            // Rule 2, 3, 4: Generic Filtering
             let emptyIds = place.allowedVehicleRids.isEmpty
             let emptySlugs = place.allowedVehicleTypeSlugs.isEmpty
             
