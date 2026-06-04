@@ -54,13 +54,18 @@ actor IconCacheService {
         
         // Inject #FFFFFF into downloaded SVG so it can be perfectly tinted via .colorMultiply()
         if let svgString = String(data: data, encoding: .utf8) {
-            let processedString = svgString
+            var processedString = svgString
                 .replacingOccurrences(of: "fill=\"#000000\"", with: "fill=\"#FFFFFF\"", options: .caseInsensitive)
                 .replacingOccurrences(of: "stroke=\"#000000\"", with: "stroke=\"#FFFFFF\"", options: .caseInsensitive)
                 .replacingOccurrences(of: "fill=\"black\"", with: "fill=\"#FFFFFF\"", options: .caseInsensitive)
                 .replacingOccurrences(of: "stroke=\"black\"", with: "stroke=\"#FFFFFF\"", options: .caseInsensitive)
                 .replacingOccurrences(of: "fill=\"currentColor\"", with: "fill=\"#FFFFFF\"", options: .caseInsensitive)
                 .replacingOccurrences(of: "stroke=\"currentColor\"", with: "stroke=\"#FFFFFF\"", options: .caseInsensitive)
+            
+            // Inject a global fill="#FFFFFF" on the <svg> tag to override the default black fill for omitted paths
+            if let range = processedString.range(of: "<svg", options: .caseInsensitive) {
+                processedString.insert(contentsOf: " fill=\"#FFFFFF\"", at: range.upperBound)
+            }
             
             if let processedData = processedString.data(using: .utf8) {
                 data = processedData
