@@ -18,6 +18,7 @@ struct LogItemRowView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var lifeEventToEdit: LifeEvent?
     
     @State private var isTripDropTargeted = false
     
@@ -25,6 +26,22 @@ struct LogItemRowView: View {
     
     @ViewBuilder
     var body: some View {
+        ZStack(alignment: .topTrailing) {
+            content
+            
+            if let linked = item as? any LinkedParent, linked.hasAmbiguousParents {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.yellow)
+                    .padding(4)
+                    .background(Color.black.opacity(0.6))
+                    .clipShape(Circle())
+                    .offset(x: -4, y: 4)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var content: some View {
         switch item {
             case let parentItem as any ParentModel:
                 ParentModelHierarchyView(
@@ -32,8 +49,8 @@ struct LogItemRowView: View {
                     level: level,
                     instanceToEdit: $instanceToEdit,
                     tripToEdit: $tripToEdit,
-                    interactionToEdit: $interactionToEdit
-                    
+                    interactionToEdit: $interactionToEdit,
+                    lifeEventToEdit: $lifeEventToEdit
                 )
                 
             case let interaction as Interaction:
@@ -44,6 +61,14 @@ struct LogItemRowView: View {
                     interactionToEdit = interaction
                 }
                 .draggable(DraggableLogItem.interaction(interaction.persistentModelID))
+                
+            case let lifeEvent as LifeEvent:
+                LifeEventRowView(event: lifeEvent, selectedDate: viewModel.filterDate)
+                    .onTapGesture(count: 2) {
+                        lifeEventToEdit = lifeEvent
+                    }
+                    .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
+                    
             default:
                 EmptyView()
         }

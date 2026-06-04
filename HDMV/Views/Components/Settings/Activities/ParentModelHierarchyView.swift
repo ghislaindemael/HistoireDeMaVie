@@ -19,6 +19,7 @@ struct ParentModelHierarchyView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var lifeEventToEdit: LifeEvent?
     
     private let indentationAmount: CGFloat = 20
     private let indicatorWidth: CGFloat = 2
@@ -66,8 +67,7 @@ struct ParentModelHierarchyView: View {
             
             if parent.hasChildren() {
                 if parent.childrenDisplayMode != .all {
-                    indicatorColor
-                        .cornerRadius(8)
+                    collapsedIndicator
                 }
                 if parent.childrenDisplayMode != .none {
                     childrenSection
@@ -103,78 +103,126 @@ struct ParentModelHierarchyView: View {
     }
     
     @ViewBuilder
-    private var childrenSection: some View {
-        if !childrenToDisplay.isEmpty {
-            HStack(alignment: .top, spacing: contentLeadingPadding) {
+    private var collapsedIndicator: some View {
+        let hidden = hiddenChildrenCount
+        if hidden > 0 {
+            HStack(spacing: 4) {
+                Spacer()
+                ForEach(0..<min(3, hidden), id: \.self) { _ in
+                    Circle()
+                        .fill(indicatorColor)
+                        .frame(width: 4, height: 4)
+                }
+                Spacer()
+            }
+            .frame(height: 16)
+            .frame(maxWidth: .infinity)
+            .background(Color.primaryBackground, in: Capsule())
+            .padding(.leading, indicatorWidth + contentLeadingPadding)
+            .background(
                 indicatorColor
                     .frame(width: indicatorWidth)
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(childrenToDisplay, id: \.id) { item in
-                        LogItemRowView(
-                            item: item,
-                            instanceToEdit: $instanceToEdit,
-                            tripToEdit: $tripToEdit,
-                            interactionToEdit: $interactionToEdit,
-                            level: level + 1
-                        )
-                    }
-                }
-            }
-        }
-        
-        
-        if !invalidChildren.isEmpty {
-            
-            HStack(alignment: .top, spacing: contentLeadingPadding) {
-                Color.red
-                    .frame(width: indicatorWidth)
-                
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(invalidChildren, id: \.id) { item in
-                        LogItemRowView(
-                            item: item,
-                            instanceToEdit: $instanceToEdit,
-                            tripToEdit: $tripToEdit,
-                            interactionToEdit: $interactionToEdit,
-                            level: level + 1
-                        )
-                    }
-                }
-            }
-            
+                    .cornerRadius(indicatorWidth / 2),
+                alignment: .leading
+            )
         }
     }
     
-    private var childrenToDisplay: [any LogModel] {
-        
-        var dateFilteredChildren: [any LogModel]
-        
-        switch viewModel.filterMode {
-            case .byDate:
-                dateFilteredChildren = parent.children(overlapping: viewModel.filterDate)
-                    
-            if parent.childrenDisplayMode == .ongoing {
-                dateFilteredChildren = dateFilteredChildren.filter { $0.timeEnd == nil }
+    @ViewBuilder
+    private var childrenSection: some View {
+        let children = allChildrenSorted
+        if !children.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(children.enumerated()), id: \.element.id) { index, item in
+                    LogItemRowView(
+                        item: item,
+                        instanceToEdit: $instanceToEdit,
+                        tripToEdit: $tripToEdit,
+                        interactionToEdit: $interactionToEdit,
+                        lifeEventToEdit: $lifeEventToEdit,
+                        level: level + 1
+                    )
+                    .padding(.bottom, index == children.count - 1 ? 0 : 4)
+                    .padding(.leading, indicatorWidth + contentLeadingPadding)
+                    .background(
+                        lineColor(for: item)
+                            .frame(width: indicatorWidth),
+                        alignment: .leading
+                    )
+                }
             }
-            
-            case .byActivity:
-                dateFilteredChildren = []
         }
-        
-        let allInvalidChildren = self.invalidChildren
-        
-        let invalidIDs = Set(allInvalidChildren.map { $0.id })
-        
-        return dateFilteredChildren.filter { child in
-            !invalidIDs.contains(child.id)
-        }
-        
     }
     
-    private var invalidChildren: [any LogModel] {
-        parent.invalidChildren
+    private var allChildrenSorted: [any LogModel] {
+        if parent.childrenDisplayMode == .none { return [] }
+        
+        let allValid = parent.children(overlapping: viewModel.filterDate)
+        let allInvalid = parent.invalidChildren
+        
+        var combined = allValid
+        for invalid in allInvalid {
+            if !combined.contains(where: { $0.id == invalid.id }) {
+                combined.append(invalid)
+            }
+        }
+        
+        if parent.childrenDisplayMode == .ongoing {
+            combined = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }
+        }
+        
+        return combined.sorted { $0.timeStart < $1.timeStart }
+    }
+    
+    private var hiddenChildrenCount: Int {
+        let allValid = parent.children(overlapping: viewModel.filterDate)
+        let allInvalid = parent.invalidChildren
+        
+        var combined = allValid
+        for invalid in allInvalid {
+            if !combined.contains(where: { $0.id == invalid.id }) {
+                combined.append(invalid)
+            }
+        }
+        
+        if parent.childrenDisplayMode == .none {
+            return combined.count
+        } else if parent.childrenDisplayMode == .ongoing {
+            let ongoingCount = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }.count
+            return max(0, combined.count - ongoingCount)
+        } else {
+            return 0
+        }
+    }
+    
+    private func lineColor(for child: any LogModel) -> Color {
+        let parentStart = parent.timeStart
+        let parentEnd = parent.timeEnd ?? Date.distantFuture
+        let childStart = child.timeStart
+        
+        let childEnd: Date
+        if child is LifeEvent && child.timeEnd == nil {
+            childEnd = childStart
+        } else {
+            childEnd = child.timeEnd ?? Date.distantFuture
+        }
+        
+        let completelyOutside = childEnd <= parentStart || childStart >= parentEnd
+        if completelyOutside {
+            return .red
+        }
+        
+        let parentFullyContained = childStart < parentStart && childEnd > parentEnd
+        if parentFullyContained {
+            return .pink
+        }
+        
+        let perfectlyContained = childStart >= parentStart && childEnd <= parentEnd
+        if perfectlyContained {
+            return indicatorColor
+        }
+        
+        return .orange
     }
     
 }
-
-

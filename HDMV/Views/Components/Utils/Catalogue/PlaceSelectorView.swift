@@ -18,6 +18,7 @@ struct PlaceSelectorView: View {
     @State private var displayCityId: Int?
     @State private var initialPlace: Place?
     @State private var uncachedPlaceholder: Place?
+    @State private var uncachedCity: City?
     
     // MARK: - Init
     
@@ -30,10 +31,12 @@ struct PlaceSelectorView: View {
         if let savedPlace = selectedPlace {
             self.initialPlace = savedPlace
             self.displayCityId = savedPlace.cityRid
+            self.checkUncachedCity(cityRid: savedPlace.cityRid)
         } else if let rid = linkedPlaceRid {
             if let fetched = fetchPlace(withId: rid) {
                 self.selectedPlace = fetched
                 self.displayCityId = fetched.cityRid
+                self.checkUncachedCity(cityRid: fetched.cityRid)
             } else {
                 self.uncachedPlaceholder = Place(rid: rid, name: "Uncached Place")
             }
@@ -94,6 +97,11 @@ struct PlaceSelectorView: View {
     private var cityPicker: some View {
         Picker("City", selection: $displayCityId) {
             Text("Select a City").tag(nil as Int?)
+            
+            if let uncached = uncachedCity {
+                Text("\(uncached.name) (Uncached)").tag(uncached.rid as Int?)
+            }
+            
             ForEach(cities) { city in
                 Text(city.name).tag(city.rid as Int?)
             }
@@ -103,6 +111,11 @@ struct PlaceSelectorView: View {
     private var placePicker: some View {
         Picker("Place", selection: $selectedPlace) {
             Text("Select a Place").tag(nil as Place?)
+            
+            if let selected = selectedPlace, !placesForSelectedCity.contains(where: { $0.id == selected.id }) {
+                Text("\(selected.name) (Uncached)").tag(selected as Place?)
+            }
+            
             ForEach(placesForSelectedCity) { place in
                 Text(place.name).tag(place as Place?)
             }
@@ -116,6 +129,21 @@ struct PlaceSelectorView: View {
     private func fetchPlace(withId id: Int?) -> Place? {
         guard let placeId = id else { return nil }
         let predicate = #Predicate<Place> { $0.rid == placeId }
+        var descriptor = FetchDescriptor(predicate: predicate)
+        descriptor.fetchLimit = 1
+        return try? modelContext.fetch(descriptor).first
+    }
+    
+    private func checkUncachedCity(cityRid: Int?) {
+        guard let cityRid = cityRid else { return }
+        if !cities.contains(where: { $0.rid == cityRid }) {
+            self.uncachedCity = fetchCity(withId: cityRid)
+        }
+    }
+    
+    private func fetchCity(withId id: Int?) -> City? {
+        guard let cityId = id else { return nil }
+        let predicate = #Predicate<City> { $0.rid == cityId }
         var descriptor = FetchDescriptor(predicate: predicate)
         descriptor.fetchLimit = 1
         return try? modelContext.fetch(descriptor).first

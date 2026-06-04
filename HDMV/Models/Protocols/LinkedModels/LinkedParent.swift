@@ -5,52 +5,57 @@
 //  Created by Ghislain Demael on 04.11.2025.
 //
 
-protocol LinkedParent: AnyObject {
+protocol LinkedParent {
     var parentInstance: ActivityInstance? { get set }
     var parentInstanceRid: Int? { get set }
     
     var parentTrip: Trip? { get set }
     var parentTripRid: Int? { get set }
+    
+    var hasAmbiguousParents: Bool { get }
 }
 
 extension LinkedParent {
     
-    func setParentInstance(_ newParent: ActivityInstance?, fallbackRid: Int? = nil) {
+    var hasAmbiguousParents: Bool {
+        return (parentInstance != nil || parentInstanceRid != nil) && (parentTrip != nil || parentTripRid != nil)
+    }
+
+    mutating func setParentInstance(_ newParent: ActivityInstance?, fallbackRid: Int? = nil) {
+        clearParents()
         parentInstance = newParent
         parentInstanceRid = newParent?.rid ?? fallbackRid
     }
     
-    func clearParentInstance() {
+    mutating func clearParentInstance() {
         parentInstance = nil
         parentInstanceRid = nil
     }
     
-    func setParentTrip(_ newParent: Trip?, fallbackRid: Int? = nil) {
+    mutating func setParentTrip(_ newParent: Trip?, fallbackRid: Int? = nil) {
+        clearParents()
         parentTrip = newParent
         parentTripRid = newParent?.rid ?? fallbackRid
     }
     
-    func clearParentTrip() {
+    mutating func clearParentTrip() {
         parentTrip = nil
         parentTripRid = nil
     }
     
-    func setParent(_ newParent: (any ParentModel)?, fallbackRid: Int? = nil) {
+    mutating func setParent(_ newParent: (any ParentModel)?, fallbackRid: Int? = nil) {
         clearParents()
         
         if let instanceParent = newParent as? ActivityInstance {
             parentInstance = instanceParent
-            parentInstanceRid = instanceParent.rid
+            parentInstanceRid = instanceParent.rid ?? fallbackRid
         } else if let tripParent = newParent as? Trip {
             parentTrip = tripParent
-            parentTripRid = tripParent.rid
-        } else {
-            parentInstanceRid = fallbackRid
-            parentTripRid = fallbackRid
+            parentTripRid = tripParent.rid ?? fallbackRid
         }
     }
     
-    func clearParents() {
+    mutating func clearParents() {
         parentInstance = nil
         parentInstanceRid = nil
         parentTrip = nil

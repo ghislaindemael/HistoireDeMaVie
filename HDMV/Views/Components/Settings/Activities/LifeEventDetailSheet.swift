@@ -35,14 +35,13 @@ struct LifeEventDetailSheet: View {
                 detailsSection
                 metricSection
 
-                if viewModel.editor.parentInstance != nil {
-                    Section("Hierarchy") {
-                        Button("Remove from Parent", role: .destructive) {
-                            viewModel.editor.parentInstance = nil
-                            viewModel.editor.parentInstanceRid = nil
-                        }
+                HierarchySectionView(
+                    model: lifeEvent,
+                    hasParent: !viewModel.editor.hasNoParent(),
+                    onRemoveFromParent: {
+                        viewModel.editor.clearParents()
                     }
-                }
+                )
 
             }
             .navigationTitle("Edit Life Event")

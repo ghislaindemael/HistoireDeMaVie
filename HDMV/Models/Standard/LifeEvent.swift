@@ -110,8 +110,8 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     let time_end: Date?
     let details: String?
     let metrics: LifeEventMetrics?
-    let parent_instance_id: Int?
-    let parent_trip_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     
     typealias Model = LifeEvent
     
@@ -130,7 +130,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     
 }
 
-struct LifeEventEditor: TimeBound, EditorProtocol {
+struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
 
     var type: LifeEventType
     var timeStart: Date
@@ -139,6 +139,8 @@ struct LifeEventEditor: TimeBound, EditorProtocol {
     var metrics: LifeEventMetrics
     var parentInstance: ActivityInstance?
     var parentInstanceRid: Int?
+    var parentTrip: Trip?
+    var parentTripRid: Int?
     
     typealias Model = LifeEvent
     
@@ -150,6 +152,8 @@ struct LifeEventEditor: TimeBound, EditorProtocol {
         self.metrics = event.metrics ?? LifeEventMetrics()
         self.parentInstance = event.parentInstance
         self.parentInstanceRid = event.parentInstanceRid
+        self.parentTrip = event.parentTrip
+        self.parentTripRid = event.parentTripRid
     }
     
     func apply(to event: LifeEvent) {
@@ -160,7 +164,9 @@ struct LifeEventEditor: TimeBound, EditorProtocol {
         event.details = self.details
         event.metrics = self.metrics
         event.parentInstance = self.parentInstance
-        event.parentInstanceRid = self.parentInstance?.rid
+        event.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
+        event.parentTrip = self.parentTrip
+        event.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         
         event.markAsModified()
     }

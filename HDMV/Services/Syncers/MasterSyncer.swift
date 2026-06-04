@@ -14,11 +14,13 @@ class MasterSyncer {
     private let activityInstanceSyncer: ActivityInstanceSyncer
     private let tripSyncer: TripSyncer
     private let interactionSyncer: InteractionSyncer
+    private let lifeEventSyncer: LifeEventSyncer
 
     init(modelContext: ModelContext) {
         self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
         self.tripSyncer = TripSyncer(modelContext: modelContext)
         self.interactionSyncer = InteractionSyncer(modelContext: modelContext)
+        self.lifeEventSyncer = LifeEventSyncer(modelContext: modelContext)
     }
 
     func sync(
@@ -43,6 +45,7 @@ class MasterSyncer {
             let primaryDate = (filterMode == .byDate) ? date : startDate ?? date
             try await tripSyncer.pullChanges(date: primaryDate)
             try await interactionSyncer.pullChanges(date: primaryDate)
+            try await lifeEventSyncer.pullChanges(date: primaryDate)
             
             try await pushChanges()
             
@@ -56,6 +59,7 @@ class MasterSyncer {
             _ = try await activityInstanceSyncer.pushChanges()            
             _ = try await tripSyncer.pushChanges()
             _ = try await interactionSyncer.pushChanges()
+            _ = try await lifeEventSyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")
         }

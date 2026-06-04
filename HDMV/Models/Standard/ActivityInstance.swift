@@ -162,9 +162,9 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     
     let time_start: Date
     let time_end: Date?
-    let activity_id: Int?
-    let parent_instance_id: Int?
-    let parent_trip_id: Int?
+    @ExplicitNull var activity_id: Int?
+    @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     
     let details: String?
     let percentage: Int
@@ -197,13 +197,16 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     }
 }
 
-struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
+struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     var timeStart: Date
     var timeEnd: Date?
     var timed: Bool
     var percentage: Int
     var activity: Activity?
     var parentInstance: ActivityInstance?
+    var parentInstanceRid: Int?
+    var parentTrip: Trip?
+    var parentTripRid: Int?
     var details: String?
     var fitFilePath: String?
     var decodedActivityDetails: ActivityDetails?
@@ -221,6 +224,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         self.percentage = instance.percentage
         self.activity = instance.activity
         self.parentInstance = instance.parentInstance
+        self.parentInstanceRid = instance.parentInstanceRid
+        self.parentTrip = instance.parentTrip
+        self.parentTripRid = instance.parentTripRid
         self.details = instance.details
         self.fitFilePath = instance.fitFilePath
         self.decodedActivityDetails = instance.decodedActivityDetails
@@ -237,6 +243,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol {
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
         instance.parentInstance = self.parentInstance
+        instance.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
+        instance.parentTrip = self.parentTrip
+        instance.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         instance.details = self.details
         instance.fitFilePath = self.fitFilePath
         instance.decodedActivityDetails = self.decodedActivityDetails

@@ -35,6 +35,12 @@ class MyActivitiesPageViewModel: ObservableObject {
     @Published var instances: [ActivityInstance] = []
     @Published var trips: [Trip] = []
     @Published var interactions: [Interaction] = []
+    @Published var lifeEvents: [LifeEvent] = []
+    
+    var timelineItems: [any LogModel] {
+        let combined: [any LogModel] = (instances as [any LogModel]) + (lifeEvents as [any LogModel])
+        return combined.sorted { $0.timeStart > $1.timeStart }
+    }
     
     @Published var activityTree: [Activity] = []
     
@@ -47,6 +53,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         fetchInstances()
         fetchTrips()
         fetchInteractions()
+        fetchLifeEvents()
     }
  
     /// A single, powerful function to fetch instances based on the current filter mode.
@@ -166,6 +173,40 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
     }
     
+    func fetchLifeEvents() {
+        guard let context = modelContext else { return }
+        
+        let descriptor: FetchDescriptor<LifeEvent>
+        
+        switch filterMode {
+            case .byDate:
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                
+                let predicate = #Predicate<LifeEvent> {
+                    $0.parentInstance == nil &&
+                    $0.parentTrip == nil &&
+                    $0.timeStart < endOfDay &&
+                    ($0.timeEnd ?? $0.timeStart) >= startOfDay
+                }
+                descriptor = FetchDescriptor<LifeEvent>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+            case .byActivity:
+                self.lifeEvents = []
+                return
+        }
+        
+        do {
+            self.lifeEvents = try context.fetch(descriptor)
+        } catch {
+            print("Failed to fetch life events: \(error)")
+        }
+    }
+    
     
     
     
@@ -208,6 +249,21 @@ class MyActivitiesPageViewModel: ObservableObject {
         saveContext()
     }
     
+    func createParentAndChildActivity(date: Date? = nil) {
+        guard let context = modelContext else { return }
+        let smartDate = (date ?? filterDate).smartCreationTime
+        
+        let parentInstance = ActivityInstance(timeStart: smartDate)
+        
+        let childDate = smartDate.addingTimeInterval(1)
+        let childInstance = ActivityInstance(timeStart: childDate)
+        childInstance.parentInstance = parentInstance
+        
+        context.insert(parentInstance)
+        context.insert(childInstance)
+        saveContext()
+    }
+    
     func createTransaction() {
         guard let context = modelContext else { return }
         let newTransaction = Transaction(timeStart: filterDate.smartCreationTime)
@@ -226,7 +282,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         let date = settings.planningMode ? parent.timeStart : Date.now
         
-        let newTrip = Trip(timeStart: date)
+        var newTrip = Trip(timeStart: date)
         newTrip.setParentInstance(parent)
         context.insert(newTrip)
         saveContext()
@@ -315,6 +371,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
         
         func move<T: LinkedParent & LogModel>(_ item: T) {
+            var item = item
             guard item.id != newParent.id else {
                 print("⚠️ SKIPPED: Cannot drop an item onto itself.")
                 return
@@ -341,6 +398,10 @@ class MyActivitiesPageViewModel: ObservableObject {
                 }
             case .interaction(let childID):
                 if let child = context.model(for: childID) as? Interaction {
+                    move(child)
+                }
+            case .lifeEvent(let childID):
+                if let child = context.model(for: childID) as? LifeEvent {
                     move(child)
                 }
         }
