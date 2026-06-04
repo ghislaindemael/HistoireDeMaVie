@@ -139,6 +139,12 @@ struct ActivityInstanceDetailSheet: View {
                 }
             }
             
+            if selectedActivity!.can(.log_media) {
+                Section(header: headerView("Media Items")) {
+                    MediaDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                }
+            }
+            
             if !selectedActivity!.cannot(.link_place) {
                 Section(header: headerView("Place")) {
                     PlaceSelectorView(

@@ -131,6 +131,9 @@ struct ActivityInstanceRowView: View {
             if instance.activity?.can(.log_food) == true {
                 mealContentText
             }
+            if instance.activity?.can(.log_media) == true {
+                mediaContentText
+            }
             if instance.activity?.shouldShowPlaceLink(settings: settings) == true
                 || instance.decodedActivityDetails?.place?.placeId != nil {
                 linkedPlaceView
@@ -148,6 +151,8 @@ struct ActivityInstanceRowView: View {
         }
     }
     
+    @Query private var mediaItems: [DataMediaItem]
+    
     @ViewBuilder
     private var mealContentText: some View {
         
@@ -164,6 +169,54 @@ struct ActivityInstanceRowView: View {
             .foregroundColor(isMissingRequiredDetails ? .red : .primary)
             .fontWeight(isMissingRequiredDetails ? .bold : .regular)
             .font(.body)
+    }
+    
+    @ViewBuilder
+    private var mediaContentText: some View {
+        if let mediaList = instance.decodedActivityDetails?.media, !mediaList.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(mediaList.indices, id: \.self) { index in
+                    let mediaDetail = mediaList[index]
+                    let item = mediaItems.first(where: { $0.rid == mediaDetail.itemId })
+                    
+                    HStack {
+                        if let icon = item?.icon {
+                            IconView(iconString: icon)
+                        } else {
+                            Image(systemName: "tv.fill") // fallback icon
+                        }
+                        
+                        Text(item?.name ?? "Unknown Item")
+                            .fontWeight(.semibold)
+                        
+                        if let progress = mediaDetail.progress, !progress.isEmpty {
+                            Text("— \(progress)")
+                                .font(.caption)
+                                .opacity(0.8)
+                        }
+                    }
+                    .padding(6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.indigo.opacity(0.15))
+                    )
+                    .foregroundColor(.indigo)
+                }
+            }
+            .padding(.vertical, 4)
+        } else if instance.activity?.must(.log_media) == true {
+            Text("Media not logged.")
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondaryBackground)
+                )
+                .foregroundColor(.red)
+                .fontWeight(.bold)
+                .font(.body)
+        }
     }
     
     @ViewBuilder

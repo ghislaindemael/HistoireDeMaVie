@@ -27,7 +27,8 @@ struct HDMVApp: App {
             Transaction.self,
             TransactionType.self,
             VaultTask.self,
-            LifeContext.self
+            LifeContext.self,
+            DataMediaItem.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

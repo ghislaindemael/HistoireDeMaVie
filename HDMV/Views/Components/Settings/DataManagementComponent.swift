@@ -21,6 +21,7 @@ struct DataManagementComponent: View {
         City.self,
         Interaction.self,
         LifeContext.self,
+        DataMediaItem.self,
         LifeEvent.self,
         Path.self,
         Place.self,
