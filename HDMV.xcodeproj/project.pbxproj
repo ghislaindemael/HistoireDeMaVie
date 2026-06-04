@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		15183DED2E96EF18001CFCF9 /* CoreGPX in Frameworks */ = {isa = PBXBuildFile; productRef = 15183DEC2E96EF18001CFCF9 /* CoreGPX */; };
+		1568311E2FD217FB0058DA8E /* SVGView in Frameworks */ = {isa = PBXBuildFile; productRef = 1568311D2FD217FB0058DA8E /* SVGView */; };
 		158A5A8E2DF7495800D003C2 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A8D2DF7495800D003C2 /* Auth */; };
 		158A5A902DF7495800D003C2 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A8F2DF7495800D003C2 /* Functions */; };
 		158A5A922DF7495800D003C2 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 158A5A912DF7495800D003C2 /* PostgREST */; };
@@ -50,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1568311E2FD217FB0058DA8E /* SVGView in Frameworks */,
 				158A5A922DF7495800D003C2 /* PostgREST in Frameworks */,
 				158A5A902DF7495800D003C2 /* Functions in Frameworks */,
 				158A5A9C2DF74A7400D003C2 /* KeychainAccess in Frameworks */,
@@ -117,6 +119,7 @@
 				158A5A982DF749F000D003C2 /* Supabase */,
 				158A5A9B2DF74A7400D003C2 /* KeychainAccess */,
 				15183DEC2E96EF18001CFCF9 /* CoreGPX */,
+				1568311D2FD217FB0058DA8E /* SVGView */,
 			);
 			productName = HDMV;
 			productReference = 15635EB22DF62DA900DE97E5 /* HDMV.app */;
@@ -150,6 +153,7 @@
 				158A5A8C2DF7495800D003C2 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				158A5A9A2DF74A7400D003C2 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				15183DEB2E96EF18001CFCF9 /* XCRemoteSwiftPackageReference "CoreGPX" */,
+				1568311C2FD217FB0058DA8E /* XCRemoteSwiftPackageReference "SVGView" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 15635EB32DF62DA900DE97E5 /* Products */;
@@ -419,6 +423,14 @@
 				minimumVersion = 0.9.3;
 			};
 		};
+		1568311C2FD217FB0058DA8E /* XCRemoteSwiftPackageReference "SVGView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/exyte/SVGView.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.6;
+			};
+		};
 		158A5A8C2DF7495800D003C2 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -442,6 +454,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 15183DEB2E96EF18001CFCF9 /* XCRemoteSwiftPackageReference "CoreGPX" */;
 			productName = CoreGPX;
+		};
+		1568311D2FD217FB0058DA8E /* SVGView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1568311C2FD217FB0058DA8E /* XCRemoteSwiftPackageReference "SVGView" */;
+			productName = SVGView;
 		};
 		158A5A8D2DF7495800D003C2 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -47,6 +47,10 @@ struct DataManagementComponent: View {
                         Divider()
                     }
                 }
+                
+                Divider()
+                IconCacheRow()
+                
             }
             .padding(.top, 8)
         } label: {
@@ -81,6 +85,18 @@ struct DataManagementComponent: View {
         
     }
     
+    private func IconCacheRow() -> some View {
+        HStack {
+            Text("SVG Icons")
+                .foregroundColor(.purple)
+            Spacer()
+            
+            // We use a state to dynamically fetch the count
+            IconCacheCountView()
+        }
+        .padding(.vertical, 8)
+    }
+    
     // MARK: - Data Operations
         
     /// Fetches the current count for a given model type from the context.
@@ -105,4 +121,36 @@ struct DataManagementComponent: View {
         .padding()
     }
     .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self, LifeContext.self])
+}
+
+struct IconCacheCountView: View {
+    @State private var cacheCount: Int = 0
+    
+    var body: some View {
+        HStack {
+            Text("\(cacheCount)")
+                .fontWeight(.bold)
+            
+            Button(role: .destructive) {
+                Task {
+                    await IconCacheService.shared.clearCache()
+                    updateCount()
+                }
+            } label: {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
+            }
+            .buttonStyle(.borderless)
+            .padding(.leading, 8)
+        }
+        .onAppear {
+            updateCount()
+        }
+    }
+    
+    private func updateCount() {
+        Task {
+            self.cacheCount = await IconCacheService.shared.getCacheCount()
+        }
+    }
 }
