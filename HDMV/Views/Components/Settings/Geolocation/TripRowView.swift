@@ -28,26 +28,50 @@ struct TripRowView: View {
                     Spacer()
                     SyncStatusIndicator(status: trip.syncStatus)
                 }
+                
                 DateRangeDisplayView(
                     startDate: trip.timeStart,
                     endDate: trip.timeEnd,
                     selectedDate: trip.timeStart
                 )
-                if let path = trip.path {
-                    PathDisplayView(path: path)
-                } else {
-                    PlaceDisplayView(placeRid: trip.placeStartRid)
-                    HStack {
-                        Image(systemName: "arrow.turn.down.right")
-                        PlaceDisplayView(placeRid: trip.placeEndRid)
+                PlaceDisplayView(placeRid: trip.placeStartRid)
+                HStack {
+                    Image(systemName: "arrow.turn.down.right")
+                    PlaceDisplayView(placeRid: trip.placeEndRid)
+                }
+                
+                let metrics = trip.pathMetrics ?? trip.path?.metrics
+                if trip.transitLine != nil || trip.path != nil || metrics != nil {
+                    VStack(alignment: .leading, spacing: 6) {
+                        if let transitLine = trip.transitLine {
+                            HStack(spacing: 4) {
+                                Image(systemName: "tram.fill")
+                                Text(transitLine.name)
+                            }
+                            .fontWeight(.semibold)
+
+                        } else if let path = trip.path {
+                            HStack(spacing: 4) {
+                                Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                                Text(path.name)
+                            }
+                            .fontWeight(.semibold)
+
+                        }
+                        
+                        if let metrics = metrics {
+                            PathMetricsRowView(
+                                metrics: metrics,
+                                showTitle: false,
+                                bubble: false
+                            )
+                        }
                     }
-                    if let metrics = trip.pathMetrics {
-                        PathMetricsRowView(
-                            metrics: metrics,
-                            showTitle: false,
-                            bubble: false
-                        )
-                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.blue.opacity(0.15))
+                    .foregroundColor(.blue)
+                    .cornerRadius(8)
                 }
                 
                 if !trip.persons.isEmpty {

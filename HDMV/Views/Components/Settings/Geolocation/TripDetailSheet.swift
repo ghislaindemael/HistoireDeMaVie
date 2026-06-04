@@ -29,22 +29,24 @@ struct TripDetailSheet: View {
                 TimeSection(editor: $viewModel.editor)
                 vehicleSection
                 
-                Section("Start Place") {
+                Section(header: headerView("Start Place")) {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeStart,
-                        linkedPlaceRid: viewModel.editor.placeStartRid
+                        linkedPlaceRid: viewModel.editor.placeStartRid,
+                        selectedVehicle: viewModel.editor.vehicle
                     )
                 }
-                Section("End Place") {
+                Section(header: headerView("End Place")) {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeEnd,
-                        linkedPlaceRid: viewModel.editor.placeEndRid
+                        linkedPlaceRid: viewModel.editor.placeEndRid,
+                        selectedVehicle: viewModel.editor.vehicle
                     )
                 }
                 pathSection
                 detailsSection
                 
-                Section("Companions") {
+                Section(header: headerView("Companions")) {
                     NavigationLink {
                         MultiPersonSelectorView(selectedPersons: $viewModel.editor.persons)
                     } label: {
@@ -73,6 +75,7 @@ struct TripDetailSheet: View {
                     showLifeEvents: true
                 )
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Trip Detail")
             .standardSheetToolbar(onDone: {
                 viewModel.onDone()
@@ -83,6 +86,12 @@ struct TripDetailSheet: View {
                     startPlaceId: viewModel.editor.placeStart?.rid,
                     endPlaceId: viewModel.editor.placeEnd?.rid,
                     onPathSelected: viewModel.selectPath
+                )
+            }
+            .sheet(isPresented: $viewModel.isShowingTransitLineSelector) {
+                TransitLineSelectorSheet(
+                    selectedVehicle: viewModel.editor.vehicle,
+                    onSelect: viewModel.selectTransitLine
                 )
             }
             .sheet(isPresented: $viewModel.isShowingMetricsEditSheet) {
@@ -111,7 +120,7 @@ struct TripDetailSheet: View {
     // MARK: - UI Sections
     
     private var vehicleSection: some View {
-        Section("Vehicle") {
+        Section(header: headerView("Vehicle")) {
             VehicleSelectorView(
                 selectedVehicle: $viewModel.editor.vehicle,
                 amDriver: $viewModel.editor.amDriver
@@ -119,18 +128,24 @@ struct TripDetailSheet: View {
         }
     }
     
+    private func headerView(_ title: String) -> some View {
+        Text(title)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+    }
+    
     private var pathSection: some View {
-        Section(header: Text("Path & Metrics")) {
+        Section(header: headerView("Path & Metrics")) {
             
             PathSelector(
                 path: viewModel.editor.path,
                 pathRid: viewModel.editor.pathRid,
                 isShowingSelector: $viewModel.isShowingPathSelector,
                 onSelect: { newPath, newRid in
-                    viewModel.editor.path = newPath
-                    viewModel.editor.pathRid = newRid
-                    viewModel.editor.pathMetrics = nil
-                    viewModel.editor.geojsonTrack = nil
+                    viewModel.selectPath(path: newPath)
                 },
                 onClear: {
                     viewModel.editor.path = nil
@@ -138,7 +153,20 @@ struct TripDetailSheet: View {
                 }
             )
             
-                
+            if viewModel.editor.path == nil && viewModel.editor.pathRid == nil {
+                TransitLineSelector(
+                    transitLine: viewModel.editor.transitLine,
+                    transitLineRid: viewModel.editor.transitLineRid,
+                    isShowingSelector: $viewModel.isShowingTransitLineSelector,
+                    onSelect: { newLine, newRid in
+                        viewModel.selectTransitLine(line: newLine)
+                    },
+                    onClear: {
+                        viewModel.editor.transitLine = nil
+                        viewModel.editor.transitLineRid = nil
+                    }
+                )
+            }
             if viewModel.editor.geojsonTrack != nil {
                 Button {
                     // TODO: Open a full-screen map to view the route
@@ -186,15 +214,24 @@ struct TripDetailSheet: View {
                 } label: {
                     Label("Add Custom Metrics", systemImage: "plus.circle")
                 }
+                
+                if viewModel.canCalculateDistanceFromTransit {
+                    Button {
+                        viewModel.calculateDistanceFromTransit()
+                    } label: {
+                        Label("Calculate Distance from Line", systemImage: "point.topleft.down.curvedto.point.bottomright.up")
+                            .foregroundStyle(.blue)
+                    }
+                }
             }
             
         }
     }
     
     private var detailsSection: some View {
-        Section(header: Text("Details")) {
-            TextEditor(text: $viewModel.editor.details.bound)
-                .frame(minHeight: 100)
+        Section(header: headerView("Details")) {
+            TextField("Details", text: $viewModel.editor.details.bound, axis: .vertical)
+                .lineLimit(4...)
         }
     }
     

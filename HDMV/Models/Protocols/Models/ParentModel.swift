@@ -90,7 +90,13 @@ extension ParentModel {
         let future = Date.distantFuture
         
         return allChildren.filter { item in
-            item.timeStart < endOfDay && (item.timeEnd ?? future) > startOfDay
+            let itemEnd: Date
+            if item is LifeEvent {
+                itemEnd = item.timeEnd ?? item.timeStart
+            } else {
+                itemEnd = item.timeEnd ?? future
+            }
+            return item.timeStart < endOfDay && itemEnd > startOfDay
         }
     }
     

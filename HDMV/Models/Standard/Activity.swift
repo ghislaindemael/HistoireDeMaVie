@@ -26,6 +26,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
+    var disallowedCapabilities: [ActivityCapability] = []
     var selectable: Bool = true
     var cache: Bool = true
     var archived: Bool = false
@@ -43,6 +44,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         icon: String? = nil,
         allowedCapabilities: [ActivityCapability] = [],
         requiredCapabilities: [ActivityCapability] = [],
+        disallowedCapabilities: [ActivityCapability] = [],
         cache: Bool = true,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
@@ -54,6 +56,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         self.icon = icon
         self.allowedCapabilities = allowedCapabilities
         self.requiredCapabilities = requiredCapabilities
+        self.disallowedCapabilities = disallowedCapabilities
         self.cache = cache
         self.archived = archived
         self.syncStatus = syncStatus
@@ -63,6 +66,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         case id, name, slug, cache, archived, parent_id, icon, type, selectable
         case allowedCapabilities = "allowed_capabilities"
         case requiredCapabilities = "required_capabilities"
+        case disallowedCapabilities = "disallowed_capabilities"
     }
     
     convenience init(fromDto dto: ActivityDTO) {
@@ -78,6 +82,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         
         self.allowedCapabilities = dto.allowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
         self.requiredCapabilities = dto.required_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
+        self.disallowedCapabilities = dto.disallowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
     }
     
     // MARK: - Activity Tree
@@ -101,6 +106,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         
         self.allowedCapabilities = dto.allowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
         self.requiredCapabilities = dto.required_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
+        self.disallowedCapabilities = dto.disallowed_capabilities?.compactMap { ActivityCapability(rawValue: $0) } ?? []
         
     }
         
@@ -147,6 +153,7 @@ struct ActivityDTO: Codable, Identifiable {
     let icon: String?
     let allowed_capabilities: [String]?
     let required_capabilities: [String]?
+    let disallowed_capabilities: [String]?
     let selectable: Bool
     let archived: Bool
     
@@ -159,6 +166,7 @@ struct ActivityPayload: Codable, InitializableWithModel {
     let icon: String?
     let allowed_capabilities: [String]
     let required_capabilities: [String]
+    let disallowed_capabilities: [String]
     let selectable: Bool
     let archived: Bool
     
@@ -173,6 +181,7 @@ struct ActivityPayload: Codable, InitializableWithModel {
         self.icon = activity.icon
         self.allowed_capabilities = activity.allowedCapabilities.map { $0.rawValue }
         self.required_capabilities = activity.requiredCapabilities.map { $0.rawValue }
+        self.disallowed_capabilities = activity.disallowedCapabilities.map { $0.rawValue }
         self.selectable = activity.selectable
         self.archived = activity.archived
     }
@@ -187,6 +196,7 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
+    var disallowedCapabilities: [ActivityCapability] = []
     var selectable: Bool = true
     var cache: Bool = true
     var archived: Bool = false
@@ -201,6 +211,7 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
         self.icon = activity.icon
         self.allowedCapabilities = activity.allowedCapabilities
         self.requiredCapabilities = activity.requiredCapabilities
+        self.disallowedCapabilities = activity.disallowedCapabilities
         self.selectable = activity.selectable
         self.cache = activity.cache
         self.archived = activity.archived
@@ -214,6 +225,7 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
         activity.icon = self.icon
         activity.allowedCapabilities = self.allowedCapabilities
         activity.requiredCapabilities = self.requiredCapabilities
+        activity.disallowedCapabilities = self.disallowedCapabilities
         activity.selectable = self.selectable
         activity.cache = self.cache
         activity.archived = self.archived

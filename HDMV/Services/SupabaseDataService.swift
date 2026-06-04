@@ -19,12 +19,16 @@ class SupabaseDataService<DTO: Identifiable & Codable, Payload: Codable>: DataSe
     
     // MARK: - Generic fetch
     func fetch(includeArchived: Bool) async throws -> [DTO] {
+        return try await fetch(includeArchived: includeArchived, orderColumn: "name")
+    }
+
+    func fetch(includeArchived: Bool, orderColumn: String) async throws -> [DTO] {
         guard let client = supabaseClient else { throw URLError(.cannotConnectToHost) }
         var query = client.from(tableName).select()
         if !includeArchived {
             query = query.eq("archived", value: false)
         }
-        return try await query.order("name", ascending: true)
+        return try await query.order(orderColumn, ascending: true)
             .execute()
             .value
     }

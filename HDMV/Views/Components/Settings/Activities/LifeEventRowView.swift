@@ -56,21 +56,11 @@ struct LifeEventRowView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundStyle(event.type != .unset ? Color.primary : Color.red)
-                        HStack(spacing: 4) {
-                            if let startDateString = displayDateIfNeeded(for: event.timeStart, comparedTo: selectedDate) {
-                                Text("\(startDateString) ")
-                            }
-                            Text(event.timeStart, style: .time)
-                            
-                            Image(systemName: "arrow.right")
-                            
-                            if let timeEnd = event.timeEnd {
-                                if let endDateString = displayDateIfNeeded(for: timeEnd, comparedTo: event.timeStart) {
-                                    Text("\(endDateString) ")
-                                }
-                                Text(timeEnd, style: .time)
-                            }
-                        }
+                        DateRangeDisplayView(
+                            startDate: event.timeStart,
+                            endDate: event.timeEnd,
+                            selectedDate: selectedDate
+                        )
                         .font(.subheadline)
                         
                     }
@@ -107,15 +97,4 @@ struct LifeEventRowView: View {
             
         }
     }
-        
-    private func displayDateIfNeeded(for date: Date, comparedTo selectedDate: Date) -> String? {
-        let calendar = Calendar.current
-        if !calendar.isDate(date, inSameDayAs: selectedDate) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "dd/MM"
-            return formatter.string(from: date)
-        }
-        return nil
-    }
-    
 }

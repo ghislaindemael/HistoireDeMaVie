@@ -30,6 +30,8 @@ final class Trip: LogModel {
     var pathMetricsData: Data?
     var geojsonTrackData: Data?
     
+    var transitLineRid: Int?
+    
     var fitFilePath: String?
     
     var persons: [Person] = []
@@ -61,6 +63,9 @@ final class Trip: LogModel {
     
     @Relationship(deleteRule: .nullify)
     var path: Path?
+    
+    @Relationship(deleteRule: .nullify)
+    var transitLine: TransitLine?
     
     @Relationship(deleteRule: .nullify, inverse: \ActivityInstance.parentTrip)
     var childActivities: [ActivityInstance] = []
@@ -109,6 +114,7 @@ final class Trip: LogModel {
          vehicle: Vehicle? = nil,
          amDriver: Bool = false,
          path: Path? = nil,
+         transitLine: TransitLine? = nil,
          fitFilePath: String? = nil,
          details: String? = nil,
          syncStatus: SyncStatus = .unsynced)
@@ -119,6 +125,7 @@ final class Trip: LogModel {
         self.parentInstance = parentInstance
         self.parentInstanceRid = parentInstance?.rid
         self.amDriver = amDriver
+        self.transitLineRid = transitLine?.rid
         self.fitFilePath = fitFilePath
         self.details = details
         self.syncStatus = syncStatus
@@ -135,6 +142,7 @@ final class Trip: LogModel {
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
+        self.transitLineRid = dto.transit_line_id
         self.personRids = dto.person_ids ?? []
         self.fitFilePath = dto.fit_file_path
         self.details = dto.details
@@ -153,6 +161,7 @@ final class Trip: LogModel {
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
+        self.transitLineRid = dto.transit_line_id
         self.fitFilePath = dto.fit_file_path
         
         self.personRids = dto.person_ids ?? []
@@ -186,6 +195,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let place_end_id: Int?
     let am_driver: Bool
     let path_id: Int?
+    let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
@@ -206,6 +216,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let vehicle_id: Int?
     let am_driver: Bool
     let path_id: Int?
+    let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
     let fit_file_path: String?
@@ -228,6 +239,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.place_end_id = placeEndId
         self.am_driver = trip.amDriver
         self.path_id = trip.pathRid
+        self.transit_line_id = trip.transitLineRid
         self.path_metrics = trip.pathMetrics
         self.geojson_track = trip.geojsonTrack
         self.fit_file_path = trip.fitFilePath
@@ -259,6 +271,8 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     
     var pathRid: Int?
     var path: Path?
+    var transitLineRid: Int?
+    var transitLine: TransitLine?
     var pathMetrics: PathMetrics?
     var geojsonTrack: GeoJSONLineString?
     
@@ -293,6 +307,8 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         
         self.pathRid = trip.pathRid
         self.path = trip.path
+        self.transitLineRid = trip.transitLineRid
+        self.transitLine = trip.transitLine
         self.pathMetrics = trip.pathMetrics
         self.geojsonTrack = trip.geojsonTrack
         
@@ -320,6 +336,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         trip.setPlaceEnd(placeEnd, fallbackRid: placeEndRid)
         trip.setVehicle(vehicle, fallbackRid: vehicleRid)
         trip.setPath(path, fallbackRid: pathRid)
+        trip.setTransitLine(transitLine, fallbackRid: transitLineRid)
         
         trip.pathMetrics = pathMetrics
         trip.geojsonTrack = geojsonTrack

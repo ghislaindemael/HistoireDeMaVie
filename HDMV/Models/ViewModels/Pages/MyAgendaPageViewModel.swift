@@ -136,18 +136,9 @@ class MyAgendaPageViewModel: ObservableObject {
     func createLifeEvent() {
         guard let context = modelContext else { return }
         
-        let date = filterDate.smartCreationTime
+        let newEvent = LifeEvent.create(in: context, date: filterDate)
         
-        let newEvent = LifeEvent(
-            timeStart: date
-        )
-        context.insert(newEvent)
-        do {
-            try context.save()
-            self.lifeEvents.append(newEvent)
-            self.lifeEvents.sort { $0.timeStart > $1.timeStart }
-        } catch {
-            print("Failed to create lifeEvent: \(error)")
-        }
+        self.lifeEvents.append(newEvent)
+        self.lifeEvents.sort { $0.timeStart > $1.timeStart }
     }
 }
