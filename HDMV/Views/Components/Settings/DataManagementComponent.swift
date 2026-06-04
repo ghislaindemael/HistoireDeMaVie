@@ -86,15 +86,21 @@ struct DataManagementComponent: View {
     }
     
     private func IconCacheRow() -> some View {
-        HStack {
-            Text("SVG Icons")
-                .foregroundColor(.purple)
-            Spacer()
-            
-            // We use a state to dynamically fetch the count
-            IconCacheCountView()
+        NavigationLink {
+            IconCacheManagerView()
+        } label: {
+            HStack {
+                Text("SVG Icons")
+                    .foregroundColor(.purple)
+                Spacer()
+                IconCacheCountView()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
+        .buttonStyle(.plain)
     }
     
     // MARK: - Data Operations
@@ -127,25 +133,11 @@ struct IconCacheCountView: View {
     @State private var cacheCount: Int = 0
     
     var body: some View {
-        HStack {
-            Text("\(cacheCount)")
-                .fontWeight(.bold)
-            
-            Button(role: .destructive) {
-                Task {
-                    await IconCacheService.shared.clearCache()
-                    updateCount()
-                }
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
+        Text("\(cacheCount)")
+            .fontWeight(.bold)
+            .onAppear {
+                updateCount()
             }
-            .buttonStyle(.borderless)
-            .padding(.leading, 8)
-        }
-        .onAppear {
-            updateCount()
-        }
     }
     
     private func updateCount() {

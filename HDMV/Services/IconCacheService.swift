@@ -82,6 +82,28 @@ actor IconCacheService {
         }
     }
     
+    /// Returns the list of cached filenames
+    func getCachedFiles() -> [String] {
+        do {
+            let contents = try fileManager.contentsOfDirectory(atPath: cacheDirectory.path)
+            return contents.filter { $0.hasSuffix(".svg") }.sorted()
+        } catch {
+            return []
+        }
+    }
+    
+    /// Deletes a specific cached icon
+    func deleteCachedIcon(filename: String) {
+        let fileURL = cacheDirectory.appendingPathComponent(filename)
+        do {
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+            }
+        } catch {
+            print("Failed to delete cached icon \(filename): \(error)")
+        }
+    }
+    
     /// Wipes all downloaded SVG icons
     func clearCache() {
         do {
