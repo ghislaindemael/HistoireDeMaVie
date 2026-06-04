@@ -121,17 +121,20 @@ struct ActivityInstanceDetailSheet: View {
     
     @ViewBuilder
     private var specializedDetailsSection: some View {
-        
-        VStack {
+        Group {
             if selectedActivity!.can(.log_food) {
-                MealDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                Section(header: headerView("Meal Details")) {
+                    MealDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                }
             }
             
-            if selectedActivity!.can(.link_place) {
-                PlaceSelectorView(
-                    selectedPlace: detailsPlaceBinding,
-                    linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId
-                )
+            if !selectedActivity!.cannot(.link_place) {
+                Section(header: headerView("Place")) {
+                    PlaceSelectorView(
+                        selectedPlace: detailsPlaceBinding,
+                        linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId
+                    )
+                }
             }
         }
     }

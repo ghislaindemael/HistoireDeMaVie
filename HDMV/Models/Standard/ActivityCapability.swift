@@ -33,14 +33,20 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
 protocol Capable {
     var allowedCapabilities: [ActivityCapability] { get set }
     var requiredCapabilities: [ActivityCapability] { get set }
+    var disallowedCapabilities: [ActivityCapability] { get set }
     
     func hasCapability(_ capability: ActivityCapability) -> Bool
     mutating func toggleCapability(_ capability: ActivityCapability)
+    
     func isRequired(_ capability: ActivityCapability) -> Bool
     mutating func toggleRequired(_ capability: ActivityCapability)
-    
     mutating func addRequired(_ capability: ActivityCapability)
     mutating func removeRequired(_ capability: ActivityCapability)
+    
+    func isDisallowed(_ capability: ActivityCapability) -> Bool
+    mutating func toggleDisallowed(_ capability: ActivityCapability)
+    mutating func addDisallowed(_ capability: ActivityCapability)
+    mutating func removeDisallowed(_ capability: ActivityCapability)
 }
 
 extension Capable {
@@ -53,6 +59,10 @@ extension Capable {
         return isRequired(capability)
     }
     
+    func cannot(_ capability: ActivityCapability) -> Bool {
+        return isDisallowed(capability)
+    }
+    
     func hasCapability(_ capability: ActivityCapability) -> Bool {
         return allowedCapabilities.contains(capability)
     }
@@ -61,14 +71,31 @@ extension Capable {
         return requiredCapabilities.contains(capability)
     }
     
+    func isDisallowed(_ capability: ActivityCapability) -> Bool {
+        return disallowedCapabilities.contains(capability)
+    }
+    
     mutating func addRequired(_ capability: ActivityCapability) {
         if !isRequired(capability) {
             requiredCapabilities.append(capability)
+            removeDisallowed(capability)
         }
     }
     
     mutating func removeRequired(_ capability: ActivityCapability) {
         requiredCapabilities.removeAll { $0 == capability }
+    }
+    
+    mutating func addDisallowed(_ capability: ActivityCapability) {
+        if !isDisallowed(capability) {
+            disallowedCapabilities.append(capability)
+            removeRequired(capability)
+            allowedCapabilities.removeAll { $0 == capability }
+        }
+    }
+    
+    mutating func removeDisallowed(_ capability: ActivityCapability) {
+        disallowedCapabilities.removeAll { $0 == capability }
     }
     
     mutating func toggleCapability(_ capability: ActivityCapability) {
@@ -77,6 +104,7 @@ extension Capable {
             removeRequired(capability)
         } else {
             allowedCapabilities.append(capability)
+            removeDisallowed(capability)
         }
     }
     
@@ -84,9 +112,18 @@ extension Capable {
         if isRequired(capability) {
             removeRequired(capability)
         } else {
-            if hasCapability(capability) {
-                addRequired(capability)
+            addRequired(capability)
+            if !hasCapability(capability) {
+                allowedCapabilities.append(capability)
             }
+        }
+    }
+    
+    mutating func toggleDisallowed(_ capability: ActivityCapability) {
+        if isDisallowed(capability) {
+            removeDisallowed(capability)
+        } else {
+            addDisallowed(capability)
         }
     }
 }
