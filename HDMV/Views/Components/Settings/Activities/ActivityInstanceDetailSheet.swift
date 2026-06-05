@@ -40,8 +40,15 @@ struct ActivityInstanceDetailSheet: View {
                 
                 basicsSection
                 detailsSection
-                if let activity = selectedActivity, activity.canLogDetails() {
-                    specializedDetailsSection
+                if let activity = selectedActivity {
+                    DynamicOptionsSection(
+                        activity: activity,
+                        decodedActivityDetails: $viewModel.editor.decodedActivityDetails
+                    )
+                    
+                    if activity.canLogDetails() {
+                        specializedDetailsSection
+                    }
                 }
                 
                 

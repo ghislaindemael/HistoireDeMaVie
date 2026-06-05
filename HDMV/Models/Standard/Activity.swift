@@ -23,6 +23,10 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
     }
     @Relationship(deleteRule: .nullify, inverse: \Activity.parent)
     var children: [Activity] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \DataActivityOptionMapping.activity)
+    var optionMappings: [DataActivityOptionMapping] = []
+    
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
@@ -130,7 +134,7 @@ final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capa
         if self.syncStatus != .synced {
             return true
         }
-        return self.children.contains(where: { $0.hasUnsyncedChanges })
+        return self.children.contains(where: { $0.hasUnsyncedChanges }) || self.optionMappings.contains(where: { $0.hasUnsyncedChanges })
     }
     
     var optionalChildren: [Activity]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name}) }

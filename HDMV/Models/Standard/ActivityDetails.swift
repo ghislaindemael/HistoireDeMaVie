@@ -36,6 +36,9 @@ struct ActivityDetails: Codable {
     
     var place: PlaceDetails?
     
+    // Phase B: Generic Options Engine
+    var options: [String: String]?
+    
     mutating func removeFields() {
         place?.removeFields()
     }

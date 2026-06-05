@@ -10,7 +10,7 @@ import Foundation
 final class ActivitiesService: SupabaseDataService<ActivityDTO, ActivityPayload> {
     
     init() {
-        super.init(tableName: "data_activities")
+        super.init(tableName: "data_activities_v3")
     }
     
     // MARK: Semantic methods

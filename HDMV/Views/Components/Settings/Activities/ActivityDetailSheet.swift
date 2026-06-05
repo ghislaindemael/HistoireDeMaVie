@@ -16,6 +16,8 @@ struct ActivityDetailSheet: View {
     @StateObject private var viewModel: ActivityDetailSheetViewModel
     
     @Query var activityTree: [Activity]
+    
+    @State private var isShowingOptionSelector = false
 
     init(activity: Activity, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: ActivityDetailSheetViewModel(
@@ -89,11 +91,66 @@ struct ActivityDetailSheet: View {
                     }
                 }
                 
+                Section("Custom Options") {
+                    let sortedMappings = viewModel.model.optionMappings.sorted { 
+                        if $0.priority == $1.priority {
+                            return $0.optionSlug < $1.optionSlug
+                        }
+                        return $0.priority < $1.priority 
+                    }
+                    
+                    List {
+                        ForEach(sortedMappings) { mapping in
+                            HStack {
+                                Text(mapping.option?.name ?? mapping.optionSlug)
+                                Spacer()
+                                Text("Priority: \(mapping.priority)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .onMove { indices, newOffset in
+                            var mappings = sortedMappings
+                            mappings.move(fromOffsets: indices, toOffset: newOffset)
+                            for (index, mapping) in mappings.enumerated() {
+                                mapping.priority = index
+                                mapping.syncStatus = .unsynced
+                            }
+                        }
+                        .onDelete { indices in
+                            for index in indices {
+                                let mapping = sortedMappings[index]
+                                modelContext.delete(mapping)
+                                viewModel.model.optionMappings.removeAll { $0.id == mapping.id }
+                            }
+                        }
+                    }
+                    
+                    Button("Add Option") {
+                        isShowingOptionSelector = true
+                    }
+                }
+                
+                
             }
             .navigationTitle("Edit Activity")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
                 viewModel.onDone()
+            }
+            .sheet(isPresented: $isShowingOptionSelector) {
+                DataActivityOptionSelectorView { selectedOption in
+                    let newMapping = DataActivityOptionMapping(
+                        activityRid: viewModel.model.rid ?? 0,
+                        optionSlug: selectedOption.slug,
+                        priority: viewModel.model.optionMappings.count,
+                        syncStatus: .unsynced
+                    )
+                    newMapping.activity = viewModel.model
+                    newMapping.option = selectedOption
+                    modelContext.insert(newMapping)
+                    viewModel.model.optionMappings.append(newMapping)
+                }
             }
         }
     }
