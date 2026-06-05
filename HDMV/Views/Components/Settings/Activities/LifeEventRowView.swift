@@ -95,6 +95,8 @@ struct LifeEventRowView: View {
 
            // TODO: Show metrics sliders
             
+            LifeContextsDisplayView(contextRids: event.contextRids)
+            
         }
     }
 }

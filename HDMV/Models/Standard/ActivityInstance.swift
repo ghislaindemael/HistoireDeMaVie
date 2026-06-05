@@ -30,6 +30,7 @@ final class ActivityInstance: LogModel {
     
     var persons: [Person] = []
     var personRids: [Int] = []
+    var contextRids: [Int] = []
     
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -59,6 +60,9 @@ final class ActivityInstance: LogModel {
     
     @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentInstance)
     var childLifeEvents: [LifeEvent] = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \Quote.parentInstance)
+    var childQuotes: [Quote] = []
     
     // MARK: Relationship conformance
 
@@ -111,6 +115,7 @@ final class ActivityInstance: LogModel {
         self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
         self.personRids = dto.person_ids ?? []
+        self.contextRids = dto.context_ids ?? []
         self.syncStatus = .synced
     }
     
@@ -125,6 +130,7 @@ final class ActivityInstance: LogModel {
         self.fitFilePath = dto.fit_file_path
         self.decodedActivityDetails = dto.activity_details
         self.personRids = dto.person_ids ?? []
+        self.contextRids = dto.context_ids ?? []
         
         let currentRids = Set(self.persons.compactMap { $0.rid })
         let newRids = Set(dto.person_ids ?? [])
@@ -153,6 +159,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let fit_file_path: String?
     let activity_details: ActivityDetails?
     let person_ids: [Int]?
+    let context_ids: [Int]?
 }
 
 
@@ -171,6 +178,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let fit_file_path: String?
     let activity_details: ActivityDetails?
     let person_ids: [Int]
+    let context_ids: [Int]
     
     init?(from instance: ActivityInstance) {
         guard instance.isValid() else {
@@ -187,6 +195,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.percentage = instance.percentage
         self.fit_file_path = instance.fitFilePath
         self.person_ids = instance.personRids
+        self.context_ids = instance.contextRids
         
         if var details = instance.decodedActivityDetails {
             details.removeFields()
@@ -213,6 +222,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     
     var persons: [Person] = []
     var personRids: [Int] = []
+    var contextRids: [Int] = []
     
     typealias Model = ActivityInstance
     
@@ -233,6 +243,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         
         self.persons = instance.persons
         self.personRids = instance.personRids
+        self.contextRids = instance.contextRids
     }
     
     func apply(to instance: ActivityInstance) {
@@ -252,5 +263,6 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         
         instance.persons = self.persons
         instance.personRids = self.persons.compactMap { $0.rid }
+        instance.contextRids = self.contextRids
     }
 }

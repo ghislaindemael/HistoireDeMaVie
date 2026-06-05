@@ -23,6 +23,7 @@ final class Interaction: LogModel {
     
     var parentInstanceRid: Int?
     var parentTripRid: Int?
+    var contextRids: [Int] = []
     
     var details: String?
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -53,6 +54,7 @@ final class Interaction: LogModel {
         parentInstance: ActivityInstance? = nil,
         persons: [Person] = [],
         in_person: Bool = true,
+        contextRids: [Int] = [],
         details: String? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -65,6 +67,7 @@ final class Interaction: LogModel {
         self.personRids = persons.compactMap { $0.rid } // Auto-fill RIDs
         self.inPerson = in_person
         self.parentInstance = parentInstance
+        self.contextRids = contextRids
         self.details = details
         self.syncStatus = syncStatus
     }
@@ -82,6 +85,7 @@ final class Interaction: LogModel {
         self.details = dto.details
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
+        self.contextRids = dto.context_ids ?? []
         self.syncStatus = .synced
     }
     
@@ -95,6 +99,7 @@ final class Interaction: LogModel {
         self.parentTripRid = dto.parent_trip_id
         self.personRids = dto.person_ids
         self.inPerson = dto.in_person
+        self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         
         let currentRids = Set(self.persons.compactMap { $0.rid })
@@ -131,6 +136,7 @@ struct InteractionDTO: Codable, Identifiable, Sendable {
     var in_person: Bool
     var parent_instance_id: Int?
     let parent_trip_id: Int?
+    let context_ids: [Int]?
     var details: String?
 }
 
@@ -147,6 +153,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
     var in_person: Bool
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
+    var context_ids: [Int]
     var details: String?
     
     init?(from interaction: Interaction) {
@@ -161,6 +168,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
         self.person_ids = interaction.personRids
         self.timed = interaction.timed
         self.in_person = interaction.inPerson
+        self.context_ids = interaction.contextRids
         self.details = interaction.details
         self.percentage = interaction.percentage
     }
@@ -181,6 +189,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
     var parentInstance: ActivityInstance?
     var parentTripRid: Int?
     var parentTrip: Trip?
+    var contextRids: [Int] = []
     var details: String?
     
     typealias Model = Interaction
@@ -209,6 +218,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
         self.parentInstanceRid = interaction.parentInstanceRid
         self.parentTrip = interaction.parentTrip
         self.parentTripRid = interaction.parentTripRid
+        self.contextRids = interaction.contextRids
         self.details = interaction.details
     }
     
@@ -226,6 +236,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
         interaction.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
         interaction.parentTrip = self.parentTrip
         interaction.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
+        interaction.contextRids = self.contextRids
         interaction.details = self.details
         
         interaction.markAsModified()

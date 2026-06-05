@@ -20,6 +20,8 @@ struct DataManagementComponent: View {
         Country.self,
         City.self,
         Interaction.self,
+        LifeContext.self,
+        DataMediaItem.self,
         LifeEvent.self,
         Path.self,
         Place.self,
@@ -46,6 +48,10 @@ struct DataManagementComponent: View {
                         Divider()
                     }
                 }
+                
+                Divider()
+                IconCacheRow()
+                
             }
             .padding(.top, 8)
         } label: {
@@ -80,6 +86,24 @@ struct DataManagementComponent: View {
         
     }
     
+    private func IconCacheRow() -> some View {
+        NavigationLink {
+            IconCacheManagerView()
+        } label: {
+            HStack {
+                Text("SVG Icons")
+                    .foregroundColor(.purple)
+                Spacer()
+                IconCacheCountView()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
+    }
+    
     // MARK: - Data Operations
         
     /// Fetches the current count for a given model type from the context.
@@ -103,5 +127,23 @@ struct DataManagementComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self])
+    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self, LifeContext.self])
+}
+
+struct IconCacheCountView: View {
+    @State private var cacheCount: Int = 0
+    
+    var body: some View {
+        Text("\(cacheCount)")
+            .fontWeight(.bold)
+            .onAppear {
+                updateCount()
+            }
+    }
+    
+    private func updateCount() {
+        Task {
+            self.cacheCount = await IconCacheService.shared.getCacheCount()
+        }
+    }
 }

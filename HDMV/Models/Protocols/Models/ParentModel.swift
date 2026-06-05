@@ -19,6 +19,7 @@ protocol ParentModel: LogModel {
     var childTrips: [Trip] { get set }
     var childInteractions: [Interaction] { get set }
     var childLifeEvents: [LifeEvent] { get set }
+    var childQuotes: [Quote] { get set }
     
     var childrenDisplayModeRaw: String { get set }
     
@@ -30,7 +31,8 @@ extension ParentModel {
         return !(self.childActivities.isEmpty) ||
         !(self.childTrips.isEmpty) ||
         !(self.childInteractions.isEmpty) ||
-        !(self.childLifeEvents.isEmpty)
+        !(self.childLifeEvents.isEmpty) ||
+        !(self.childQuotes.isEmpty)
     }
     
     func hasOngoingChild() -> Bool {
@@ -56,6 +58,7 @@ extension ParentModel {
         allChildren.append(contentsOf: self.childTrips)
         allChildren.append(contentsOf: self.childInteractions)
         allChildren.append(contentsOf: self.childLifeEvents)
+        allChildren.append(contentsOf: self.childQuotes)
         
         return allChildren.sorted(by: { $0.timeStart < $1.timeStart })
     }

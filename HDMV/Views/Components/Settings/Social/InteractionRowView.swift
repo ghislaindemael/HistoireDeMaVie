@@ -78,6 +78,9 @@ struct InteractionRowView: View {
                     .foregroundColor(Color.primary)
                     .font(.body)
             }
+            
+            LifeContextsDisplayView(contextRids: interaction.contextRids)
+            
             if interaction.timeEnd == nil, let onEnd = onEnd {
                 EndItemButton(title: "End Interaction", action: onEnd)
             }

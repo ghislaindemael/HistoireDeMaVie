@@ -16,3 +16,5 @@ protocol TreeSelectable: Identifiable {
 
 extension Activity: TreeSelectable {}
 extension TransactionType: TreeSelectable {}
+
+extension LifeContext: TreeSelectable {}

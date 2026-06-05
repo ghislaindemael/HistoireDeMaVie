@@ -79,10 +79,10 @@ extension Transaction: DebugViewable {
                     .foregroundStyle(.secondary)
             }
             
-            if let contextRid {
-                Text("Context RID: \(contextRid)")
+            if !contextRids.isEmpty {
+                Text("Context RIDs: \(contextRids.map(String.init).joined(separator: ", "))")
             } else {
-                Text("Context RID: Unset")
+                Text("Context RIDs: None")
                     .foregroundStyle(.secondary)
             }
             

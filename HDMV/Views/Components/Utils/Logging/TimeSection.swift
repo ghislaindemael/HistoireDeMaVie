@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TimeSection<Editor: TimeBound>: View {
     @Binding var editor: Editor
+    var hideEndTime: Bool = false
     
     private var isTrackable: Bool {
         editor is any TimeTrackable
@@ -50,11 +51,13 @@ struct TimeSection<Editor: TimeBound>: View {
         Section("Time") {
             FullTimePicker(label: "Start Time", selection: $editor.timeStart)
             
-            FullTimePicker(
-                label: "End Time",
-                selection: $editor.timeEnd,
-                minimumDate: editor.timeStart
-            )
+            if !hideEndTime {
+                FullTimePicker(
+                    label: "End Time",
+                    selection: $editor.timeEnd,
+                    minimumDate: editor.timeStart
+                )
+            }
             
             if isTrackable {
                 Toggle("Timed ?", isOn: timedBinding)

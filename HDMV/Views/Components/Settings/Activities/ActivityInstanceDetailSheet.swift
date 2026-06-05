@@ -106,6 +106,17 @@ struct ActivityInstanceDetailSheet: View {
                         .lineLimit(1)
                 }
             }
+            
+            NavigationLink {
+                MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
+            } label: {
+                HStack {
+                    Text("Contexts")
+                    Spacer()
+                    Text("\(viewModel.editor.contextRids.count) selected")
+                        .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
+                }
+            }
         }
     }
     
@@ -125,6 +136,12 @@ struct ActivityInstanceDetailSheet: View {
             if selectedActivity!.can(.log_food) {
                 Section(header: headerView("Meal Details")) {
                     MealDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                }
+            }
+            
+            if selectedActivity!.can(.log_media) {
+                Section(header: headerView("Media Items")) {
+                    MediaDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
                 }
             }
             

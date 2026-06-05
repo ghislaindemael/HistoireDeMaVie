@@ -90,6 +90,7 @@ struct TripRowView: View {
                         .foregroundColor(.green)
                 }
                 
+                LifeContextsDisplayView(contextRids: trip.contextRids)
                 
             }
             .frame(maxWidth: .infinity, alignment: .leading)

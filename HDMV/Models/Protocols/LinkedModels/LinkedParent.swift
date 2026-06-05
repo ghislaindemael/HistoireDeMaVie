@@ -79,3 +79,4 @@ extension ActivityInstance: LinkedParent {}
 extension Trip: LinkedParent {}
 extension Interaction: LinkedParent {}
 extension LifeEvent: LinkedParent {}
+extension Quote: LinkedParent {}

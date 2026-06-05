@@ -148,6 +148,8 @@ struct TransactionRowView: View {
                     .font(.body)
             }
             
+            LifeContextsDisplayView(contextRids: transaction.contextRids)
+            
             if let onQuickAction = onQuickAction {
                 Button(action: onQuickAction) {
                     Text("Quick Action")

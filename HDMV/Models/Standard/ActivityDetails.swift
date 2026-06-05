@@ -6,9 +6,10 @@
 //
 
 // MARK: The JSON objects
-struct ReadingDetails: Codable {
-    var book_id: Int
-    var pageCount: Int
+
+struct MediaDetails: Codable {
+    var itemId: Int
+    var progress: String? // e.g. "Chapter 4", "Pages 40-90", "S1E4"
 }
 
 struct PlaceDetails: Codable {
@@ -29,12 +30,13 @@ struct PlaceDetails: Codable {
 
 struct ActivityDetails: Codable {
     var meal: MealDetails?
-    var reading: ReadingDetails?
+    
+    // Modern Activity media logs
+    var media: [MediaDetails]?
+    
     var place: PlaceDetails?
     
     mutating func removeFields() {
         place?.removeFields()
     }
 }
-
-

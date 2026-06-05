@@ -131,6 +131,9 @@ struct ActivityInstanceRowView: View {
             if instance.activity?.can(.log_food) == true {
                 mealContentText
             }
+            if instance.activity?.can(.log_media) == true {
+                mediaContentText
+            }
             if instance.activity?.shouldShowPlaceLink(settings: settings) == true
                 || instance.decodedActivityDetails?.place?.placeId != nil {
                 linkedPlaceView
@@ -142,6 +145,8 @@ struct ActivityInstanceRowView: View {
                     .background(Color.green.opacity(0.2), in: Capsule())
                     .foregroundColor(.green)
             }
+            
+            LifeContextsDisplayView(contextRids: instance.contextRids)
             
         }
     }
@@ -162,6 +167,31 @@ struct ActivityInstanceRowView: View {
             .foregroundColor(isMissingRequiredDetails ? .red : .primary)
             .fontWeight(isMissingRequiredDetails ? .bold : .regular)
             .font(.body)
+    }
+    
+    @ViewBuilder
+    private var mediaContentText: some View {
+        if let mediaList = instance.decodedActivityDetails?.media, !mediaList.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(mediaList.indices, id: \.self) { index in
+                    let mediaDetail = mediaList[index]
+                    
+                    DataMediaItemPillView(itemId: mediaDetail.itemId, progress: mediaDetail.progress)
+                }
+            }
+            .padding(.vertical, 4)
+        } else if instance.activity?.must(.log_media) == true {
+            Text("Media not logged.")
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondaryBackground)
+                )
+                .foregroundColor(.red)
+                .fontWeight(.bold)
+                .font(.body)
+        }
     }
     
     @ViewBuilder

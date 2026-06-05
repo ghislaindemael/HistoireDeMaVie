@@ -20,6 +20,7 @@ final class LifeEvent: LogModel {
     
     var parentInstanceRid: Int?
     var parentTripRid: Int?
+    var contextRids: [Int] = []
 
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -49,6 +50,7 @@ final class LifeEvent: LogModel {
          details: String? = nil,
          metrics: LifeEventMetrics? = nil,
          parentInstance: ActivityInstance? = nil,
+         contextRids: [Int] = [],
          syncStatus: SyncStatus = .unsynced
     ){
         self.rid = rid
@@ -58,6 +60,7 @@ final class LifeEvent: LogModel {
         self.details = details
         self.metrics = metrics
         self.parentInstance = parentInstance
+        self.contextRids = contextRids
         self.syncStatus = syncStatus
     }
     
@@ -71,6 +74,7 @@ final class LifeEvent: LogModel {
         self.metrics = dto.metrics
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
+        self.contextRids = dto.context_ids ?? []
         self.syncStatus = .synced
     }
     
@@ -82,6 +86,7 @@ final class LifeEvent: LogModel {
         self.metrics = dto.metrics 
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
+        self.contextRids = dto.context_ids ?? []
         self.syncStatus = .synced
     }
     
@@ -100,6 +105,7 @@ struct LifeEventDTO: Identifiable, Codable, Sendable {
     let metrics: LifeEventMetrics?
     let parent_instance_id: Int?
     let parent_trip_id: Int?
+    let context_ids: [Int]?
 }
 
 
@@ -112,6 +118,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     let metrics: LifeEventMetrics?
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
+    var context_ids: [Int]
     
     typealias Model = LifeEvent
     
@@ -126,6 +133,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         self.metrics = event.metrics
         self.parent_instance_id = event.parentInstanceRid
         self.parent_trip_id = event.parentTripRid
+        self.context_ids = event.contextRids
     }
     
 }
@@ -141,6 +149,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     var parentInstanceRid: Int?
     var parentTrip: Trip?
     var parentTripRid: Int?
+    var contextRids: [Int] = []
     
     typealias Model = LifeEvent
     
@@ -154,6 +163,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         self.parentInstanceRid = event.parentInstanceRid
         self.parentTrip = event.parentTrip
         self.parentTripRid = event.parentTripRid
+        self.contextRids = event.contextRids
     }
     
     func apply(to event: LifeEvent) {
@@ -167,6 +177,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         event.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
         event.parentTrip = self.parentTrip
         event.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
+        event.contextRids = self.contextRids
         
         event.markAsModified()
     }
