@@ -112,9 +112,14 @@ struct DynamicOptionRow: View {
                             Text(option.name)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack {
-                                    ForEach(choices, id: \.self) { choice in
-                                        let isSelected = optionValue.wrappedValue.components(separatedBy: ",").contains(choice)
-                                        Text(choice)
+                                    ForEach(choices, id: \.slug) { choice in
+                                        let isSelected = optionValue.wrappedValue.components(separatedBy: ",").contains(choice.slug)
+                                        HStack(spacing: 4) {
+                                            if let icon = choice.icon {
+                                                Image(systemName: icon)
+                                            }
+                                            Text(choice.label)
+                                        }
                                             .font(.subheadline)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 6)
@@ -124,9 +129,9 @@ struct DynamicOptionRow: View {
                                             .onTapGesture {
                                                 var current = optionValue.wrappedValue.components(separatedBy: ",").filter { !$0.isEmpty }
                                                 if isSelected {
-                                                    current.removeAll { $0 == choice }
+                                                    current.removeAll { $0 == choice.slug }
                                                 } else {
-                                                    current.append(choice)
+                                                    current.append(choice.slug)
                                                 }
                                                 optionValue.wrappedValue = current.joined(separator: ",")
                                             }
@@ -138,8 +143,8 @@ struct DynamicOptionRow: View {
                     } else {
                         Picker(option.name, selection: optionValue) {
                             Text("None").tag("")
-                            ForEach(choices, id: \.self) { choice in
-                                Text(choice).tag(choice)
+                            ForEach(choices, id: \.slug) { choice in
+                                Text(choice.label).tag(choice.slug)
                             }
                         }
                     }

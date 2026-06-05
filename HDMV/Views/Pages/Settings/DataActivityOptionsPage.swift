@@ -13,7 +13,6 @@ struct DataActivityOptionsPage: View {
     @StateObject private var viewModel = DataActivityOptionsPageViewModel()
     
     @Query(FetchDescriptor<DataActivityOption>(
-        predicate: #Predicate { $0.cache == true },
         sortBy: [SortDescriptor(\.name)]))
     private var options: [DataActivityOption]
     
@@ -35,9 +34,19 @@ struct DataActivityOptionsPage: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .onDelete(perform: deleteOptions)
                 }
             }
             .navigationTitle("Activity Options")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .destructive) {
+                        clearAllCache()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -50,5 +59,20 @@ struct DataActivityOptionsPage: View {
                 DataActivityOptionDetailSheet(option: option, modelContext: modelContext)
             }
         }
+    }
+    
+    private func deleteOptions(at offsets: IndexSet) {
+        for index in offsets {
+            let option = options[index]
+            modelContext.delete(option)
+        }
+        try? modelContext.save()
+    }
+    
+    private func clearAllCache() {
+        for option in options {
+            modelContext.delete(option)
+        }
+        try? modelContext.save()
     }
 }

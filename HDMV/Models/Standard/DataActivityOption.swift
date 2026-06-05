@@ -19,12 +19,21 @@ enum DataActivityOptionType: String, Codable {
     case person
 }
 
+struct DataActivityOptionChoice: Codable, Equatable, Hashable {
+    var slug: String
+    var label: String
+    var icon: String?
+    var archived: Bool?
+}
+
 struct DataActivityOptionConfig: Codable, Equatable {
     var multiselect: Bool?
-    var choices: [String]?
+    var choices: [DataActivityOptionChoice]?
+    var defaultValue: String?
     var min: Double?
     var max: Double?
     var step: Double?
+    var layoutNode: ActivityLayoutNode?
 }
 
 @Model

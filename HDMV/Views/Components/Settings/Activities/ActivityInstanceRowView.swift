@@ -93,7 +93,9 @@ struct ActivityInstanceRowView: View {
     
     @ViewBuilder
     private var detailsSection: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 8) {
+            
+            optionsPillsView
             
             if !instance.persons.isEmpty {
                 Label(instance.persons.formattedNames(), systemImage: instance.persons.count > 1 ? "person.2.fill" : "person.fill")
@@ -151,6 +153,39 @@ struct ActivityInstanceRowView: View {
         }
     }
     
+    @ViewBuilder
+    private var optionsPillsView: some View {
+        let engine = DynamicOptionsLayoutEngine(instance: instance)
+        let layoutView = engine.renderAll()
+        
+        VStack(alignment: .leading, spacing: 4) {
+            layoutView
+            missingRequiredOptionsWarnings
+        }
+    }
+    
+    @ViewBuilder
+    private var missingRequiredOptionsWarnings: some View {
+        let missing = instance.activity?.optionMappings.filter { mapping in
+            mapping.required && (instance.decodedActivityDetails?.options?[mapping.optionSlug] == nil || instance.decodedActivityDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+        } ?? []
+        
+        if !missing.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(missing, id: \.id) { mapping in
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                        Text("Missing \(mapping.option?.name ?? mapping.optionSlug)")
+                            .fontWeight(.bold)
+                    }
+                    .font(.caption)
+                    .foregroundColor(.red)
+                }
+            }
+            .padding(.top, 2)
+        }
+    }
+
     @ViewBuilder
     private var mealContentText: some View {
         

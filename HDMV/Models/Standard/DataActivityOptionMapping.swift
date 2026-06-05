@@ -15,6 +15,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     var activityRid: Int
     var optionSlug: String
     var priority: Int
+    var required: Bool = false
     var cache: Bool = true
     var archived: Bool = false
     
@@ -33,12 +34,14 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
         activityRid: Int = 0,
         optionSlug: String = "",
         priority: Int = 0,
+        required: Bool = false,
         syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.activityRid = activityRid
         self.optionSlug = optionSlug
         self.priority = priority
+        self.required = required
         self.syncStatus = syncStatus
     }
     
@@ -48,6 +51,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.activityRid = dto.activity_id
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
+        self.required = dto.required ?? false
         self.syncStatus = .synced
     }
     
@@ -55,6 +59,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.activityRid = dto.activity_id
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
+        self.required = dto.required ?? false
         self.syncStatus = .synced
     }
     
@@ -74,6 +79,7 @@ struct DataActivityOptionMappingDTO: Codable, Identifiable {
     let activity_id: Int
     let option_slug: String
     let priority: Int
+    let required: Bool?
 }
 
 struct DataActivityOptionMappingPayload: Codable, InitializableWithModel {
@@ -82,12 +88,14 @@ struct DataActivityOptionMappingPayload: Codable, InitializableWithModel {
     let activity_id: Int
     let option_slug: String
     let priority: Int
+    let required: Bool
     
     init?(from model: DataActivityOptionMapping) {
         guard model.isValid() else { return nil }
         self.activity_id = model.activityRid
         self.option_slug = model.optionSlug
         self.priority = model.priority
+        self.required = model.required
     }
 }
 
@@ -97,6 +105,7 @@ struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
     var option: DataActivityOption?
     var optionSlug: String
     var priority: Int
+    var required: Bool = false
     var cache: Bool = true
     var archived: Bool = false
     
@@ -108,6 +117,7 @@ struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
         self.option = model.option
         self.optionSlug = model.optionSlug
         self.priority = model.priority
+        self.required = model.required
         self.cache = model.cache
         self.archived = model.archived
     }
@@ -118,6 +128,7 @@ struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
         model.option = self.option
         model.optionSlug = self.optionSlug
         model.priority = self.priority
+        model.required = self.required
         model.cache = self.cache
         model.archived = self.archived
     }

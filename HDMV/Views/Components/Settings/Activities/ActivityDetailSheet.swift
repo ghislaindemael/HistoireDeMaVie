@@ -101,12 +101,22 @@ struct ActivityDetailSheet: View {
                     
                     List {
                         ForEach(sortedMappings) { mapping in
-                            HStack {
-                                Text(mapping.option?.name ?? mapping.optionSlug)
-                                Spacer()
-                                Text("Priority: \(mapping.priority)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text(mapping.option?.name ?? mapping.optionSlug)
+                                        .font(.headline)
+                                    Spacer()
+                                    Text("Priority: \(mapping.priority)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Toggle("Required", isOn: Binding(
+                                    get: { mapping.required },
+                                    set: { newValue in
+                                        mapping.required = newValue
+                                        mapping.syncStatus = .unsynced
+                                    }
+                                ))
                             }
                         }
                         .onMove { indices, newOffset in

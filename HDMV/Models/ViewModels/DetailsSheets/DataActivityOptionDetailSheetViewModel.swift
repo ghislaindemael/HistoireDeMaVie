@@ -11,15 +11,15 @@ import SwiftData
 @MainActor
 class DataActivityOptionDetailSheetViewModel: BaseDetailSheetViewModel<DataActivityOption, DataActivityOptionEditor> {
     
-    // Add any specific option-editing logic here
-    func addChoice(_ choice: String) {
+    func addChoice(slug: String, label: String, icon: String?) {
         if editor.config == nil {
             editor.config = DataActivityOptionConfig()
         }
         if editor.config?.choices == nil {
             editor.config?.choices = []
         }
-        editor.config?.choices?.append(choice)
+        let newChoice = DataActivityOptionChoice(slug: slug, label: label, icon: icon, archived: false)
+        editor.config?.choices?.append(newChoice)
     }
     
     func removeChoice(at index: Int) {
