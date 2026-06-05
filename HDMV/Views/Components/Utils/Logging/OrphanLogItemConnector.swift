@@ -18,13 +18,15 @@ struct OrphanLogItemConnector: View {
     let showTrips: Bool
     let showInteractions: Bool
     let showLifeEvents: Bool
+    let showQuotes: Bool
     
     init(
         parent: any ParentModel,
         activity: Activity? = nil,
         showTrips: Bool? = nil,
         showInteractions: Bool? = nil,
-        showLifeEvents: Bool? = nil
+        showLifeEvents: Bool? = nil,
+        showQuotes: Bool? = nil
     ) {
         self.parent = parent
         self.activity = activity
@@ -32,6 +34,7 @@ struct OrphanLogItemConnector: View {
         self.showTrips = showTrips ?? activity?.can(.create_trips) ?? false
         self.showInteractions = showInteractions ?? activity?.can(.create_interactions) ?? true
         self.showLifeEvents = showLifeEvents ?? true
+        self.showQuotes = showQuotes ?? true
     }
 
     
@@ -39,6 +42,7 @@ struct OrphanLogItemConnector: View {
         tripSection
         interactionSection
         lifeEventSection
+        quoteSection
     }
     
     @ViewBuilder
@@ -59,6 +63,13 @@ struct OrphanLogItemConnector: View {
     private var lifeEventSection: some View {
         if showLifeEvents {
             ClaimLifeEventsSectionView(parent: parent)
+        }
+    }
+    
+    @ViewBuilder
+    private var quoteSection: some View {
+        if showQuotes {
+            ClaimQuotesSectionView(parent: parent)
         }
     }
     

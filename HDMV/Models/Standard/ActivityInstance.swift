@@ -61,6 +61,9 @@ final class ActivityInstance: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \LifeEvent.parentInstance)
     var childLifeEvents: [LifeEvent] = []
     
+    @Relationship(deleteRule: .nullify, inverse: \Quote.parentInstance)
+    var childQuotes: [Quote] = []
+    
     // MARK: Relationship conformance
 
     // MARK: Init

@@ -18,6 +18,7 @@ struct MyAgendaPage: View {
     
     @State private var entryToEdit: AgendaEntry?
     @State private var eventToEdit: LifeEvent?
+    @State private var quoteToEdit: Quote?
     
     // MARK: Setup
     
@@ -45,6 +46,9 @@ struct MyAgendaPage: View {
                             Button(action: { viewModel.createAgendaEntry() }) {
                                 Label("Agenda Entry", systemImage: "book.pages")
                             }
+                            Button(action: { viewModel.createQuote() }) {
+                                Label("Quote", systemImage: "quote.bubble")
+                            }
                         }
                     }
                 )
@@ -58,6 +62,9 @@ struct MyAgendaPage: View {
                 }
                 .sheet(item: $eventToEdit) { event in
                     LifeEventDetailSheet(lifeEvent: event, modelContext: modelContext)
+                }
+                .sheet(item: $quoteToEdit) { quote in
+                    QuoteDetailSheet(quote: quote, modelContext: modelContext)
                 }
         }
         
@@ -80,16 +87,23 @@ struct MyAgendaPage: View {
             
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    ForEach(viewModel.lifeEvents) { event in
-                        LifeEventRowView(
-                            event: event,
-                            selectedDate: viewModel.filterDate
-                        )
-                        .onTapGesture {
-                            eventToEdit = event
+                    ForEach(viewModel.combinedItems) { item in
+                        switch item {
+                        case .lifeEvent(let event):
+                            LifeEventRowView(
+                                event: event,
+                                selectedDate: viewModel.filterDate
+                            )
+                            .onTapGesture {
+                                eventToEdit = event
+                            }
+                        case .quote(let quote):
+                            QuoteRowView(quote: quote)
+                                .onTapGesture {
+                                    quoteToEdit = quote
+                                }
                         }
                     }
-                    
                 }
                 .padding(.horizontal)
             }

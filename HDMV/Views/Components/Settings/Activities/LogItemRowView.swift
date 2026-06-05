@@ -19,6 +19,7 @@ struct LogItemRowView: View {
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
     @Binding var lifeEventToEdit: LifeEvent?
+    @Binding var quoteToEdit: Quote?
     
     @State private var isTripDropTargeted = false
     
@@ -50,7 +51,8 @@ struct LogItemRowView: View {
                     instanceToEdit: $instanceToEdit,
                     tripToEdit: $tripToEdit,
                     interactionToEdit: $interactionToEdit,
-                    lifeEventToEdit: $lifeEventToEdit
+                    lifeEventToEdit: $lifeEventToEdit,
+                    quoteToEdit: $quoteToEdit
                 )
                 
             case let interaction as Interaction:
@@ -68,6 +70,13 @@ struct LogItemRowView: View {
                         lifeEventToEdit = lifeEvent
                     }
                     .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
+            
+            case let quote as Quote:
+                QuoteRowView(quote: quote)
+                    .onTapGesture(count: 2) {
+                        quoteToEdit = quote
+                    }
+                    .draggable(DraggableLogItem.quote(quote.persistentModelID))
                     
             default:
                 EmptyView()

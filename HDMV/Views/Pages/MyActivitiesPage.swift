@@ -20,6 +20,7 @@ struct MyActivitiesPage: View {
     @State private var interactionToEdit: Interaction?
     @State private var transactionToEdit: Transaction?
     @State private var lifeEventToEdit: LifeEvent?
+    @State private var quoteToEdit: Quote?
     @State private var showingImporter = false
     
     private func onAppear() {
@@ -58,6 +59,9 @@ struct MyActivitiesPage: View {
                         Button(action: { viewModel.createLifeEvent() }) {
                             Label("Life Event", systemImage: "star.fill")
                         }
+                        Button(action: { viewModel.createQuote() }) {
+                            Label("Quote", systemImage: "quote.bubble.fill")
+                        }
                     }
                 }
         }
@@ -81,7 +85,8 @@ struct MyActivitiesPage: View {
                                 instanceToEdit: $instanceToEdit,
                                 tripToEdit: $tripToEdit,
                                 interactionToEdit: $interactionToEdit,
-                                lifeEventToEdit: $lifeEventToEdit
+                                lifeEventToEdit: $lifeEventToEdit,
+                                quoteToEdit: $quoteToEdit
                             )
                         } else if let lifeEvent = item as? LifeEvent {
                             LifeEventRowView(event: lifeEvent, selectedDate: viewModel.filterDate)
@@ -89,6 +94,12 @@ struct MyActivitiesPage: View {
                                     lifeEventToEdit = lifeEvent
                                 }
                                 .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
+                        } else if let quote = item as? Quote {
+                            QuoteRowView(quote: quote)
+                                .onTapGesture(count: 2) {
+                                    quoteToEdit = quote
+                                }
+                                .draggable(DraggableLogItem.quote(quote.persistentModelID))
                         }
                     }
                 }
@@ -131,6 +142,12 @@ struct MyActivitiesPage: View {
         .sheet(item: $lifeEventToEdit, onDismiss: { viewModel.fetchDailyData() }) { lifeEvent in
             LifeEventDetailSheet(
                 lifeEvent: lifeEvent,
+                modelContext: modelContext
+            )
+        }
+        .sheet(item: $quoteToEdit, onDismiss: { viewModel.fetchDailyData() }) { quote in
+            QuoteDetailSheet(
+                quote: quote,
                 modelContext: modelContext
             )
         }

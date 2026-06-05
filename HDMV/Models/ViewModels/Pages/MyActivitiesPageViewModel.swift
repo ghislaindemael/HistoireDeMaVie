@@ -36,9 +36,10 @@ class MyActivitiesPageViewModel: ObservableObject {
     @Published var trips: [Trip] = []
     @Published var interactions: [Interaction] = []
     @Published var lifeEvents: [LifeEvent] = []
+    @Published var quotes: [Quote] = []
     
     var timelineItems: [any LogModel] {
-        let combined: [any LogModel] = (instances as [any LogModel]) + (lifeEvents as [any LogModel])
+        let combined: [any LogModel] = (instances as [any LogModel]) + (lifeEvents as [any LogModel]) + (quotes as [any LogModel])
         return combined.sorted { $0.timeStart > $1.timeStart }
     }
     
@@ -54,6 +55,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         fetchTrips()
         fetchInteractions()
         fetchLifeEvents()
+        fetchQuotes()
     }
  
     /// A single, powerful function to fetch instances based on the current filter mode.
@@ -201,9 +203,49 @@ class MyActivitiesPageViewModel: ObservableObject {
         }
         
         do {
-            self.lifeEvents = try context.fetch(descriptor)
+            let fetchedEvents = try context.fetch(descriptor)
+            self.lifeEvents = fetchedEvents
         } catch {
-            print("Failed to fetch life events: \(error)")
+            print("Failed to fetch LifeEvents: \(error)")
+        }
+    }
+    
+    func fetchQuotes() {
+        guard let context = modelContext else { return }
+        
+        let descriptor: FetchDescriptor<Quote>
+        
+        switch filterMode {
+            case .byDate:
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                
+                let predicate = #Predicate<Quote> {
+                    $0.timeStart >= startOfDay &&
+                    $0.timeStart < endOfDay
+                }
+                descriptor = FetchDescriptor<Quote>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+            case .byActivity:
+                // No quotes for activity mode (they are fetched as children)
+                descriptor = FetchDescriptor<Quote>(
+                    predicate: #Predicate<Quote> { _ in false }
+                )
+        }
+        
+        do {
+            let fetchedQuotes = try context.fetch(descriptor)
+            // Filter in-memory to avoid `#Predicate` compiler timeout
+            self.quotes = fetchedQuotes.filter { 
+                $0.parentInstance == nil && 
+                $0.parentTrip == nil && 
+                $0.parentInteraction == nil 
+            }
+        } catch {
+            print("Failed to fetch Quotes: \(error)")
         }
     }
     
@@ -274,6 +316,12 @@ class MyActivitiesPageViewModel: ObservableObject {
     func createLifeEvent() {
         guard let context = modelContext else { return }
         LifeEvent.create(in: context, date: filterDate)
+        fetchDailyData()
+    }
+    
+    func createQuote() {
+        guard let context = modelContext else { return }
+        Quote.create(in: context, date: filterDate)
         fetchDailyData()
     }
     
@@ -401,6 +449,10 @@ class MyActivitiesPageViewModel: ObservableObject {
                 }
             case .lifeEvent(let childID):
                 if let child = context.model(for: childID) as? LifeEvent {
+                    move(child)
+                }
+            case .quote(let childID):
+                if let child = context.model(for: childID) as? Quote {
                     move(child)
                 }
         }

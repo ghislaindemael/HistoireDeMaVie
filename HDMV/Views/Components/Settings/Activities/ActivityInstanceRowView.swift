@@ -151,8 +151,6 @@ struct ActivityInstanceRowView: View {
         }
     }
     
-    @Query private var mediaItems: [DataMediaItem]
-    
     @ViewBuilder
     private var mealContentText: some View {
         
@@ -177,31 +175,8 @@ struct ActivityInstanceRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(mediaList.indices, id: \.self) { index in
                     let mediaDetail = mediaList[index]
-                    let item = mediaItems.first(where: { $0.rid == mediaDetail.itemId })
                     
-                    HStack {
-                        if let icon = item?.icon {
-                            IconView(iconString: icon)
-                        } else {
-                            Image(systemName: "tv.fill") // fallback icon
-                        }
-                        
-                        Text(item?.name ?? "Unknown Item")
-                            .fontWeight(.semibold)
-                        
-                        if let progress = mediaDetail.progress, !progress.isEmpty {
-                            Text("— \(progress)")
-                                .font(.caption)
-                                .opacity(0.8)
-                        }
-                    }
-                    .padding(6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.indigo.opacity(0.15))
-                    )
-                    .foregroundColor(.indigo)
+                    DataMediaItemPillView(itemId: mediaDetail.itemId, progress: mediaDetail.progress)
                 }
             }
             .padding(.vertical, 4)

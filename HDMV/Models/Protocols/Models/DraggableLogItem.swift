@@ -15,6 +15,7 @@ enum DraggableLogItem: Codable, Transferable {
     case trip(PersistentIdentifier)
     case interaction(PersistentIdentifier)
     case lifeEvent(PersistentIdentifier)
+    case quote(PersistentIdentifier)
     
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .data)
@@ -39,6 +40,11 @@ extension DraggableLogItem {
     
     var isLifeEvent: Bool {
         if case .lifeEvent = self { return true }
+        return false
+    }
+    
+    var isQuote: Bool {
+        if case .quote = self { return true }
         return false
     }
 }
