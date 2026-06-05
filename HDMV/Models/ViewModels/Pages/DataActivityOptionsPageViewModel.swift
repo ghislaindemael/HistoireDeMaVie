@@ -12,6 +12,7 @@ import SwiftData
 class DataActivityOptionsPageViewModel: BasePageViewModel {
     
     private var optionSyncer: DataActivityOptionSyncer?
+    private var mappingSyncer: DataActivityOptionMappingSyncer?
     
     @Published var options: [DataActivityOption] = []
     
@@ -22,6 +23,7 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
     override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.optionSyncer = DataActivityOptionSyncer(modelContext: modelContext)
+        self.mappingSyncer = DataActivityOptionMappingSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
@@ -44,6 +46,9 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
         guard let syncer = optionSyncer else { return }
         do {
             try await syncer.pullChanges()
+            if let mappingSyncer = mappingSyncer {
+                try await mappingSyncer.pullChanges()
+            }
             fetchFromCache()
         } catch {
             print("Failed to refresh options from server: \(error)")

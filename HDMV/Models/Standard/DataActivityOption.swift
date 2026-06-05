@@ -49,6 +49,10 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
     
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
+    // Relationships
+    @Relationship(deleteRule: .cascade, inverse: \DataActivityOptionMapping.option)
+    var mappings: [DataActivityOptionMapping]? = []
+    
     typealias Payload = DataActivityOptionPayload
     typealias DTO = DataActivityOptionDTO
     typealias Editor = DataActivityOptionEditor

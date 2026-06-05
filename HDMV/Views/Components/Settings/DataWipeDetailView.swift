@@ -17,12 +17,6 @@ extension PersistentModel {
     }
     
     static func chunkedDelete(from context: ModelContext, filter: DataWipeDetailView.FilterOption) throws {
-        if filter == .all {
-            try context.delete(model: Self.self)
-            try context.save()
-            return
-        }
-        
         var offset = 0
         let batchSize = 500
         while true {
@@ -34,7 +28,10 @@ extension PersistentModel {
             
             var deletedCount = 0
             for item in batch {
-                if let syncable = item as? any SyncableModel {
+                if filter == .all {
+                    context.delete(item)
+                    deletedCount += 1
+                } else if let syncable = item as? any SyncableModel {
                     let isSynced = syncable.syncStatus == .synced
                     let matches = (filter == .synced && isSynced) || (filter == .unsynced && !isSynced)
                     if matches {

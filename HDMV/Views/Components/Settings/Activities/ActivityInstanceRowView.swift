@@ -167,7 +167,7 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var missingRequiredOptionsWarnings: some View {
         let missing = instance.activity?.optionMappings.filter { mapping in
-            mapping.required && (instance.decodedActivityDetails?.options?[mapping.optionSlug] == nil || instance.decodedActivityDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+            !mapping.isDeleted && mapping.required && (instance.decodedActivityDetails?.options?[mapping.optionSlug] == nil || instance.decodedActivityDetails?.options?[mapping.optionSlug]?.isEmpty == true)
         } ?? []
         
         if !missing.isEmpty {
