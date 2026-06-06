@@ -93,7 +93,9 @@ struct ActivityInstanceRowView: View {
     
     @ViewBuilder
     private var detailsSection: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 8) {
+            
+            optionsPillsView
             
             if !instance.persons.isEmpty {
                 Label(instance.persons.formattedNames(), systemImage: instance.persons.count > 1 ? "person.2.fill" : "person.fill")
@@ -151,6 +153,45 @@ struct ActivityInstanceRowView: View {
         }
     }
     
+    @ViewBuilder
+    private var optionsPillsView: some View {
+        let engine = DynamicOptionsLayoutEngine(instance: instance)
+        let layoutView = engine.renderAll()
+        
+        VStack(alignment: .leading, spacing: 4) {
+            layoutView
+            missingRequiredOptionsWarnings
+        }
+    }
+    
+    @ViewBuilder
+    private var missingRequiredOptionsWarnings: some View {
+        let missing = instance.activity?.optionMappings.filter { mapping in
+            !mapping.isDeleted && mapping.required && (instance.decodedActivityDetails?.options?[mapping.optionSlug] == nil || instance.decodedActivityDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+        } ?? []
+        
+        if !missing.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(missing, id: \.id) { mapping in
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                        Text("Missing \(mapping.option?.name ?? mapping.optionSlug)")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.2))
+                    .foregroundStyle(Color.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+            }
+            .padding(.top, 4)
+        }
+    }
+
     @ViewBuilder
     private var mealContentText: some View {
         

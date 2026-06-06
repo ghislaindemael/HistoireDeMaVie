@@ -15,7 +15,7 @@ class BaseDetailSheetViewModel<ModelType: EditableModel, EditorType: EditorProto
 where ModelType == EditorType.Model
 {
     @Published var editor: EditorType
-    private var model: ModelType
+    var model: ModelType
     let modelContext: ModelContext
 
     init(model: ModelType, modelContext: ModelContext) {

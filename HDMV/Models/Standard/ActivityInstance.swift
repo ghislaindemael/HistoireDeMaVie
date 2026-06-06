@@ -9,6 +9,14 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+struct ActivityOptionPill: Identifiable {
+    let id = UUID()
+    let optionSlug: String
+    let label: String
+    let icon: String?
+    let isDefault: Bool
+}
+
 @Model
 final class ActivityInstance: LogModel {
     
@@ -100,6 +108,37 @@ final class ActivityInstance: LogModel {
         set {
             activity_details = try? JSONEncoder().encode(newValue)
         }
+    }
+    
+    var resolvedOptionsPills: [ActivityOptionPill] {
+        guard let activity = self.activity,
+              let mappedOptions = decodedActivityDetails?.options,
+              !mappedOptions.isEmpty else {
+            return []
+        }
+        
+        let sortedMappings = activity.optionMappings.sorted { $0.priority < $1.priority }
+        var pills: [ActivityOptionPill] = []
+        
+        for mapping in sortedMappings {
+            guard let option = mapping.option else { continue }
+            guard let selectedValueSlug = mappedOptions[option.slug] else { continue }
+            
+            let config = option.config
+            let choice = config?.choices?.first(where: { $0.slug == selectedValueSlug })
+            let label = choice?.label ?? selectedValueSlug
+            let icon = choice?.icon
+            let isDefault = (selectedValueSlug == config?.defaultValue)
+            
+            pills.append(ActivityOptionPill(
+                optionSlug: option.slug,
+                label: label,
+                icon: icon,
+                isDefault: isDefault
+            ))
+        }
+        
+        return pills
     }
     
     convenience init(fromDto dto: ActivityInstanceDTO) {

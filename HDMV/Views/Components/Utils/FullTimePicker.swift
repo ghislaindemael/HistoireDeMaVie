@@ -13,6 +13,7 @@ struct FullTimePicker: View {
     let label: String
     @Binding var selection: Date?
     let minimumDate: Date?
+    let hideDatePicker: Bool
     
     private let placeholderColor = Color(.systemGray4)
     private let placeholderCornerRadius: CGFloat = 8
@@ -32,19 +33,21 @@ struct FullTimePicker: View {
     private var second: Int { secondVirtualIndex % 60 }
     
     // MARK: - Initializers updated to accept minimumDate
-    init(label: String, selection: Binding<Date?>, minimumDate: Date? = nil) {
+    init(label: String, selection: Binding<Date?>, minimumDate: Date? = nil, hideDatePicker: Bool = false) {
         self.label = label
         self._selection = selection
         self.minimumDate = minimumDate
+        self.hideDatePicker = hideDatePicker
     }
     
-    init(label: String, selection: Binding<Date>, minimumDate: Date? = nil) {
+    init(label: String, selection: Binding<Date>, minimumDate: Date? = nil, hideDatePicker: Bool = false) {
         self.label = label
         self._selection = Binding<Date?>(
             get: { selection.wrappedValue },
             set: { selection.wrappedValue = $0 ?? selection.wrappedValue }
         )
         self.minimumDate = minimumDate
+        self.hideDatePicker = hideDatePicker
     }
     
     var body: some View {
@@ -167,11 +170,13 @@ struct FullTimePicker: View {
     @ViewBuilder
     private var picker: some View {
         HStack {
-            nativeDatePicker
-                .labelsHidden()
-                .onChange(of: selectedDateOnly) { _, newDate in
-                    mergeDateOnly(newDate)
-                }
+            if !hideDatePicker {
+                nativeDatePicker
+                    .labelsHidden()
+                    .onChange(of: selectedDateOnly) { _, newDate in
+                        mergeDateOnly(newDate)
+                    }
+            }
             
             Text(DateFormatter.timeWithSeconds.string(from: selection!))
                 .font(.body)

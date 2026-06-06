@@ -48,8 +48,9 @@ final class ActivitySyncer: BaseSyncer<Activity, ActivityDTO, ActivityPayload> {
                 continue
             }
             
-            if activity.parent?.rid != parentRid {
-                activity.parent = activityCache[parentRid]
+            let targetParent = activityCache[parentRid]
+            if activity.parent?.persistentModelID != targetParent?.persistentModelID {
+                activity.parent = targetParent
             }
         }
     }

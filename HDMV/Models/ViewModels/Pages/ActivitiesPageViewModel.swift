@@ -12,6 +12,8 @@ import SwiftData
 class ActivitiesPageViewModel: BasePageViewModel {
     
     private var activitySyncer: ActivitySyncer?
+    private var optionSyncer: DataActivityOptionSyncer?
+    private var mappingSyncer: DataActivityOptionMappingSyncer?
     
     @Published var activities: [Activity] = []
     
@@ -25,6 +27,8 @@ class ActivitiesPageViewModel: BasePageViewModel {
     override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.activitySyncer = ActivitySyncer(modelContext: modelContext)
+        self.optionSyncer = DataActivityOptionSyncer(modelContext: modelContext)
+        self.mappingSyncer = DataActivityOptionMappingSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
@@ -56,6 +60,8 @@ class ActivitiesPageViewModel: BasePageViewModel {
         }
         do {
             try await syncer.pullChanges()
+            try await optionSyncer?.pullChanges()
+            try await mappingSyncer?.pullChanges()
             fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
@@ -71,6 +77,8 @@ class ActivitiesPageViewModel: BasePageViewModel {
         }
         do {
             _ = try await syncer.pushChanges()
+            _ = try await optionSyncer?.pushChanges()
+            _ = try await mappingSyncer?.pushChanges()
             fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")

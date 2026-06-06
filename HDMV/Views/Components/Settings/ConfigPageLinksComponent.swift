@@ -23,6 +23,7 @@ struct ConfigPageLinksComponent: View {
     private let configPages: [ConfigPageLink] = [
         ConfigPageLink(title: "Life Contexts", destination: AnyView(LifeContextsPage())),
         ConfigPageLink(title: "Activities", destination: AnyView(ActivitiesPage())),
+        ConfigPageLink(title: "Activity Options", destination: AnyView(DataActivityOptionsPage())),
         ConfigPageLink(title: "Countries", destination: AnyView(CountriesPage())),
         ConfigPageLink(title: "Cities", destination: AnyView(CitiesPage())),
         ConfigPageLink(title: "Paths", destination: AnyView(PathsPage())),

@@ -29,7 +29,9 @@ struct HDMVApp: App {
             VaultTask.self,
             LifeContext.self,
             DataMediaItem.self,
-            Quote.self
+            Quote.self,
+            DataActivityOption.self,
+            DataActivityOptionMapping.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

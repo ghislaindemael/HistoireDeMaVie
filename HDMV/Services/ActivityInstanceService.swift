@@ -11,7 +11,7 @@ import Foundation
 class ActivityInstanceService: SupabaseDataService<ActivityInstanceDTO, ActivityInstancePayload> {
     
     init() {
-        super.init(tableName: "my_activities")
+        super.init(tableName: "my_activities_v3")
     }
     
     // MARK: Semantic methods
