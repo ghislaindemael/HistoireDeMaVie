@@ -1,16 +1,9 @@
-//
-//  DataActivityOptionRowView.swift
-//  HDMV
-//
-//  Created by Ghislain Demael on 05.06.2026.
-//
-
 import SwiftUI
 import SwiftData
 
-struct DataActivityOptionRowView: View {
-    let option: DataActivityOption
-    let onToggleCache: (DataActivityOption) -> Void
+struct DataFoodOptionRowView: View {
+    let option: DataFoodOption
+    let onToggleCache: (DataFoodOption) -> Void
     
     var body: some View {
         HStack {
@@ -27,9 +20,7 @@ struct DataActivityOptionRowView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            
             Spacer()
-            
             CacheToggleButton(model: option, onToggle: onToggleCache)
             SyncStatusIndicator(status: option.syncStatus)
         }

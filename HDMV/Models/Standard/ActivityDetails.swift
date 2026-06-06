@@ -29,7 +29,7 @@ struct PlaceDetails: Codable {
 // MARK: The handler
 
 struct ActivityDetails: Codable {
-    var meal: MealDetails?
+    var food: FoodDetails?
     
     // Modern Activity media logs
     var media: [MediaDetails]?

@@ -300,7 +300,7 @@ class DynamicOptionsLayoutEngine {
                 return formatted
             }
             return value
-        case .date(let style):
+        case .date(let _style):
             // Fallback for simple dates
             return value
         }

@@ -31,7 +31,11 @@ struct HDMVApp: App {
             DataMediaItem.self,
             Quote.self,
             DataActivityOption.self,
-            DataActivityOptionMapping.self
+            DataActivityOptionMapping.self,
+            DataFoodItem.self,
+            DataFoodOption.self,
+            DataFoodOptionMapping.self,
+            DataFoodRecipe.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

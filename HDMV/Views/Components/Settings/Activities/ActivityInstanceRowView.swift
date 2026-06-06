@@ -195,8 +195,8 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var mealContentText: some View {
         
-        let displayText = instance.decodedActivityDetails?.meal?.displayText ?? "Meal not logged."
-        let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && instance.decodedActivityDetails?.meal == nil
+        let displayText = instance.decodedActivityDetails?.food?.generalNotes ?? "Food not logged."
+        let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && instance.decodedActivityDetails?.food == nil
         
         Text(displayText)
             .padding(8)

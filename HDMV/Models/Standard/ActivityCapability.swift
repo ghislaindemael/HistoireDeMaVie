@@ -24,7 +24,7 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
             case .create_trips: return "Can create Trips"
             case .create_interactions: return "Can create Interactions"
             case .link_place: return "Can attach Place"
-            case .log_food: return "Can log Meals"
+            case .log_food: return "Can log Food"
             case .log_media: return "Can log Media & Media Items"
             case .have_child_instances: return "Have child instances"
             case .be_child_instance: return "Be child instance"
