@@ -26,7 +26,7 @@ final class DataActivityOptionMappingSyncer: BaseSyncer<DataActivityOptionMappin
     }
     
     override func deleteFromServer(_ id: Int) async throws {
-        fatalError("DataActivityOptionMapping deletion not implemented")
+        _ = try await mappingService.delete(rid: id)
     }
     
     override func resolveRelationships() throws {

@@ -171,18 +171,24 @@ struct ActivityInstanceRowView: View {
         } ?? []
         
         if !missing.isEmpty {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 ForEach(missing, id: \.id) { mapping in
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
                         Text("Missing \(mapping.option?.name ?? mapping.optionSlug)")
+                            .font(.subheadline)
                             .fontWeight(.bold)
+                        Spacer()
                     }
-                    .font(.caption)
-                    .foregroundColor(.red)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.2))
+                    .foregroundStyle(Color.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-            .padding(.top, 2)
+            .padding(.top, 4)
         }
     }
 

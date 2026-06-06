@@ -166,6 +166,34 @@ struct DynamicOptionRow: View {
                     }
                 }
                 
+            case .time:
+                let binding = Binding<Date?>(
+                    get: {
+                        if optionValue.wrappedValue.isEmpty { return nil }
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "HH:mm:ss"
+                        // Fallback to HH:mm for old data
+                        if let date = formatter.date(from: optionValue.wrappedValue) {
+                            return date
+                        }
+                        formatter.dateFormat = "HH:mm"
+                        return formatter.date(from: optionValue.wrappedValue)
+                    },
+                    set: { newDate in
+                        if let d = newDate {
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "HH:mm:ss"
+                            optionValue.wrappedValue = formatter.string(from: d)
+                        } else {
+                            optionValue.wrappedValue = ""
+                        }
+                    }
+                )
+                
+                HStack {
+                    FullTimePicker(label: option.name, selection: binding, hideDatePicker: true)
+                }
+                
             default:
                 Text("Unsupported type: \(option.typeRaw)")
                     .foregroundStyle(.red)

@@ -17,6 +17,7 @@ enum DataActivityOptionType: String, Codable {
     case text
     case dropdown
     case person
+    case time
 }
 
 struct DataActivityOptionChoice: Codable, Equatable, Hashable {

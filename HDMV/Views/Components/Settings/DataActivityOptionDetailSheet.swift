@@ -42,6 +42,7 @@ struct DataActivityOptionDetailSheet: View {
                         Text("Rating").tag(DataActivityOptionType.rating)
                         Text("Text").tag(DataActivityOptionType.text)
                         Text("Dropdown").tag(DataActivityOptionType.dropdown)
+                        Text("Time").tag(DataActivityOptionType.time)
                     }
                 }
                 

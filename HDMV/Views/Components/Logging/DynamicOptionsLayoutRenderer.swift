@@ -266,6 +266,11 @@ class DynamicOptionsLayoutEngine {
                 }
                 return labels.joined(separator: ", ")
             }
+            
+            if option.type != .boolean {
+                return "\(option.name): \(val)"
+            }
+            
             return val
         }
         

@@ -130,6 +130,11 @@ struct ActivityDetailSheet: View {
                         .onDelete { indices in
                             for index in indices {
                                 let mapping = sortedMappings[index]
+                                if let rid = mapping.rid {
+                                    Task {
+                                        _ = try? await DataActivityOptionMappingService().delete(rid: rid)
+                                    }
+                                }
                                 modelContext.delete(mapping)
                                 viewModel.model.optionMappings.removeAll { $0.id == mapping.id }
                             }
