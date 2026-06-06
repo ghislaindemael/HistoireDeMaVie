@@ -5,45 +5,37 @@ struct DataFoodRecipesPage: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = DataFoodRecipesPageViewModel()
     
-    @Query(FetchDescriptor<DataFoodRecipe>(sortBy: [SortDescriptor(\.name)]))
-    private var items: [DataFoodRecipe]
-    
-    @State private var itemToEdit: DataFoodRecipe?
+    @Query(filter: #Predicate<DataFoodRecipe> { $0.parentId == nil }, sort: \DataFoodRecipe.name)
+    private var rootItems: [DataFoodRecipe]
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(items) { item in
-                    Button(action: { itemToEdit = item }) {
-                        HStack {
-                            Text(item.name)
-                            Spacer()
-                            SyncStatusIndicator(status: item.syncStatus)
+            GenericTreePageView(
+                title: "Food Recipes",
+                items: rootItems,
+                childrenKeyPath: \.optionalChildren,
+                isLoading: viewModel.isLoading,
+                onRefresh: { await viewModel.refreshFromServer() },
+                onSync: { await viewModel.uploadLocalChanges() },
+                onAdd: { viewModel.createItem() },
+                rowContent: { item in
+                    DataFoodRecipeRowView(recipe: item) { it in
+                        withAnimation(.snappy) {
+                            it.cache.toggle()
+                            it.markAsModified()
                         }
                     }
-                    .buttonStyle(.plain)
+
+                },
+                sheetContent: { item in
+                    DataFoodRecipeDetailSheet(item: item, modelContext: modelContext)
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .navigationTitle("Food Recipes")
-            .simpleLogToolbar(
-                refreshAction: { await viewModel.refreshFromServer() },
-                syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createItem() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
             }
-            .sheet(item: $itemToEdit) { item in
-                DataFoodRecipeDetailSheet(item: item, modelContext: modelContext)
-            }
         }
     }
     
-    private func deleteItems(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(items[index])
-        }
-        try? modelContext.save()
-    }
+
 }

@@ -22,9 +22,10 @@ struct DataFoodItemsPage: View {
                     DataFoodItemRowView(item: item) { it in
                         withAnimation(.snappy) {
                             it.cache.toggle()
-                            it.syncStatus = .unsynced
+                            it.markAsModified()
                         }
                     }
+
                 },
                 sheetContent: { item in
                     DataFoodItemDetailSheet(item: item, modelContext: modelContext)
@@ -35,4 +36,6 @@ struct DataFoodItemsPage: View {
             }
         }
     }
+    
+
 }

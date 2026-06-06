@@ -41,7 +41,7 @@ class DataFoodOptionsPageViewModel: ObservableObject {
     
     func updateModel(_ model: DataFoodOption, modifier: (DataFoodOption) -> Void) {
         modifier(model)
-        model.syncStatus = .unsynced
+        model.markAsModified()
         try? modelContext?.save()
     }
 }

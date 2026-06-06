@@ -26,7 +26,7 @@ struct ModelBoolToggleButton: View {
                 .foregroundStyle(isOn ? .blue : .red)
                 .contentTransition(.symbolEffect(.replace))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
     }
 }
 

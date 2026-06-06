@@ -62,7 +62,7 @@ struct DataFoodItemDetailSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
                 editor.apply(to: item)
-                item.syncStatus = .unsynced
+                item.markAsModified()
                 try? modelContext.save()
             }
         }

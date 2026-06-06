@@ -9,13 +9,14 @@
 enum CourseType: String, Codable, CaseIterable, Identifiable {
     case aperitif = "Apéritif"
     case entree = "Entrée"
-    case secondeEntree = "Seconde Entrée"
-    case plat1 = "Plat principal 1"
+    case entree2 = "Seconde Entrée"
+    case plat = "Plat principal"
     case plat2 = "Plat principal 2"
     case fromage = "Fromage"
     case dessert = "Dessert"
     case fruits = "Fruits"
     case cafe = "Café"
+    case the = "Thé / Tisane"
     case digestif = "Digestif"
     case divers = "Divers / Notes"
     

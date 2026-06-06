@@ -135,17 +135,7 @@ struct DataFoodItemPayload: Codable, InitializableWithModel {
 struct DataFoodItemEditor: CachableModel, EditorProtocol {
     var name: String
     var parentId: Int?
-    var parent: DataFoodItem? {
-        didSet {
-            parentId = parent?.rid
-        }
-    }
-    
-    @Relationship(deleteRule: .cascade, inverse: \DataFoodItem.parent)
-    var children: [DataFoodItem] = []
-    
-    var icon: String? { return nil }
-    var optionalChildren: [DataFoodItem]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name }) }
+    var parent: DataFoodItem?
     var baseUnit: String?
     var macros: DataFoodItemMacros?
     var cache: Bool = true
