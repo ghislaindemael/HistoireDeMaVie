@@ -194,20 +194,14 @@ struct ActivityInstanceRowView: View {
 
     @ViewBuilder
     private var mealContentText: some View {
+        let foodDetails = instance.decodedActivityDetails?.food
+        let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && foodDetails == nil
         
-        let displayText = instance.decodedActivityDetails?.food?.generalNotes ?? "Food not logged."
-        let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && instance.decodedActivityDetails?.food == nil
-        
-        Text(displayText)
-            .padding(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.secondaryBackground)
-            )
-            .foregroundColor(isMissingRequiredDetails ? .red : .primary)
-            .fontWeight(isMissingRequiredDetails ? .bold : .regular)
-            .font(.body)
+        FoodDetailsPillView(
+            foodDetails: foodDetails,
+            isMissingRequiredDetails: isMissingRequiredDetails,
+            themeColor: .yellow
+        )
     }
     
     @ViewBuilder
