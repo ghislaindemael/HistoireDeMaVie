@@ -135,7 +135,11 @@ struct DataFoodItemPayload: Codable, InitializableWithModel {
 struct DataFoodItemEditor: CachableModel, EditorProtocol {
     var name: String
     var parentId: Int?
-    var parent: DataFoodItem?
+    var parent: DataFoodItem? {
+        didSet {
+            parentId = parent?.rid
+        }
+    }
     var baseUnit: String?
     var macros: DataFoodItemMacros?
     var cache: Bool = true

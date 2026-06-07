@@ -251,9 +251,17 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     var timed: Bool
     var percentage: Int
     var activity: Activity?
-    var parentInstance: ActivityInstance?
+    var parentInstance: ActivityInstance? {
+        didSet {
+            parentInstanceRid = parentInstance?.rid
+        }
+    }
     var parentInstanceRid: Int?
-    var parentTrip: Trip?
+    var parentTrip: Trip? {
+        didSet {
+            parentTripRid = parentTrip?.rid
+        }
+    }
     var parentTripRid: Int?
     var details: String?
     var fitFilePath: String?
@@ -293,9 +301,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
         instance.parentInstance = self.parentInstance
-        instance.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
+        instance.parentInstanceRid = self.parentInstanceRid
         instance.parentTrip = self.parentTrip
-        instance.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
+        instance.parentTripRid = self.parentTripRid
         instance.details = self.details
         instance.fitFilePath = self.fitFilePath
         instance.decodedActivityDetails = self.decodedActivityDetails
