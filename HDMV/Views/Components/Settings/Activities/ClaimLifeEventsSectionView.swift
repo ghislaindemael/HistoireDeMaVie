@@ -26,6 +26,10 @@ struct ClaimLifeEventsSectionView: View {
         _unclaimedLifeEvents = Query(filter: predicate, sort: \.timeStart)
     }
     
+    private var filteredLifeEvents: [LifeEvent] {
+        unclaimedLifeEvents.filter { $0.parentInstance == nil && $0.parentTrip == nil }
+    }
+    
     private func claim(event: LifeEvent) {
         var mutableEvent = event
         mutableEvent.setParent(parent)
@@ -34,12 +38,13 @@ struct ClaimLifeEventsSectionView: View {
     }
     
     var body: some View {
+        let displayEvents = filteredLifeEvents
         Section("Claim Life Events") {
-            if unclaimedLifeEvents.isEmpty {
+            if displayEvents.isEmpty {
                 Text("No unclaimed life events available")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(unclaimedLifeEvents) { event in
+                ForEach(displayEvents) { event in
                     LifeEventRowView(event: event, selectedDate: parent.timeStart)
                         .contentShape(Rectangle())
                         .onTapGesture {

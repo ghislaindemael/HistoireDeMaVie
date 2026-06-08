@@ -85,6 +85,9 @@ final class Trip: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \Quote.parentTrip)
     var childQuotes: [Quote] = []
     
+    @Relationship(deleteRule: .nullify, inverse: \Transaction.parentTrip)
+    var childTransactions: [Transaction] = []
+    
     
     // MARK: Derived properties
     

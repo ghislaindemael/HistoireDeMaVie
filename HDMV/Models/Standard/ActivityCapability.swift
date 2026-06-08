@@ -11,6 +11,7 @@ import SwiftUI
 enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
     case create_trips
     case create_interactions
+    case link_transactions
     case link_place
     case log_food
     case log_media
@@ -23,6 +24,7 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
         switch self {
             case .create_trips: return "Can create Trips"
             case .create_interactions: return "Can create Interactions"
+            case .link_transactions: return "Can link Transactions"
             case .link_place: return "Can attach Place"
             case .log_food: return "Can log Food"
             case .log_media: return "Can log Media & Media Items"

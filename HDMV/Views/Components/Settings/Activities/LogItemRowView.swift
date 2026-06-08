@@ -78,6 +78,9 @@ struct LogItemRowView: View {
                     }
                     .draggable(DraggableLogItem.quote(quote.persistentModelID))
                     
+            case let transaction as Transaction:
+                TransactionRowView(transaction: transaction)
+                
             default:
                 EmptyView()
         }

@@ -19,6 +19,7 @@ struct OrphanLogItemConnector: View {
     let showInteractions: Bool
     let showLifeEvents: Bool
     let showQuotes: Bool
+    let showTransactions: Bool
     
     init(
         parent: any ParentModel,
@@ -26,7 +27,8 @@ struct OrphanLogItemConnector: View {
         showTrips: Bool? = nil,
         showInteractions: Bool? = nil,
         showLifeEvents: Bool? = nil,
-        showQuotes: Bool? = nil
+        showQuotes: Bool? = nil,
+        showTransactions: Bool? = nil
     ) {
         self.parent = parent
         self.activity = activity
@@ -35,6 +37,7 @@ struct OrphanLogItemConnector: View {
         self.showInteractions = showInteractions ?? activity?.can(.create_interactions) ?? true
         self.showLifeEvents = showLifeEvents ?? true
         self.showQuotes = showQuotes ?? true
+        self.showTransactions = showTransactions ?? activity?.can(.link_transactions) ?? false
     }
 
     
@@ -43,6 +46,7 @@ struct OrphanLogItemConnector: View {
         interactionSection
         lifeEventSection
         quoteSection
+        transactionSection
     }
     
     @ViewBuilder
@@ -73,7 +77,10 @@ struct OrphanLogItemConnector: View {
         }
     }
     
-    
-    
-    
+    @ViewBuilder
+    private var transactionSection: some View {
+        if showTransactions {
+            ClaimTransactionsSectionView(parent: parent)
+        }
+    }
 }

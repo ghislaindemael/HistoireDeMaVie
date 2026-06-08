@@ -73,6 +73,9 @@ final class ActivityInstance: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \Quote.parentInstance)
     var childQuotes: [Quote] = []
     
+    @Relationship(deleteRule: .nullify, inverse: \Transaction.parentInstance)
+    var childTransactions: [Transaction] = []
+    
     // MARK: Relationship conformance
 
     // MARK: Init

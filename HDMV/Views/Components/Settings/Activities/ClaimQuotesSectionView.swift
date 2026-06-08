@@ -33,6 +33,10 @@ struct ClaimQuotesSectionView: View {
         _unclaimedQuotes = Query(filter: predicate, sort: \.timeStart)
     }
     
+    private var filteredQuotes: [Quote] {
+        unclaimedQuotes.filter { $0.parentInstance == nil && $0.parentTrip == nil }
+    }
+    
     private func claim(quote: Quote) {
         var mutableQuote = quote
         mutableQuote.setParent(parent)
@@ -41,12 +45,13 @@ struct ClaimQuotesSectionView: View {
     }
     
     var body: some View {
+        let displayQuotes = filteredQuotes
         Section("Claim Quotes") {
-            if unclaimedQuotes.isEmpty {
+            if displayQuotes.isEmpty {
                 Text("No unclaimed quotes available")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(unclaimedQuotes) { quote in
+                ForEach(displayQuotes) { quote in
                     QuoteRowView(quote: quote)
                         .contentShape(Rectangle())
                         .onTapGesture {

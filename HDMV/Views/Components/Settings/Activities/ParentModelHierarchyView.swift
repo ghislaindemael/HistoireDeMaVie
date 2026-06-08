@@ -170,7 +170,7 @@ struct ParentModelHierarchyView: View {
         }
         
         if parent.childrenDisplayMode == .ongoing {
-            combined = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }
+            combined = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) && !($0 is Quote) && !($0 is Transaction) }
         }
         
         return combined.sorted { $0.timeStart < $1.timeStart }
@@ -190,7 +190,7 @@ struct ParentModelHierarchyView: View {
         if parent.childrenDisplayMode == .none {
             return combined.count
         } else if parent.childrenDisplayMode == .ongoing {
-            let ongoingCount = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) }.count
+            let ongoingCount = combined.filter { $0.timeEnd == nil && !($0 is LifeEvent) && !($0 is Quote) && !($0 is Transaction) }.count
             return max(0, combined.count - ongoingCount)
         } else {
             return 0
@@ -203,7 +203,7 @@ struct ParentModelHierarchyView: View {
         let childStart = child.timeStart
         
         let childEnd: Date
-        if (child is LifeEvent || child is Quote) && child.timeEnd == nil {
+        if (child is LifeEvent || child is Quote || child is Transaction) && child.timeEnd == nil {
             childEnd = childStart
         } else {
             childEnd = child.timeEnd ?? Date.distantFuture
