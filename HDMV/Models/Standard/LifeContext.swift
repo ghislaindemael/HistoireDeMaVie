@@ -144,7 +144,11 @@ struct LifeContextPayload: Codable, InitializableWithModel {
 struct LifeContextEditor: EditorProtocol {
     var name: String
     var parentRid: Int?
-    var parent: LifeContext?
+    var parent: LifeContext? {
+        didSet {
+            parentRid = parent?.rid
+        }
+    }
     var icon: String?
     var selectable: Bool = true
     var archived: Bool = false
@@ -169,7 +173,7 @@ struct LifeContextEditor: EditorProtocol {
     func apply(to context: LifeContext) {
         context.name = self.name
         context.parent = self.parent
-        context.parentRid = self.parentRid ?? self.parent?.rid
+        context.parentRid = self.parentRid
         context.icon = self.icon
         context.selectable = self.selectable
         context.archived = self.archived

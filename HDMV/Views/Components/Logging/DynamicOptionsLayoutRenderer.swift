@@ -25,6 +25,13 @@ class DynamicOptionsLayoutEngine {
         
         var views = [AnyView]()
         
+        // Consume any slug that replaces the activity name so it doesn't draw a pill
+        for mapping in mappings {
+            if mapping.option?.config?.replacesActivityName == true {
+                consumedSlugs.insert(mapping.optionSlug)
+            }
+        }
+        
         // Find all slugs that are handled by any custom layout
         var slugsHandledByLayouts = Set<String>()
         for mapping in mappings {

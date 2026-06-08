@@ -15,6 +15,7 @@ struct ActivityOptionPill: Identifiable {
     let label: String
     let icon: String?
     let isDefault: Bool
+    let replacesActivityName: Bool
 }
 
 @Model
@@ -129,12 +130,14 @@ final class ActivityInstance: LogModel {
             let label = choice?.label ?? selectedValueSlug
             let icon = choice?.icon
             let isDefault = (selectedValueSlug == config?.defaultValue)
+            let replaces = config?.replacesActivityName ?? false
             
             pills.append(ActivityOptionPill(
                 optionSlug: option.slug,
                 label: label,
                 icon: icon,
-                isDefault: isDefault
+                isDefault: isDefault,
+                replacesActivityName: replaces
             ))
         }
         

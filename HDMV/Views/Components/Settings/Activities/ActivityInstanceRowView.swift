@@ -41,18 +41,20 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var basicsSection: some View {
         
+        let overridingOption = instance.resolvedOptionsPills.first(where: { $0.replacesActivityName })
+        
         ZStack(alignment: .topTrailing) {
             
             VStack(alignment: .leading) {
                 HStack() {
                     IconView(
-                        iconString: instance.activity?.icon ?? "questionmark.circle",
+                        iconString: overridingOption?.icon ?? instance.activity?.icon ?? "questionmark.circle",
                         size: 30,
                         tint: instance.activity == nil ? .red : .primary,
                     )
                     
                     VStack(alignment: .leading) {
-                        Text(instance.activity?.name ?? "Unassigned")
+                        Text(overridingOption?.label ?? instance.activity?.name ?? "Unassigned")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundStyle(instance.activity != nil ? Color.primary : Color.red)
