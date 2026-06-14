@@ -41,18 +41,18 @@ struct FoodItemSelectorSheet: View {
                 
                 List {
                     if selectedTab == 0 {
-                        if !searchText.isEmpty {
-                            Button(action: {
-                                addRawText(searchText)
-                            }) {
-                                HStack {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.accentColor)
-                                    Text("Add \"\(searchText)\" as custom text")
-                                        .foregroundColor(.accentColor)
-                                }
+                        Button(action: {
+                            addRawText(searchText.isEmpty ? "New Custom Food" : searchText)
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.accentColor)
+                                Text(searchText.isEmpty ? "Add Custom Food" : "Add \"\(searchText)\" as custom food")
+                                    .foregroundColor(.accentColor)
                             }
-                            
+                        }
+                        
+                        if !searchText.isEmpty {
                             ForEach(filteredItems) { item in
                                 itemRow(item)
                             }

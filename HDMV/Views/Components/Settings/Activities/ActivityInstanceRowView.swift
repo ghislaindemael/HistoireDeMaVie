@@ -132,10 +132,10 @@ struct ActivityInstanceRowView: View {
                     .frame(height: 10)
             }
             
-            if instance.activity?.can(.log_food) == true {
+            if instance.decodedActivityDetails?.food != nil || instance.activity?.must(.log_food) == true {
                 mealContentText
             }
-            if instance.activity?.can(.log_media) == true {
+            if (instance.decodedActivityDetails?.media?.isEmpty == false) || instance.activity?.must(.log_media) == true {
                 mediaContentText
             }
             if instance.activity?.shouldShowPlaceLink(settings: settings) == true

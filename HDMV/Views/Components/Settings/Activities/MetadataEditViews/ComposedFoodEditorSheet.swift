@@ -41,8 +41,16 @@ struct ComposedFoodEditorForm: View {
     var body: some View {
         Form {
             Section("Identity") {
-                Text(item.rawText ?? "Unknown Item")
+                if item.foodItemRid == nil {
+                    TextField("Food Name", text: Binding(
+                        get: { item.rawText ?? "" },
+                        set: { item.rawText = $0.isEmpty ? nil : $0 }
+                    ))
                     .font(.headline)
+                } else {
+                    Text(item.rawText ?? "Unknown Item")
+                        .font(.headline)
+                }
                 
                 Picker("Course", selection: Binding(
                     get: { item.course ?? .entree },
