@@ -10,6 +10,7 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
     
     let hasTrailingOptions: Bool
     let trailingMenuOptions: TrailingContent
+    let showTrailingOptions: Bool
     
     @ObservedObject private var settings = SettingsStore.shared
     
@@ -25,11 +26,11 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
                         Button(action: { Task { await syncAction() } }) {
                             Label("Sync local changes", systemImage: "icloud.and.arrow.up")
                         }
-                        Button(action: { settings.planningMode.toggle() }) {
+                        Button(action: { settings.appMode = (settings.appMode == .live) ? .backfill : .live }) {
                             Label {
-                                Text("\(settings.planningMode ? "Exit": "Enter") Planning Mode")
+                                Text(settings.appMode == .backfill ? "Exit Backfill Mode" : "Enter Backfill Mode")
                             } icon: {
-                                Image(systemName: settings.planningMode ? "calendar.badge.minus" : "calendar.badge.plus")
+                                Image(systemName: settings.appMode == .backfill ? "calendar.badge.minus" : "calendar.badge.plus")
                             }
                         }
                         
@@ -53,6 +54,7 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .disabled(!showTrailingOptions)
                         
                         if hasTrailingOptions {
                             Menu {
@@ -63,6 +65,7 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
                                     .contentShape(Rectangle())
                                     .foregroundStyle(.secondary)
                             }
+                            .disabled(!showTrailingOptions)
                         }
                     }
                 }
@@ -77,6 +80,7 @@ extension View {
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
         onAdd: @escaping () -> Void,
+        showTrailingOptions: Bool = true,
         @ViewBuilder leadingOptions: @escaping () -> LeadingContent = { EmptyView() },
         @ViewBuilder trailingOptions: @escaping () -> TrailingContent = { EmptyView() }
     ) -> some View {
@@ -88,7 +92,8 @@ extension View {
                 hasLeadingOptions: LeadingContent.self != EmptyView.self,
                 leadingMenuOptions: leadingOptions(),
                 hasTrailingOptions: TrailingContent.self != EmptyView.self,
-                trailingMenuOptions: trailingOptions()
+                trailingMenuOptions: trailingOptions(),
+                showTrailingOptions: showTrailingOptions
             )
         )
     }
@@ -97,7 +102,8 @@ extension View {
     func simpleLogToolbar(
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
-        onAdd: @escaping () -> Void
+        onAdd: @escaping () -> Void,
+        showTrailingOptions: Bool = true
     ) -> some View {
         self.modifier(
             LogPageToolbar(
@@ -107,7 +113,8 @@ extension View {
                 hasLeadingOptions: false,
                 leadingMenuOptions: EmptyView(),
                 hasTrailingOptions: false,
-                trailingMenuOptions: EmptyView()
+                trailingMenuOptions: EmptyView(),
+                showTrailingOptions: showTrailingOptions
             )
         )
     }

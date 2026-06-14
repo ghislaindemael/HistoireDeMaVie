@@ -132,16 +132,9 @@ struct ActivityInstanceRowView: View {
                     .frame(height: 10)
             }
             
-            if instance.decodedActivityDetails?.food != nil || instance.activity?.must(.log_food) == true {
-                mealContentText
-            }
-            if (instance.decodedActivityDetails?.media?.isEmpty == false) || instance.activity?.must(.log_media) == true {
-                mediaContentText
-            }
-            if instance.activity?.shouldShowPlaceLink(settings: settings) == true
-                || instance.decodedActivityDetails?.place?.placeId != nil {
-                linkedPlaceView
-            }
+            mealContentText
+            mediaContentText
+            linkedPlaceView
             
             if instance.fitFilePath != nil {
                 Label("Vaulted", systemImage: "archivebox.fill")
@@ -175,19 +168,11 @@ struct ActivityInstanceRowView: View {
         if !missing.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(missing, id: \.id) { mapping in
-                    HStack(spacing: 6) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.subheadline)
-                        Text("Missing \(mapping.option?.name ?? mapping.optionSlug)")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.red.opacity(0.2))
-                    .foregroundStyle(Color.red)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    MissingDetailWarningView(
+                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
+                        iconName: "exclamationmark.triangle.fill",
+                        isRequired: true
+                    )
                 }
             }
             .padding(.top, 4)
@@ -197,60 +182,72 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var mealContentText: some View {
         let foodDetails = instance.decodedActivityDetails?.food
-        let isMissingRequiredDetails = instance.activity?.must(.log_food) ?? false && foodDetails == nil
+        let hasFood = foodDetails != nil
+        let mustLog = instance.activity?.must(.log_food) == true
+        let canLogBackfill = settings.appMode == .backfill && instance.activity?.can(.log_food) == true
         
-        FoodDetailsPillView(
-            foodDetails: foodDetails,
-            isMissingRequiredDetails: isMissingRequiredDetails,
-            themeColor: .yellow
-        )
+        if hasFood || mustLog || canLogBackfill {
+            let isMissingRequiredDetails = mustLog && !hasFood
+            let isMissingOptionalDetails = canLogBackfill && !hasFood
+            
+            FoodDetailsPillView(
+                foodDetails: foodDetails,
+                isMissingRequiredDetails: isMissingRequiredDetails,
+                isMissingOptionalDetails: isMissingOptionalDetails,
+                themeColor: .yellow
+            )
+        }
     }
     
     @ViewBuilder
     private var mediaContentText: some View {
-        if let mediaList = instance.decodedActivityDetails?.media, !mediaList.isEmpty {
+        let mediaList = instance.decodedActivityDetails?.media
+        let hasMedia = mediaList?.isEmpty == false
+        let mustLog = instance.activity?.must(.log_media) == true
+        let canLogBackfill = settings.appMode == .backfill && instance.activity?.can(.log_media) == true
+        
+        if hasMedia {
             VStack(alignment: .leading, spacing: 4) {
-                ForEach(mediaList.indices, id: \.self) { index in
-                    let mediaDetail = mediaList[index]
+                ForEach(mediaList!.indices, id: \.self) { index in
+                    let mediaDetail = mediaList![index]
                     
                     DataMediaItemPillView(itemId: mediaDetail.itemId, progress: mediaDetail.progress)
                 }
             }
             .padding(.vertical, 4)
-        } else if instance.activity?.must(.log_media) == true {
-            Text("Media not logged.")
-                .padding(8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondaryBackground)
-                )
-                .foregroundColor(.red)
-                .fontWeight(.bold)
-                .font(.body)
+        } else if mustLog || canLogBackfill {
+            MissingDetailWarningView(
+                message: "Media not logged.",
+                isRequired: mustLog
+            )
         }
     }
     
     @ViewBuilder
     private var linkedPlaceView: some View {
-        
         let placeId = instance.decodedActivityDetails?.place?.placeId
-        let color = instance.activity?.placeUnsetColor(settings: settings, placeId: placeId)
-        let weight = instance.activity?.placeUnsetWeight(placeId: placeId)
-
-        PlaceDisplayView(
-            placeRid: placeId,
-            showMapPin: true,
-            color: color,
-            fontWeight: weight
-        )
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.secondaryBackground)
-        )
+        let hasPlace = placeId != nil
+        let mustLink = instance.activity?.must(.link_place) == true
+        let canLinkBackfill = settings.appMode == .backfill && instance.activity?.can(.link_place) == true
         
+        if hasPlace {
+            PlaceDisplayView(
+                placeRid: placeId,
+                showMapPin: true
+            )
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.secondaryBackground)
+            )
+        } else if mustLink || canLinkBackfill {
+            MissingDetailWarningView(
+                message: "Place not linked.",
+                iconName: "mappin.circle",
+                isRequired: mustLink
+            )
+        }
     }
     
     private func displayDateIfNeeded(for date: Date, comparedTo selectedDate: Date) -> String? {

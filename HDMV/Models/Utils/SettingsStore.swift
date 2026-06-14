@@ -6,8 +6,13 @@
 //
 import SwiftUI
 
+enum AppMode: String {
+    case live
+    case backfill
+}
+
 class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
     @AppStorage("includeArchived") var includeArchived: Bool = false
-    @AppStorage("planningMode") var planningMode: Bool = false
+    @AppStorage("appMode") var appMode: AppMode = .live
 }

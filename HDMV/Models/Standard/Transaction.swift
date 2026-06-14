@@ -348,3 +348,14 @@ struct TransactionEditor: EditorProtocol {
 
 
 extension Transaction: LinkedParent {}
+
+extension Transaction {
+    @discardableResult
+    static func create(in context: ModelContext, date: Date) -> Transaction {
+        let smartDate = date.smartCreationTime
+        let newTransaction = Transaction(timeStart: smartDate)
+        context.insert(newTransaction)
+        try? context.save()
+        return newTransaction
+    }
+}

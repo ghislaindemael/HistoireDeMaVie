@@ -76,7 +76,7 @@ struct ParentModelHierarchyView: View {
             }
             
             
-            if parent.timeEnd == nil || settings.planningMode == true,
+            if parent.timeEnd == nil,
                let instance = parent as? ActivityInstance {
                 if (instance.activity?.can(.create_trips) == true) {
                     if !parent.hasOngoingTrips()  {

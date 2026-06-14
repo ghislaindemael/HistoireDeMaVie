@@ -26,7 +26,7 @@ struct MyActivitiesPage: View {
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
             viewModel.filterDate = navDate
-            if settings.planningMode == false {
+            if settings.appMode == .live {
                 appNavigator.selectedDate = nil
             }
         }
@@ -44,6 +44,7 @@ struct MyActivitiesPage: View {
                     refreshAction: { await viewModel.syncWithServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
                     onAdd: { viewModel.createActivityInstance() },
+                    showTrailingOptions: viewModel.filterMode == .byDate,
                     leadingOptions: {
                         Section("Integrations") {
                             Button(action: { showingImporter = true }) {
@@ -71,8 +72,6 @@ struct MyActivitiesPage: View {
     // MARK: - View Components (Sheets & Observers attached here to split compile time)
     private var mainListView: some View {
         VStack(spacing: 12) {
-            TitleLabel(title: "My Activities")
-            
             FilterControlView(viewModel: viewModel)
             
             ScrollView {
@@ -106,6 +105,7 @@ struct MyActivitiesPage: View {
             }
             .padding(8)
         }
+        .navigationTitle("My Activities")
         .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
         .onChange(of: viewModel.filterDate) {
             viewModel.fetchDailyData()

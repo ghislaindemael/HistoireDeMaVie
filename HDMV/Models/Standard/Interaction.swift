@@ -242,3 +242,15 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
         interaction.markAsModified()
     }
 }
+
+extension Interaction {
+    @discardableResult
+    static func create(in context: ModelContext, parent: ActivityInstance) -> Interaction {
+        // Inherits parent's intelligent dates logic if applicable, or uses parent's start
+        let smartDate = parent.timeStart
+        let newInteraction = Interaction(timeStart: smartDate, parentInstance: parent)
+        context.insert(newInteraction)
+        try? context.save()
+        return newInteraction
+    }
+}

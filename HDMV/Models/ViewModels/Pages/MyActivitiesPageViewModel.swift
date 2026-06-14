@@ -284,33 +284,27 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createActivityInstance(date: Date? = nil) {
         guard let context = modelContext else { return }
-        let smartDate = (date ?? filterDate).smartCreationTime
-        
-        let newInstance = ActivityInstance(timeStart: smartDate)
-        context.insert(newInstance)
-        saveContext()
+        ActivityInstance.create(in: context, date: date ?? filterDate)
+        fetchDailyData()
     }
     
     func createParentAndChildActivity(date: Date? = nil) {
         guard let context = modelContext else { return }
         let smartDate = (date ?? filterDate).smartCreationTime
         
-        let parentInstance = ActivityInstance(timeStart: smartDate)
+        let parentInstance = ActivityInstance.create(in: context, date: smartDate)
         
         let childDate = smartDate.addingTimeInterval(1)
-        let childInstance = ActivityInstance(timeStart: childDate)
+        let childInstance = ActivityInstance.create(in: context, date: childDate)
         childInstance.parentInstance = parentInstance
         
-        context.insert(parentInstance)
-        context.insert(childInstance)
-        saveContext()
+        fetchDailyData()
     }
     
     func createTransaction() {
         guard let context = modelContext else { return }
-        let newTransaction = Transaction(timeStart: filterDate.smartCreationTime)
-        context.insert(newTransaction)
-        saveContext()
+        Transaction.create(in: context, date: filterDate)
+        fetchDailyData()
     }
     
     func createLifeEvent() {
@@ -327,19 +321,14 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
-        let date = settings.planningMode ? parent.timeStart : Date.now
-        
-        var newTrip = Trip(timeStart: date)
-        newTrip.setParentInstance(parent)
-        context.insert(newTrip)
-        saveContext()
+        Trip.create(in: context, parent: parent)
+        fetchDailyData()
     }
     
     func createInteraction(parent: ActivityInstance) {
         guard let context = modelContext else { return }
-        let newInteraction = Interaction(timeStart: Date.now, parentInstance: parent)
-        context.insert(newInteraction)
-        saveContext()
+        Interaction.create(in: context, parent: parent)
+        fetchDailyData()
     }
     
     func endTrip(trip: Trip){

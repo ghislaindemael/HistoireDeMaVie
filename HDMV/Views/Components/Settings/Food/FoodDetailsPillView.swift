@@ -3,29 +3,38 @@ import SwiftUI
 struct FoodDetailsPillView: View {
     let foodDetails: FoodDetails?
     let isMissingRequiredDetails: Bool
+    let isMissingOptionalDetails: Bool
     let themeColor: Color
     
     init(
         foodDetails: FoodDetails?,
         isMissingRequiredDetails: Bool = false,
+        isMissingOptionalDetails: Bool = false,
         themeColor: Color = .yellow
     ) {
         self.foodDetails = foodDetails
         self.isMissingRequiredDetails = isMissingRequiredDetails
+        self.isMissingOptionalDetails = isMissingOptionalDetails
         self.themeColor = themeColor
+    }
+    
+    private var alertColor: Color {
+        if isMissingRequiredDetails { return .red }
+        if isMissingOptionalDetails { return .orange }
+        return themeColor
     }
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             VStack(spacing: 4) {
                 Image(systemName: "fork.knife")
-                    .foregroundColor(isMissingRequiredDetails ? .red : themeColor)
+                    .foregroundColor(alertColor)
                     .frame(width: 20)
                     .padding(.top, 2)
                 
                 if (foodDetails?.consumedItems.isEmpty == false) {
                     Rectangle()
-                        .fill(isMissingRequiredDetails ? Color.red : themeColor)
+                        .fill(alertColor)
                         .frame(width: 2)
                 }
             }
@@ -37,8 +46,8 @@ struct FoodDetailsPillView: View {
                         .foregroundColor(themeColor)
                 } else if foodDetails?.consumedItems.isEmpty != false {
                     Text("Food not logged.")
-                        .foregroundColor(isMissingRequiredDetails ? .red : themeColor)
-                        .fontWeight(isMissingRequiredDetails ? .bold : .regular)
+                        .foregroundColor(alertColor)
+                        .fontWeight((isMissingRequiredDetails || isMissingOptionalDetails) ? .bold : .regular)
                         .font(.headline)
                 }
                 
@@ -69,7 +78,7 @@ struct FoodDetailsPillView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isMissingRequiredDetails ? Color.red.opacity(0.1) : themeColor.opacity(0.15))
+                .fill((isMissingRequiredDetails || isMissingOptionalDetails) ? alertColor.opacity(0.1) : themeColor.opacity(0.15))
         )
     }
     

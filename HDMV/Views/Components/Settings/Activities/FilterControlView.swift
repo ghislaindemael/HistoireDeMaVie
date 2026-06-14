@@ -21,13 +21,22 @@ struct FilterControlView: View {
     }
     
     
+    @ObservedObject var settings = SettingsStore.shared
+    
     private var byDateTab: some View {
         VStack {
             DatePicker(
-                "Select Date",
                 selection: $viewModel.filterDate,
                 displayedComponents: .date
-            )
+            ) {
+                HStack {
+                    Text("Select Date")
+                    if settings.appMode == .backfill {
+                        Image(systemName: "lock.fill")
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
             .padding()
         }
         .tag(MyActivitiesPageViewModel.FilterMode.byDate)

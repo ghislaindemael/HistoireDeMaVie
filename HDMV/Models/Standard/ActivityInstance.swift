@@ -319,3 +319,20 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.contextRids = self.contextRids
     }
 }
+
+extension ActivityInstance {
+    @discardableResult
+    static func create(in context: ModelContext, date: Date) -> ActivityInstance {
+        let smartDate = date.smartCreationTime
+        let isToday = Calendar.current.isDateInToday(date)
+        
+        let newInstance = ActivityInstance(timeStart: smartDate)
+        if !isToday {
+            newInstance.timeEnd = smartDate.addingTimeInterval(3600) // 1 hour later
+        }
+        
+        context.insert(newInstance)
+        try? context.save()
+        return newInstance
+    }
+}
