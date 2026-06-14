@@ -7,12 +7,12 @@
 
 // MARK: The JSON objects
 
-struct MediaDetails: Codable {
+struct MediaDetails: Codable, Sendable {
     var itemId: Int
     var progress: String? // e.g. "Chapter 4", "Pages 40-90", "S1E4"
 }
 
-struct PlaceDetails: Codable {
+struct PlaceDetails: Codable, @unchecked Sendable {
     var placeId: Int?
     var place: Place?
     
@@ -28,7 +28,7 @@ struct PlaceDetails: Codable {
 
 // MARK: The handler
 
-struct ActivityDetails: Codable {
+struct ActivityDetails: Codable, @unchecked Sendable {
     var food: FoodDetails?
     
     // Modern Activity media logs

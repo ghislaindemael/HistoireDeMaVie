@@ -9,24 +9,32 @@ import SwiftUI
 import SwiftData
 
 class DynamicOptionsLayoutEngine {
-    let instance: ActivityInstance
+    let mappings: [DataActivityOptionMapping]
+    let decodedOptions: [String: String]?
     var consumedSlugs = Set<String>()
     
-    init(instance: ActivityInstance) {
-        self.instance = instance
+    init(mappings: [DataActivityOptionMapping], decodedOptions: [String: String]?) {
+        self.mappings = mappings
+        self.decodedOptions = decodedOptions
+    }
+    
+    convenience init(instance: ActivityInstance) {
+        self.init(mappings: instance.activity?.optionMappings ?? [], decodedOptions: instance.decodedActivityDetails?.options)
     }
     
     func renderAll() -> AnyView {
-        guard let mappings = instance.activity?.optionMappings
+        let activeMappings = mappings
             .filter({ !$0.isDeleted })
-            .sorted(by: { $0.priority < $1.priority }) else {
+            .sorted(by: { $0.priority < $1.priority })
+        
+        if activeMappings.isEmpty {
             return AnyView(EmptyView())
         }
         
         var views = [AnyView]()
         
         // Consume any slug that replaces the activity name so it doesn't draw a pill
-        for mapping in mappings {
+        for mapping in activeMappings {
             if mapping.option?.config?.replacesActivityName == true {
                 consumedSlugs.insert(mapping.optionSlug)
             }
@@ -34,13 +42,13 @@ class DynamicOptionsLayoutEngine {
         
         // Find all slugs that are handled by any custom layout
         var slugsHandledByLayouts = Set<String>()
-        for mapping in mappings {
+        for mapping in activeMappings {
             if let layout = mapping.option?.config?.layoutNode {
                 slugsHandledByLayouts.formUnion(layout.referencedSlugs)
             }
         }
         
-        for mapping in mappings {
+        for mapping in activeMappings {
             if consumedSlugs.contains(mapping.optionSlug) { continue }
             
             if let layout = mapping.option?.config?.layoutNode {
@@ -160,10 +168,10 @@ class DynamicOptionsLayoutEngine {
             
         case .unrenderedOptions:
             // Find mappings that are not consumed yet
-            let unrendered = instance.activity?.optionMappings
+            let unrendered = mappings
                 .filter { !$0.isDeleted }
                 .sorted(by: { $0.priority < $1.priority })
-                .filter { !consumedSlugs.contains($0.optionSlug) } ?? []
+                .filter { !consumedSlugs.contains($0.optionSlug) }
             
             let views = unrendered.map { mapping -> AnyView in
                 consumedSlugs.insert(mapping.optionSlug)
@@ -247,14 +255,14 @@ class DynamicOptionsLayoutEngine {
     }
     
     private func getValue(for slug: String) -> String? {
-        return instance.decodedActivityDetails?.options?[slug]
+        return decodedOptions?[slug]
     }
     
     private func getLabel(for slug: String) -> String? {
         let val = getValue(for: slug) ?? ""
         
         // Find the mapped option config to see if we should resolve a label
-        if let mapping = instance.activity?.optionMappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
+        if let mapping = mappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
            let option = mapping.option {
             
             if val.isEmpty {
@@ -285,7 +293,7 @@ class DynamicOptionsLayoutEngine {
     }
     
     private func getIcon(for slug: String) -> String? {
-        guard let mapping = instance.activity?.optionMappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
+        guard let mapping = mappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
               let option = mapping.option else { return nil }
         
         let val = getValue(for: slug) ?? option.config?.defaultValue ?? ""
@@ -327,7 +335,7 @@ class DynamicOptionsLayoutEngine {
             
         case .optionNotDefault(let slug):
             let val = getValue(for: slug) ?? ""
-            guard let mapping = instance.activity?.optionMappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
+            guard let mapping = mappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
                   let option = mapping.option else { return false }
             
             let def = option.config?.defaultValue ?? ""
