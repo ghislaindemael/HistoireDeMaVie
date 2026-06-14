@@ -22,7 +22,7 @@ struct ComposedFoodEditorSheet: View {
 struct ComposedFoodEditorForm: View {
     @Binding var item: ComposedFood
     
-    @Query private var mappings: [DataFoodOptionMapping]
+    @Query private var foodItems: [DataFoodItem]
     
     @State private var showingItemSelector = false
     
@@ -30,11 +30,11 @@ struct ComposedFoodEditorForm: View {
         self._item = item
         
         if let rid = item.wrappedValue.foodItemRid {
-            let predicate = #Predicate<DataFoodOptionMapping> { $0.foodItemRid == rid }
-            _mappings = Query(filter: predicate, sort: \.priority)
+            let predicate = #Predicate<DataFoodItem> { $0.rid == rid }
+            _foodItems = Query(filter: predicate)
         } else {
-            let predicate = #Predicate<DataFoodOptionMapping> { _ in false }
-            _mappings = Query(filter: predicate)
+            let predicate = #Predicate<DataFoodItem> { _ in false }
+            _foodItems = Query(filter: predicate)
         }
     }
     
@@ -81,9 +81,10 @@ struct ComposedFoodEditorForm: View {
                 }
             }
             
-            if !mappings.isEmpty {
+            if let foodItem = foodItems.first, let mappings = foodItem.optionMappings, !mappings.isEmpty {
+                let sortedMappings = mappings.sorted(by: { $0.priority < $1.priority })
                 Section("Options") {
-                    ForEach(mappings) { mapping in
+                    ForEach(sortedMappings) { mapping in
                         if let option = mapping.foodOption {
                             let optionBinding = Binding<String>(
                                 get: { item.options?[option.slug] ?? "" },
