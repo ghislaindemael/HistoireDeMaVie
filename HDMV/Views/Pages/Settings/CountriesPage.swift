@@ -23,7 +23,9 @@ struct CountriesPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createCountry() }
+                onAdd: { viewModel.createCountry() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)
@@ -38,8 +40,13 @@ struct CountriesPage: View {
     private var countriesList: some View {
         Section("Countries") {
             ForEach(viewModel.countries) { country in
-                CountryRowView(country: country)
+                CountryRowView(country: country) { c in
+                    withAnimation(.snappy) {
+                        viewModel.updateModel(c) { $0.cache.toggle() }
+                    }
+                }
             }
+            .onDelete(perform: viewModel.deleteCountries)
         }
     }
 }

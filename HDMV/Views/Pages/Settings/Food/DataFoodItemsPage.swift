@@ -18,11 +18,12 @@ struct DataFoodItemsPage: View {
                 onRefresh: { await viewModel.refreshFromServer() },
                 onSync: { await viewModel.uploadLocalChanges() },
                 onAdd: { viewModel.createItem() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() },
                 rowContent: { item in
                     DataFoodItemRowView(item: item) { it in
                         withAnimation(.snappy) {
                             it.cache.toggle()
-                            it.markAsModified()
                         }
                     }
 

@@ -40,4 +40,35 @@ class BasePageViewModel: ObservableObject {
             print("❌ BasePageViewModel: Failed to save: \(error)")
         }
     }
+    
+    // MARK: - Archive Utilities
+    
+    func executeFetchArchived(refreshAction: () async -> Void) async {
+        SettingsStore.shared.includeArchived = true
+        defer { SettingsStore.shared.includeArchived = false }
+        
+        await refreshAction()
+    }
+    
+    func executePurgeArchived<T: PersistentModel & CachableModel>(
+        type: T.Type,
+        context: ModelContext?,
+        fetchAction: () -> Void
+    ) {
+        guard let context = context else { return }
+        
+        do {
+            let predicate = #Predicate<T> { $0.archived == true }
+            let descriptor = FetchDescriptor<T>(predicate: predicate)
+            let archivedItems = try context.fetch(descriptor)
+            
+            for item in archivedItems {
+                context.delete(item)
+            }
+            save()
+            fetchAction()
+        } catch {
+            print("Failed to purge archived items: \(error)")
+        }
+    }
 }

@@ -18,6 +18,8 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
     let onRefresh: () async -> Void
     let onSync: () async -> Void
     let onAdd: () -> Void
+    var fetchArchivedAction: (() async -> Void)? = nil
+    var purgeArchivedAction: (() async -> Void)? = nil
     
     // UI Builders
     @ViewBuilder let rowContent: (T) -> RowView
@@ -40,7 +42,9 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
         .simpleLogToolbar(
             refreshAction: onRefresh,
             syncAction: onSync,
-            onAdd: onAdd
+            onAdd: onAdd,
+            fetchArchivedAction: fetchArchivedAction,
+            purgeArchivedAction: purgeArchivedAction
         )
         .sheet(item: $itemToEdit) { item in
             sheetContent(item)

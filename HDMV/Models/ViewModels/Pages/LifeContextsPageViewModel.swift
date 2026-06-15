@@ -59,6 +59,14 @@ class LifeContextsPageViewModel: BasePageViewModel {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: LifeContext.self, context: modelContext, fetchAction: fetchFromCache)
+    }
+    
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }

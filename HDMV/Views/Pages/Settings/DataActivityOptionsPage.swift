@@ -41,7 +41,9 @@ struct DataActivityOptionsPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createOption() }
+                onAdd: { viewModel.createOption() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

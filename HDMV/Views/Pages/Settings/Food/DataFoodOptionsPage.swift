@@ -29,7 +29,9 @@ struct DataFoodOptionsPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createItem() }
+                onAdd: { viewModel.createItem() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

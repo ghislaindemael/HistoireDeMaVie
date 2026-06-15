@@ -19,7 +19,6 @@ struct DataManagementComponent: View {
         DataActivityOptionMapping.self,
         ActivityInstance.self,
         AgendaEntry.self,
-        Country.self,
         City.self,
         Interaction.self,
         LifeContext.self,

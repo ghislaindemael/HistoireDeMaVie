@@ -62,6 +62,14 @@ class TransactionTypesPageViewModel: BasePageViewModel {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: TransactionType.self, context: modelContext, fetchAction: fetchFromCache)
+    }
+    
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }

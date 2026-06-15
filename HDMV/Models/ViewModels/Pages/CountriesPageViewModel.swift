@@ -30,11 +30,11 @@ class CountriesPageViewModel: ObservableObject {
     
     func fetchFromCache() {
         guard let context = modelContext else { return }
-        let descriptor = FetchDescriptor<Country>()
+        let descriptor = FetchDescriptor<Country>(sortBy: [SortDescriptor(\.name)])
         do {
             self.countries = try context.fetch(descriptor)
         } catch {
-            print("Failed to fetch interactions: \(error)")
+            print("Failed to fetch countries: \(error)")
         }
     }
     
@@ -50,6 +50,31 @@ class CountriesPageViewModel: ObservableObject {
             fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
+        }
+    }
+    
+    func fetchArchivedFromServer() async {
+        SettingsStore.shared.includeArchived = true
+        defer { SettingsStore.shared.includeArchived = false }
+        
+        await refreshFromServer()
+    }
+    
+    func purgeArchivedFromCache() {
+        guard let context = modelContext else { return }
+        
+        do {
+            let predicate = #Predicate<Country> { $0.archived == true }
+            let descriptor = FetchDescriptor<Country>(predicate: predicate)
+            let archivedItems = try context.fetch(descriptor)
+            
+            for item in archivedItems {
+                context.delete(item)
+            }
+            try? context.save()
+            fetchFromCache()
+        } catch {
+            print("Failed to purge archived countries: \(error)")
         }
     }
     
@@ -82,6 +107,21 @@ class CountriesPageViewModel: ObservableObject {
         }
     }
         
+    func updateModel(_ model: Country, modifier: (Country) -> Void) {
+        modifier(model)
+        try? modelContext?.save()
+    }
+    
+    func deleteCountries(at offsets: IndexSet) {
+        guard let context = modelContext else { return }
+        for index in offsets {
+            let country = countries[index]
+            context.delete(country)
+        }
+        try? context.save()
+        fetchFromCache()
+    }
+    
     
 
     

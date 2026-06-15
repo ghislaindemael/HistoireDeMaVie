@@ -21,6 +21,8 @@ struct LifeContextsPage: View {
                 onRefresh: { await viewModel.refreshFromServer() },
                 onSync: { await viewModel.uploadLocalChanges() },
                 onAdd: { viewModel.createContext() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() },
                 rowContent: { context in
                     LifeContextRowView(context: context) { c in
                         viewModel.updateModel(c) { $0.cache.toggle() }

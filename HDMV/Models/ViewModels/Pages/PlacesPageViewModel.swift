@@ -38,6 +38,7 @@ class PlacesPageViewModel: BasePageViewModel {
         do {
             let placeDescriptor = FetchDescriptor<Place>(sortBy: [SortDescriptor(\.name)])
             self.places = try context.fetch(placeDescriptor)
+            updateFilteredPlaces()
         } catch {
             print("Failed to fetch from cache: \(error)")
         }
@@ -56,6 +57,14 @@ class PlacesPageViewModel: BasePageViewModel {
         } catch {
             print("Failed to refresh data from server: \(error)")
         }
+    }
+    
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: Place.self, context: modelContext, fetchAction: fetchFromCache)
     }
     
     func uploadLocalChanges() async {

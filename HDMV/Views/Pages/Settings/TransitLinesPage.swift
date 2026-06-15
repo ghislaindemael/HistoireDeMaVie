@@ -36,7 +36,9 @@ struct TransitLinesPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { showingAddAlert = true }
+                onAdd: { showingAddAlert = true },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .alert("Not Allowed", isPresented: $showingAddAlert) {
                 Button("OK", role: .cancel) { }

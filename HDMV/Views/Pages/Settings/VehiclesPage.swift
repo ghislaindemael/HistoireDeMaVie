@@ -24,7 +24,9 @@ struct VehiclesPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createVehicle() }
+                onAdd: { viewModel.createVehicle() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

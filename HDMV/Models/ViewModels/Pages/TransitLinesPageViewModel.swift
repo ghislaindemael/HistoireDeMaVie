@@ -54,6 +54,14 @@ class TransitLinesPageViewModel: BasePageViewModel {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: TransitLine.self, context: modelContext, fetchAction: fetchFromCache)
+    }
+    
     func uploadLocalChanges() async {
         print("Upload not allowed for Transit Lines.")
     }

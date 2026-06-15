@@ -39,6 +39,14 @@ class CitiesPageViewModel: BasePageViewModel {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: City.self, context: modelContext, fetchAction: {})
+    }
+    
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }

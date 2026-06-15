@@ -34,7 +34,9 @@ struct CitiesPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createCity() }
+                onAdd: { viewModel.createCity() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .onAppear {
                 viewModel.setup(modelContext: modelContext)

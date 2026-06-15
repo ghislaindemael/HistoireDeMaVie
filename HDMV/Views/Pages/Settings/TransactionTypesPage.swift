@@ -14,6 +14,8 @@ struct TransactionTypesPage: View {
                 onRefresh: { await viewModel.refreshFromServer() },
                 onSync: { await viewModel.uploadLocalChanges() },
                 onAdd: { viewModel.createTransactionType() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() },
                 rowContent: { type in
                     TransactionTypeRowView(type: type) { t in
                         withAnimation(.snappy) {

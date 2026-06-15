@@ -47,6 +47,14 @@ class PeoplePageViewModel: BasePageViewModel {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        await executeFetchArchived(refreshAction: refreshFromServer)
+    }
+    
+    func purgeArchivedFromCache() {
+        executePurgeArchived(type: Person.self, context: modelContext, fetchAction: fetchFromCache)
+    }
+    
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }

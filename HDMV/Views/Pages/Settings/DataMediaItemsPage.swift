@@ -21,6 +21,8 @@ struct DataMediaItemsPage: View {
                 onRefresh: { await viewModel.refreshFromServer() },
                 onSync: { await viewModel.uploadLocalChanges() },
                 onAdd: { viewModel.createItem() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() },
                 rowContent: { item in
                     DataMediaItemRowView(item: item) { c in
                         viewModel.updateModel(c) { $0.cache.toggle() }

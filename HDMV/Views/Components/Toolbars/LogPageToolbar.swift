@@ -5,6 +5,9 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
     let syncAction: () async -> Void
     let primaryAddAction: () -> Void
     
+    var fetchArchivedAction: (() async -> Void)? = nil
+    var purgeArchivedAction: (() async -> Void)? = nil
+    
     let hasLeadingOptions: Bool
     let leadingMenuOptions: LeadingContent
     
@@ -26,11 +29,30 @@ struct LogPageToolbar<LeadingContent: View, TrailingContent: View>: ViewModifier
                         Button(action: { Task { await syncAction() } }) {
                             Label("Sync local changes", systemImage: "icloud.and.arrow.up")
                         }
-                        Button(action: { settings.appMode = (settings.appMode == .live) ? .backfill : .live }) {
-                            Label {
-                                Text(settings.appMode == .backfill ? "Exit Backfill Mode" : "Enter Backfill Mode")
-                            } icon: {
-                                Image(systemName: settings.appMode == .backfill ? "calendar.badge.minus" : "calendar.badge.plus")
+                        
+                        if fetchArchivedAction != nil || purgeArchivedAction != nil {
+                            Divider()
+                        }
+                        
+                        if let fetchArchived = fetchArchivedAction {
+                            Button(action: { Task { await fetchArchived() } }) {
+                                Label("Fetch Archived Items", systemImage: "archivebox.circle")
+                            }
+                        }
+                        
+                        if let purgeArchived = purgeArchivedAction {
+                            Button(role: .destructive, action: { Task { await purgeArchived() } }) {
+                                Label("Remove Archived from Cache", systemImage: "trash")
+                            }
+                        }
+                        
+                        if fetchArchivedAction == nil && purgeArchivedAction == nil {
+                            Button(action: { settings.appMode = (settings.appMode == .live) ? .backfill : .live }) {
+                                Label {
+                                    Text(settings.appMode == .backfill ? "Exit Backfill Mode" : "Enter Backfill Mode")
+                                } icon: {
+                                    Image(systemName: settings.appMode == .backfill ? "calendar.badge.minus" : "calendar.badge.plus")
+                                }
                             }
                         }
                         
@@ -80,6 +102,8 @@ extension View {
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
         onAdd: @escaping () -> Void,
+        fetchArchivedAction: (() async -> Void)? = nil,
+        purgeArchivedAction: (() async -> Void)? = nil,
         showTrailingOptions: Bool = true,
         @ViewBuilder leadingOptions: @escaping () -> LeadingContent = { EmptyView() },
         @ViewBuilder trailingOptions: @escaping () -> TrailingContent = { EmptyView() }
@@ -89,6 +113,8 @@ extension View {
                 refreshAction: refreshAction,
                 syncAction: syncAction,
                 primaryAddAction: onAdd,
+                fetchArchivedAction: fetchArchivedAction,
+                purgeArchivedAction: purgeArchivedAction,
                 hasLeadingOptions: LeadingContent.self != EmptyView.self,
                 leadingMenuOptions: leadingOptions(),
                 hasTrailingOptions: TrailingContent.self != EmptyView.self,
@@ -103,6 +129,8 @@ extension View {
         refreshAction: @escaping () async -> Void,
         syncAction: @escaping () async -> Void,
         onAdd: @escaping () -> Void,
+        fetchArchivedAction: (() async -> Void)? = nil,
+        purgeArchivedAction: (() async -> Void)? = nil,
         showTrailingOptions: Bool = true
     ) -> some View {
         self.modifier(
@@ -110,6 +138,8 @@ extension View {
                 refreshAction: refreshAction,
                 syncAction: syncAction,
                 primaryAddAction: onAdd,
+                fetchArchivedAction: fetchArchivedAction,
+                purgeArchivedAction: purgeArchivedAction,
                 hasLeadingOptions: false,
                 leadingMenuOptions: EmptyView(),
                 hasTrailingOptions: false,
