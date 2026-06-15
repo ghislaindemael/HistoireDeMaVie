@@ -395,20 +395,33 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
 
 extension Trip {
     @discardableResult
-    static func create(in context: ModelContext, parent: ActivityInstance) -> Trip {
-        let tripStart = parent.timeStart.addingTimeInterval(1)
-        let parentDuration = parent.timeEnd?.timeIntervalSince(parent.timeStart) ?? .infinity
+    static func create(in context: ModelContext, parent: any ParentModel, filterDate: Date) -> Trip {
+        let calendar = Calendar.current
+        let tripStart: Date
+        let tripEnd: Date?
         
-        let tripEnd: Date
-        if parentDuration < 15 * 60 {
-            let parentActualEnd = parent.timeEnd ?? parent.timeStart.addingTimeInterval(parentDuration)
-            tripEnd = parentActualEnd.addingTimeInterval(-1)
+        if calendar.isDateInToday(filterDate) {
+            tripStart = Date()
+            tripEnd = nil
         } else {
-            tripEnd = tripStart.addingTimeInterval(15 * 60)
+            tripStart = parent.timeStart.addingTimeInterval(1)
+            let parentDuration: TimeInterval
+            if let end = parent.timeEnd {
+                parentDuration = end.timeIntervalSince(parent.timeStart)
+            } else {
+                parentDuration = .infinity
+            }
+            
+            if parentDuration < 15 * 60 {
+                let parentActualEnd = parent.timeEnd ?? parent.timeStart.addingTimeInterval(parentDuration)
+                tripEnd = parentActualEnd.addingTimeInterval(-1)
+            } else {
+                tripEnd = tripStart.addingTimeInterval(15 * 60)
+            }
         }
         
         var newTrip = Trip(timeStart: tripStart, timeEnd: tripEnd)
-        newTrip.setParentInstance(parent)
+        newTrip.setParent(parent)
         context.insert(newTrip)
         try? context.save()
         return newTrip

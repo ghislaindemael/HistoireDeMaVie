@@ -335,4 +335,37 @@ extension ActivityInstance {
         try? context.save()
         return newInstance
     }
+    @discardableResult
+    static func createChild(in context: ModelContext, parent: any ParentModel, filterDate: Date) -> ActivityInstance {
+        let calendar = Calendar.current
+        let childStart: Date
+        let childEnd: Date?
+        
+        if calendar.isDateInToday(filterDate) {
+            childStart = Date()
+            childEnd = nil
+        } else {
+            childStart = parent.timeStart.addingTimeInterval(1)
+            let parentDuration: TimeInterval
+            if let end = parent.timeEnd {
+                parentDuration = end.timeIntervalSince(parent.timeStart)
+            } else {
+                parentDuration = .infinity
+            }
+            
+            if parentDuration < 15 * 60 {
+                let parentActualEnd = parent.timeEnd ?? parent.timeStart.addingTimeInterval(parentDuration)
+                childEnd = parentActualEnd.addingTimeInterval(-1)
+            } else {
+                childEnd = childStart.addingTimeInterval(15 * 60)
+            }
+        }
+        
+        var newInstance = ActivityInstance(timeStart: childStart)
+        newInstance.timeEnd = childEnd
+        newInstance.setParent(parent)
+        context.insert(newInstance)
+        try? context.save()
+        return newInstance
+    }
 }

@@ -83,10 +83,8 @@ struct ParentModelHierarchyView: View {
                         StartItemButton(title: "Start Trip") {
                             viewModel.createTrip(parent: instance)
                         }
-                        
                     }
                 }
-                
             }
             
             if parent.timeEnd == nil, !parent.hasOngoingChild() {

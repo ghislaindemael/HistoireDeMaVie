@@ -321,7 +321,7 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
-        Trip.create(in: context, parent: parent)
+        Trip.create(in: context, parent: parent, filterDate: filterDate)
         fetchDailyData()
     }
     

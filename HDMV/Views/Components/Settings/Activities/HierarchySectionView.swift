@@ -8,6 +8,9 @@ struct HierarchySectionView: View {
     let hasParent: Bool
     let onRemoveFromParent: () -> Void
     
+    @State private var justCreatedTrip = false
+    @State private var justCreatedInstance = false
+    
     var body: some View {
         Section("Hierarchy") {
             Button("Remove from Parent", role: .destructive) {
@@ -15,35 +18,52 @@ struct HierarchySectionView: View {
             }
             .disabled(!hasParent)
             if let parentModel = model as? any ParentModel {
-                Button("Create Child Trip") {
-                    createChildTrip(parent: parentModel)
+                Button(action: {
+                    withAnimation {
+                        createChildTrip(parent: parentModel)
+                        justCreatedTrip = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation { justCreatedTrip = false }
+                    }
+                }) {
+                    HStack {
+                        Text("Create Child Trip")
+                        if justCreatedTrip {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.green)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
                 }
-                Button("Create Child Instance") {
-                    createChildInstance(parent: parentModel)
+                
+                Button(action: {
+                    withAnimation {
+                        createChildInstance(parent: parentModel)
+                        justCreatedInstance = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation { justCreatedInstance = false }
+                    }
+                }) {
+                    HStack {
+                        Text("Create Child Instance")
+                        if justCreatedInstance {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.green)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
                 }
             }
         }
     }
     
     private func createChildInstance(parent: any ParentModel) {
-        let childDate = parent.timeStart.addingTimeInterval(1)
-        var child = ActivityInstance(timeStart: childDate)
-        if let end = parent.timeEnd {
-            child.timeEnd = end.addingTimeInterval(-1)
-        }
-        child.setParent(parent)
-        modelContext.insert(child)
-        try? modelContext.save()
+        ActivityInstance.createChild(in: modelContext, parent: parent, filterDate: parent.timeStart)
     }
     
     private func createChildTrip(parent: any ParentModel) {
-        let childDate = parent.timeStart.addingTimeInterval(1)
-        var child = Trip(timeStart: childDate)
-        if let end = parent.timeEnd {
-            child.timeEnd = end.addingTimeInterval(-1)
-        }
-        child.setParent(parent)
-        modelContext.insert(child)
-        try? modelContext.save()
+        Trip.create(in: modelContext, parent: parent, filterDate: parent.timeStart)
     }
 }
