@@ -196,7 +196,11 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
     var name: String
     var slug: String
     var parentRid: Int?
-    var parent: Activity?
+    var parent: Activity? {
+        didSet {
+            parentRid = parent?.rid
+        }
+    }
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []
     var requiredCapabilities: [ActivityCapability] = []
@@ -225,7 +229,7 @@ struct ActivityEditor: CachableModel, EditorProtocol, Capable {
         activity.name = self.name
         activity.slug = self.slug
         activity.parent = self.parent
-        activity.parentRid = self.parentRid ?? self.parent?.rid
+        activity.parentRid = self.parentRid
         activity.icon = self.icon
         activity.allowedCapabilities = self.allowedCapabilities
         activity.requiredCapabilities = self.requiredCapabilities

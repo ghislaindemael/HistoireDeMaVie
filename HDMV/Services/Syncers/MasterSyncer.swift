@@ -16,6 +16,7 @@ class MasterSyncer {
     private let interactionSyncer: InteractionSyncer
     private let lifeEventSyncer: LifeEventSyncer
     private let quoteSyncer: QuoteSyncer
+    private let transactionSyncer: TransactionSyncer
 
     init(modelContext: ModelContext) {
         self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
@@ -23,6 +24,7 @@ class MasterSyncer {
         self.interactionSyncer = InteractionSyncer(modelContext: modelContext)
         self.lifeEventSyncer = LifeEventSyncer(modelContext: modelContext)
         self.quoteSyncer = QuoteSyncer(modelContext: modelContext)
+        self.transactionSyncer = TransactionSyncer(modelContext: modelContext)
     }
 
     func sync(
@@ -49,6 +51,7 @@ class MasterSyncer {
             try await interactionSyncer.pullChanges(date: primaryDate)
             try await lifeEventSyncer.pullChanges(date: primaryDate)
             try await quoteSyncer.pullChanges(date: primaryDate)
+            try await transactionSyncer.pullChanges(date: primaryDate)
             
             try await pushChanges()
             
@@ -64,6 +67,7 @@ class MasterSyncer {
             _ = try await interactionSyncer.pushChanges()
             _ = try await lifeEventSyncer.pushChanges()
             _ = try await quoteSyncer.pushChanges()
+            _ = try await transactionSyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")
         }

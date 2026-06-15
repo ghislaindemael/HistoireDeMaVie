@@ -12,7 +12,8 @@ import SwiftData
 final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     
     var rid: Int?
-    var activityRid: Int
+    var activityRid: Int?
+    var isForTrip: Bool = false
     var optionSlug: String
     var priority: Int
     var required: Bool = false
@@ -31,7 +32,8 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     
     init(
         rid: Int? = nil,
-        activityRid: Int = 0,
+        activityRid: Int? = nil,
+        isForTrip: Bool = false,
         optionSlug: String = "",
         priority: Int = 0,
         required: Bool = false,
@@ -39,6 +41,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     ) {
         self.rid = rid
         self.activityRid = activityRid
+        self.isForTrip = isForTrip
         self.optionSlug = optionSlug
         self.priority = priority
         self.required = required
@@ -49,6 +52,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.init()
         self.rid = dto.id
         self.activityRid = dto.activity_id
+        self.isForTrip = dto.is_for_trip ?? false
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
         self.required = dto.required ?? false
@@ -57,6 +61,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     
     func update(fromDto dto: DataActivityOptionMappingDTO) {
         self.activityRid = dto.activity_id
+        self.isForTrip = dto.is_for_trip ?? false
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
         self.required = dto.required ?? false
@@ -64,7 +69,7 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     }
     
     func isValid() -> Bool {
-        return activityRid != 0 && !optionSlug.isEmpty
+        return (activityRid != nil || isForTrip) && !optionSlug.isEmpty
     }
     
     var hasUnsyncedChanges: Bool {
@@ -76,7 +81,8 @@ final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
 
 struct DataActivityOptionMappingDTO: Codable, Identifiable {
     let id: Int
-    let activity_id: Int
+    let activity_id: Int?
+    let is_for_trip: Bool?
     let option_slug: String
     let priority: Int
     let required: Bool?
@@ -85,7 +91,8 @@ struct DataActivityOptionMappingDTO: Codable, Identifiable {
 struct DataActivityOptionMappingPayload: Codable, InitializableWithModel {
     typealias Model = DataActivityOptionMapping
     
-    let activity_id: Int
+    let activity_id: Int?
+    let is_for_trip: Bool
     let option_slug: String
     let priority: Int
     let required: Bool
@@ -93,6 +100,7 @@ struct DataActivityOptionMappingPayload: Codable, InitializableWithModel {
     init?(from model: DataActivityOptionMapping) {
         guard model.isValid() else { return nil }
         self.activity_id = model.activityRid
+        self.is_for_trip = model.isForTrip
         self.option_slug = model.optionSlug
         self.priority = model.priority
         self.required = model.required
@@ -101,7 +109,8 @@ struct DataActivityOptionMappingPayload: Codable, InitializableWithModel {
 
 struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
     var activity: Activity?
-    var activityRid: Int
+    var activityRid: Int?
+    var isForTrip: Bool = false
     var option: DataActivityOption?
     var optionSlug: String
     var priority: Int
@@ -114,6 +123,7 @@ struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
     init(from model: DataActivityOptionMapping) {
         self.activity = model.activity
         self.activityRid = model.activityRid
+        self.isForTrip = model.isForTrip
         self.option = model.option
         self.optionSlug = model.optionSlug
         self.priority = model.priority
@@ -125,6 +135,7 @@ struct DataActivityOptionMappingEditor: CachableModel, EditorProtocol {
     func apply(to model: DataActivityOptionMapping) {
         model.activity = self.activity
         model.activityRid = self.activityRid
+        model.isForTrip = self.isForTrip
         model.option = self.option
         model.optionSlug = self.optionSlug
         model.priority = self.priority

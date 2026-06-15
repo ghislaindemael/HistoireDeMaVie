@@ -22,6 +22,7 @@ struct StartItemButton: View {
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) {
                 action()
+                isDisappearing = false
             }
         }
         .font(.headline)

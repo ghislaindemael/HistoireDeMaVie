@@ -12,6 +12,9 @@ import SwiftData
 struct TripRowView: View {
     let trip: Trip
     let onEnd: (() -> Void)?
+    
+    @Query(filter: #Predicate<DataActivityOptionMapping> { mapping in mapping.isForTrip == true }, sort: \DataActivityOptionMapping.priority)
+    private var tripOptionMappings: [DataActivityOptionMapping]
 
     init(trip: Trip, onEnd: (() -> Void)? = nil) {
         self.trip = trip
@@ -73,6 +76,9 @@ struct TripRowView: View {
                     .foregroundColor(.blue)
                     .cornerRadius(8)
                 }
+                
+                let engine = DynamicOptionsLayoutEngine(mappings: tripOptionMappings, decodedOptions: trip.decodedActivityDetails?.options)
+                engine.renderAll()
                 
                 if !trip.persons.isEmpty {
                     Label(trip.persons.formattedNames(), systemImage: trip.persons.count > 1 ? "person.2.fill" : "person.fill")

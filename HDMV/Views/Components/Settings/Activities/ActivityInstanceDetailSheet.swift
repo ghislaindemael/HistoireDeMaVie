@@ -42,7 +42,7 @@ struct ActivityInstanceDetailSheet: View {
                 detailsSection
                 if let activity = selectedActivity {
                     DynamicOptionsSection(
-                        activity: activity,
+                        mappings: activity.optionMappings,
                         decodedActivityDetails: $viewModel.editor.decodedActivityDetails
                     )
                     
@@ -141,8 +141,8 @@ struct ActivityInstanceDetailSheet: View {
     private var specializedDetailsSection: some View {
         Group {
             if selectedActivity!.can(.log_food) {
-                Section(header: headerView("Meal Details")) {
-                    MealDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                Section(header: headerView("Food Details")) {
+                    FoodDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
                 }
             }
             

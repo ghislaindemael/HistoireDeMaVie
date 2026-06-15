@@ -28,6 +28,7 @@ final class Transaction: LogModel {
     var isCash: Bool = false
     
     var typeRid: Int?
+    var parentTripRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
     var contextRids: [Int] = []
@@ -52,6 +53,9 @@ final class Transaction: LogModel {
     var parentInstance: ActivityInstance?
     
     @Relationship(deleteRule: .nullify)
+    var parentTrip: Trip?
+    
+    @Relationship(deleteRule: .nullify)
     var payer: Person?
     
     @Relationship(deleteRule: .nullify)
@@ -73,11 +77,13 @@ final class Transaction: LogModel {
         isCash: Bool = false,
         typeRid: Int? = nil,
         parentInstanceRid: Int? = nil,
+        parentTripRid: Int? = nil,
         payerRid: Int? = nil,
         contextRids: [Int] = [],
         details: String? = nil,
         syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
+        parentTrip: Trip? = nil,
         payer: Person? = nil,
         type: TransactionType? = nil
     ){
@@ -94,11 +100,13 @@ final class Transaction: LogModel {
         self.isCash = isCash
         self.typeRid = typeRid
         self.parentInstanceRid = parentInstanceRid
+        self.parentTripRid = parentTripRid
         self.payerRid = payerRid
         self.contextRids = contextRids
         self.details = details
         self.syncStatus = syncStatus
         self.parentInstance = parentInstance
+        self.parentTrip = parentTrip
         self.payer = payer
         self.type = type
     }
@@ -117,6 +125,8 @@ final class Transaction: LogModel {
         self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
+        self.parentTripRid = dto.parent_trip_id
         self.payerRid = dto.payer_id
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
@@ -135,6 +145,8 @@ final class Transaction: LogModel {
         self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
+        self.parentTripRid = dto.parent_trip_id
+        self.parentTripRid = dto.parent_trip_id
         self.payerRid = dto.payer_id
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
@@ -164,6 +176,7 @@ struct TransactionDTO: Codable, Identifiable {
     
     let type_id: Int?
     let parent_instance_id: Int?
+    let parent_trip_id: Int?
     let payer_id: Int?
     let context_ids: [Int]?
         
@@ -188,6 +201,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
     
     let type_id: Int?
     @ExplicitNull var parent_instance_id: Int?
+    @ExplicitNull var parent_trip_id: Int?
     let payer_id: Int?
     let context_ids: [Int]
     
@@ -214,6 +228,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
         
         self.type_id = transaction.typeRid
         self.parent_instance_id = transaction.parentInstanceRid
+        self.parent_trip_id = transaction.parentTripRid
         self.payer_id = transaction.payerRid
         self.context_ids = transaction.contextRids
         
@@ -239,9 +254,11 @@ struct TransactionEditor: EditorProtocol {
     
     var type: TransactionType?
     var parentInstance: ActivityInstance?
+    var parentTrip: Trip?
     var payer: Person?
     
     var typeRid: Int?
+    var parentTripRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
     var contextRids: [Int] = []
@@ -273,6 +290,9 @@ struct TransactionEditor: EditorProtocol {
         
         self.parentInstance = transaction.parentInstance
         self.parentInstanceRid = transaction.parentInstanceRid
+        
+        self.parentTrip = transaction.parentTrip
+        self.parentTripRid = transaction.parentTripRid
         
         self.payer = transaction.payer
         self.payerRid = transaction.payerRid
@@ -308,6 +328,9 @@ struct TransactionEditor: EditorProtocol {
         transaction.parentInstance = self.parentInstance
         transaction.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
         
+        transaction.parentTrip = self.parentTrip
+        transaction.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
+        
         transaction.payer = self.payer
         transaction.payerRid = self.payer?.rid ?? self.payerRid
         
@@ -320,5 +343,19 @@ struct TransactionEditor: EditorProtocol {
     @Transient var transactionTime: Date {
         get { timeStart }
         set { timeStart = newValue }
+    }
+}
+
+
+extension Transaction: LinkedParent {}
+
+extension Transaction {
+    @discardableResult
+    static func create(in context: ModelContext, date: Date) -> Transaction {
+        let smartDate = date.smartCreationTime
+        let newTransaction = Transaction(timeStart: smartDate)
+        context.insert(newTransaction)
+        try? context.save()
+        return newTransaction
     }
 }

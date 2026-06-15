@@ -35,6 +35,7 @@ struct DataActivityOptionConfig: Codable, Equatable {
     var max: Double?
     var step: Double?
     var layoutNode: ActivityLayoutNode?
+    var replacesActivityName: Bool?
 }
 
 @Model

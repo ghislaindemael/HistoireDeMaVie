@@ -114,7 +114,7 @@ struct ActivityDetailSheet: View {
                                     get: { mapping.required },
                                     set: { newValue in
                                         mapping.required = newValue
-                                        mapping.syncStatus = .unsynced
+                                        mapping.markAsModified()
                                     }
                                 ))
                             }
@@ -124,7 +124,7 @@ struct ActivityDetailSheet: View {
                             mappings.move(fromOffsets: indices, toOffset: newOffset)
                             for (index, mapping) in mappings.enumerated() {
                                 mapping.priority = index
-                                mapping.syncStatus = .unsynced
+                                mapping.markAsModified()
                             }
                         }
                         .onDelete { indices in

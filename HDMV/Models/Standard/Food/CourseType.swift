@@ -7,14 +7,17 @@
 
 
 enum CourseType: String, Codable, CaseIterable, Identifiable {
-    case brut = "Brut"
     case aperitif = "Apéritif"
     case entree = "Entrée"
-    case plat = "Plat Principal"
+    case entree2 = "Seconde Entrée"
+    case plat = "Plat principal"
+    case plat2 = "Plat principal 2"
     case fromage = "Fromage"
     case dessert = "Dessert"
     case fruits = "Fruits"
-    case cafe = "Café & Digestif"
+    case cafe = "Café"
+    case the = "Thé / Tisane"
+    case digestif = "Digestif"
     case divers = "Divers / Notes"
     
     var id: String { self.rawValue }

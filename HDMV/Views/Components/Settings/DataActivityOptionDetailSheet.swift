@@ -44,6 +44,14 @@ struct DataActivityOptionDetailSheet: View {
                         Text("Dropdown").tag(DataActivityOptionType.dropdown)
                         Text("Time").tag(DataActivityOptionType.time)
                     }
+                    
+                    Toggle("Replaces Activity Name", isOn: Binding(
+                        get: { viewModel.editor.config?.replacesActivityName ?? false },
+                        set: { val in
+                            if viewModel.editor.config == nil { viewModel.editor.config = DataActivityOptionConfig() }
+                            viewModel.editor.config?.replacesActivityName = val
+                        }
+                    ))
                 }
                 
                 if viewModel.editor.type == .dropdown {

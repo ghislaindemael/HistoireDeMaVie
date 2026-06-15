@@ -30,16 +30,8 @@ struct DataActivityOptionRowView: View {
             
             Spacer()
             
+            CacheToggleButton(model: option, onToggle: onToggleCache)
             SyncStatusIndicator(status: option.syncStatus)
-        }
-        .contentShape(Rectangle())
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button {
-                onToggleCache(option)
-            } label: {
-                Label(option.cache ? "Uncache" : "Cache", systemImage: option.cache ? "tray.and.arrow.down" : "tray.and.arrow.up")
-            }
-            .tint(option.cache ? .orange : .green)
         }
     }
 }

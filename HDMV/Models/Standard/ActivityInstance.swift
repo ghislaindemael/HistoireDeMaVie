@@ -15,6 +15,7 @@ struct ActivityOptionPill: Identifiable {
     let label: String
     let icon: String?
     let isDefault: Bool
+    let replacesActivityName: Bool
 }
 
 @Model
@@ -71,6 +72,9 @@ final class ActivityInstance: LogModel {
     
     @Relationship(deleteRule: .nullify, inverse: \Quote.parentInstance)
     var childQuotes: [Quote] = []
+    
+    @Relationship(deleteRule: .nullify, inverse: \Transaction.parentInstance)
+    var childTransactions: [Transaction] = []
     
     // MARK: Relationship conformance
 
@@ -129,12 +133,14 @@ final class ActivityInstance: LogModel {
             let label = choice?.label ?? selectedValueSlug
             let icon = choice?.icon
             let isDefault = (selectedValueSlug == config?.defaultValue)
+            let replaces = config?.replacesActivityName ?? false
             
             pills.append(ActivityOptionPill(
                 optionSlug: option.slug,
                 label: label,
                 icon: icon,
-                isDefault: isDefault
+                isDefault: isDefault,
+                replacesActivityName: replaces
             ))
         }
         
@@ -251,9 +257,17 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     var timed: Bool
     var percentage: Int
     var activity: Activity?
-    var parentInstance: ActivityInstance?
+    var parentInstance: ActivityInstance? {
+        didSet {
+            parentInstanceRid = parentInstance?.rid
+        }
+    }
     var parentInstanceRid: Int?
-    var parentTrip: Trip?
+    var parentTrip: Trip? {
+        didSet {
+            parentTripRid = parentTrip?.rid
+        }
+    }
     var parentTripRid: Int?
     var details: String?
     var fitFilePath: String?
@@ -293,9 +307,9 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.activity = self.activity
         instance.activityRid = self.activity?.rid
         instance.parentInstance = self.parentInstance
-        instance.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
+        instance.parentInstanceRid = self.parentInstanceRid
         instance.parentTrip = self.parentTrip
-        instance.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
+        instance.parentTripRid = self.parentTripRid
         instance.details = self.details
         instance.fitFilePath = self.fitFilePath
         instance.decodedActivityDetails = self.decodedActivityDetails
@@ -303,5 +317,55 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.persons = self.persons
         instance.personRids = self.persons.compactMap { $0.rid }
         instance.contextRids = self.contextRids
+    }
+}
+
+extension ActivityInstance {
+    @discardableResult
+    static func create(in context: ModelContext, date: Date) -> ActivityInstance {
+        let smartDate = date.smartCreationTime
+        let isToday = Calendar.current.isDateInToday(date)
+        
+        let newInstance = ActivityInstance(timeStart: smartDate)
+        if !isToday {
+            newInstance.timeEnd = smartDate.addingTimeInterval(3600) // 1 hour later
+        }
+        
+        context.insert(newInstance)
+        try? context.save()
+        return newInstance
+    }
+    @discardableResult
+    static func createChild(in context: ModelContext, parent: any ParentModel, filterDate: Date) -> ActivityInstance {
+        let calendar = Calendar.current
+        let childStart: Date
+        let childEnd: Date?
+        
+        if calendar.isDateInToday(filterDate) {
+            childStart = Date()
+            childEnd = nil
+        } else {
+            childStart = parent.timeStart.addingTimeInterval(1)
+            let parentDuration: TimeInterval
+            if let end = parent.timeEnd {
+                parentDuration = end.timeIntervalSince(parent.timeStart)
+            } else {
+                parentDuration = .infinity
+            }
+            
+            if parentDuration < 15 * 60 {
+                let parentActualEnd = parent.timeEnd ?? parent.timeStart.addingTimeInterval(parentDuration)
+                childEnd = parentActualEnd.addingTimeInterval(-1)
+            } else {
+                childEnd = childStart.addingTimeInterval(15 * 60)
+            }
+        }
+        
+        var newInstance = ActivityInstance(timeStart: childStart)
+        newInstance.timeEnd = childEnd
+        newInstance.setParent(parent)
+        context.insert(newInstance)
+        try? context.save()
+        return newInstance
     }
 }

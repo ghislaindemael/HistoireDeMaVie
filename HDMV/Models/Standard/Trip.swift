@@ -40,6 +40,7 @@ final class Trip: LogModel {
     var personRids: [Int] = []
     
     var details: String?
+    var activity_details: Data?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = TripDTO
@@ -85,6 +86,9 @@ final class Trip: LogModel {
     @Relationship(deleteRule: .nullify, inverse: \Quote.parentTrip)
     var childQuotes: [Quote] = []
     
+    @Relationship(deleteRule: .nullify, inverse: \Transaction.parentTrip)
+    var childTransactions: [Transaction] = []
+    
     
     // MARK: Derived properties
     
@@ -108,6 +112,16 @@ final class Trip: LogModel {
         }
     }
     
+    var decodedActivityDetails: ActivityDetails? {
+        get {
+            guard let data = activity_details else { return nil }
+            return try? JSONDecoder().decode(ActivityDetails.self, from: data)
+        }
+        set {
+            activity_details = try? JSONEncoder().encode(newValue)
+        }
+    }
+    
     // MARK: Init
     
     init(rid: Int? = nil,
@@ -123,6 +137,7 @@ final class Trip: LogModel {
          fitFilePath: String? = nil,
          contextRids: [Int] = [],
          details: String? = nil,
+         activity_details: ActivityDetails? = nil,
          syncStatus: SyncStatus = .unsynced)
     {
         self.rid = rid
@@ -135,6 +150,7 @@ final class Trip: LogModel {
         self.fitFilePath = fitFilePath
         self.contextRids = contextRids
         self.details = details
+        self.decodedActivityDetails = activity_details
         self.syncStatus = syncStatus
     }
     
@@ -154,6 +170,7 @@ final class Trip: LogModel {
         self.fitFilePath = dto.fit_file_path
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
+        self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
     
@@ -182,6 +199,7 @@ final class Trip: LogModel {
         
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
+        self.decodedActivityDetails = dto.activity_details
         self.syncStatus = .synced
     }
     
@@ -211,6 +229,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let person_ids: [Int]?
     let context_ids: [Int]?
     let details: String?
+    let activity_details: ActivityDetails?
 }
 
 
@@ -233,6 +252,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let person_ids: [Int]
     let context_ids: [Int]
     let details: String?
+    let activity_details: ActivityDetails?
     
     init?(from trip: Trip) {
         guard trip.isValid(),
@@ -257,6 +277,13 @@ struct TripPayload: Codable, InitializableWithModel {
         self.details = trip.details
         self.person_ids = trip.personRids
         self.context_ids = trip.contextRids
+        
+        if var activityDetails = trip.decodedActivityDetails {
+            activityDetails.removeFields()
+            self.activity_details = activityDetails
+        } else {
+            self.activity_details = nil
+        }
     }
     
 }
@@ -292,6 +319,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     
     var amDriver: Bool
     var details: String?
+    var decodedActivityDetails: ActivityDetails?
     
     var persons: [Person] = []
     var personRids: [Int] = []
@@ -329,6 +357,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         
         self.amDriver = trip.amDriver
         self.details = trip.details
+        self.decodedActivityDetails = trip.decodedActivityDetails
         
         self.persons = trip.persons
         self.personRids = trip.personRids
@@ -340,6 +369,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         trip.timeEnd = timeEnd
         trip.amDriver = amDriver
         trip.details = details
+        trip.decodedActivityDetails = decodedActivityDetails
         trip.fitFilePath = fitFilePath
         
         trip.parentInstance = parentInstance
@@ -360,5 +390,40 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         trip.contextRids = self.contextRids
         
         trip.markAsModified()
+    }
+}
+
+extension Trip {
+    @discardableResult
+    static func create(in context: ModelContext, parent: any ParentModel, filterDate: Date) -> Trip {
+        let calendar = Calendar.current
+        let tripStart: Date
+        let tripEnd: Date?
+        
+        if calendar.isDateInToday(filterDate) {
+            tripStart = Date()
+            tripEnd = nil
+        } else {
+            tripStart = parent.timeStart.addingTimeInterval(1)
+            let parentDuration: TimeInterval
+            if let end = parent.timeEnd {
+                parentDuration = end.timeIntervalSince(parent.timeStart)
+            } else {
+                parentDuration = .infinity
+            }
+            
+            if parentDuration < 15 * 60 {
+                let parentActualEnd = parent.timeEnd ?? parent.timeStart.addingTimeInterval(parentDuration)
+                tripEnd = parentActualEnd.addingTimeInterval(-1)
+            } else {
+                tripEnd = tripStart.addingTimeInterval(15 * 60)
+            }
+        }
+        
+        var newTrip = Trip(timeStart: tripStart, timeEnd: tripEnd)
+        newTrip.setParent(parent)
+        context.insert(newTrip)
+        try? context.save()
+        return newTrip
     }
 }

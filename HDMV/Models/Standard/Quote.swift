@@ -241,6 +241,7 @@ extension Quote {
     static func create(in context: ModelContext, date: Date) -> Quote {
         let smartDate = date.smartCreationTime
         let newQuote = Quote(timeStart: smartDate)
+        newQuote.timeEnd = smartDate
         context.insert(newQuote)
         try? context.save()
         return newQuote

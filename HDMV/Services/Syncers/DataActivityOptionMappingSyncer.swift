@@ -41,9 +41,13 @@ final class DataActivityOptionMappingSyncer: BaseSyncer<DataActivityOptionMappin
         
         for mapping in allMappings {
             // Bind Activity
-            let targetActivity = activityCache[mapping.activityRid]
-            if mapping.activity?.persistentModelID != targetActivity?.persistentModelID {
-                mapping.activity = targetActivity
+            if let activityRid = mapping.activityRid {
+                let targetActivity = activityCache[activityRid]
+                if mapping.activity?.persistentModelID != targetActivity?.persistentModelID {
+                    mapping.activity = targetActivity
+                }
+            } else {
+                mapping.activity = nil
             }
             
             // Bind Option

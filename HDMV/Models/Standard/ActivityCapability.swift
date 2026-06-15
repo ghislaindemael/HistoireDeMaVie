@@ -11,6 +11,7 @@ import SwiftUI
 enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
     case create_trips
     case create_interactions
+    case link_transactions
     case link_place
     case log_food
     case log_media
@@ -23,8 +24,9 @@ enum ActivityCapability: String, Codable, CaseIterable, Identifiable {
         switch self {
             case .create_trips: return "Can create Trips"
             case .create_interactions: return "Can create Interactions"
+            case .link_transactions: return "Can link Transactions"
             case .link_place: return "Can attach Place"
-            case .log_food: return "Can log Meals"
+            case .log_food: return "Can log Food"
             case .log_media: return "Can log Media & Media Items"
             case .have_child_instances: return "Have child instances"
             case .be_child_instance: return "Be child instance"
@@ -132,28 +134,13 @@ extension Capable {
 
 extension Activity {
     
-    // MARK: Named implementations
-    
-    func shouldShowPlaceLink(settings: SettingsStore) -> Bool {
-        return must(.link_place) || (can(.link_place) && settings.planningMode)
-    }
-    
-    func placeUnsetColor(settings: SettingsStore, placeId: Int?) -> Color {
-        return linkedModelColor(capability: .link_place, modelRid: placeId, settings: settings)
-    }
-    
-    func placeUnsetWeight(placeId: Int?) -> Font.Weight {
-        return linkedModelFontWeight(capability: .link_place, modelRid: placeId)
-    }
-    
-    
     // MARK: Base functions
     
     func linkedModelColor(capability: ActivityCapability, modelRid: Int?, settings: SettingsStore) -> Color {
         if must(capability) == true && modelRid == nil {
             return .red
         }
-        else if can(capability) == true && settings.planningMode && modelRid == nil {
+        else if can(capability) == true && settings.appMode == .backfill && modelRid == nil {
             return .orange
         }
         else {

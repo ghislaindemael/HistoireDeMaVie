@@ -32,7 +32,9 @@ struct DataManagementComponent: View {
         Trip.self,
         Vehicle.self,
         TransitLine.self,
-        TransitStop.self
+        TransitStop.self,
+        DataFoodItem.self,
+        DataFoodRecipe.self
     ]
     
     init(expanded: Bool = false) {

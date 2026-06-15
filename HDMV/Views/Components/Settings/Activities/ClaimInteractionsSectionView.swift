@@ -24,7 +24,11 @@ struct ClaimInteractionsSectionView: View {
             (interaction.timeEnd ?? future) > startOfDay
         }
         
-        _unclaimedInteractions = Query(filter: predicate, sort: \.timeStart, order: .reverse)
+        _unclaimedInteractions = Query(filter: predicate, sort: \.timeStart)
+    }
+    
+    private var filteredInteractions: [Interaction] {
+        unclaimedInteractions.filter { $0.parentInstance == nil && $0.parentTrip == nil }
     }
     
     private func claim(interaction: Interaction) {
@@ -35,13 +39,14 @@ struct ClaimInteractionsSectionView: View {
     }
     
     var body: some View {
+        let displayInteractions = filteredInteractions
         Section("Claim Interactions") {
-            if unclaimedInteractions.isEmpty {
+            if displayInteractions.isEmpty {
                 Text("No unclaimed interactions available")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(unclaimedInteractions) { interaction in
-                    InteractionRowView(interaction: interaction)
+                ForEach(displayInteractions) { interaction in
+                    InteractionRowView(interaction: interaction, onEnd: nil)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             claim(interaction: interaction)

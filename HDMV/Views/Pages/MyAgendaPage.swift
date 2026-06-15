@@ -25,7 +25,7 @@ struct MyAgendaPage: View {
     private func onAppear() {
         if let navDate = appNavigator.selectedDate {
             viewModel.filterDate = navDate
-            if settings.planningMode == false {
+            if settings.appMode == .live {
                 appNavigator.selectedDate = nil
             }
         }
