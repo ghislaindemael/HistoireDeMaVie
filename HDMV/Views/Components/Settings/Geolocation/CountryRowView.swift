@@ -14,22 +14,13 @@ struct CountryRowView: View {
     
     var body: some View {
         HStack {
-            Text(country.name)
-                .font(.title3.bold())
-                .lineLimit(1)
-                .italic(country.archived)
-                .foregroundColor(country.archived ? .secondary : .primary)
+            UnsettableTextView(
+                text: country.name,
+                font: .title3.bold(),
+                isItalicized: country.archived
+            )
             Spacer()
-            
-            if country.archived {
-                Image(systemName: "archivebox.fill")
-                    .foregroundColor(.secondary)
-                    .imageScale(.medium)
-            } else if let onToggle = onToggle {
-                CacheToggleButton(model: country, onToggle: onToggle)
-            }
-            
-            SyncStatusIndicator(status: country.syncStatus)
+            CatalogueRowControlsView(model: country, onToggle: onToggle)
         }
     }
         

@@ -9,122 +9,53 @@ import Foundation
 import SwiftData
 
 @MainActor
-class CountriesPageViewModel: ObservableObject {
+class CountriesPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
-    private var countriesSyncer: CountrySyncer?
-
-    @Published var isLoading = false
-    @Published var countries: [Country] = []
+    var syncer: AnySyncer?
+    var sortDescriptors: [SortDescriptor<Country>] = [SortDescriptor(\.slug)]
     
+    @Published var items: [Country] = []
     
     // MARK: Initialization
             
-    func setup(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        self.countriesSyncer = CountrySyncer(modelContext: modelContext)
+    override func setup(modelContext: ModelContext) {
+        super.setup(modelContext: modelContext)
+        self.syncer = CountrySyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
-    // MARK: - Data Loading and Caching
-    
     func fetchFromCache() {
-        guard let context = modelContext else { return }
-        let descriptor = FetchDescriptor<Country>(sortBy: [SortDescriptor(\.name)])
-        do {
-            self.countries = try context.fetch(descriptor)
-        } catch {
-            print("Failed to fetch countries: \(error)")
-        }
+        self.items = super.fetchFromCache(sortDescriptors: sortDescriptors)
     }
+    
+    // MARK: - Sync & Data Lifecycle
     
     func refreshFromServer() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = countriesSyncer else {
-            print("⚠️ [CountriesPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            try await syncer.pullChanges()
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
-    }
-    
-    func fetchArchivedFromServer() async {
-        SettingsStore.shared.includeArchived = true
-        defer { SettingsStore.shared.includeArchived = false }
-        
-        await refreshFromServer()
-    }
-    
-    func purgeArchivedFromCache() {
-        guard let context = modelContext else { return }
-        
-        do {
-            let predicate = #Predicate<Country> { $0.archived == true }
-            let descriptor = FetchDescriptor<Country>(predicate: predicate)
-            let archivedItems = try context.fetch(descriptor)
-            
-            for item in archivedItems {
-                context.delete(item)
-            }
-            try? context.save()
-            fetchFromCache()
-        } catch {
-            print("Failed to purge archived countries: \(error)")
-        }
+        self.items = await super.refreshFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func uploadLocalChanges() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = countriesSyncer else {
-            print("⚠️ [CountriesPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            _ = try await syncer.pushChanges()
-            // TODO: For cleancode, add City update for first country sync
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
+        self.items = await super.uploadLocalChanges(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func fetchArchivedFromServer() async {
+        self.items = await super.fetchArchivedFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func purgeArchivedFromCache() {
+        self.items = super.purgeArchivedFromCache(sortDescriptors: sortDescriptors)
+    }
+    
+    func deleteItem(_ item: Country) {
+        self.items = super.deleteItem(item, sortDescriptors: sortDescriptors)
     }
     
     // MARK: - User Actions
             
     func createCountry() {
-        guard let context = modelContext else { return }
-        let newCountry = Country(syncStatus: .unsynced)
-        context.insert(newCountry)
-        do {
-            try context.save()
-        } catch {
-            print("Failed to create country: \(error)")
+        if let items = super.createPlaceholderIfNeeded(factory: { Country(syncStatus: .unsynced) }, sortDescriptors: sortDescriptors) {
+            self.items = items
         }
     }
-        
-    func updateModel(_ model: Country, modifier: (Country) -> Void) {
-        modifier(model)
-        try? modelContext?.save()
-    }
-    
-    func deleteCountries(at offsets: IndexSet) {
-        guard let context = modelContext else { return }
-        for index in offsets {
-            let country = countries[index]
-            context.delete(country)
-        }
-        try? context.save()
-        fetchFromCache()
-    }
-    
-    
-
-    
-    
 }
 

@@ -10,7 +10,7 @@ import SwiftUI
 extension String {
     func isNotUnset() -> Bool {
         let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmed.isEmpty && trimmed.lowercased() != "unset"
+        return !trimmed.isEmpty && trimmed.lowercased() != "unset" && trimmed.lowercased() != "!unset"
     }
     
     func isUnset() -> Bool {

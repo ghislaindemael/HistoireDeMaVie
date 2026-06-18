@@ -11,9 +11,15 @@ import Foundation
 import SwiftData
 
 
+/// A type-erased protocol for generic sync operations.
+protocol AnySyncer: AnyObject {
+    func pullChanges(date: Date?) async throws
+    func pushChanges() async throws
+}
+
 /// An abstract base class for syncing a specific SwiftData model with a remote server.
 @MainActor
-class BaseSyncer<Model, DTO, Payload>
+class BaseSyncer<Model, DTO, Payload>: AnySyncer
 where
 Model: SyncableModel & Identifiable & PersistentModel,
 DTO: Codable & Identifiable,

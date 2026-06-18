@@ -16,9 +16,9 @@ import SwiftData
 final class Country: CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
-    var slug: String
-    var name: String
-    var cache: Bool = true
+    @Attribute(.unique) var slug: String
+    @Attribute(.unique) var name: String
+    var cache: Bool = false
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
@@ -34,10 +34,10 @@ final class Country: CatalogueModel {
     // MARK: Init
     
     init(
-        slug: String = "Unset",
-        name: String = "unset",
+        slug: String = "!unset",
+        name: String = "Unset",
         rid: Int? = nil,
-        cache: Bool = true,
+        cache: Bool = false,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -50,7 +50,7 @@ final class Country: CatalogueModel {
     }
     
     func isValid() -> Bool {
-        guard name.isNotUnset()  else {
+        guard name.isNotUnset(), slug.isNotUnset() else {
             return false
         }
         return true
@@ -97,8 +97,8 @@ struct CountryPayload: Codable, InitializableWithModel {
 
 struct CountryEditor: CachableModel, EditorProtocol {
     var rid: Int?
-    var slug: String?
-    var name: String?
+    var slug: String
+    var name: String
     var cache: Bool
     var archived: Bool
     
@@ -114,8 +114,8 @@ struct CountryEditor: CachableModel, EditorProtocol {
     
     func apply(to country: Country) {
         country.rid = self.rid
-        country.slug = self.slug ?? country.slug
-        country.name = self.name ?? country.name
+        country.slug = self.slug
+        country.name = self.name
         country.cache = self.cache
         country.archived = self.archived
     }

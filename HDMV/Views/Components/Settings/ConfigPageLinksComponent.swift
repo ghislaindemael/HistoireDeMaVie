@@ -45,7 +45,6 @@ struct ConfigPageLinksComponent: View {
     var body: some View {
         DisclosureGroup("Configuration", isExpanded: $isExpanded) {
             VStack(spacing: 4) {
-                Toggle("Fetch archived", isOn: $settings.includeArchived)
                 ForEach(configPages.indices, id: \.self) { index in
                     let page = configPages[index]
                     

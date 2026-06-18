@@ -38,15 +38,19 @@ struct CountriesPage: View {
     
     @ViewBuilder
     private var countriesList: some View {
-        Section("Countries") {
-            ForEach(viewModel.countries) { country in
+        Section("") {
+            ForEach(viewModel.items) { country in
                 CountryRowView(country: country) { c in
                     withAnimation(.snappy) {
                         viewModel.updateModel(c) { $0.cache.toggle() }
                     }
                 }
             }
-            .onDelete(perform: viewModel.deleteCountries)
+            .onDelete { offsets in
+                for index in offsets {
+                    viewModel.deleteItem(viewModel.items[index])
+                }
+            }
         }
     }
 }
