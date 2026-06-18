@@ -12,84 +12,55 @@ import SwiftData
 @MainActor
 class CitiesPageViewModel: BasePageViewModel {
     
-    private var citySyncer: CitySyncer?
+    var syncer: AnySyncer?
+    var sortDescriptors: [SortDescriptor<City>] = [SortDescriptor(\.slug)]
     
+    @Published var items: [City] = []
     @Published var selectedCountry: Country?
     
     // MARK: Initialization
-    
+            
     override func setup(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        self.citySyncer = CitySyncer(modelContext: modelContext)
+        super.setup(modelContext: modelContext)
+        self.syncer = CitySyncer(modelContext: modelContext)
+        fetchFromCache()
     }
     
-    // MARK: - Data Loading and Caching
+    func fetchFromCache() {
+        self.items = super.fetchFromCache(sortDescriptors: sortDescriptors)
+    }
+    
+    // MARK: - Sync & Data Lifecycle
     
     func refreshFromServer() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = citySyncer else {
-            print("⚠️ [CitiesPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            try await syncer.pullChanges()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
-    }
-    
-    func fetchArchivedFromServer() async {
-        await executeFetchArchived(refreshAction: refreshFromServer)
-    }
-    
-    func purgeArchivedFromCache() {
-        executePurgeArchived(type: City.self, context: modelContext, fetchAction: {})
+        self.items = await super.refreshFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func uploadLocalChanges() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = citySyncer else {
-            print("⚠️ [CitiesPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            _ = try await syncer.pushChanges()
-            // TODO: For cleancode, add Place update on City Sync
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
+        self.items = await super.uploadLocalChanges(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func fetchArchivedFromServer() async {
+        self.items = await super.fetchArchivedFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func purgeArchivedFromCache() {
+        self.items = super.purgeArchivedFromCache(sortDescriptors: sortDescriptors)
+    }
+    
+    func deleteItem(_ item: City) {
+        self.items = super.deleteItem(item, sortDescriptors: sortDescriptors)
     }
     
     // MARK: - User Actions
-        
+            
     func createCity() {
-        
-        guard let context = modelContext else { return }
-
-        let existing = try? context.fetch(FetchDescriptor<City>(
-            predicate: #Predicate { $0.slug == "unset" || $0.name == "Unset"}
-        )).first
-        
-        if existing != nil {
-            return
-        }
-
-        
-        let newCity = City()
-        newCity.setCountry(selectedCountry)
-        context.insert(newCity)
-        
-        do {
-            try context.save()
-            print("✅ Created new placeholder city.")
-        } catch {
-            context.rollback()
-            print("❌ Failed to create city: \(error)")
+        if let items = super.createPlaceholderIfNeeded(factory: { 
+            let city = City(syncStatus: .unsynced)
+            city.setCountry(selectedCountry)
+            return city
+        }, sortDescriptors: sortDescriptors) {
+            self.items = items
         }
     }
-
-    
-    
 }

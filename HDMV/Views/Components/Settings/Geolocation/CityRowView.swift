@@ -11,16 +11,17 @@ import SwiftUI
 struct CityRowView: View {
     
     let city: City
-    let onToggle: (City) -> Void
+    var onToggle: ((City) -> Void)? = nil
     
     var body: some View {
-        VStack{
-            HStack {
-                Label("\(city.name)", systemImage: "")
-                Spacer()
-                CacheToggleButton(model: city, onToggle: onToggle)
-                SyncStatusIndicator(status: city.syncStatus)
-            }
+        HStack {
+            UnsettableTextView(
+                text: city.name,
+                font: .body.bold(),
+                isItalicized: city.archived
+            )
+            Spacer()
+            CatalogueRowControlsView(model: city, onToggle: onToggle)
         }
     }
 }

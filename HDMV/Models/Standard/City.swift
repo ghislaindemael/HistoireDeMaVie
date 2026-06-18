@@ -15,6 +15,7 @@ final class City: CatalogueModel{
     @Attribute(.unique) var slug: String
     @Attribute(.unique) var name: String
     var countryRid: Int?
+    var parentRid: Int?
 
     var cache: Bool = false
     var archived: Bool = false
@@ -34,13 +35,19 @@ final class City: CatalogueModel{
     @Relationship(deleteRule: .nullify, inverse: \Place.city)
     var places: [Place]?
     
+    @Relationship(deleteRule: .nullify, inverse: \City.children)
+    var parentCity: City?
+    
+    var children: [City]?
+    
     // MARK: - Init
     init(
         rid: Int? = nil,
-        slug: String = "unset",
+        slug: String = "!unset",
         name: String = "Unset",
         countryRid: Int? = nil,
-        cache: Bool = true,
+        parentRid: Int? = nil,
+        cache: Bool = false,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -48,6 +55,7 @@ final class City: CatalogueModel{
         self.name = name
         self.rid = rid
         self.countryRid = countryRid
+        self.parentRid = parentRid
         self.cache = cache
         self.archived = archived
         self.syncStatusRaw = syncStatus.rawValue
@@ -60,6 +68,7 @@ final class City: CatalogueModel{
         self.slug = dto.slug
         self.name = dto.name
         self.countryRid = dto.country_id
+        self.parentRid = dto.parent_id
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -68,6 +77,7 @@ final class City: CatalogueModel{
         self.slug = dto.slug
         self.name = dto.name
         self.countryRid = dto.country_id
+        self.parentRid = dto.parent_id
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -76,6 +86,10 @@ final class City: CatalogueModel{
         guard slug.isNotUnset(), name.isNotUnset() else { return false }
         return countryRid != nil
     }
+    
+    var sortedChildren: [City] {
+        children?.sorted { $0.slug < $1.slug } ?? []
+    }
 }
 
 struct CityDTO: Codable, Identifiable, Sendable {
@@ -83,6 +97,7 @@ struct CityDTO: Codable, Identifiable, Sendable {
     var slug: String
     var name: String
     var country_id: Int
+    var parent_id: Int?
     var archived: Bool
 }
 
@@ -91,6 +106,7 @@ struct CityPayload: Codable, InitializableWithModel {
     var slug: String
     var name: String
     var country_id: Int
+    var parent_id: Int?
     var archived: Bool
     
     init?(from city: City) {
@@ -102,6 +118,7 @@ struct CityPayload: Codable, InitializableWithModel {
         self.slug = city.slug
         self.name = city.name
         self.country_id = countryRid
+        self.parent_id = city.parentRid
         self.archived = city.archived
     }
 }
@@ -111,6 +128,8 @@ struct CityEditor: CachableModel, EditorProtocol {
     var name: String?
     var countryRid: Int?
     var country: Country?
+    var parentRid: Int?
+    var parentCity: City?
     var cache: Bool
     var archived: Bool
     
@@ -119,6 +138,8 @@ struct CityEditor: CachableModel, EditorProtocol {
         self.name = city.name
         self.countryRid = city.countryRid
         self.country = city.country
+        self.parentRid = city.parentRid
+        self.parentCity = city.parentCity
         self.cache = city.cache
         self.archived = city.archived
     }
@@ -128,9 +149,11 @@ struct CityEditor: CachableModel, EditorProtocol {
         if let name = self.name { city.name = name }
         
         city.setCountry(country, fallbackRid: countryRid)
+        city.setParentCity(parentCity, fallbackRid: parentRid)
 
         city.cache = self.cache
         city.archived = self.archived
     }
 }
 
+extension City: LinkedParentCity {}

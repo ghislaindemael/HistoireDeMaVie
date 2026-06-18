@@ -18,8 +18,8 @@ struct CitiesPage: View {
     private var countries: [Country]
     
     @Query(
-        filter: #Predicate<City> { $0.country == nil },
-        sort: \.name
+        filter: #Predicate<City> { $0.country == nil && $0.parentCity == nil },
+        sort: \.slug
     ) private var orphanedCities: [City]
     
     @State private var cityToEdit: City?
@@ -63,32 +63,24 @@ struct CitiesPage: View {
     private var citiesList: some View {
         if let selectedCountry = viewModel.selectedCountry {
             Section("Cities in \(selectedCountry.name)") {
-                ForEach(selectedCountry.sortedCities) { city in
-                    Button(action: { cityToEdit = city }) {
-                        CityRowView(city: city) { c in
-                            withAnimation(.snappy) {
-                                viewModel.updateModel(c) { concreteCity in
-                                    concreteCity.cache.toggle()
-                                }
-                            }
-                        }
+                ForEach(selectedCountry.rootCities) { city in
+                    CityNodeView(city: city, viewModel: viewModel, cityToEdit: $cityToEdit)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deleteItem(selectedCountry.rootCities[index])
                     }
-                    .buttonStyle(.plain)
                 }
             }
         } else {
             Section("Cities (No Country)") {
                 ForEach(orphanedCities) { city in
-                    Button(action: { cityToEdit = city }) {
-                        CityRowView(city: city) { c in
-                            withAnimation(.snappy) {
-                                viewModel.updateModel(c) { concreteCity in
-                                    concreteCity.cache.toggle()
-                                }
-                            }
-                        }
+                    CityNodeView(city: city, viewModel: viewModel, cityToEdit: $cityToEdit)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deleteItem(orphanedCities[index])
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }

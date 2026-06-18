@@ -29,6 +29,7 @@ struct CityDetailSheet: View {
                     TextField("Name", text: $viewModel.editor.name.orEmpty())
                     TextField("Slug", text: $viewModel.editor.slug.orEmpty())
                     CountrySelectorView(selectedCountry: $viewModel.editor.country)
+                    ParentCitySelectorView(selectedCity: $viewModel.editor.parentCity, title: "Parent City")
                 }
 
                 Section("Usage") {

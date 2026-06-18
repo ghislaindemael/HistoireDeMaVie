@@ -69,7 +69,11 @@ final class Country: CatalogueModel {
     }
     
     var sortedCities: [City] {
-        cities?.sorted { $0.name < $1.name } ?? []
+        cities?.sorted { $0.slug < $1.slug } ?? []
+    }
+    
+    var rootCities: [City] {
+        sortedCities.filter { $0.parentCity == nil }
     }
 }
 

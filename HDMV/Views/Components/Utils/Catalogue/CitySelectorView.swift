@@ -10,22 +10,19 @@ import SwiftUI
 import SwiftData
 
 struct CitySelectorView: View {
-    @Environment(\.modelContext) private var modelContext
-    
     @Binding var selectedCity: City?
+    var title: String = "City"
     
     @Query(FetchDescriptor<City>(
         predicate: #Predicate { $0.cache == true },
-            sortBy: [SortDescriptor(\.name)]))
-    private var cities: [City]
+        sortBy: [SortDescriptor(\.slug)]))
+    private var cachedCities: [City]
     
     var body: some View {
-        VStack {
-            Picker("City", selection: $selectedCity) {
-                Text("None").tag(nil as City?)
-                ForEach(cities) { city in
-                    Text(city.name).tag(city as City?)
-                }
+        Picker(title, selection: $selectedCity) {
+            Text("None").tag(nil as City?)
+            ForEach(cachedCities) { city in
+                Text(city.name).tag(city as City?)
             }
         }
     }
