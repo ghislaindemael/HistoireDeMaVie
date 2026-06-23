@@ -121,6 +121,7 @@ struct MyActivitiesPage: View {
                 }
             }
             .padding(8)
+            .id(viewModel.scrollResetID)
         }
         .navigationTitle("My Activities")
         .onChange(of: viewModel.filterMode) { viewModel.fetchDailyData() }
@@ -128,9 +129,6 @@ struct MyActivitiesPage: View {
             viewModel.fetchDailyData()
             appNavigator.selectedDate = viewModel.filterDate
         }
-        .onChange(of: viewModel.filterActivity) { viewModel.fetchDailyData() }
-        .onChange(of: viewModel.filterStartDate) { viewModel.fetchDailyData() }
-        .onChange(of: viewModel.filterEndDate) { viewModel.fetchDailyData() }
         
         .sheet(item: $instanceToEdit, onDismiss: { viewModel.fetchDailyData() }) { instance in
             ActivityInstanceDetailSheet(

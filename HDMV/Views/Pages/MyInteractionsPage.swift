@@ -91,6 +91,7 @@ struct MyInteractionsPage: View {
                 }
                 .padding(.horizontal)
             }
+            .id(viewModel.scrollResetID)
         }
         
     }

@@ -21,18 +21,24 @@ class MyInteractionsPageViewModel: ObservableObject {
     
     @Published var isLoading: Bool = false
     
-    @Published var filterMode: TimelineFilterMode = .daily
-    @Published var filterDate: Date = .now
+    @Published var filterMode: TimelineFilterMode = .daily {
+        didSet { scrollResetID = UUID() }
+    }
+    @Published var filterDate: Date = .now {
+        didSet { scrollResetID = UUID() }
+    }
     
     @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now {
-        didSet { fetchInteractions() }
+        didSet { scrollResetID = UUID(); fetchInteractions() }
     }
     @Published var filterEndDate: Date = .now {
-        didSet { fetchInteractions() }
+        didSet { scrollResetID = UUID(); fetchInteractions() }
     }
     @Published var filterPerson: Person? {
-        didSet { fetchInteractions() }
+        didSet { scrollResetID = UUID(); fetchInteractions() }
     }
+    
+    @Published var scrollResetID = UUID()
     
     @Published var interactions: [Interaction] = []
         

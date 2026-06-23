@@ -95,6 +95,7 @@ struct MyTransactionsPage: View {
                 }
                 .padding(.horizontal)
             }
+            .id(viewModel.scrollResetID)
         }
     }
 }

@@ -20,13 +20,25 @@ class MyActivitiesPageViewModel: ObservableObject {
 
     @Published var isLoading: Bool = false
     
-    @Published var filterMode: TimelineFilterMode = .daily
+    @Published var filterMode: TimelineFilterMode = .daily {
+        didSet { scrollResetID = UUID() }
+    }
     // State for the 'byDate' mode
-    @Published var filterDate: Date = .now
+    @Published var filterDate: Date = .now {
+        didSet { scrollResetID = UUID() }
+    }
     // State for the 'byActivity' mode
-    @Published var filterActivity: Activity?
-    @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now
-    @Published var filterEndDate: Date = .now
+    @Published var filterActivity: Activity? {
+        didSet { scrollResetID = UUID(); fetchDailyData() }
+    }
+    @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now {
+        didSet { scrollResetID = UUID(); fetchDailyData() }
+    }
+    @Published var filterEndDate: Date = .now {
+        didSet { scrollResetID = UUID(); fetchDailyData() }
+    }
+    
+    @Published var scrollResetID = UUID()
     
     
     @Published var instances: [ActivityInstance] = []
