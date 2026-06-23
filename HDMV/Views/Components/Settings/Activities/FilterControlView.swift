@@ -25,19 +25,8 @@ struct FilterControlView: View {
     
     private var byDateTab: some View {
         VStack {
-            DatePicker(
-                selection: $viewModel.filterDate,
-                displayedComponents: .date
-            ) {
-                HStack {
-                    Text("Select Date")
-                    if settings.appMode == .backfill {
-                        Image(systemName: "lock.fill")
-                            .foregroundColor(.orange)
-                    }
-                }
-            }
-            .padding()
+            LockedDatePickerView(selection: $viewModel.filterDate)
+                .padding()
         }
         .tag(MyActivitiesPageViewModel.FilterMode.byDate)
     }

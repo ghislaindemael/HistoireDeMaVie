@@ -66,8 +66,7 @@ struct MyTransactionsPage: View {
         VStack(spacing: 12) {
             // A DatePicker is good, but for finances, you might eventually 
             // want a "Month/Year" picker as daily filtering can be too narrow.
-            DatePicker("Select Date", selection: $viewModel.filterDate, displayedComponents: .date)
-                .datePickerStyle(.compact)
+            LockedDatePickerView(selection: $viewModel.filterDate)
                 .padding(.horizontal)
             
             ScrollView {

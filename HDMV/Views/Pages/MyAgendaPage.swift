@@ -73,8 +73,7 @@ struct MyAgendaPage: View {
     
     private var mainListView: some View {
         VStack(spacing: 12) {
-            DatePicker("Select Date", selection: $viewModel.filterDate, displayedComponents: .date)
-                .datePickerStyle(.compact)
+            LockedDatePickerView(selection: $viewModel.filterDate)
                 .padding(.horizontal)
             
             if let entry = viewModel.agendaEntry {
