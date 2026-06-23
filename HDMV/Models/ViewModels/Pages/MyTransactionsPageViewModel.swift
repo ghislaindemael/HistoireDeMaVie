@@ -5,19 +5,26 @@ import SwiftData
 @MainActor
 class MyTransactionsPageViewModel: ObservableObject {
     
-    enum FilterMode: Hashable {
-        case byDate
-        case byType
-    }
+
     
     private var modelContext: ModelContext?
-    private var transactionSyncer: BaseSyncer<Transaction, TransactionDTO, TransactionPayload>?
+    private var masterSyncer: MasterSyncer?
     private var settings: SettingsStore = SettingsStore.shared
     
     @Published var isLoading: Bool = false
     
-    @Published var filterMode: FilterMode = .byDate
+    @Published var filterMode: TimelineFilterMode = .daily
     @Published var filterDate: Date = .now
+    
+    @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now {
+        didSet { fetchTransactions() }
+    }
+    @Published var filterEndDate: Date = .now {
+        didSet { fetchTransactions() }
+    }
+    @Published var filterTransactionType: TransactionType? {
+        didSet { fetchTransactions() }
+    }
     
     @Published var transactions: [Transaction] = []
     
@@ -27,8 +34,7 @@ class MyTransactionsPageViewModel: ObservableObject {
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        // Assuming you have or will create a TransactionSyncer subclass
-        self.transactionSyncer = TransactionSyncer(modelContext: modelContext)
+        self.masterSyncer = MasterSyncer(modelContext: modelContext)
     }
     
     // MARK: - Data Fetching
@@ -37,20 +43,45 @@ class MyTransactionsPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         
         do {
-            let calendar = Calendar.current
-            let startOfDay = calendar.startOfDay(for: filterDate)
-            guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-            
-            let predicate = #Predicate<Transaction> {
-                $0.timeStart >= startOfDay && $0.timeStart < endOfDay
+            if filterMode == .daily {
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                
+                let predicate = #Predicate<Transaction> {
+                    $0.timeStart >= startOfDay && $0.timeStart < endOfDay
+                }
+                
+                let descriptor = FetchDescriptor<Transaction>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+                self.transactions = try context.fetch(descriptor)
+            } else {
+                let startOfDay = Calendar.current.startOfDay(for: filterStartDate)
+                let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: filterEndDate)) ?? .now
+                
+                let typeId = filterTransactionType?.rid
+                
+                // SwiftData predicate workaround: optional bindings or compound filters can be tricky.
+                let predicate = #Predicate<Transaction> {
+                    $0.timeStart >= startOfDay && $0.timeStart < endOfDay
+                }
+                
+                let descriptor = FetchDescriptor<Transaction>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+                var fetched = try context.fetch(descriptor)
+                
+                if let typeId = typeId {
+                    fetched = fetched.filter { $0.typeRid == typeId }
+                }
+                
+                self.transactions = fetched
             }
-            
-            let descriptor = FetchDescriptor<Transaction>(
-                predicate: predicate,
-                sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
-            )
-            
-            self.transactions = try context.fetch(descriptor)
         } catch {
             print("Error during transaction fetch: \(error)")
             self.transactions = []
@@ -62,11 +93,13 @@ class MyTransactionsPageViewModel: ObservableObject {
     func refreshFromServer() async {
         isLoading = true
         defer { isLoading = false }
-        do {
-            try await transactionSyncer?.pullChanges(date: filterDate)
-        } catch {
-            print("Failed to sync transactions: \(error)")
-        }
+        await masterSyncer?.sync(
+            filterMode: self.filterMode,
+            date: self.filterDate,
+            transactionTypeRid: self.filterTransactionType?.rid,
+            startDate: self.filterStartDate,
+            endDate: self.filterEndDate
+        )
         fetchTransactions()
     }
     
@@ -74,7 +107,7 @@ class MyTransactionsPageViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await transactionSyncer?.pushChanges()
+            try await masterSyncer?.pushChanges()
         } catch {
             print("Transaction changes upload failed: \(error)")
         }

@@ -70,44 +70,7 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
         }
     }
     
-    override func pullChanges(date: Date?) async throws {
-        guard let filterDate = date else { throw SyncError.missingDateContext }
-        
-        let dtos = try await instanceService.fetchActivityInstances(for: filterDate)
-        let serverRids = Set(dtos.map { $0.id })
-        
-        let (startOfDay, endOfDay) = getDayBounds(for: filterDate)
-        let future = Date.distantFuture
-        let predicate = #Predicate<ActivityInstance> {
-            $0.timeStart < endOfDay && ($0.timeEnd ?? future) > startOfDay
-        }
-        let descriptor = FetchDescriptor<ActivityInstance>(predicate: predicate)
-        let relevantLocalModels = try modelContext.fetch(descriptor)
-        
-        let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
-        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in return first })
-        let localRids = Set(localCache.keys)
-        
-        for dto in dtos {
-            if let existingModel = localCache[dto.id] {
-                guard existingModel.syncStatus == .synced else { continue }
-                existingModel.update(fromDto: dto)
-            } else {
-                let newModel = ActivityInstance(fromDto: dto)
-                modelContext.insert(newModel)
-            }
-        }
-        
-        let ridsToDelete = localRids.subtracting(serverRids)
-        for rid in ridsToDelete {
-            if let modelToDelete = localCache[rid], modelToDelete.syncStatus == .synced {
-                modelContext.delete(modelToDelete)
-            }
-        }
-        
-        try resolveRelationships()
-        if modelContext.hasChanges { try modelContext.save() }
-    }
+
     
     func pullChanges(activityRid: Int, startDate: Date, endDate: Date) async throws {
         

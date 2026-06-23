@@ -44,7 +44,7 @@ struct MyActivitiesPage: View {
                     refreshAction: { await viewModel.syncWithServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
                     onAdd: { viewModel.createActivityInstance() },
-                    showTrailingOptions: viewModel.filterMode == .byDate,
+                    showTrailingOptions: viewModel.filterMode == .daily,
                     leadingOptions: {
                         Section("Integrations") {
                             Button(action: { showingImporter = true }) {
@@ -72,7 +72,24 @@ struct MyActivitiesPage: View {
     // MARK: - View Components (Sheets & Observers attached here to split compile time)
     private var mainListView: some View {
         VStack(spacing: 12) {
-            FilterControlView(viewModel: viewModel)
+            GenericFilterControlView(
+                filterMode: $viewModel.filterMode,
+                filterDate: $viewModel.filterDate,
+                filterStartDate: $viewModel.filterStartDate,
+                filterEndDate: $viewModel.filterEndDate,
+                advancedFilterLabel: "Activity"
+            ) {
+                NavigationLink {
+                    ActivitySelectorView(selectedActivity: $viewModel.filterActivity)
+                } label: {
+                    Text(viewModel.filterActivity?.name ?? "Select one")
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+            }
             
             ScrollView {
                 LazyVStack(spacing: 8) {

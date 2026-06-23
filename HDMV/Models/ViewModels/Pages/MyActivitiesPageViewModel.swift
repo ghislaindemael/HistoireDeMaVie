@@ -12,10 +12,7 @@ import SwiftData
 @MainActor
 class MyActivitiesPageViewModel: ObservableObject {
     
-    enum FilterMode: Hashable {
-        case byDate
-        case byActivity
-    }
+
     
     private var modelContext: ModelContext?
     private var masterSyncer: MasterSyncer?
@@ -23,7 +20,7 @@ class MyActivitiesPageViewModel: ObservableObject {
 
     @Published var isLoading: Bool = false
     
-    @Published var filterMode: FilterMode = .byDate
+    @Published var filterMode: TimelineFilterMode = .daily
     // State for the 'byDate' mode
     @Published var filterDate: Date = .now
     // State for the 'byActivity' mode
@@ -65,7 +62,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         let descriptor: FetchDescriptor<ActivityInstance>
         
         switch filterMode {
-            case .byDate:
+            case .daily:
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: filterDate)
                 guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
@@ -82,7 +79,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                     sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                 )
                 
-            case .byActivity:
+            case .advanced:
                 
                 guard let activity = filterActivity else {
                     self.instances = []
@@ -181,7 +178,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         let descriptor: FetchDescriptor<LifeEvent>
         
         switch filterMode {
-            case .byDate:
+            case .daily:
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: filterDate)
                 guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
@@ -197,7 +194,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                     sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                 )
                 
-            case .byActivity:
+            case .advanced:
                 self.lifeEvents = []
                 return
         }
@@ -216,7 +213,7 @@ class MyActivitiesPageViewModel: ObservableObject {
         let descriptor: FetchDescriptor<Quote>
         
         switch filterMode {
-            case .byDate:
+            case .daily:
                 let calendar = Calendar.current
                 let startOfDay = calendar.startOfDay(for: filterDate)
                 guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
@@ -229,7 +226,7 @@ class MyActivitiesPageViewModel: ObservableObject {
                     predicate: predicate,
                     sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
                 )
-            case .byActivity:
+            case .advanced:
                 // No quotes for activity mode (they are fetched as children)
                 descriptor = FetchDescriptor<Quote>(
                     predicate: #Predicate<Quote> { _ in false }

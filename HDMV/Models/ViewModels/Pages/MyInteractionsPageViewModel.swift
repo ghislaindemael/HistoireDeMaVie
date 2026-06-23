@@ -13,19 +13,26 @@ import SwiftData
 @MainActor
 class MyInteractionsPageViewModel: ObservableObject {
     
-    enum FilterMode: Hashable {
-        case byDate
-        case byPerson
-    }
+
     
     private var modelContext: ModelContext?
-    private var interactionSyncer: InteractionSyncer?
+    private var masterSyncer: MasterSyncer?
     private var settings: SettingsStore = SettingsStore.shared
     
     @Published var isLoading: Bool = false
     
-    @Published var filterMode: FilterMode = .byDate
+    @Published var filterMode: TimelineFilterMode = .daily
     @Published var filterDate: Date = .now
+    
+    @Published var filterStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: .now) ?? .now {
+        didSet { fetchInteractions() }
+    }
+    @Published var filterEndDate: Date = .now {
+        didSet { fetchInteractions() }
+    }
+    @Published var filterPerson: Person? {
+        didSet { fetchInteractions() }
+    }
     
     @Published var interactions: [Interaction] = []
         
@@ -35,7 +42,7 @@ class MyInteractionsPageViewModel: ObservableObject {
     
     func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        self.interactionSyncer = InteractionSyncer(modelContext: modelContext)
+        self.masterSyncer = MasterSyncer(modelContext: modelContext)
     }
     
     // MARK: - Data Fetching
@@ -44,22 +51,48 @@ class MyInteractionsPageViewModel: ObservableObject {
         guard let context = modelContext else { return }
         
         do {
-            
-            let calendar = Calendar.current
-            let startOfDay = calendar.startOfDay(for: filterDate)
-            guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
-            let future = Date.distantFuture
-            
-            let predicate = #Predicate<Interaction> {
-                $0.timeStart < endOfDay &&
-                ($0.timeEnd ?? future) > startOfDay
+            if filterMode == .daily {
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: filterDate)
+                guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
+                let future = Date.distantFuture
+                
+                let predicate = #Predicate<Interaction> {
+                    $0.timeStart < endOfDay &&
+                    ($0.timeEnd ?? future) > startOfDay
+                }
+                let descriptor = FetchDescriptor<Interaction>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+                self.interactions = try context.fetch(descriptor)
+            } else {
+                let startOfDay = Calendar.current.startOfDay(for: filterStartDate)
+                let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: filterEndDate)) ?? .now
+                let future = Date.distantFuture
+                
+                // SwiftData predicate doesn't handle collection 'contains' with relationships well in all cases,
+                // so we fetch by date and then filter by person in memory if needed.
+                let predicate = #Predicate<Interaction> {
+                    $0.timeStart < endOfDay &&
+                    ($0.timeEnd ?? future) > startOfDay
+                }
+                let descriptor = FetchDescriptor<Interaction>(
+                    predicate: predicate,
+                    sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
+                )
+                
+                var fetched = try context.fetch(descriptor)
+                
+                if let person = filterPerson, let personRid = person.rid {
+                    fetched = fetched.filter { interaction in
+                        interaction.personRids.contains(personRid)
+                    }
+                }
+                
+                self.interactions = fetched
             }
-            let descriptor = FetchDescriptor<Interaction>(
-                predicate: predicate,
-                sortBy: [SortDescriptor(\.timeStart, order: .reverse)]
-            )
-            
-            self.interactions = try context.fetch(descriptor)
         } catch {
             print("Error during interaction fetch: \(error)")
             self.interactions = []
@@ -72,11 +105,13 @@ class MyInteractionsPageViewModel: ObservableObject {
     func refreshFromServer() async {
         isLoading = true
         defer { isLoading = false }
-        do {
-            try await interactionSyncer?.pullChanges(date: filterDate)
-        } catch {
-            print("Failed to sync interactions: \(error)")
-        }
+        await masterSyncer?.sync(
+            filterMode: self.filterMode,
+            date: self.filterDate,
+            personRid: self.filterPerson?.rid,
+            startDate: self.filterStartDate,
+            endDate: self.filterEndDate
+        )
         fetchInteractions()
     }
     
@@ -84,7 +119,7 @@ class MyInteractionsPageViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await interactionSyncer?.pushChanges()
+            try await masterSyncer?.pushChanges()
         } catch {
             print("MasterSyncer changes upload failed: \(error)")
         }

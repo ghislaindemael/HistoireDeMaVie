@@ -76,4 +76,27 @@ class TransactionService: SupabaseDataService<TransactionDTO, TransactionPayload
             .execute()
             .value
     }
+    
+    /// Fetches transactions for a specific transaction type within a date range
+    func fetchTransactions(
+        transactionTypeId: Int,
+        startDate: Date,
+        endDate: Date
+    ) async throws -> [TransactionDTO] {
+        guard let client = supabaseClient else { return [] }
+        
+        let formatter = ISO8601DateFormatter()
+        
+        let query = client
+            .from(tableName)
+            .select()
+            .eq("type_id", value: transactionTypeId)
+            .gte("time", value: formatter.string(from: startDate))
+            .lt("time", value: formatter.string(from: endDate))
+        
+        return try await query
+            .order("time", ascending: false)
+            .execute()
+            .value
+    }
 }

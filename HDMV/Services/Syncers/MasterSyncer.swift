@@ -28,30 +28,41 @@ class MasterSyncer {
     }
 
     func sync(
-        filterMode: MyActivitiesPageViewModel.FilterMode,
+        filterMode: TimelineFilterMode,
         date: Date,
-        activityRid: Int?,
-        startDate: Date?,
-        endDate: Date?
+        activityRid: Int? = nil,
+        personRid: Int? = nil,
+        transactionTypeRid: Int? = nil,
+        startDate: Date? = nil,
+        endDate: Date? = nil
     ) async {
         do {
             switch filterMode {
-                case .byDate:
+                case .daily:
                     try await activityInstanceSyncer.pullChanges(date: date)
-                case .byActivity:
-                    guard let actRid = activityRid, let start = startDate, let end = endDate else {
-                        print("❌ MasterSyncer: Missing parameters for byActivity sync.")
+                    try await interactionSyncer.pullChanges(date: date)
+                    try await tripSyncer.pullChanges(date: date)
+                    try await lifeEventSyncer.pullChanges(date: date)
+                    try await quoteSyncer.pullChanges(date: date)
+                    try await transactionSyncer.pullChanges(date: date)
+                case .advanced:
+                    guard let start = startDate, let end = endDate else {
+                        print("❌ MasterSyncer: Missing date parameters for advanced sync.")
                         return
                     }
-                    try await activityInstanceSyncer.pullChanges(activityRid: actRid, startDate: start, endDate: end)
+                    
+                    if let actRid = activityRid {
+                        try await activityInstanceSyncer.pullChanges(activityRid: actRid, startDate: start, endDate: end)
+                    }
+                    
+                    if let pRid = personRid {
+                        try await interactionSyncer.pullChanges(personRid: pRid, startDate: start, endDate: end)
+                    }
+                    
+                    if let tRid = transactionTypeRid {
+                        try await transactionSyncer.pullChanges(transactionTypeRid: tRid, startDate: start, endDate: end)
+                    }
             }
-            
-            let primaryDate = (filterMode == .byDate) ? date : startDate ?? date
-            try await tripSyncer.pullChanges(date: primaryDate)
-            try await interactionSyncer.pullChanges(date: primaryDate)
-            try await lifeEventSyncer.pullChanges(date: primaryDate)
-            try await quoteSyncer.pullChanges(date: primaryDate)
-            try await transactionSyncer.pullChanges(date: primaryDate)
             
             try await pushChanges()
             

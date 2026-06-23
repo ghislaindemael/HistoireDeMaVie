@@ -42,16 +42,10 @@ struct MyInteractionsPage: View {
                     syncAction: { await viewModel.uploadLocalChanges() },
                     onAdd: { viewModel.createInteraction() },
                     leadingOptions: {
-                    Section("Advanced") {
-                        Button(action: {
-                            print("Create Grouped Interaction - Coming Soon")
-                        }) {
-                            Label("Grouped Interaction", systemImage: "person.3.fill")
-                        }
-                        .disabled(true)
+                    
                     }
-                }
                 )
+                .onChange(of: viewModel.filterMode) { viewModel.fetchInteractions() }
                 .onChange(of: viewModel.filterDate) {
                     viewModel.fetchInteractions()
                     appNavigator.selectedDate = viewModel.filterDate
@@ -71,8 +65,15 @@ struct MyInteractionsPage: View {
     
     private var mainListView: some View {
         VStack(spacing: 12) {
-            LockedDatePickerView(selection: $viewModel.filterDate)
-                .padding(.horizontal)
+            GenericFilterControlView(
+                filterMode: $viewModel.filterMode,
+                filterDate: $viewModel.filterDate,
+                filterStartDate: $viewModel.filterStartDate,
+                filterEndDate: $viewModel.filterEndDate,
+                advancedFilterLabel: "Person"
+            ) {
+                PersonSelectorView(selectedPerson: $viewModel.filterPerson)
+            }
             
             ScrollView {
                 LazyVStack(spacing: 8) {

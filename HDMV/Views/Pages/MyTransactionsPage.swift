@@ -47,6 +47,7 @@ struct MyTransactionsPage: View {
                         }
                     }
                 )
+                .onChange(of: viewModel.filterMode) { viewModel.fetchTransactions() }
                 .onChange(of: viewModel.filterDate) {
                     viewModel.fetchTransactions()
                     appNavigator.selectedDate = viewModel.filterDate
@@ -64,10 +65,24 @@ struct MyTransactionsPage: View {
     // MARK: - View Components
     private var mainListView: some View {
         VStack(spacing: 12) {
-            // A DatePicker is good, but for finances, you might eventually 
-            // want a "Month/Year" picker as daily filtering can be too narrow.
-            LockedDatePickerView(selection: $viewModel.filterDate)
-                .padding(.horizontal)
+            GenericFilterControlView(
+                filterMode: $viewModel.filterMode,
+                filterDate: $viewModel.filterDate,
+                filterStartDate: $viewModel.filterStartDate,
+                filterEndDate: $viewModel.filterEndDate,
+                advancedFilterLabel: "Type"
+            ) {
+                NavigationLink {
+                    TransactionTypeSelectorView(selectedType: $viewModel.filterTransactionType)
+                } label: {
+                    Text(viewModel.filterTransactionType?.name ?? "Select one")
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+            }
             
             ScrollView {
                 LazyVStack(spacing: 8) {
