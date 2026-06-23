@@ -110,32 +110,30 @@ struct DynamicOptionRow: View {
                     if config.multiselect == true {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(option.name)
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack {
-                                    ForEach(choices, id: \.slug) { choice in
-                                        let isSelected = optionValue.wrappedValue.components(separatedBy: ",").contains(choice.slug)
-                                        HStack(spacing: 4) {
-                                            if let icon = choice.icon {
-                                                Image(systemName: icon)
-                                            }
-                                            Text(choice.label)
+                            FlowLayout(spacing: 6) {
+                                ForEach(choices, id: \.slug) { choice in
+                                    let isSelected = optionValue.wrappedValue.components(separatedBy: ",").contains(choice.slug)
+                                    HStack(spacing: 4) {
+                                        if let icon = choice.icon {
+                                            Image(systemName: icon)
                                         }
-                                            .font(.subheadline)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
-                                            .foregroundColor(isSelected ? .white : .primary)
-                                            .clipShape(Capsule())
-                                            .onTapGesture {
-                                                var current = optionValue.wrappedValue.components(separatedBy: ",").filter { !$0.isEmpty }
-                                                if isSelected {
-                                                    current.removeAll { $0 == choice.slug }
-                                                } else {
-                                                    current.append(choice.slug)
-                                                }
-                                                optionValue.wrappedValue = current.joined(separator: ",")
-                                            }
+                                        Text(choice.label)
                                     }
+                                        .font(.subheadline)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
+                                        .foregroundColor(isSelected ? .white : .primary)
+                                        .clipShape(Capsule())
+                                        .onTapGesture {
+                                            var current = optionValue.wrappedValue.components(separatedBy: ",").filter { !$0.isEmpty }
+                                            if isSelected {
+                                                current.removeAll { $0 == choice.slug }
+                                            } else {
+                                                current.append(choice.slug)
+                                            }
+                                            optionValue.wrappedValue = current.joined(separator: ",")
+                                        }
                                 }
                             }
                         }
