@@ -25,8 +25,7 @@ struct AgendaEntryRowView: View {
                 Spacer(minLength: 8)
                 SyncStatusIndicator(status: entry.syncStatus)
             }
-            GradientPercentageBarView(percentage: Double(entry.mood * 10))
-                .frame(height: 8)
+            MoodPillView(mood: entry.mood)
 
             if !entry.moodComments.isEmpty {
                 Text(entry.moodComments)

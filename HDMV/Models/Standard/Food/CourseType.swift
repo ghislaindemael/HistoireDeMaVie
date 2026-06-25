@@ -15,8 +15,7 @@ enum CourseType: String, Codable, CaseIterable, Identifiable {
     case fromage = "Fromage"
     case dessert = "Dessert"
     case fruits = "Fruits"
-    case cafe = "Café"
-    case the = "Thé / Tisane"
+    case the = "Thé / Tisane / Café"
     case digestif = "Digestif"
     case divers = "Divers / Notes"
     
