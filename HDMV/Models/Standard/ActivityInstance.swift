@@ -324,10 +324,10 @@ extension ActivityInstance {
     @discardableResult
     static func create(in context: ModelContext, date: Date) -> ActivityInstance {
         let smartDate = date.smartCreationTime
-        let isToday = Calendar.current.isDateInToday(date)
+        let isOngoing = abs(smartDate.timeIntervalSinceNow) < 60
         
         let newInstance = ActivityInstance(timeStart: smartDate)
-        if !isToday {
+        if !isOngoing {
             newInstance.timeEnd = smartDate.addingTimeInterval(3600) // 1 hour later
         }
         
@@ -341,8 +341,11 @@ extension ActivityInstance {
         let childStart: Date
         let childEnd: Date?
         
-        if calendar.isDateInToday(filterDate) {
-            childStart = Date()
+        let now = Date.now
+        let isToday = calendar.isDateInToday(filterDate) || (calendar.isDateInYesterday(filterDate) && calendar.component(.hour, from: now) < 3 && SettingsStore.shared.appMode == .live)
+        
+        if isToday || parent.timeEnd == nil {
+            childStart = now
             childEnd = nil
         } else {
             childStart = parent.timeStart.addingTimeInterval(1)

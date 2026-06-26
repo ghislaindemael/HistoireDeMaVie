@@ -400,8 +400,11 @@ extension Trip {
         let tripStart: Date
         let tripEnd: Date?
         
-        if calendar.isDateInToday(filterDate) {
-            tripStart = Date()
+        let now = Date.now
+        let isToday = calendar.isDateInToday(filterDate) || (calendar.isDateInYesterday(filterDate) && calendar.component(.hour, from: now) < 3 && SettingsStore.shared.appMode == .live)
+        
+        if isToday || parent.timeEnd == nil {
+            tripStart = now
             tripEnd = nil
         } else {
             tripStart = parent.timeStart.addingTimeInterval(1)

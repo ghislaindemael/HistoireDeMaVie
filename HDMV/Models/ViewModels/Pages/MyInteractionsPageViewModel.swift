@@ -136,9 +136,10 @@ class MyInteractionsPageViewModel: ObservableObject {
         
     func createInteraction(date: Date? = nil) {
         guard let context = modelContext else { return }
-        let date = filterDate.smartCreationTime
+        let creationDate = (date ?? filterDate).smartCreationTime
+        updateFilterDateIfNeeded(for: creationDate)
         let newInteraction = Interaction(
-            timeStart: date
+            timeStart: creationDate
         )
         context.insert(newInteraction)
         do {
@@ -174,4 +175,10 @@ class MyInteractionsPageViewModel: ObservableObject {
         }
     }
     
+    private func updateFilterDateIfNeeded(for smartDate: Date) {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(smartDate) && !calendar.isDateInToday(filterDate) {
+            filterDate = .now
+        }
+    }
 }

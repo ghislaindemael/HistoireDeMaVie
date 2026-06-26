@@ -125,6 +125,7 @@ class MyTransactionsPageViewModel: ObservableObject {
     func createTransaction(date: Date? = nil) {
         guard let context = modelContext else { return }
         let creationDate = (date ?? filterDate).smartCreationTime
+        updateFilterDateIfNeeded(for: creationDate)
         
         let newTransaction = Transaction(
             timeStart: creationDate,
@@ -151,6 +152,13 @@ class MyTransactionsPageViewModel: ObservableObject {
         }
         try? context.save()
         fetchTransactions()
+    }
+    
+    private func updateFilterDateIfNeeded(for smartDate: Date) {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(smartDate) && !calendar.isDateInToday(filterDate) {
+            filterDate = .now
+        }
     }
 }
 

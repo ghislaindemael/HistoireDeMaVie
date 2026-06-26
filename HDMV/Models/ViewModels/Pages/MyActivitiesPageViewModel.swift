@@ -293,13 +293,16 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createActivityInstance(date: Date? = nil) {
         guard let context = modelContext else { return }
-        ActivityInstance.create(in: context, date: date ?? filterDate)
+        let smartDate = (date ?? filterDate).smartCreationTime
+        updateFilterDateIfNeeded(for: smartDate)
+        ActivityInstance.create(in: context, date: smartDate)
         fetchDailyData()
     }
     
     func createParentAndChildActivity(date: Date? = nil) {
         guard let context = modelContext else { return }
         let smartDate = (date ?? filterDate).smartCreationTime
+        updateFilterDateIfNeeded(for: smartDate)
         
         let parentInstance = ActivityInstance.create(in: context, date: smartDate)
         
@@ -312,19 +315,25 @@ class MyActivitiesPageViewModel: ObservableObject {
     
     func createTransaction() {
         guard let context = modelContext else { return }
-        Transaction.create(in: context, date: filterDate)
+        let smartDate = filterDate.smartCreationTime
+        updateFilterDateIfNeeded(for: smartDate)
+        Transaction.create(in: context, date: smartDate)
         fetchDailyData()
     }
     
     func createLifeEvent() {
         guard let context = modelContext else { return }
-        LifeEvent.create(in: context, date: filterDate)
+        let smartDate = filterDate.smartCreationTime
+        updateFilterDateIfNeeded(for: smartDate)
+        LifeEvent.create(in: context, date: smartDate)
         fetchDailyData()
     }
     
     func createQuote() {
         guard let context = modelContext else { return }
-        Quote.create(in: context, date: filterDate)
+        let smartDate = filterDate.smartCreationTime
+        updateFilterDateIfNeeded(for: smartDate)
+        Quote.create(in: context, date: smartDate)
         fetchDailyData()
     }
     
@@ -396,6 +405,13 @@ class MyActivitiesPageViewModel: ObservableObject {
         } else {
             // Return noon on the selected filter date
             return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: filterDate) ?? filterDate
+        }
+    }
+    
+    private func updateFilterDateIfNeeded(for smartDate: Date) {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(smartDate) && !calendar.isDateInToday(filterDate) {
+            filterDate = .now
         }
     }
     
