@@ -32,16 +32,22 @@ struct PathDetailSheet: View {
                     TextField("Details", text: $viewModel.editor.details.orEmpty())
                 }
                 Section("Start place"){
-                    PlaceSelectorView(selectedPlace: Binding(
-                        get: { viewModel.editor.placeStart },
-                        set: { viewModel.editor.placeStart = $0 }
-                    ))
+                    PlaceSelectorView(
+                        selectedPlace: Binding(
+                            get: { viewModel.editor.placeStart },
+                            set: { viewModel.editor.placeStart = $0 }
+                        ),
+                        isForTrip: true
+                    )
                 }
                 Section("End place"){
-                    PlaceSelectorView(selectedPlace: Binding(
-                        get: { viewModel.editor.placeEnd},
-                        set: { viewModel.editor.placeEnd = $0 }
-                    ))
+                    PlaceSelectorView(
+                        selectedPlace: Binding(
+                            get: { viewModel.editor.placeEnd},
+                            set: { viewModel.editor.placeEnd = $0 }
+                        ),
+                        isForTrip: true
+                    )
                 }
                 pathSection
                 

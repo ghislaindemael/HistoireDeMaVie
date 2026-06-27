@@ -36,6 +36,18 @@ struct PlaceDetailSheet: View {
                     ))
                 }
 
+                Section("Options") {
+                    Toggle("Reachable in Trip", isOn: Binding(
+                        get: { viewModel.editor.decodedOptions?.reachableInTrip ?? true },
+                        set: { newValue in
+                            if viewModel.editor.decodedOptions == nil {
+                                viewModel.editor.decodedOptions = PlaceOptions()
+                            }
+                            viewModel.editor.decodedOptions?.reachableInTrip = newValue
+                        }
+                    ))
+                }
+                
                 Section("Usage") {
                     Toggle("Favorite", isOn: $viewModel.editor.isFavorite)
                     Toggle("Cached", isOn: $viewModel.editor.cache)

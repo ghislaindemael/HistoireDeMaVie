@@ -18,23 +18,18 @@ struct PlaceRowView: View {
     var body: some View {
         VStack{
             HStack {
-                Text(place.name)
-                    .bold(place.name == "Unset")
-                    .foregroundStyle(place.name == "Unset" ? .red : .primary)
+                UnsettableTextView(
+                    text: place.name,
+                    font: .body,
+                    isItalicized: place.archived
+                )
                 Spacer()
-                if let onFav = onFavoriteToggle {
-                    Button {
-                        onFav(place)
-                    } label: {
-                        Image(systemName: place.isFavorite ? "star.fill" : "star")
-                            .foregroundColor(place.isFavorite ? .yellow : .gray)
-                    }
-                    .buttonStyle(.plain)
-                }
-                CacheToggleButton(model: place) { p in
-                    onCacheToggle(p)
-                }
-                SyncStatusIndicator(status: place.syncStatus)
+                CatalogueRowControlsView(
+                    model: place,
+                    isFavorite: place.isFavorite,
+                    onFavoriteToggle: onFavoriteToggle,
+                    onToggle: onCacheToggle
+                )
             }
         }
     }

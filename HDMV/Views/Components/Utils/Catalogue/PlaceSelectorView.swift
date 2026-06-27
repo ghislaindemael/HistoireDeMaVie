@@ -17,6 +17,7 @@ struct PlaceSelectorView: View {
     var selectedVehicle: Vehicle?
     var targetDate: Date?
     var disableSuggestion: Bool
+    var isForTrip: Bool
     
     @State private var displayCityId: Int?
     @State private var initialPlace: Place?
@@ -30,12 +31,13 @@ struct PlaceSelectorView: View {
     
     // MARK: - Init
     
-    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil, selectedVehicle: Vehicle? = nil, targetDate: Date? = nil, disableSuggestion: Bool = false) {
+    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil, selectedVehicle: Vehicle? = nil, targetDate: Date? = nil, disableSuggestion: Bool = false, isForTrip: Bool = false) {
         self._selectedPlace = selectedPlace
         self.linkedPlaceRid = linkedPlaceRid
         self.selectedVehicle = selectedVehicle
         self.targetDate = targetDate
         self.disableSuggestion = disableSuggestion
+        self.isForTrip = isForTrip
     }
     
     private func initializeState() {
@@ -76,10 +78,20 @@ struct PlaceSelectorView: View {
     }
     
     private func filterPlacesByVehicle(_ places: [Place]) -> [Place] {
-        guard !showAllPlaces else { return places }
-        guard let vehicle = selectedVehicle else { return places }
+        // Option check
+        let filteredByOptions = places.filter { place in
+            if isForTrip {
+                if let options = place.decodedOptions, let reachable = options.reachableInTrip, reachable == false {
+                    return false
+                }
+            }
+            return true
+        }
         
-        return places.filter { place in
+        guard !showAllPlaces else { return filteredByOptions }
+        guard let vehicle = selectedVehicle else { return filteredByOptions }
+        
+        return filteredByOptions.filter { place in
             // Rule 1: Transit Line
             if let vRid = vehicle.rid {
                 let matchingTransitLines = transitLines.filter { $0.allowedVehicleRids?.contains(vRid) == true }

@@ -22,11 +22,28 @@ final class Place: CatalogueModel, EditableModel {
     var isFavorite: Bool = false
     var allowedVehicleRids: [Int] = []
     var allowedVehicleTypeSlugs: [String] = []
+    var options_details: Data?
     var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias DTO = PlaceDTO
     typealias Payload = PlacePayload
     typealias Editor = PlaceEditor
+    
+    // MARK: - Options Decoding
+    
+    var decodedOptions: PlaceOptions? {
+        get {
+            guard let data = options_details else { return nil }
+            return try? JSONDecoder().decode(PlaceOptions.self, from: data)
+        }
+        set {
+            if let newValue = newValue {
+                options_details = try? JSONEncoder().encode(newValue)
+            } else {
+                options_details = nil
+            }
+        }
+    }
     
     // MARK: Relationships
     
@@ -54,11 +71,12 @@ final class Place: CatalogueModel, EditableModel {
          name: String = "Unset",
          cityRid: Int? = nil,
          city: City? = nil,
-         cache: Bool = true,
+         cache: Bool = false,
          archived: Bool = false,
          isFavorite: Bool = false,
          allowedVehicleRids: [Int] = [],
          allowedVehicleTypeSlugs: [String] = [],
+         optionsDetails: Data? = nil,
          syncStatus: SyncStatus = .unsynced) {
         self.rid = rid
         self.name = name
@@ -68,10 +86,16 @@ final class Place: CatalogueModel, EditableModel {
         self.isFavorite = isFavorite
         self.allowedVehicleRids = allowedVehicleRids
         self.allowedVehicleTypeSlugs = allowedVehicleTypeSlugs
+        self.options_details = optionsDetails
         self.syncStatusRaw = syncStatus.rawValue
     }
     
     convenience init(fromDto dto: PlaceDTO) {
+        var optionsData: Data? = nil
+        if let options = dto.options_details {
+            optionsData = try? JSONEncoder().encode(options)
+        }
+        
         self.init(
             rid: dto.id,
             name: dto.name,
@@ -79,6 +103,7 @@ final class Place: CatalogueModel, EditableModel {
             archived: dto.archived,
             allowedVehicleRids: dto.allowed_vehicle_ids ?? [],
             allowedVehicleTypeSlugs: dto.allowed_vehicle_type_slugs ?? [],
+            optionsDetails: optionsData,
             syncStatus: SyncStatus.synced
         )
     }
@@ -90,12 +115,22 @@ final class Place: CatalogueModel, EditableModel {
         self.archived = dto.archived
         self.allowedVehicleRids = dto.allowed_vehicle_ids ?? []
         self.allowedVehicleTypeSlugs = dto.allowed_vehicle_type_slugs ?? []
+        if let options = dto.options_details {
+            self.options_details = try? JSONEncoder().encode(options)
+        } else {
+            self.options_details = nil
+        }
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
     func isValid() -> Bool {
         return name != "Unset" && name.count > 0 && cityRid != nil
     }
+}
+
+// MARK: - Options Payload
+struct PlaceOptions: Codable, Sendable {
+    var reachableInTrip: Bool? = true
 }
 
 
@@ -107,6 +142,7 @@ struct PlaceDTO: Codable, Identifiable, Sendable {
     var archived: Bool
     var allowed_vehicle_ids: [Int]?
     var allowed_vehicle_type_slugs: [String]?
+    var options_details: PlaceOptions?
 }
 
 struct PlacePayload: Codable, InitializableWithModel {
@@ -117,6 +153,7 @@ struct PlacePayload: Codable, InitializableWithModel {
     var archived: Bool
     var allowed_vehicle_ids: [Int]?
     var allowed_vehicle_type_slugs: [String]?
+    var options_details: PlaceOptions?
     
     init?(from place: Place) {
         guard place.isValid(), let cityRid = place.cityRid else {
@@ -127,6 +164,7 @@ struct PlacePayload: Codable, InitializableWithModel {
         self.archived = place.archived
         self.allowed_vehicle_ids = place.allowedVehicleRids.isEmpty ? nil : place.allowedVehicleRids
         self.allowed_vehicle_type_slugs = place.allowedVehicleTypeSlugs.isEmpty ? nil : place.allowedVehicleTypeSlugs
+        self.options_details = place.decodedOptions
     }
 }
 
@@ -141,6 +179,7 @@ struct PlaceEditor: CachableModel, EditorProtocol {
     var isFavorite: Bool
     var allowedVehicleRids: [Int]
     var allowedVehicleTypeSlugs: [String]
+    var decodedOptions: PlaceOptions?
     
     typealias Model = Place
     
@@ -154,6 +193,7 @@ struct PlaceEditor: CachableModel, EditorProtocol {
         self.isFavorite = place.isFavorite
         self.allowedVehicleRids = place.allowedVehicleRids
         self.allowedVehicleTypeSlugs = place.allowedVehicleTypeSlugs
+        self.decodedOptions = place.decodedOptions
     }
     
     func apply(to place: Place) {
@@ -165,5 +205,6 @@ struct PlaceEditor: CachableModel, EditorProtocol {
         place.isFavorite = self.isFavorite
         place.allowedVehicleRids = self.allowedVehicleRids
         place.allowedVehicleTypeSlugs = self.allowedVehicleTypeSlugs
+        place.decodedOptions = self.decodedOptions
     }
 }
