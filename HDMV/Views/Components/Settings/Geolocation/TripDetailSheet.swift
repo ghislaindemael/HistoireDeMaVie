@@ -36,14 +36,17 @@ struct TripDetailSheet: View {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeStart,
                         linkedPlaceRid: viewModel.editor.placeStartRid,
-                        selectedVehicle: viewModel.editor.vehicle
+                        selectedVehicle: viewModel.editor.vehicle,
+                        targetDate: viewModel.editor.timeStart
                     )
                 }
                 Section(header: headerView("End Place")) {
                     PlaceSelectorView(
                         selectedPlace: $viewModel.editor.placeEnd,
                         linkedPlaceRid: viewModel.editor.placeEndRid,
-                        selectedVehicle: viewModel.editor.vehicle
+                        selectedVehicle: viewModel.editor.vehicle,
+                        targetDate: viewModel.editor.timeEnd ?? viewModel.editor.timeStart,
+                        disableSuggestion: true
                     )
                 }
                 pathSection

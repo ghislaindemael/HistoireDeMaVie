@@ -156,7 +156,8 @@ struct ActivityInstanceDetailSheet: View {
                 Section(header: headerView("Place")) {
                     PlaceSelectorView(
                         selectedPlace: detailsPlaceBinding,
-                        linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId
+                        linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId,
+                        targetDate: viewModel.editor.timeStart
                     )
                 }
             }

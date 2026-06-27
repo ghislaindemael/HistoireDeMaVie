@@ -15,6 +15,8 @@ struct PlaceSelectorView: View {
     @Binding var selectedPlace: Place?
     var linkedPlaceRid: Int?
     var selectedVehicle: Vehicle?
+    var targetDate: Date?
+    var disableSuggestion: Bool
     
     @State private var displayCityId: Int?
     @State private var initialPlace: Place?
@@ -22,12 +24,18 @@ struct PlaceSelectorView: View {
     @State private var uncachedCity: City?
     @State private var showAllPlaces: Bool = false
     
+    @State private var suggestedPlace: Place?
+    @State private var showSuggestion: Bool = true
+    @State private var hasComputedSuggestion: Bool = false
+    
     // MARK: - Init
     
-    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil, selectedVehicle: Vehicle? = nil) {
+    init(selectedPlace: Binding<Place?>, linkedPlaceRid: Int? = nil, selectedVehicle: Vehicle? = nil, targetDate: Date? = nil, disableSuggestion: Bool = false) {
         self._selectedPlace = selectedPlace
         self.linkedPlaceRid = linkedPlaceRid
         self.selectedVehicle = selectedVehicle
+        self.targetDate = targetDate
+        self.disableSuggestion = disableSuggestion
     }
     
     private func initializeState() {
@@ -125,8 +133,28 @@ struct PlaceSelectorView: View {
             if displayCityId != nil {
                 placePicker
             }
+            
+            if showSuggestion, let suggestion = suggestedPlace, suggestion.rid != selectedPlace?.rid {
+                Divider()
+                Button {
+                    withAnimation {
+                        displayCityId = suggestion.cityRid
+                        selectedPlace = suggestion
+                        showSuggestion = false
+                    }
+                } label: {
+                    Label("\(suggestion.name)", systemImage: "sparkles")
+                        .lineLimit(1)
+                        .foregroundStyle(.primary)
+                }
+                .buttonStyle(.borderless)
+                .padding(.top, 4)
+            }
         }
-        .onAppear(perform: initializeState)
+        .onAppear {
+            initializeState()
+            computeSuggestedPlace()
+        }
     }
     
     // MARK: - Subviews
@@ -217,5 +245,54 @@ struct PlaceSelectorView: View {
         return try? modelContext.fetch(descriptor).first
     }
     
+    private func computeSuggestedPlace() {
+        guard !hasComputedSuggestion, !disableSuggestion else { return }
+        hasComputedSuggestion = true
+        
+        let date = targetDate ?? .now
+        
+        // 1. Fetch latest Trip end place
+        let tripsPredicate = #Predicate<Trip> { $0.timeStart <= date }
+        var tripsDescriptor = FetchDescriptor(predicate: tripsPredicate, sortBy: [SortDescriptor(\.timeStart, order: .reverse)])
+        tripsDescriptor.fetchLimit = 30
+        let recentTrips = (try? modelContext.fetch(tripsDescriptor)) ?? []
+        
+        var latestTrip: Trip? = nil
+        for trip in recentTrips {
+            if let end = trip.timeEnd, end <= date, trip.placeEndRid != nil {
+                latestTrip = trip
+                break
+            }
+        }
+        
+        // 2. Fetch latest Activity with a Place
+        let activitiesPredicate = #Predicate<ActivityInstance> { $0.timeStart <= date }
+        var activitiesDescriptor = FetchDescriptor(predicate: activitiesPredicate, sortBy: [SortDescriptor(\.timeStart, order: .reverse)])
+        activitiesDescriptor.fetchLimit = 30 // Check up to 30 recent activities
+        let recentActivities = (try? modelContext.fetch(activitiesDescriptor)) ?? []
+        
+        var latestActivityWithPlace: ActivityInstance? = nil
+        for activity in recentActivities {
+            if activity.decodedActivityDetails?.place?.placeId != nil {
+                latestActivityWithPlace = activity
+                break
+            }
+        }
+        
+        let tripTime = latestTrip?.timeEnd ?? .distantPast
+        let activityTime = latestActivityWithPlace?.timeStart ?? .distantPast
+        
+        if tripTime == .distantPast && activityTime == .distantPast {
+            return
+        }
+        
+        if activityTime >= tripTime {
+            if let placeId = latestActivityWithPlace?.decodedActivityDetails?.place?.placeId {
+                self.suggestedPlace = fetchPlace(withId: placeId)
+            }
+        } else {
+            self.suggestedPlace = latestTrip?.placeEnd
+        }
+    }
     
 }
