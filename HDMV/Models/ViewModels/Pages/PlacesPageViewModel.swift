@@ -109,6 +109,18 @@ class PlacesPageViewModel: BasePageViewModel {
         }
     }
     
+    func deletePlace(_ place: Place) {
+        guard let context = modelContext else { return }
+        context.delete(place)
+        places.removeAll { $0.id == place.id }
+        updateFilteredPlaces()
+        do {
+            try context.save()
+        } catch {
+            print("Failed to delete Place: \(error)")
+        }
+    }
+    
 
     
 }

@@ -20,6 +20,7 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
     let onAdd: () -> Void
     var fetchArchivedAction: (() async -> Void)? = nil
     var purgeArchivedAction: (() async -> Void)? = nil
+    var onDeleteItem: ((T) -> Void)? = nil
     
     // UI Builders
     @ViewBuilder let rowContent: (T) -> RowView
@@ -36,6 +37,15 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
                     rowContent(item)
                 }
                 .buttonStyle(.plain)
+                .swipeActions(edge: .trailing) {
+                    if let onDeleteItem = onDeleteItem {
+                        Button(role: .destructive) {
+                            onDeleteItem(item)
+                        } label: {
+                            Label("Delete Cache", systemImage: "trash")
+                        }
+                    }
+                }
             }
         }
         .navigationTitle(title)

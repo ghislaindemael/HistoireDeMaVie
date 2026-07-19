@@ -16,18 +16,13 @@ struct VehicleRowView: View {
     var body: some View {
         VStack{
             HStack {
-                if vehicle.type != .unset {
-                    Text(vehicle.label)
-                } else {
-                    Text("Unset")
-                        .bold()
-                        .foregroundStyle(.red)
-                }
+                UnsettableTextView(
+                    text: vehicle.type != .unset ? vehicle.label : "Unset",
+                    font: .body,
+                    isItalicized: vehicle.archived
+                )
                 Spacer()
-                CacheToggleButton(model: vehicle) { v in
-                    onCacheToggle(v)
-                }
-                SyncStatusIndicator(status: vehicle.syncStatus)
+                CatalogueRowControlsView(model: vehicle, onToggle: onCacheToggle)
             }
         }
     }

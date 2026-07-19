@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class Activity: Identifiable, Hashable, SyncableModel, EditableModel, Capable, CachableObject {
+final class Activity: Identifiable, Hashable, CatalogueModel, Capable {
     
     var rid: Int?
     var name: String

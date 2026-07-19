@@ -65,6 +65,11 @@ struct PlacesPage: View {
                 ForEach(favorites) { place in
                     placeRow(place)
                 }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deletePlace(favorites[index])
+                    }
+                }
             }
         }
         
@@ -72,6 +77,11 @@ struct PlacesPage: View {
             Section(favorites.isEmpty ? "Places" : "Other Places") {
                 ForEach(others) { place in
                     placeRow(place)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deletePlace(others[index])
+                    }
                 }
             }
         }

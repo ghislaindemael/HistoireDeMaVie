@@ -14,7 +14,6 @@ struct DataManagementComponent: View {
     @State private var isExpanded: Bool = false
     
     private let modelTypes: [any PersistentModel.Type] = [
-        Activity.self,
         DataActivityOption.self,
         DataActivityOptionMapping.self,
         ActivityInstance.self,
@@ -24,11 +23,9 @@ struct DataManagementComponent: View {
         DataMediaItem.self,
         LifeEvent.self,
         Path.self,
-        Place.self,
         Person.self,
         Transaction.self,
         Trip.self,
-        Vehicle.self,
         TransitLine.self,
         TransitStop.self,
         DataFoodItem.self,

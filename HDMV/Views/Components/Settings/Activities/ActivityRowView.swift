@@ -15,12 +15,13 @@ struct ActivityRowView: View {
     var body: some View {
         HStack {
             IconView(iconString: activity.icon ?? "")
-            Text(activity.name)
+            UnsettableTextView(
+                text: activity.name,
+                font: .body,
+                isItalicized: activity.archived
+            )
             Spacer()
-            CacheToggleButton(model: activity) { a in
-                onCacheToggle(a)
-            }
-            SyncStatusIndicator(status: activity.syncStatus)
+            CatalogueRowControlsView(model: activity, onToggle: onCacheToggle)
         }
         .foregroundStyle(.primary)
     }

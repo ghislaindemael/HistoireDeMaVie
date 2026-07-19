@@ -109,4 +109,18 @@ class ActivitiesPageViewModel: BasePageViewModel {
         }
     }
     
+    func deleteActivity(_ activity: Activity) {
+        guard let context = modelContext else { return }
+        context.delete(activity)
+        
+        // Remove from root array if it's a root activity
+        activities.removeAll { $0.id == activity.id }
+        
+        do {
+            try context.save()
+        } catch {
+            print("Failed to delete Activity: \(error)")
+        }
+    }
+    
 }

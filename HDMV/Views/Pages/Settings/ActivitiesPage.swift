@@ -16,6 +16,9 @@ struct ActivitiesPage: View {
                 onAdd: { viewModel.createActivity() },
                 fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
                 purgeArchivedAction: { viewModel.purgeArchivedFromCache() },
+                onDeleteItem: { activity in
+                    viewModel.deleteActivity(activity)
+                },
                 rowContent: { activity in
                     ActivityRowView(activity: activity) { act in
                         withAnimation(.snappy) {

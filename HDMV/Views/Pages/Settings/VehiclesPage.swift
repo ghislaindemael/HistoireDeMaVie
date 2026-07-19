@@ -67,6 +67,11 @@ struct VehiclesPage: View {
                 }
                 .buttonStyle(.plain)
             }
+            .onDelete { offsets in
+                for index in offsets {
+                    viewModel.deleteVehicle(viewModel.filteredVehicles[index])
+                }
+            }
         }
     }
     

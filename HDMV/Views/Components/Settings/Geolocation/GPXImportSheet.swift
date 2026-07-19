@@ -210,7 +210,7 @@ struct GPXImportSheet: View {
             let calendar = Calendar.current
             if let matchingTrip = allTrips.first(where: { calendar.isDate($0.timeStart, inSameDayAs: data.timeStart) }) {
                 self.selectedTrip = matchingTrip
-                self.intent = .existingTrip
+                // intent remains .newTrip as per user request
             }
             
         } else {

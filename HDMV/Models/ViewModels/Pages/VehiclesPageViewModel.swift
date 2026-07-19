@@ -103,6 +103,18 @@ class VehiclesPageViewModel: BasePageViewModel {
         }
     }
     
+    func deleteVehicle(_ vehicle: Vehicle) {
+        guard let context = modelContext else { return }
+        context.delete(vehicle)
+        vehicles.removeAll { $0.id == vehicle.id }
+        refreshFilteredVehicles()
+        do {
+            try context.save()
+        } catch {
+            print("Failed to delete Vehicle: \(error)")
+        }
+    }
+    
 
     
 }
