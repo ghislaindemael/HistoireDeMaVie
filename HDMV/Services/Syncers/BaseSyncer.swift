@@ -213,26 +213,23 @@ Payload.Model == Model
     ) throws {
         
         let allChildren = try modelContext.fetch(FetchDescriptor<Child>())
+        var fixedCount = 0
         
-        let childrenToFix = allChildren.filter { child in
-            guard let rid = child[keyPath: ridKeyPath] else {
-                return false
-            }
+        for var child in allChildren {
+            guard let rid = child[keyPath: ridKeyPath] else { continue }
             
-            if let currentParent = child[keyPath: relationshipKeyPath] {
-                return currentParent.rid != rid
-            } else {
-                return true
+            let targetParent = lookupMap[rid]
+            let currentParent = child[keyPath: relationshipKeyPath]
+            
+            // Compare persistentModelIDs to avoid faulting invalidated models
+            if currentParent?.persistentModelID != targetParent?.persistentModelID {
+                child[keyPath: relationshipKeyPath] = targetParent
+                fixedCount += 1
             }
         }
         
-        if childrenToFix.isEmpty { return }
-        
-        print("Resolving \(childrenToFix.count) broken relationships for \(Child.self) -> \(Parent.self)")
-        
-        for var child in childrenToFix {
-            guard let rid = child[keyPath: ridKeyPath] else { continue }
-            child[keyPath: relationshipKeyPath] = lookupMap[rid]
+        if fixedCount > 0 {
+            print("Resolved \(fixedCount) broken relationships for \(Child.self) -> \(Parent.self)")
         }
     }
     
@@ -251,18 +248,19 @@ Payload.Model == Model
             let rids = child[keyPath: ridArrayKeyPath]
             let currentParents = child[keyPath: relationshipKeyPath]
             
-            let currentParentRids = Set(currentParents.compactMap { $0.rid })
-            let targetParentRids = Set(rids)
+            let targetParents = rids.compactMap { lookupMap[$0] }
             
-            if currentParentRids != targetParentRids {
-                let resolvedParents = rids.compactMap { lookupMap[$0] }
-                child[keyPath: relationshipKeyPath] = resolvedParents
+            let currentIDs = Set(currentParents.map { $0.persistentModelID })
+            let targetIDs = Set(targetParents.map { $0.persistentModelID })
+            
+            if currentIDs != targetIDs {
+                child[keyPath: relationshipKeyPath] = targetParents
                 fixedCount += 1
             }
         }
         
         if fixedCount > 0 {
-            print("Resolving \(fixedCount) broken relationships for \(Child.self) -> [\(Parent.self)]")
+            print("Resolved \(fixedCount) broken relationships for \(Child.self) -> [\(Parent.self)]")
         }
     }
     
