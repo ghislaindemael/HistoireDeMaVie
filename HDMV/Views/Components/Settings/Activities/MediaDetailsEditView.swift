@@ -121,6 +121,8 @@ struct MediaItemEditorSheet: View {
     @State private var localProgress: String = ""
     @State private var localItemId: Int = 0
     
+    @State private var hasInitialized = false
+    
     var body: some View {
         NavigationView {
             Form {
@@ -166,18 +168,25 @@ struct MediaItemEditorSheet: View {
                 }
             }
             .onAppear {
-                if let detail = metadata?.media?[safe: index] {
-                    localProgress = detail.progress ?? ""
-                    localItemId = detail.itemId
+                if !hasInitialized {
+                    if let detail = metadata?.media?[safe: index] {
+                        localProgress = detail.progress ?? ""
+                        localItemId = detail.itemId
+                    }
+                    hasInitialized = true
                 }
             }
         }
     }
     
     private func saveChanges() {
-        if metadata?.media != nil && index < (metadata?.media?.count ?? 0) {
-            metadata?.media?[index].progress = localProgress.isEmpty ? nil : localProgress
-            metadata?.media?[index].itemId = localItemId
+        if var tempMetadata = metadata,
+           var tempMedia = tempMetadata.media,
+           index < tempMedia.count {
+            tempMedia[index].progress = localProgress.isEmpty ? nil : localProgress
+            tempMedia[index].itemId = localItemId
+            tempMetadata.media = tempMedia
+            metadata = tempMetadata
         }
     }
 }
