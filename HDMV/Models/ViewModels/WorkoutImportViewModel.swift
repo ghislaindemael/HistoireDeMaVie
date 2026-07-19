@@ -26,8 +26,9 @@ class WorkoutImportViewModel: ObservableObject {
     
     private var modelContext: ModelContext
     
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, initialDate: Date = .now) {
         self.modelContext = modelContext
+        self.filterDate = initialDate
     }
     
     func loadData() async {

@@ -167,7 +167,7 @@ struct MyActivitiesPage: View {
             )
         }
         .sheet(isPresented: $showingImporter) {
-            WorkoutImportSheet(modelContext: modelContext)
+            WorkoutImportSheet(modelContext: modelContext, initialDate: viewModel.filterDate)
         }
     }
 }

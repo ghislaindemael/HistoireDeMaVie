@@ -6,8 +6,8 @@ struct WorkoutImportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: WorkoutImportViewModel
     
-    init(modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: WorkoutImportViewModel(modelContext: modelContext))
+    init(modelContext: ModelContext, initialDate: Date = .now) {
+        _viewModel = StateObject(wrappedValue: WorkoutImportViewModel(modelContext: modelContext, initialDate: initialDate))
     }
     
     var body: some View {

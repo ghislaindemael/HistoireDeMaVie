@@ -23,7 +23,7 @@ struct VaultLinkerSheet: View {
     @State private var selectedTarget: VaultLinkTarget = .trip
     @State private var isUploading = false
     @State private var errorMessage: String?
-    @State private var targetDate: Date = .now
+    @State private var targetDate: Date = AppNavigator.shared.selectedDate ?? .now
     
     // MARK: - Main Body
     
@@ -56,7 +56,9 @@ struct VaultLinkerSheet: View {
                 }
             }
             .onAppear {
-                autoDetectFileDate()
+                if AppNavigator.shared.selectedDate == nil {
+                    autoDetectFileDate()
+                }
             }
             .overlay {
                 uploadOverlay
