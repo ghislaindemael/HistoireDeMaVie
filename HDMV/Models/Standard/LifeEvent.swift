@@ -11,7 +11,7 @@ import Foundation
 @Model
 final class LifeEvent: LogModel {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var typeSlug: String = LifeEventType.unset.rawValue
     var timeStart: Date = Date()
     var timeEnd: Date?

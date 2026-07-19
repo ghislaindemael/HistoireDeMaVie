@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class DataActivityOptionMapping: Identifiable, Hashable, CatalogueModel {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var activityRid: Int?
     var isForTrip: Bool = false
     var optionSlug: String

@@ -12,7 +12,7 @@ import SwiftData
 @Model
 final class Trip: LogModel {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var timeStart: Date = Date()
     var timeEnd: Date?
     

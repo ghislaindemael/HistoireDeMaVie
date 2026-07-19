@@ -25,11 +25,11 @@ struct TransactionDetailSheet: View {
     }
     
     // MARK: - The Magic Fix for Disappearing Decimals
-    private func decimalBinding(for value: Binding<Decimal?>) -> Binding<String> {
+    private func decimalBinding(for value: Binding<Double?>) -> Binding<String> {
         Binding(
             get: {
-                if let decimal = value.wrappedValue {
-                    return NSDecimalNumber(decimal: decimal).stringValue
+                if let doubleVal = value.wrappedValue {
+                    return String(format: "%.2f", doubleVal)
                 }
                 return ""
             },
@@ -37,8 +37,8 @@ struct TransactionDetailSheet: View {
                 let sanitized = newValue.replacingOccurrences(of: ",", with: ".")
                 if sanitized.isEmpty {
                     value.wrappedValue = nil
-                } else if let newDecimal = Decimal(string: sanitized) {
-                    value.wrappedValue = newDecimal
+                } else if let newDouble = Double(sanitized) {
+                    value.wrappedValue = newDouble
                 }
             }
         )

@@ -12,7 +12,7 @@ import SwiftUI
 @Model
 final class TransactionType: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     var slug: String
     var parentRid: Int?

@@ -11,7 +11,7 @@ import Foundation
 @Model
 final class Quote: LogModel, TimeBound {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var text: String = ""
     var timeStart: Date = Date() // Equivalent to `date` in DB
     var timeEnd: Date? = nil

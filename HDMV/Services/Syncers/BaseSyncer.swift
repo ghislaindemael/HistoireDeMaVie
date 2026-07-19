@@ -98,7 +98,7 @@ Payload.Model == Model
         let allLocalModels = try modelContext.fetch(FetchDescriptor<Model>())
         
         let relevantLocalModels: [Model]
-        if let filterDate = date, Model.self is any TimeTrackable.Type {
+        if let filterDate = date, Model.self is any TimeBound.Type {
             let calendar = Calendar.current
             let startOfDay = calendar.startOfDay(for: filterDate)
             guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
@@ -107,9 +107,9 @@ Payload.Model == Model
             let future = Date.distantFuture
             
             relevantLocalModels = allLocalModels.filter { model in
-                if let timeTrackableModel = model as? any TimeTrackable {
-                    return timeTrackableModel.timeStart < endOfDay &&
-                    (timeTrackableModel.timeEnd ?? future) > startOfDay
+                if let timeBoundModel = model as? any TimeBound {
+                    return timeBoundModel.timeStart < endOfDay &&
+                    (timeBoundModel.timeEnd ?? future) > startOfDay
                 }
                 return false
             }

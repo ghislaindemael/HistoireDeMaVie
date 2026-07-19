@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class DataMediaItem: Identifiable, Hashable, CatalogueModel, TreeSelectable {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     
     var parentRid: Int?

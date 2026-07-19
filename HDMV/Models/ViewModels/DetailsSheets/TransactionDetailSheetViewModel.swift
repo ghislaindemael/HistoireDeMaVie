@@ -30,7 +30,7 @@ class TransactionDetailSheetViewModel: BaseDetailSheetViewModel<Transaction, Tra
         guard let total = editor.amount, numberOfPeople > 0 else { return }
         
         if isEqualSplit {
-            editor.myCost = total / Decimal(numberOfPeople)
+            editor.myCost = total / Double(numberOfPeople)
         } else {
             // Complex logic: handled manually by user inputting 'myCost'
         }

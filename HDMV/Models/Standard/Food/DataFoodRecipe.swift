@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class DataFoodRecipe: Identifiable, Hashable, CatalogueModel, TreeSelectable {
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     var parentId: Int?
     var parent: DataFoodRecipe? {

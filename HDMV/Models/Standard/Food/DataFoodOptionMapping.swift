@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class DataFoodOptionMapping: Identifiable, Hashable, CatalogueModel {
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var priority: Int = 0
     var cache: Bool = true
     var archived: Bool = false

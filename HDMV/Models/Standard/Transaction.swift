@@ -17,12 +17,12 @@ final class Transaction: LogModel {
     var timeEnd: Date?
     var executionDate: Date?
     
-    var amount: Decimal?
-    var realAmount: Decimal?
+    var amount: Double?
+    var realAmount: Double?
     var currency: String?
-    var myCost: Decimal?
+    var myCost: Double?
     
-    var bankAmount: Decimal?
+    var bankAmount: Double?
     var bankCurrency: String?
     
     var isCash: Bool = false
@@ -68,11 +68,11 @@ final class Transaction: LogModel {
         timeStart: Date = .now,
         timeEnd: Date? = nil,
         executionDate: Date? = nil,
-        amount: Decimal? = nil,
-        realAmount: Decimal? = nil,
+        amount: Double? = nil,
+        realAmount: Double? = nil,
         currency: String? = nil,
-        myCost: Decimal? = nil,
-        bankAmount: Decimal? = nil,
+        myCost: Double? = nil,
+        bankAmount: Double? = nil,
         bankCurrency: String? = nil,
         isCash: Bool = false,
         typeRid: Int? = nil,
@@ -164,12 +164,12 @@ struct TransactionDTO: Codable, Identifiable {
     let time: Date
     let execution_time: Date?
     
-    let amount: Decimal?
-    let real_amount: Decimal?
+    let amount: Double?
+    let real_amount: Double?
     let currency: String?
-    let my_cost: Decimal?
+    let my_cost: Double?
     
-    let bank_amount: Decimal?
+    let bank_amount: Double?
     let bank_currency: String?
     
     let cash: Bool
@@ -189,12 +189,12 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let time: Date
     let execution_time: Date?
     
-    let amount: Decimal?
-    let real_amount: Decimal?
+    let amount: Double?
+    let real_amount: Double?
     let currency: String?
-    let my_cost: Decimal?
+    let my_cost: Double?
     
-    let bank_amount: Decimal?
+    let bank_amount: Double?
     let bank_currency: String?
     
     let cash: Bool
@@ -242,12 +242,12 @@ struct TransactionEditor: EditorProtocol {
     var timeStart: Date
     var executionDate: Date?
     
-    var amount: Decimal?
-    var realAmount: Decimal?
+    var amount: Double?
+    var realAmount: Double?
     var currency: String?
-    var myCost: Decimal?
+    var myCost: Double?
     
-    var bankAmount: Decimal?
+    var bankAmount: Double?
     var bankCurrency: String?
     
     var isCash: Bool
@@ -302,7 +302,7 @@ struct TransactionEditor: EditorProtocol {
         self.details = transaction.details
     }
     
-    func applySign(to value: Decimal?) -> Decimal? {
+    func applySign(to value: Double?) -> Double? {
         guard let rawValue = value else { return nil }
         let absoluteValue = abs(rawValue)
         return self.isIncome ? absoluteValue : -absoluteValue

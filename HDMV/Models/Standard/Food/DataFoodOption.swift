@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class DataFoodOption: Identifiable, Hashable, CatalogueModel {
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var slug: String
     var name: String
     var typeRaw: String

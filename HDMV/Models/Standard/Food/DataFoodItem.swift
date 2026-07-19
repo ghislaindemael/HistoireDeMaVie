@@ -10,7 +10,7 @@ struct DataFoodItemMacros: Codable, Equatable {
 
 @Model
 final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable {
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     var parentId: Int?
     var parent: DataFoodItem? {

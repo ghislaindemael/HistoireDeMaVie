@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class LifeContext: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject {
     
-    var rid: Int?
+    @Attribute(.unique) var rid: Int?
     var name: String
     
     var parentRid: Int?
