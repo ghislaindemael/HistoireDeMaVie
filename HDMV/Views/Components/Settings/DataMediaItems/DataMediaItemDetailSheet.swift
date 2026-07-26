@@ -43,10 +43,13 @@ struct DataMediaItemDetailSheet: View {
                         IconView(iconString: viewModel.editor.icon ?? "")
                     }
                     
-                    NavigationLink(destination: ParentCatalogueSelector(
-                        catalogueItems: itemsTree,
-                        selectedParent: $viewModel.editor.parent)
-                    ) {
+                    NavigationLink(destination: GenericTreeSelectorView(
+                        items: itemsTree,
+                        childrenKeyPath: \.optionalChildren,
+                        selection: $viewModel.editor.parent,
+                        title: "Select Parent",
+                        noneButtonText: "None"
+                    )) {
                         HStack {
                             Text("Parent Item")
                             Spacer()
@@ -92,45 +95,3 @@ struct DataMediaItemDetailSheet: View {
     }
 }
 
-// Reuse a generic selector if possible, or define a specific one
-struct ParentCatalogueSelector: View {
-    let catalogueItems: [DataMediaItem]
-    @Binding var selectedParent: DataMediaItem?
-    
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        List {
-            Button(action: {
-                selectedParent = nil
-                dismiss()
-            }) {
-                HStack {
-                    Text("None")
-                    Spacer()
-                    if selectedParent == nil {
-                        Image(systemName: "checkmark").foregroundColor(.blue)
-                    }
-                }
-            }
-            .foregroundColor(.primary)
-            
-            ForEach(catalogueItems) { item in
-                Button(action: {
-                    selectedParent = item
-                    dismiss()
-                }) {
-                    HStack {
-                        Text(item.name)
-                        Spacer()
-                        if selectedParent?.id == item.id {
-                            Image(systemName: "checkmark").foregroundColor(.blue)
-                        }
-                    }
-                }
-                .foregroundColor(.primary)
-            }
-        }
-        .navigationTitle("Select Parent")
-    }
-}
