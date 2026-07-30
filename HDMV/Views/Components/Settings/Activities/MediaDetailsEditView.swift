@@ -119,6 +119,12 @@ struct MediaItemEditorSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var localProgress: String = ""
+    @State private var localSeason: Int?
+    @State private var localEpisode: Int?
+    @State private var localTome: Int?
+    @State private var localPercentage: Int?
+    @State private var localTime: Int?
+    
     @State private var localItemId: Int = 0
     
     @State private var hasInitialized = false
@@ -147,7 +153,27 @@ struct MediaItemEditorSheet: View {
                     }
                 }
                 
-                Section("Progress") {
+                Section("Structured Tracking") {
+                    HStack {
+                        TextField("Season", value: $localSeason, format: .number)
+                            .keyboardType(.numberPad)
+                        Divider()
+                        TextField("Episode", value: $localEpisode, format: .number)
+                            .keyboardType(.numberPad)
+                    }
+                    TextField("Tome / Volume", value: $localTome, format: .number)
+                        .keyboardType(.numberPad)
+                    
+                    HStack {
+                        TextField("Completion %", value: $localPercentage, format: .number)
+                            .keyboardType(.numberPad)
+                        Divider()
+                        TextField("Time (mins)", value: $localTime, format: .number)
+                            .keyboardType(.numberPad)
+                    }
+                }
+                
+                Section("Custom Notes / Progress") {
                     TextEditor(text: $localProgress)
                         .frame(minHeight: 100)
                 }
@@ -171,6 +197,11 @@ struct MediaItemEditorSheet: View {
                 if !hasInitialized {
                     if let detail = metadata?.media?[safe: index] {
                         localProgress = detail.progress ?? ""
+                        localSeason = detail.season
+                        localEpisode = detail.episode
+                        localTome = detail.tome
+                        localPercentage = detail.percentage
+                        localTime = detail.time
                         localItemId = detail.itemId
                     }
                     hasInitialized = true
@@ -184,6 +215,11 @@ struct MediaItemEditorSheet: View {
            var tempMedia = tempMetadata.media,
            index < tempMedia.count {
             tempMedia[index].progress = localProgress.isEmpty ? nil : localProgress
+            tempMedia[index].season = localSeason
+            tempMedia[index].episode = localEpisode
+            tempMedia[index].tome = localTome
+            tempMedia[index].percentage = localPercentage
+            tempMedia[index].time = localTime
             tempMedia[index].itemId = localItemId
             tempMetadata.media = tempMedia
             metadata = tempMetadata

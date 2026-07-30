@@ -18,9 +18,8 @@ final class Quote: LogModel, TimeBound {
     var authorString: String?
     
     var personRid: Int?
-    var mediaItemRid: Int?
-    var mediaProgress: String?
     var context: String?
+    var mediaDetailsData: Data?
     
     var parentInteractionRid: Int?
     var parentInstanceRid: Int?
@@ -37,8 +36,7 @@ final class Quote: LogModel, TimeBound {
     @Relationship(deleteRule: .nullify)
     var person: Person?
     
-    @Relationship(deleteRule: .nullify)
-    var mediaItem: DataMediaItem?
+
     
     @Relationship(deleteRule: .nullify)
     var parentInteraction: Interaction?
@@ -56,8 +54,7 @@ final class Quote: LogModel, TimeBound {
          timeStart: Date = .now,
          authorString: String? = nil,
          person: Person? = nil,
-         mediaItem: DataMediaItem? = nil,
-         mediaProgress: String? = nil,
+         mediaDetailsData: Data? = nil,
          context: String? = nil,
          parentInteraction: Interaction? = nil,
          parentInstance: ActivityInstance? = nil,
@@ -69,8 +66,7 @@ final class Quote: LogModel, TimeBound {
         self.timeStart = timeStart
         self.authorString = authorString
         self.person = person
-        self.mediaItem = mediaItem
-        self.mediaProgress = mediaProgress
+        self.mediaDetailsData = mediaDetailsData
         self.context = context
         self.parentInteraction = parentInteraction
         self.parentInstance = parentInstance
@@ -85,8 +81,17 @@ final class Quote: LogModel, TimeBound {
         self.timeStart = dto.date
         self.authorString = dto.author_string
         self.personRid = dto.person_id
-        self.mediaItemRid = dto.media_item_id
-        self.mediaProgress = dto.media_progress
+        
+        // Handle migration gracefully if old data is present but new data isn't
+        if let details = dto.media_details {
+            self.mediaDetailsData = try? JSONEncoder().encode(details)
+        } else if let oldItemId = dto.media_item_id {
+            let legacyDetails = MediaDetails(itemId: oldItemId, progress: dto.media_progress)
+            self.mediaDetailsData = try? JSONEncoder().encode(legacyDetails)
+        } else {
+            self.mediaDetailsData = nil
+        }
+        
         self.context = dto.context
         self.parentInteractionRid = dto.parent_interaction_id
         self.parentInstanceRid = dto.parent_instance_id
@@ -98,11 +103,18 @@ final class Quote: LogModel, TimeBound {
         self.text = dto.text
         self.timeStart = dto.date
         self.authorString = dto.author_string
-        self.mediaProgress = dto.media_progress
+        if let details = dto.media_details {
+            self.mediaDetailsData = try? JSONEncoder().encode(details)
+        } else if let oldItemId = dto.media_item_id {
+            let legacyDetails = MediaDetails(itemId: oldItemId, progress: dto.media_progress)
+            self.mediaDetailsData = try? JSONEncoder().encode(legacyDetails)
+        } else {
+            self.mediaDetailsData = nil
+        }
+        
         self.context = dto.context
         
         self.personRid = dto.person_id
-        self.mediaItemRid = dto.media_item_id
         self.parentInteractionRid = dto.parent_interaction_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
@@ -124,6 +136,7 @@ struct QuoteDTO: Identifiable, Codable, Sendable {
     let person_id: Int?
     let media_item_id: Int?
     let media_progress: String?
+    let media_details: MediaDetails?
     let parent_interaction_id: Int?
     let parent_instance_id: Int?
     let parent_trip_id: Int?
@@ -137,6 +150,7 @@ struct QuotePayload: Codable, InitializableWithModel {
     @ExplicitNull var person_id: Int?
     @ExplicitNull var media_item_id: Int?
     let media_progress: String?
+    let media_details: MediaDetails?
     @ExplicitNull var parent_interaction_id: Int?
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
@@ -151,8 +165,16 @@ struct QuotePayload: Codable, InitializableWithModel {
         self.date = quote.timeStart
         self.author_string = quote.authorString
         self.person_id = quote.person?.rid ?? quote.personRid
-        self.media_item_id = quote.mediaItem?.rid ?? quote.mediaItemRid
-        self.media_progress = quote.mediaProgress
+        
+        if let data = quote.mediaDetailsData, let details = try? JSONDecoder().decode(MediaDetails.self, from: data) {
+            self.media_details = details
+            self.media_item_id = details.itemId
+            self.media_progress = details.progress
+        } else {
+            self.media_details = nil
+            self.media_item_id = nil
+            self.media_progress = nil
+        }
         self.parent_interaction_id = quote.parentInteraction?.rid ?? quote.parentInteractionRid
         self.parent_instance_id = quote.parentInstance?.rid ?? quote.parentInstanceRid
         self.parent_trip_id = quote.parentTrip?.rid ?? quote.parentTripRid
@@ -171,10 +193,7 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
     var person: Person?
     var personRid: Int?
     
-    var mediaItem: DataMediaItem?
-    var mediaItemRid: Int?
-    
-    var mediaProgress: String?
+    var mediaDetails: MediaDetails?
     var context: String?
     
     var parentInteraction: Interaction?
@@ -195,9 +214,13 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
         self.authorString = quote.authorString
         self.person = quote.person
         self.personRid = quote.personRid
-        self.mediaItem = quote.mediaItem
-        self.mediaItemRid = quote.mediaItemRid
-        self.mediaProgress = quote.mediaProgress
+        
+        if let data = quote.mediaDetailsData, let details = try? JSONDecoder().decode(MediaDetails.self, from: data) {
+            self.mediaDetails = details
+        } else {
+            self.mediaDetails = nil
+        }
+        
         self.context = quote.context
         
         self.parentInteraction = quote.parentInteraction
@@ -217,10 +240,12 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
         quote.person = self.person
         quote.personRid = self.person?.rid ?? self.personRid
         
-        quote.mediaItem = self.mediaItem
-        quote.mediaItemRid = self.mediaItem?.rid ?? self.mediaItemRid
+        if let details = self.mediaDetails {
+            quote.mediaDetailsData = try? JSONEncoder().encode(details)
+        } else {
+            quote.mediaDetailsData = nil
+        }
         
-        quote.mediaProgress = self.mediaProgress
         quote.context = self.context
         
         quote.parentInteraction = self.parentInteraction

@@ -10,6 +10,15 @@
 struct MediaDetails: Codable, Sendable {
     var itemId: Int
     var progress: String? // e.g. "Chapter 4", "Pages 40-90", "S1E4"
+    
+    // Structured Tracking Fields
+    var season: Int?
+    var episode: Int?
+    var tome: Int?
+    
+    // Completion Metrics
+    var percentage: Int? // 0 to 100
+    var time: Int? // Typically minutes
 }
 
 struct PlaceDetails: Codable, @unchecked Sendable {

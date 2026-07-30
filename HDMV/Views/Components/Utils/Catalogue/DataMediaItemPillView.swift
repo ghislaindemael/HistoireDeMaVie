@@ -12,15 +12,17 @@ struct DataMediaItemPillView: View {
     var explicitMediaItem: DataMediaItem?
     var itemId: Int?
     var progress: String?
+    var mediaDetails: MediaDetails?
     
     @Query private var queriedItems: [DataMediaItem]
     
-    init(mediaItem: DataMediaItem? = nil, itemId: Int? = nil, progress: String? = nil) {
+    init(mediaItem: DataMediaItem? = nil, itemId: Int? = nil, progress: String? = nil, mediaDetails: MediaDetails? = nil) {
         self.explicitMediaItem = mediaItem
         self.itemId = itemId
         self.progress = progress
+        self.mediaDetails = mediaDetails
         
-        if let id = itemId {
+        if let id = itemId ?? mediaDetails?.itemId {
             let filter = #Predicate<DataMediaItem> { $0.rid == id }
             _queriedItems = Query(filter: filter)
         } else {
@@ -31,6 +33,36 @@ struct DataMediaItemPillView: View {
     private var resolvedItem: DataMediaItem? {
         if let item = explicitMediaItem { return item }
         return queriedItems.first
+    }
+    
+    private var displayProgress: String? {
+        if let md = mediaDetails {
+            var parts: [String] = []
+            
+            if let t = md.tome { parts.append("T\(t)") }
+            
+            if let s = md.season {
+                let epStr = md.episode != nil ? "E\(md.episode!)" : ""
+                parts.append("S\(s)\(epStr)")
+            } else if let e = md.episode {
+                parts.append("E\(e)")
+            }
+            
+            if let time = md.time {
+                if time >= 60 {
+                    parts.append("\(time/60)h\(time%60)m")
+                } else {
+                    parts.append("\(time)m")
+                }
+            }
+            if let perc = md.percentage { parts.append("\(perc)%") }
+            if let p = md.progress, !p.isEmpty { parts.append(p) }
+            
+            if !parts.isEmpty {
+                return parts.joined(separator: " - ")
+            }
+        }
+        return progress
     }
     
     var body: some View {
@@ -46,8 +78,8 @@ struct DataMediaItemPillView: View {
                 .fontWeight(.semibold)
                 .font(.caption)
             
-            if let progress = progress, !progress.isEmpty {
-                Text("— \(progress)")
+            if let disp = displayProgress, !disp.isEmpty {
+                Text("— \(disp)")
                     .font(.caption2)
                     .opacity(0.8)
             }

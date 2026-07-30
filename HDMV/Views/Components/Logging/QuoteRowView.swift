@@ -48,8 +48,8 @@ struct QuoteRowView: View {
                 }
             }
             
-            if let mediaItem = quote.mediaItem {
-                DataMediaItemPillView(mediaItem: mediaItem, progress: quote.mediaProgress)
+            if let data = quote.mediaDetailsData, let details = try? JSONDecoder().decode(MediaDetails.self, from: data) {
+                DataMediaItemPillView(itemId: details.itemId, mediaDetails: details)
             }
         }
         .padding()

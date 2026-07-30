@@ -89,7 +89,7 @@ class QuoteSyncer: BaseSyncer<Quote, QuoteDTO, QuotePayload> {
         print("Resolving Quote relationships...")
         
         let personLookup: [Int: Person] = try getLookupMap()
-        let mediaItemLookup: [Int: DataMediaItem] = try getLookupMap()
+
         let interactionLookup: [Int: Interaction] = try getLookupMap()
         let instanceLookup: [Int: ActivityInstance] = try getLookupMap()
         let tripLookup: [Int: Trip] = try getLookupMap()
@@ -101,12 +101,7 @@ class QuoteSyncer: BaseSyncer<Quote, QuoteDTO, QuotePayload> {
             lookupMap: personLookup
         )
         
-        try resolveRelationship(
-            for: Quote.self,
-            relationshipKeyPath: \Quote.mediaItem,
-            ridKeyPath: \Quote.mediaItemRid,
-            lookupMap: mediaItemLookup
-        )
+
         
         try resolveRelationship(
             for: Quote.self,
