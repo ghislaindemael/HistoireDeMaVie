@@ -18,7 +18,7 @@ struct MultiVehicleTypeSelectorView: View {
                     toggleSelection(for: type.rawValue)
                 } label: {
                     HStack {
-                        Text(type.label)
+                        type.labelView
                             .foregroundStyle(.primary)
                         Spacer()
                         

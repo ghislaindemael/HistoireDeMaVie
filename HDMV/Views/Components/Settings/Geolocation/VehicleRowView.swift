@@ -18,8 +18,10 @@ struct VehicleRowView: View {
             HStack {
                 UnsettableTextView(
                     text: vehicle.type != .unset ? vehicle.label : "Unset",
+                    iconString: vehicle.type != .unset ? vehicle.type.icon : nil,
                     font: .body,
-                    isItalicized: vehicle.archived
+                    isItalicized: vehicle.archived,
+                    fallbackIconString: vehicle.type.icon // This will pass the ❌ (or whatever is defined for .unset)
                 )
                 Spacer()
                 CatalogueRowControlsView(model: vehicle, onToggle: onCacheToggle)

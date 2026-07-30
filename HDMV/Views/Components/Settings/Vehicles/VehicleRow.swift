@@ -21,7 +21,7 @@ struct VehicleRow: View {
     
     var body: some View {
         HStack() {
-            Text(vehicle.label)
+            vehicle.labelView
                 .font(.headline)
             
             Spacer()

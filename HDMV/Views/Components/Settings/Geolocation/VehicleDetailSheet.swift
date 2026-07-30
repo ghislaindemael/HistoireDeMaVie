@@ -30,9 +30,10 @@ struct VehicleDetailSheet: View {
                     Picker("Vehicle Type", selection: $viewModel.editor.type) {
                         Text("All Types").tag(nil as VehicleType?)
                         ForEach(VehicleType.allCases, id: \.self) { type in
-                            Text(type.label).tag(type as VehicleType?)
+                            type.labelView.tag(type as VehicleType?)
                         }
                     }
+                    .pickerStyle(.navigationLink)
                     
                 }
                 

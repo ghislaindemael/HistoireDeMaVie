@@ -44,9 +44,10 @@ struct VehiclesPage: View {
             Picker("Vehicle Type", selection: $viewModel.selectedType) {
                 Text("All Types").tag(nil as VehicleType?)
                 ForEach(VehicleType.allCases, id: \.self) { type in
-                    Text(type.label).tag(type as VehicleType?)
+                    type.labelView.tag(type as VehicleType?)
                 }
             }
+            .pickerStyle(.navigationLink)
         }
     }
     

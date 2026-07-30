@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Vehicle: CatalogueModel {
@@ -82,8 +83,6 @@ final class Vehicle: CatalogueModel {
     
     var label: String {
         var components: [String] = []
-        
-        components.append(type.icon)
 
         if let cityName = city?.name, !cityName.isEmpty {
             components.append(cityName)
@@ -98,6 +97,16 @@ final class Vehicle: CatalogueModel {
         }
         
         return components.joined(separator: " - ")
+    }
+    
+    @ViewBuilder
+    var labelView: some View {
+        HStack(spacing: 6) {
+            if type != .unset {
+                IconView(iconString: type.icon, size: 16)
+            }
+            Text(self.label)
+        }
     }
     
     // MARK: Computed properties

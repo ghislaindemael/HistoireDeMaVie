@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 enum VehicleType: String, CaseIterable, Codable {
     case funiculaire = "funiculaire"
@@ -28,6 +29,7 @@ enum VehicleType: String, CaseIterable, Codable {
     case scooter = "scooter"
     case cablecar = "cablecar"
     case skilift = "skilift"
+    case tank = "tank"
     case unset = "unset"
     
     var name: String {
@@ -51,6 +53,7 @@ enum VehicleType: String, CaseIterable, Codable {
             case .scooter: return "Trottinette"
             case .cablecar: return "Télécabine"
             case .skilift: return "Télésiège"
+            case .tank: return "Tank"
             case .unset: return "Unset"
         }
     }
@@ -76,11 +79,20 @@ enum VehicleType: String, CaseIterable, Codable {
             case .scooter: return "🛴"
             case .cablecar: return "🚠"
             case .skilift: return "🚡"
+            case .tank: return "tank.svg"
             case .unset: return "❌"
         }
     }
     
     var label: String {
-        return "\(self.icon) \(self.name)"
+        return self.name
+    }
+    
+    @ViewBuilder
+    var labelView: some View {
+        HStack(spacing: 6) {
+            IconView(iconString: self.icon, size: 16)
+            Text(self.name)
+        }
     }
 }

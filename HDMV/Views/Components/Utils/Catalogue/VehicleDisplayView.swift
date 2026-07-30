@@ -34,7 +34,7 @@ struct VehicleDisplayView: View {
     @ViewBuilder
     private var content: some View {
         if let vehicle = vehicle {
-            Text(vehicle.label)
+            vehicle.labelView
                 .foregroundStyle(.primary)
         } else if vehicleRid != nil {
             HStack(spacing: 4) {
