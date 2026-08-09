@@ -26,16 +26,22 @@ struct TransactionRowView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            basicsSection
-            detailsSection
+        Group {
+            if transaction.isDeleted || transaction.modelContext == nil {
+                EmptyView()
+            } else {
+                VStack(spacing: 0) {
+                    basicsSection
+                    detailsSection
+                }
+                .frame(maxWidth: .infinity)
+                .padding(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.primaryBackground)
+                )
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.primaryBackground)
-        )
     }
     
     // MARK: - Basics Section (Type & Amount)

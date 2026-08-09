@@ -53,7 +53,7 @@ class TransactionSyncer: BaseLogSyncer<Transaction, TransactionDTO, TransactionP
         }
         
         let predicate = #Predicate<Transaction> {
-            $0.timeStart < endOfDay && $0.timeStart > startOfDay &&
+            $0.timeStart < endOfDay && $0.timeStart >= startOfDay &&
             $0.typeRid == transactionTypeRid
         }
         let descriptor = FetchDescriptor<Transaction>(predicate: predicate)

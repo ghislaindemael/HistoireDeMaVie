@@ -35,12 +35,7 @@ where
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
             throw SyncError.dateCalculationError
         }
-        let future = Date.distantFuture
-
-        let predicate = #Predicate<Model> { model in
-            model.timeStart < endOfDay && (model.timeEnd ?? future) > startOfDay
-        }
-        let descriptor = FetchDescriptor<Model>(predicate: predicate)
+        let descriptor = getFetchDescriptor(startOfDay: startOfDay, endOfDay: endOfDay)
         let relevantLocalModels = try modelContext.fetch(descriptor)
         
         let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
@@ -87,5 +82,12 @@ where
         } else {
              print("PullChanges: No changes to save for \(Model.self).")
         }
+    }
+    
+    func getFetchDescriptor(startOfDay: Date, endOfDay: Date) -> FetchDescriptor<Model> {
+        let predicate = #Predicate<Model> { model in
+            model.timeStart < endOfDay && (model.timeEnd ?? model.timeStart) >= startOfDay
+        }
+        return FetchDescriptor<Model>(predicate: predicate)
     }
 }

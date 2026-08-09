@@ -161,6 +161,12 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
         print("All ActivityInstance relationships resolved.")
     }
     
-    
+    override func getFetchDescriptor(startOfDay: Date, endOfDay: Date) -> FetchDescriptor<ActivityInstance> {
+        let future = Date.distantFuture
+        let predicate = #Predicate<ActivityInstance> { model in
+            model.timeStart < endOfDay && (model.timeEnd ?? future) > startOfDay
+        }
+        return FetchDescriptor<ActivityInstance>(predicate: predicate)
+    }
     
 }

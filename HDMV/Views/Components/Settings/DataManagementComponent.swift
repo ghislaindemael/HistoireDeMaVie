@@ -29,7 +29,8 @@ struct DataManagementComponent: View {
         TransitLine.self,
         TransitStop.self,
         DataFoodItem.self,
-        DataFoodRecipe.self
+        DataFoodRecipe.self,
+        Quote.self
     ]
     
     init(expanded: Bool = false) {
@@ -126,7 +127,7 @@ struct DataManagementComponent: View {
         }
         .padding()
     }
-    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self, LifeContext.self])
+    .modelContainer(for: [AgendaEntry.self, Trip.self, City.self, Place.self, Person.self, Interaction.self, LifeContext.self, Quote.self])
 }
 
 struct IconCacheCountView: View {

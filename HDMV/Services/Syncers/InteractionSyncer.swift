@@ -37,7 +37,6 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
         )
         let serverRids = Set(dtos.map { $0.id })
         
-        let future = Date.distantFuture
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: startDate)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: endDate)) else {
@@ -45,7 +44,7 @@ class InteractionSyncer: BaseLogSyncer<Interaction, InteractionDTO, InteractionP
         }
         
         let predicate = #Predicate<Interaction> {
-            $0.timeStart < endOfDay && ($0.timeEnd ?? future) > startOfDay
+            $0.timeStart < endOfDay && ($0.timeEnd ?? $0.timeStart) >= startOfDay
         }
         let descriptor = FetchDescriptor<Interaction>(predicate: predicate)
         var relevantLocalModels = try modelContext.fetch(descriptor)
