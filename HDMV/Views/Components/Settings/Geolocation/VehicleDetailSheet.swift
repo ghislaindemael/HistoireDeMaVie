@@ -47,6 +47,7 @@ struct VehicleDetailSheet: View {
                 Section("Usage") {
                     Toggle("Cached", isOn: $viewModel.editor.cache)
                     Toggle("Archived", isOn: $viewModel.editor.archived)
+                    Toggle("Is Drivable", isOn: $viewModel.editor.isDrivable)
                 }
                 
             }

@@ -20,9 +20,9 @@ struct VehicleSelectorView: View {
             sortBy: [SortDescriptor(\.name)]))
     private var vehicles: [Vehicle]
     
-    private var isCarSelected: Bool {
+    private var isDrivableSelected: Bool {
         guard let vehicle = selectedVehicle else { return false }
-        return vehicle.type == .car
+        return vehicle.isDrivable
     }
     
     var body: some View {
@@ -33,9 +33,14 @@ struct VehicleSelectorView: View {
                     Text(vehicle.name!).tag(vehicle as Vehicle?)
                 }
             }
-            if isCarSelected {
+            if isDrivableSelected {
                 Toggle("Am I the driver", isOn: $amDriver)
                     .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .onChange(of: isDrivableSelected) { _, isDrivable in
+            if !isDrivable {
+                amDriver = false
             }
         }
     }

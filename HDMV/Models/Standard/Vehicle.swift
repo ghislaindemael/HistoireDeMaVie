@@ -18,6 +18,7 @@ final class Vehicle: CatalogueModel {
     
     var cache: Bool = false
     var archived: Bool = false
+    var isDrivable: Bool = false
     var syncStatusRaw: String = SyncStatus.unsynced.rawValue
     
     typealias DTO = VehicleDTO
@@ -44,6 +45,7 @@ final class Vehicle: CatalogueModel {
          city: City? = nil,
          cache: Bool = true,
          archived: Bool = false,
+         isDrivable: Bool = false,
          syncStatus: SyncStatus = .unsynced) {
         self.rid = rid
         self.name = name
@@ -55,6 +57,7 @@ final class Vehicle: CatalogueModel {
         self.city = city
         self.cache = cache
         self.archived = archived
+        self.isDrivable = isDrivable
         self.syncStatusRaw = syncStatus.rawValue
     }
     
@@ -65,6 +68,7 @@ final class Vehicle: CatalogueModel {
         self.typeSlug = dto.type_slug
         self.cityRid = dto.city_id
         self.archived = dto.archived
+        self.isDrivable = dto.is_drivable ?? false
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
@@ -74,6 +78,7 @@ final class Vehicle: CatalogueModel {
         self.typeSlug = dto.type_slug
         self.cityRid = dto.city_id
         self.archived = dto.archived
+        self.isDrivable = dto.is_drivable ?? false
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
@@ -129,6 +134,7 @@ struct VehicleDTO: Codable, Identifiable, Sendable {
     var type_slug: String
     var city_id: Int?
     var archived: Bool
+    var is_drivable: Bool?
 }
 
 struct VehiclePayload: Codable, InitializableWithModel {
@@ -138,6 +144,7 @@ struct VehiclePayload: Codable, InitializableWithModel {
     var type_slug: String
     var city_id: Int?
     var archived: Bool
+    var is_drivable: Bool
     
     init?(from vehicle: Vehicle) {
         guard vehicle.isValid(),
@@ -149,6 +156,7 @@ struct VehiclePayload: Codable, InitializableWithModel {
         self.type_slug = vehicle.typeSlug
         self.city_id = vehicle.cityRid
         self.archived = vehicle.archived
+        self.is_drivable = vehicle.isDrivable
     }
 }
 
@@ -164,6 +172,7 @@ struct VehicleEditor: CachableModel, EditorProtocol {
     var city: City?
     var cache: Bool
     var archived: Bool
+    var isDrivable: Bool
     
     init(from vehicle: Vehicle) {
         self.rid = vehicle.rid
@@ -173,6 +182,7 @@ struct VehicleEditor: CachableModel, EditorProtocol {
         self.city = vehicle.city
         self.cache = vehicle.cache
         self.archived = vehicle.archived
+        self.isDrivable = vehicle.isDrivable
     }
     
     func apply(to vehicle: Vehicle) {
@@ -189,5 +199,6 @@ struct VehicleEditor: CachableModel, EditorProtocol {
         
         vehicle.cache = self.cache
         vehicle.archived = self.archived
+        vehicle.isDrivable = self.isDrivable
     }
 }

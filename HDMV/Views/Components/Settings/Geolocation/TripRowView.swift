@@ -28,6 +28,12 @@ struct TripRowView: View {
                 HStack {
                     VehicleDisplayView(trip: trip)
                     
+                    if trip.amDriver {
+                        Image(systemName: "steeringwheel")
+                            .foregroundColor(.secondary)
+                            .imageScale(.small)
+                    }
+                    
                     Spacer()
                     SyncStatusIndicator(status: trip.syncStatus)
                 }
