@@ -24,7 +24,7 @@ struct CourseEditorSheet: View {
                                     .foregroundColor(.primary)
                                 
                                 if let qty = item.quantity {
-                                    Text(String(format: "%.1f", qty) + " " + (item.unit?.rawValue ?? ""))
+                                    Text(String(format: "%.1f", qty) + " " + (item.unit ?? ""))
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -35,16 +35,39 @@ struct CourseEditorSheet: View {
                                 .imageScale(.small)
                         }
                     }
-                }
-                .onDelete { indices in
-                    let idsToDelete = indices.map { itemsInCourse[$0].id }
-                    consumedItems.removeAll { idsToDelete.contains($0.id) }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            if let idx = consumedItems.firstIndex(where: { $0.id == item.id }) {
+                                consumedItems.remove(at: idx)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        
+                        Button {
+                            FoodClipboardManager.copy(food: item)
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                        .tint(.blue)
+                    }
                 }
                 
                 Button(action: {
                     showingItemSelector = true
                 }) {
                     Label("Add Food", systemImage: "plus.circle")
+                }
+                
+                if FoodClipboardManager.hasFood {
+                    Button(action: {
+                        if var pastedFood = FoodClipboardManager.getFoodWithNewIDs() {
+                            pastedFood.course = course
+                            consumedItems.append(pastedFood)
+                        }
+                    }) {
+                        Label("Paste Food", systemImage: "doc.on.clipboard")
+                    }
                 }
             }
             .navigationTitle(course.rawValue)

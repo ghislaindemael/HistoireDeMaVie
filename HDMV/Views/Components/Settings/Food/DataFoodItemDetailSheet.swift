@@ -10,6 +10,18 @@ struct DataFoodItemDetailSheet: View {
     
     @State private var editor: DataFoodItemEditor
     @State private var isShowingOptionSelector = false
+    @State private var newUnitName = ""
+    @State private var newGrams: Double? = nil
+    
+    private func macroBinding(for keyPath: WritableKeyPath<DataFoodItemMacros, Double?>) -> Binding<Double?> {
+        Binding<Double?>(
+            get: { editor.macros?[keyPath: keyPath] },
+            set: { newValue in
+                if editor.macros == nil { editor.macros = DataFoodItemMacros() }
+                editor.macros?[keyPath: keyPath] = newValue
+            }
+        )
+    }
     
     init(item: DataFoodItem, modelContext: ModelContext) {
         self.item = item
@@ -51,6 +63,56 @@ struct DataFoodItemDetailSheet: View {
                             editor.parent = nil
                             editor.parentId = nil
                         }
+                    }
+                }
+                
+                Section("Macros (per 100 base units)") {
+                    HStack { Text("Calories"); Spacer(); TextField("kcal", value: macroBinding(for: \.calories), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Protein"); Spacer(); TextField("g", value: macroBinding(for: \.protein), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Carbs"); Spacer(); TextField("g", value: macroBinding(for: \.carbs), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Fat"); Spacer(); TextField("g", value: macroBinding(for: \.fat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    
+                    DisclosureGroup("Extended Macros") {
+                        HStack { Text("Fiber"); Spacer(); TextField("g", value: macroBinding(for: \.fiber), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                        HStack { Text("Sugar"); Spacer(); TextField("g", value: macroBinding(for: \.sugar), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                        HStack { Text("Saturated Fat"); Spacer(); TextField("g", value: macroBinding(for: \.saturatedFat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                        HStack { Text("Sodium"); Spacer(); TextField("mg", value: macroBinding(for: \.sodium), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                        HStack { Text("Alcohol"); Spacer(); TextField("g", value: macroBinding(for: \.alcohol), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    }
+                }
+                
+                Section("Custom Serving Sizes") {
+                    if let sizes = editor.servingSizes {
+                        ForEach(sizes, id: \.unitName) { size in
+                            HStack {
+                                Text(size.unitName)
+                                Spacer()
+                                Text("\(size.gramsPerUnit, specifier: "%.1f") g")
+                            }
+                        }
+                        .onDelete { indices in
+                            editor.servingSizes?.remove(atOffsets: indices)
+                            if editor.servingSizes?.isEmpty == true {
+                                editor.servingSizes = nil
+                            }
+                        }
+                    }
+                    
+                    HStack {
+                        TextField("New Unit (e.g. slice)", text: $newUnitName)
+                        TextField("Grams", value: $newGrams, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Button("Add") {
+                            if !newUnitName.isEmpty, let grams = newGrams, grams > 0 {
+                                if editor.servingSizes == nil { editor.servingSizes = [] }
+                                editor.servingSizes?.removeAll(where: { $0.unitName == newUnitName })
+                                editor.servingSizes?.append(FoodServingSize(unitName: newUnitName, gramsPerUnit: grams))
+                                newUnitName = ""
+                                newGrams = nil
+                            }
+                        }
+                        .disabled(newUnitName.isEmpty || (newGrams ?? 0) <= 0)
                     }
                 }
                 

@@ -136,7 +136,7 @@ struct FoodItemSelectorSheet: View {
             course: course,
             options: nil,
             quantity: nil,
-            unit: FoodUnitType(rawValue: item.baseUnit ?? "") ?? .grams,
+            unit: item.baseUnit ?? "g",
             children: nil
         )
         onSelect(newFood)

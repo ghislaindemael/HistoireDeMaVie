@@ -37,8 +37,8 @@ struct FoodDetailsEditView: View {
             .lineLimit(1...3)
         }
         
-        if !activeCourses.isEmpty {
-            Section("Courses") {
+        Section("Courses") {
+            if !activeCourses.isEmpty {
                 ForEach(activeCourses) { course in
                     let itemsInCourse = foodDetailsBinding.wrappedValue.consumedItems.filter { $0.course == course }
                     
@@ -56,44 +56,59 @@ struct FoodDetailsEditView: View {
                                 .imageScale(.small)
                         }
                     }
-                }
-                .onDelete { indices in
-                    let coursesToDelete = indices.map { activeCourses[$0] }
-                    for course in coursesToDelete {
-                        emptyCourses.remove(course)
-                        foodDetailsBinding.wrappedValue.consumedItems.removeAll { $0.course == course }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            emptyCourses.remove(course)
+                            foodDetailsBinding.wrappedValue.consumedItems.removeAll { $0.course == course }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        
+                        Button {
+                            FoodClipboardManager.copy(course: itemsInCourse)
+                        } label: {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                        .tint(.blue)
                     }
                 }
             }
-        }
-        
-        Section {
+            
             Button(action: { showingAddCourse = true }) {
                 Label("Add Course", systemImage: "plus.rectangle.on.folder")
             }
-        }
-        .confirmationDialog("Add Course", isPresented: $showingAddCourse) {
-            ForEach(CourseType.allCases) { course in
-                if !activeCourses.contains(course) {
-                    Button(course.rawValue) {
-                        emptyCourses.insert(course)
-                        // Wait slightly to let the dialog dismiss cleanly
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            selectedCourseToEdit = course
+            .confirmationDialog("Add Course", isPresented: $showingAddCourse) {
+                ForEach(CourseType.allCases) { course in
+                    if !activeCourses.contains(course) {
+                        Button(course.rawValue) {
+                            emptyCourses.insert(course)
+                            // Wait slightly to let the dialog dismiss cleanly
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                selectedCourseToEdit = course
+                            }
                         }
                     }
                 }
+                Button("Cancel", role: .cancel) {}
             }
-            Button("Cancel", role: .cancel) {}
-        }
-        .sheet(item: Binding<CourseType?>(
-            get: { selectedCourseToEdit },
-            set: { selectedCourseToEdit = $0 }
-        )) { course in
-            CourseEditorSheet(course: course, consumedItems: Binding(
-                get: { foodDetailsBinding.wrappedValue.consumedItems },
-                set: { foodDetailsBinding.wrappedValue.consumedItems = $0 }
-            ))
+            .sheet(item: Binding<CourseType?>(
+                get: { selectedCourseToEdit },
+                set: { selectedCourseToEdit = $0 }
+            )) { course in
+                CourseEditorSheet(course: course, consumedItems: Binding(
+                    get: { foodDetailsBinding.wrappedValue.consumedItems },
+                    set: { foodDetailsBinding.wrappedValue.consumedItems = $0 }
+                ))
+            }
+            if FoodClipboardManager.hasCourse {
+                Button(action: {
+                    if let pastedItems = FoodClipboardManager.getCourseWithNewIDs() {
+                        foodDetailsBinding.wrappedValue.consumedItems.append(contentsOf: pastedItems)
+                    }
+                }) {
+                    Label("Paste Course", systemImage: "doc.on.clipboard")
+                }
+            }
         }
     }
 }

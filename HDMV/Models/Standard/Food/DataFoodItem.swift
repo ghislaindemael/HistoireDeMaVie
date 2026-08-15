@@ -1,11 +1,23 @@
 import Foundation
 import SwiftData
 
-struct DataFoodItemMacros: Codable, Equatable {
+struct DataFoodItemMacros: Codable, Equatable, Hashable {
     var calories: Double?
     var protein: Double?
     var carbs: Double?
     var fat: Double?
+    
+    // Extended Macros
+    var fiber: Double?
+    var sugar: Double?
+    var saturatedFat: Double?
+    var sodium: Double?
+    var alcohol: Double?
+}
+
+struct FoodServingSize: Codable, Hashable, Equatable {
+    var unitName: String
+    var gramsPerUnit: Double
 }
 
 @Model
@@ -26,6 +38,7 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
     var optionalChildren: [DataFoodItem]? { children.isEmpty ? nil : children.sorted(by: { $0.name < $1.name }) }
     var baseUnit: String?
     var macrosRaw: Data?
+    var servingSizesRaw: Data?
     var cache: Bool = true
     var archived: Bool = false
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
@@ -43,6 +56,7 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
         parentId: Int? = nil,
         baseUnit: String? = nil,
         macros: DataFoodItemMacros? = nil,
+        servingSizes: [FoodServingSize]? = nil,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -52,6 +66,9 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
         self.baseUnit = baseUnit
         if let macros = macros {
             self.macrosRaw = try? JSONEncoder().encode(macros)
+        }
+        if let servingSizes = servingSizes {
+            self.servingSizesRaw = try? JSONEncoder().encode(servingSizes)
         }
         self.archived = archived
         self.syncStatus = syncStatus
@@ -71,6 +88,20 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
         }
     }
     
+    var servingSizes: [FoodServingSize]? {
+        get {
+            guard let data = servingSizesRaw else { return nil }
+            return try? JSONDecoder().decode([FoodServingSize].self, from: data)
+        }
+        set {
+            if let newServingSizes = newValue {
+                servingSizesRaw = try? JSONEncoder().encode(newServingSizes)
+            } else {
+                servingSizesRaw = nil
+            }
+        }
+    }
+    
     convenience init(fromDto dto: DataFoodItemDTO) {
         self.init()
         self.rid = dto.id
@@ -79,6 +110,9 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
         self.baseUnit = dto.base_unit
         if let mac = dto.macros {
             self.macrosRaw = try? JSONEncoder().encode(mac)
+        }
+        if let servings = dto.serving_sizes {
+            self.servingSizesRaw = try? JSONEncoder().encode(servings)
         }
         self.archived = dto.archived ?? false
         self.syncStatus = .synced
@@ -92,6 +126,11 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
             self.macrosRaw = try? JSONEncoder().encode(mac)
         } else {
             self.macrosRaw = nil
+        }
+        if let servings = dto.serving_sizes {
+            self.servingSizesRaw = try? JSONEncoder().encode(servings)
+        } else {
+            self.servingSizesRaw = nil
         }
         self.archived = dto.archived ?? false
         self.syncStatus = .synced
@@ -110,6 +149,7 @@ struct DataFoodItemDTO: Codable, Identifiable {
     let parent_id: Int?
     let base_unit: String?
     let macros: DataFoodItemMacros?
+    let serving_sizes: [FoodServingSize]?
     let archived: Bool?
 }
 
@@ -120,6 +160,7 @@ struct DataFoodItemPayload: Codable, InitializableWithModel {
     let parent_id: Int?
     let base_unit: String?
     let macros: DataFoodItemMacros?
+    let serving_sizes: [FoodServingSize]?
     let archived: Bool
     
     init?(from model: DataFoodItem) {
@@ -128,6 +169,7 @@ struct DataFoodItemPayload: Codable, InitializableWithModel {
         self.parent_id = model.parentId
         self.base_unit = model.baseUnit
         self.macros = model.macros
+        self.serving_sizes = model.servingSizes
         self.archived = model.archived
     }
 }
@@ -142,6 +184,7 @@ struct DataFoodItemEditor: CachableModel, EditorProtocol {
     }
     var baseUnit: String?
     var macros: DataFoodItemMacros?
+    var servingSizes: [FoodServingSize]?
     var cache: Bool = true
     var archived: Bool
     
@@ -153,6 +196,7 @@ struct DataFoodItemEditor: CachableModel, EditorProtocol {
         self.parent = model.parent
         self.baseUnit = model.baseUnit
         self.macros = model.macros
+        self.servingSizes = model.servingSizes
         self.archived = model.archived
     }
     
@@ -162,6 +206,7 @@ struct DataFoodItemEditor: CachableModel, EditorProtocol {
         model.parent = self.parent
         model.baseUnit = self.baseUnit
         model.macros = self.macros
+        model.servingSizes = self.servingSizes
         model.cache = self.cache
         model.archived = self.archived
     }

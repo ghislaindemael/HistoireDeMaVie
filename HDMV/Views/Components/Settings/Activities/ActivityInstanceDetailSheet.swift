@@ -141,9 +141,7 @@ struct ActivityInstanceDetailSheet: View {
     private var specializedDetailsSection: some View {
         Group {
             if selectedActivity!.can(.log_food) {
-                Section(header: headerView("Food Details")) {
-                    FoodDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
-                }
+                FoodDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
             }
             
             if selectedActivity!.can(.log_media) {

@@ -1,25 +1,13 @@
 import Foundation
 
-enum FoodUnitType: String, Codable, CaseIterable, Identifiable {
-    case grams = "g"
-    case ml = "ml"
-    case units = "units"
-    case slices = "slices"
-    case cups = "cups"
-    case tablespoons = "tablespoons"
-    case teaspoons = "teaspoons"
-    case portion = "portion"
-    case pieces = "pieces"
-    case unknown = ""
-    
-    var id: String { self.rawValue }
-}
+
 
 struct ComposedFood: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
     
     // Core Identity: Either a Database Node or Raw Text
     var foodItemRid: Int?
+    var sourceActivityRid: Int? // Link to a batch cooking activity!
     var rawText: String?
     
     // Properties
@@ -28,7 +16,11 @@ struct ComposedFood: Codable, Hashable, Identifiable {
     
     // Quantity
     var quantity: Double?
-    var unit: FoodUnitType?
+    var unit: String?
+    
+    // Snapshots (Highly Recommended for History)
+    var totalGrams: Double?
+    var snapshottedMacros: DataFoodItemMacros?
     
     // Recursive Composition (for template explosion or complex items)
     var children: [ComposedFood]?

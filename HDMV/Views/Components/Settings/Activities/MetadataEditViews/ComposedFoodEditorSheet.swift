@@ -14,6 +14,13 @@ struct ComposedFoodEditorSheet: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") { dismiss() }
                     }
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            FoodClipboardManager.copy(food: item)
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                        }
+                    }
                 }
         }
     }
@@ -25,6 +32,24 @@ struct ComposedFoodEditorForm: View {
     @Query private var foodItems: [DataFoodItem]
     
     @State private var showingItemSelector = false
+    
+    private var availableUnits: [String] {
+        var units = ["g", "ml"]
+        if let firstItem = foodItems.first, let servingSizes = firstItem.servingSizes {
+            units.append(contentsOf: servingSizes.map { $0.unitName })
+        }
+        return units
+    }
+    
+    private func macroBinding(for keyPath: WritableKeyPath<DataFoodItemMacros, Double?>) -> Binding<Double?> {
+        Binding<Double?>(
+            get: { item.snapshottedMacros?[keyPath: keyPath] },
+            set: { newValue in
+                if item.snapshottedMacros == nil { item.snapshottedMacros = DataFoodItemMacros() }
+                item.snapshottedMacros?[keyPath: keyPath] = newValue
+            }
+        )
+    }
     
     init(item: Binding<ComposedFood>) {
         self._item = item
@@ -71,13 +96,28 @@ struct ComposedFoodEditorForm: View {
                     .keyboardType(.decimalPad)
                     
                     Picker("Unit", selection: Binding(
-                        get: { item.unit ?? .grams },
+                        get: { item.unit ?? "g" },
                         set: { item.unit = $0 }
                     )) {
-                        ForEach(FoodUnitType.allCases) { unit in
-                            Text(unit.rawValue).tag(unit)
+                        ForEach(availableUnits, id: \.self) { unit in
+                            Text(unit).tag(unit as String?)
                         }
                     }
+                }
+            }
+            
+            Section("Custom Macros") {
+                HStack { Text("Calories"); Spacer(); TextField("kcal", value: macroBinding(for: \.calories), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                HStack { Text("Protein"); Spacer(); TextField("g", value: macroBinding(for: \.protein), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                HStack { Text("Carbs"); Spacer(); TextField("g", value: macroBinding(for: \.carbs), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                HStack { Text("Fat"); Spacer(); TextField("g", value: macroBinding(for: \.fat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                
+                DisclosureGroup("Extended Macros") {
+                    HStack { Text("Fiber"); Spacer(); TextField("g", value: macroBinding(for: \.fiber), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Sugar"); Spacer(); TextField("g", value: macroBinding(for: \.sugar), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Saturated Fat"); Spacer(); TextField("g", value: macroBinding(for: \.saturatedFat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Sodium"); Spacer(); TextField("mg", value: macroBinding(for: \.sodium), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    HStack { Text("Alcohol"); Spacer(); TextField("g", value: macroBinding(for: \.alcohol), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
                 }
             }
             
@@ -135,7 +175,7 @@ struct ComposedFoodEditorForm: View {
                                     Text(children[idx].rawText ?? "Unknown Food")
                                         .foregroundColor(.primary)
                                     if let qty = children[idx].quantity {
-                                        Text(String(format: "%.1f", qty) + " " + (children[idx].unit?.rawValue ?? ""))
+                                        Text(String(format: "%.1f", qty) + " " + (children[idx].unit ?? ""))
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }
