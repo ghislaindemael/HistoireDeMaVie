@@ -340,12 +340,18 @@ class MyActivitiesPageViewModel: ObservableObject {
     func createTrip(parent: ActivityInstance) {
         guard let context = modelContext else { return }
         Trip.create(in: context, parent: parent, filterDate: filterDate)
+        if parent.childrenDisplayMode == .none {
+            parent.childrenDisplayMode = .ongoing
+        }
         fetchDailyData()
     }
     
     func createInteraction(parent: ActivityInstance) {
         guard let context = modelContext else { return }
         Interaction.create(in: context, parent: parent)
+        if parent.childrenDisplayMode == .none {
+            parent.childrenDisplayMode = .ongoing
+        }
         fetchDailyData()
     }
     

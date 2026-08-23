@@ -31,9 +31,9 @@ struct PathMetrics: Codable, Equatable, Hashable {
         elevationLoss: Double = 0,
         pathDescription: String = ""
     ) {
-        self.distance = distance
-        self.elevationGain = elevationGain
-        self.elevationLoss = elevationLoss
+        self.distance = distance.rounded()
+        self.elevationGain = elevationGain.rounded()
+        self.elevationLoss = elevationLoss.rounded()
         self.pathDescription = pathDescription
     }
     

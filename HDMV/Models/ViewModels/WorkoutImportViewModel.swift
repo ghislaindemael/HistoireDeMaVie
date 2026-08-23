@@ -122,40 +122,75 @@ class WorkoutImportViewModel: ObservableObject {
                 timeStart: workout.startDate,
                 timeEnd: workout.endDate,
                 details: detailsText,
-                syncStatus: .local
+                syncStatus: .unsynced
             )
             
-            if let locations = try? await HealthKitService.shared.fetchRouteLocations(for: workout), !locations.isEmpty {
-                var coords: [[Double]] = []
-                var gain: Double = 0
-                var loss: Double = 0
-                
-                for i in 0..<locations.count {
-                    let current = locations[i]
-                    coords.append([
-                        current.coordinate.longitude,
-                        current.coordinate.latitude,
-                        current.altitude,
-                        current.timestamp.timeIntervalSince1970
-                    ])
+            var gain: Double = 0
+            var loss: Double = 0
+            
+            // 1. Try to get native elevation from Apple Health metadata (extremely accurate, from barometric altimeter)
+            if let asc = workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity {
+                gain = asc.doubleValue(for: .meter())
+            }
+            if let desc = workout.metadata?[HKMetadataKeyElevationDescended] as? HKQuantity {
+                loss = desc.doubleValue(for: .meter())
+            }
+            
+            // 2. Fetch the route to get coordinates
+            if let locations = try? await HealthKitService.shared.fetchRouteLocations(for: workout) {
+                if !locations.isEmpty {
+                    var coords: [[Double]] = []
+                    let needsElevationCalc = (gain == 0 && loss == 0)
                     
-                    if i > 0 {
-                        let previous = locations[i - 1]
-                        let diff = current.altitude - previous.altitude
-                        if diff > 0 { gain += diff }
-                        else if diff < 0 { loss += abs(diff) }
+                    var calcGain: Double = 0
+                    var calcLoss: Double = 0
+                    
+                    for i in 0..<locations.count {
+                        let current = locations[i]
+                        coords.append([
+                            current.coordinate.longitude,
+                            current.coordinate.latitude,
+                            current.altitude,
+                            current.timestamp.timeIntervalSince1970
+                        ])
+                        
+                        if needsElevationCalc && i > 0 {
+                            let previous = locations[i - 1]
+                            let diff = current.altitude - previous.altitude
+                            if diff > 0 {
+                                calcGain += diff
+                            } else if diff < 0 {
+                                calcLoss += abs(diff)
+                            }
+                        }
+                    }
+                    
+                    if needsElevationCalc {
+                        gain = calcGain
+                        loss = calcLoss
+                    }
+                    newTrip.geojsonTrack = GeoJSONLineString(coordinates: coords)
+                    newTrip.pathMetrics = PathMetrics(
+                        distance: totalDistanceMeters,
+                        elevationGain: gain,
+                        elevationLoss: loss
+                    )
+                } else {
+                    if totalDistanceMeters > 0 || gain > 0 || loss > 0 {
+                        newTrip.pathMetrics = PathMetrics(
+                            distance: totalDistanceMeters,
+                            elevationGain: gain,
+                            elevationLoss: loss
+                        )
                     }
                 }
-                
-                newTrip.geojsonTrack = GeoJSONLineString(coordinates: coords)
-                newTrip.pathMetrics = PathMetrics(
-                    distance: totalDistanceMeters,
-                    elevationGain: gain,
-                    elevationLoss: loss
-                )
             } else {
-                if totalDistanceMeters > 0 {
-                    newTrip.pathMetrics = PathMetrics(distance: totalDistanceMeters)
+                if totalDistanceMeters > 0 || gain > 0 || loss > 0 {
+                    newTrip.pathMetrics = PathMetrics(
+                        distance: totalDistanceMeters,
+                        elevationGain: gain,
+                        elevationLoss: loss
+                    )
                 }
             }
             
