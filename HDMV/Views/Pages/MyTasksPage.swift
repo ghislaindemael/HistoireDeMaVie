@@ -45,7 +45,10 @@ struct MyTasksPage: View {
                         .listRowBackground(Color.clear)
                     } else {
                         ForEach(viewModel.tasks, id: \.persistentModelID) { task in
-                            TaskRowView(task: task) {
+                            TaskRowView(
+                                task: task,
+                                showToggle: viewModel.filterMode == .pending
+                            ) {
                                 viewModel.toggleCompletion(for: task)
                             }
                             .contentShape(Rectangle())

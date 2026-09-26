@@ -41,6 +41,7 @@ final class VaultTask: Identifiable, SyncableModel, EditableModel {
     var timeStart: Date?
     var timeEnd: Date?
     var completedAt: Date?
+    var canceledAt: Date?
     
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -62,6 +63,7 @@ final class VaultTask: Identifiable, SyncableModel, EditableModel {
         timeStart: Date? = nil,
         timeEnd: Date? = nil,
         completedAt: Date? = nil,
+        canceledAt: Date? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
         let now = Date.now
@@ -73,6 +75,7 @@ final class VaultTask: Identifiable, SyncableModel, EditableModel {
         self.timeStart = timeStart
         self.timeEnd = timeEnd
         self.completedAt = completedAt
+        self.canceledAt = canceledAt
         self.createdAt = now
         self.updatedAt = now
         self.syncStatusRaw = syncStatus.rawValue
@@ -88,6 +91,7 @@ final class VaultTask: Identifiable, SyncableModel, EditableModel {
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.completedAt = dto.completed_at
+        self.canceledAt = dto.canceled_at
         self.createdAt = dto.created_at
         self.updatedAt = dto.updated_at
         self.syncStatus = .synced
@@ -101,6 +105,7 @@ final class VaultTask: Identifiable, SyncableModel, EditableModel {
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.completedAt = dto.completed_at
+        self.canceledAt = dto.canceled_at
         self.updatedAt = dto.updated_at
         self.syncStatus = .synced
     }
@@ -123,6 +128,7 @@ struct VaultTaskDTO: Codable, Identifiable {
     let time_start: Date?
     let time_end: Date?
     let completed_at: Date?
+    let canceled_at: Date?
 }
 
 struct VaultTaskPayload: Codable, InitializableWithModel {
@@ -135,6 +141,7 @@ struct VaultTaskPayload: Codable, InitializableWithModel {
     let time_start: Date?
     let time_end: Date?
     let completed_at: Date?
+    let canceled_at: Date?
     
     init?(from task: VaultTask) {
         guard task.isValid() else { return nil }
@@ -145,6 +152,7 @@ struct VaultTaskPayload: Codable, InitializableWithModel {
         self.time_start = task.timeStart
         self.time_end = task.timeEnd
         self.completed_at = task.completedAt
+        self.canceled_at = task.canceledAt
     }
 }
 
@@ -163,6 +171,7 @@ struct VaultTaskEditor: EditorProtocol {
     var timeStart: Date?
     var timeEnd: Date?
     var completedAt: Date?
+    var canceledAt: Date?
     
     var hasTimeStart: Bool
     var hasTimeEnd: Bool
@@ -175,6 +184,7 @@ struct VaultTaskEditor: EditorProtocol {
         self.timeStart = task.timeStart
         self.timeEnd = task.timeEnd
         self.completedAt = task.completedAt
+        self.canceledAt = task.canceledAt
         
         self.createdAt = task.createdAt
         self.updatedAt = task.updatedAt
@@ -195,6 +205,12 @@ struct VaultTaskEditor: EditorProtocol {
             task.completedAt = .now
         } else if self.status != .completed {
             task.completedAt = nil
+        }
+        
+        if self.status == .canceled && task.canceledAt == nil {
+            task.canceledAt = .now
+        } else if self.status != .canceled {
+            task.canceledAt = nil
         }
         
         task.updatedAt = .now

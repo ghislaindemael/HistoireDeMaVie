@@ -10,6 +10,7 @@ import SwiftData
 
 struct TaskRowView: View {
     let task: VaultTask
+    var showToggle: Bool = true
     let onToggle: () -> Void
     
     private var priorityColor: Color {
@@ -21,24 +22,43 @@ struct TaskRowView: View {
         }
     }
     
+    @ViewBuilder
+    private var statusIcon: some View {
+        if task.status == .completed {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.green)
+        } else if task.status == .canceled {
+            Image(systemName: "xmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+        } else {
+            Image(systemName: "circle")
+                .font(.title2)
+                .foregroundStyle(priorityColor)
+        }
+    }
+    
     var body: some View {
         HStack(spacing: 16) {
             // MARK: - Checkbox Button
-            Button(action: onToggle) {
-                Image(systemName: task.status == .completed ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundStyle(task.status == .completed ? .green : priorityColor)
+            if showToggle {
+                Button(action: onToggle) {
+                    statusIcon
+                }
+                .buttonStyle(.plain)
+            } else {
+                statusIcon
             }
-            .buttonStyle(.plain)
             
             // MARK: - Task Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.name.isEmpty ? "New Task" : task.name)
                     .font(.headline)
-                    .strikethrough(task.status == .completed, color: .secondary)
-                    .foregroundStyle(task.status == .completed ? .secondary : .primary)
+                    .strikethrough(task.status == .completed || task.status == .canceled, color: .secondary)
+                    .foregroundStyle(task.status == .completed || task.status == .canceled ? .secondary : .primary)
                 
-                if let deadline = task.timeEnd, task.status != .completed {
+                if let deadline = task.timeEnd, task.status == .todo || task.status == .inProgress {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar.badge.exclamationmark")
                         Text(deadline.formatted(date: .abbreviated, time: .shortened))
@@ -47,6 +67,10 @@ struct TaskRowView: View {
                     .foregroundStyle(deadline < .now ? .red : .secondary) 
                 } else if let completed = task.completedAt, task.status == .completed {
                     Text("Done \(completed.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if let canceled = task.canceledAt, task.status == .canceled {
+                    Text("Canceled \(canceled.formatted(date: .abbreviated, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

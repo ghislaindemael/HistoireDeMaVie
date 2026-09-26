@@ -91,6 +91,18 @@ struct VaultTaskDetailSheet: View {
                             .labelsHidden()
                         }
                     }
+                    
+                    if let canceled = viewModel.editor.canceledAt {
+                        HStack {
+                            Text("Canceled")
+                            Spacer()
+                            DatePicker("", selection: Binding(
+                                get: { canceled },
+                                set: { viewModel.editor.canceledAt = $0 }
+                            ), displayedComponents: [.date, .hourAndMinute])
+                            .labelsHidden()
+                        }
+                    }
                 }
                 .font(.footnote)
             }
