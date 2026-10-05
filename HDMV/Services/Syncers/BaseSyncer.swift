@@ -52,6 +52,11 @@ Payload.Model == Model
     
     /// Pushes local creations, updates, and deletions to the server.
     func pushChanges() async throws {
+        guard NetworkMonitor.shared.isConnected else {
+            print("⚠️ BaseSyncer: Skipping push, no network connection.")
+            return
+        }
+        
         let unsyncedItems = try fetchLocalModels(with: SyncStatus.unsynced)
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)

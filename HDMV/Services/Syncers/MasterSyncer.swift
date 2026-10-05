@@ -36,6 +36,11 @@ class MasterSyncer {
         startDate: Date? = nil,
         endDate: Date? = nil
     ) async {
+        guard NetworkMonitor.shared.isConnected else {
+            print("⚠️ MasterSyncer: Skipping sync, no network connection.")
+            return
+        }
+        
         do {
             switch filterMode {
                 case .daily:
@@ -72,6 +77,11 @@ class MasterSyncer {
     }
 
     func pushChanges() async throws {
+        guard NetworkMonitor.shared.isConnected else {
+            print("⚠️ MasterSyncer: Skipping push, no network connection.")
+            return
+        }
+        
         do {
             _ = try await activityInstanceSyncer.pushChanges()            
             _ = try await tripSyncer.pushChanges()
