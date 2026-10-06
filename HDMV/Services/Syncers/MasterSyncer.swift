@@ -38,6 +38,7 @@ class MasterSyncer {
     ) async {
         guard NetworkMonitor.shared.isConnected else {
             print("⚠️ MasterSyncer: Skipping sync, no network connection.")
+            ToastManager.shared.showToast(message: "No Internet Connection", systemImage: "wifi.exclamationmark", color: .orange)
             return
         }
         
@@ -73,12 +74,14 @@ class MasterSyncer {
             
         } catch {
             print("❌ MasterSyncer full sync failed: \(error)")
+            ToastManager.shared.showToast(message: "Sync Failed", systemImage: "xmark.icloud", color: .red)
         }
     }
 
     func pushChanges() async throws {
         guard NetworkMonitor.shared.isConnected else {
             print("⚠️ MasterSyncer: Skipping push, no network connection.")
+            ToastManager.shared.showToast(message: "No Internet Connection", systemImage: "wifi.exclamationmark", color: .orange)
             return
         }
         
@@ -91,6 +94,7 @@ class MasterSyncer {
             _ = try await transactionSyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")
+            ToastManager.shared.showToast(message: "Push Failed", systemImage: "arrow.up.icloud", color: .red)
         }
     }
 }

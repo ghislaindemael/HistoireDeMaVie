@@ -13,7 +13,7 @@ import Combine
 class NetworkMonitor: ObservableObject {
     static let shared = NetworkMonitor()
     
-    @Published var isConnected = false
+    @Published var isConnected = true
     
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")

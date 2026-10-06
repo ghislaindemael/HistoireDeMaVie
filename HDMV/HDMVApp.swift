@@ -54,6 +54,7 @@ struct HDMVApp: App {
     var body: some Scene {
         WindowGroup {
                     AppView()
+                        .withGlobalToasts()
                         .onAppear {}
                         .onOpenURL { url in
                             vaultService.handleIncomingURL(url)
