@@ -12,6 +12,9 @@ struct LifeEventRowView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var settings = SettingsStore.shared
     
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForLifeEvent && $0.archived == false })
+    private var optionMappings: [DataLogOptionMapping]
+    
     let event: LifeEvent
     let selectedDate: Date
     
@@ -92,11 +95,43 @@ struct LifeEventRowView: View {
                     .font(.body)
             }
             
-
-           // TODO: Show metrics sliders
+            
+            // TODO: Show metrics sliders
             
             LifeContextsDisplayView(contextRids: event.contextRids)
             
+            optionsPillsView
+        }
+    }
+    
+    // MARK: - Options Pills View
+    @ViewBuilder
+    private var optionsPillsView: some View {
+        let engine = DynamicOptionsLayoutEngine(mappings: optionMappings, decodedOptions: event.decodedLogDetails?.options)
+        let layoutView = engine.renderAll()
+        
+        VStack(alignment: .leading, spacing: 4) {
+            layoutView
+            missingRequiredOptionsWarnings
+        }
+    }
+    
+    @ViewBuilder
+    private var missingRequiredOptionsWarnings: some View {
+        let missing = optionMappings.filter { mapping in
+            !mapping.isDeleted && mapping.required && (event.decodedLogDetails?.options?[mapping.optionSlug] == nil || event.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+        }
+        
+        if !missing.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(missing, id: \.id) { mapping in
+                    MissingDetailWarningView(
+                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
+                        iconName: "exclamationmark.triangle.fill",
+                        isRequired: true
+                    )
+                }
+            }
         }
     }
 }

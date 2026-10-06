@@ -9,6 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct InteractionRowView: View {
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForInteraction && $0.archived == false })
+    private var optionMappings: [DataLogOptionMapping]
+    
     let interaction: Interaction
     let onEnd: (() -> Void)?
     
@@ -39,11 +42,6 @@ struct InteractionRowView: View {
             }
             
             HStack {
-                if interaction.inPerson {
-                    Image(systemName: "person.2")
-                } else {
-                    Image(systemName: "phone")
-                }
                 DateRangeDisplayView(
                     startDate: interaction.timeStart,
                     endDate: interaction.timeEnd,
@@ -81,8 +79,41 @@ struct InteractionRowView: View {
             
             LifeContextsDisplayView(contextRids: interaction.contextRids)
             
+            optionsPillsView
+            
             if interaction.timeEnd == nil, let onEnd = onEnd {
                 EndItemButton(title: "End Interaction", action: onEnd)
+            }
+        }
+    }
+    
+    // MARK: - Options Pills View
+    @ViewBuilder
+    private var optionsPillsView: some View {
+        let engine = DynamicOptionsLayoutEngine(mappings: optionMappings, decodedOptions: interaction.decodedLogDetails?.options)
+        let layoutView = engine.renderAll()
+        
+        VStack(alignment: .leading, spacing: 4) {
+            layoutView
+            missingRequiredOptionsWarnings
+        }
+    }
+    
+    @ViewBuilder
+    private var missingRequiredOptionsWarnings: some View {
+        let missing = optionMappings.filter { mapping in
+            !mapping.isDeleted && mapping.required && (interaction.decodedLogDetails?.options?[mapping.optionSlug] == nil || interaction.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+        }
+        
+        if !missing.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(missing, id: \.id) { mapping in
+                    MissingDetailWarningView(
+                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
+                        iconName: "exclamationmark.triangle.fill",
+                        isRequired: true
+                    )
+                }
             }
         }
     }

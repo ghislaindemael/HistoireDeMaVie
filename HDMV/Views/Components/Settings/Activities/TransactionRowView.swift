@@ -188,7 +188,8 @@ struct TransactionRowView: View {
                 ForEach(missing, id: \.id) { mapping in
                     MissingDetailWarningView(
                         message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
-                        systemImage: "exclamationmark.triangle.fill"
+                        iconName: "exclamationmark.triangle.fill",
+                        isRequired: true
                     )
                 }
             }

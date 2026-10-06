@@ -13,6 +13,9 @@ struct InteractionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
     
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForInteraction && $0.archived == false }) 
+    private var optionMappings: [DataLogOptionMapping]
+    
     let interaction: Interaction
     
     init(interaction: Interaction, modelContext: ModelContext) {
@@ -81,9 +84,14 @@ struct InteractionDetailSheet: View {
     }
     
     private var detailsSection: some View {
-        Section("Details") {
-            Toggle("In Person", isOn: $viewModel.editor.in_person)
-            Toggle("Timed", isOn: $viewModel.editor.timed)
+        Group {
+            DynamicOptionsSection(
+                mappings: optionMappings,
+                decodedLogDetails: $viewModel.editor.log_details
+            )
+            
+            Section("Details") {
+                Toggle("Timed", isOn: $viewModel.editor.timed)
             
             Slider(
                 value: Binding(
@@ -99,6 +107,7 @@ struct InteractionDetailSheet: View {
             ))
             .frame(height: 80)
             .lineLimit(3...)
+            }
         }
     }
 }

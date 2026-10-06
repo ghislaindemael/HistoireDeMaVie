@@ -73,12 +73,18 @@ final class Transaction: LogModel {
             guard let selectedValueSlug = mappedOptions[option.slug] else { continue }
             
             let config = option.config
+            let choice = config?.choices?.first(where: { $0.slug == selectedValueSlug })
+            let label = choice?.label ?? selectedValueSlug
+            let icon = choice?.icon
+            let isDefault = (selectedValueSlug == config?.defaultValue)
+            let replaces = config?.replacesActivityName ?? false
+            
             pills.append(ActivityOptionPill(
                 optionSlug: option.slug,
-                label: option.name,
-                value: config.getChoice(for: selectedValueSlug)?.label ?? selectedValueSlug,
-                type: option.type,
-                replacesActivityName: false
+                label: label,
+                icon: icon,
+                isDefault: isDefault,
+                replacesActivityName: replaces
             ))
         }
         

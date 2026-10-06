@@ -14,6 +14,9 @@ struct LifeEventDetailSheet: View {
     
     @StateObject var viewModel: LifeEventDetailSheetViewModel
     
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForLifeEvent && $0.archived == false }) 
+    private var optionMappings: [DataLogOptionMapping]
+    
     let lifeEvent: LifeEvent
     
     init(
@@ -56,8 +59,14 @@ struct LifeEventDetailSheet: View {
     // MARK: - UI Sections
     
     private var detailsSection: some View {
-        Section("Details") {
-            Picker("Type", selection: $viewModel.editor.type) {
+        Group {
+            DynamicOptionsSection(
+                mappings: optionMappings,
+                decodedLogDetails: $viewModel.editor.log_details
+            )
+            
+            Section("Details") {
+                Picker("Type", selection: $viewModel.editor.type) {
                 ForEach(LifeEventType.allCases) { type in
                     Text(type.name).tag(type as LifeEventType)
                 }
@@ -78,6 +87,7 @@ struct LifeEventDetailSheet: View {
                 set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }
             ))
             .lineLimit(3...)
+            }
         }
     }
     
