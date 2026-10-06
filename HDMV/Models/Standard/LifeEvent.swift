@@ -22,6 +22,18 @@ final class LifeEvent: LogModel {
     var parentTripRid: Int?
     var contextRids: [Int] = []
 
+    var log_details: Data?
+    
+    var decodedLogDetails: LogDetails? {
+        get {
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
+        }
+        set {
+            log_details = try? JSONEncoder().encode(newValue)
+        }
+    }
+    
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     var type: LifeEventType {
@@ -75,6 +87,7 @@ final class LifeEvent: LogModel {
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
@@ -87,6 +100,7 @@ final class LifeEvent: LogModel {
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
@@ -106,6 +120,7 @@ struct LifeEventDTO: Identifiable, Codable, Sendable {
     let parent_instance_id: Int?
     let parent_trip_id: Int?
     let context_ids: [Int]?
+    let log_details: LogDetails?
 }
 
 
@@ -119,6 +134,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
     var context_ids: [Int]
+    let log_details: LogDetails?
     
     typealias Model = LifeEvent
     
@@ -134,6 +150,13 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         self.parent_instance_id = event.parentInstanceRid
         self.parent_trip_id = event.parentTripRid
         self.context_ids = event.contextRids
+        
+        if var details = event.decodedLogDetails {
+            details.removeFields()
+            self.log_details = details
+        } else {
+            self.log_details = nil
+        }
     }
     
 }
@@ -144,6 +167,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     var timeStart: Date
     var timeEnd: Date?
     var details: String?
+    var log_details: LogDetails?
     var metrics: LifeEventMetrics
     var parentInstance: ActivityInstance?
     var parentInstanceRid: Int?
@@ -158,6 +182,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         self.timeStart = event.timeStart
         self.timeEnd = event.timeEnd
         self.details = event.details
+        self.log_details = event.decodedLogDetails
         self.metrics = event.metrics ?? LifeEventMetrics()
         self.parentInstance = event.parentInstance
         self.parentInstanceRid = event.parentInstanceRid
@@ -172,6 +197,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         event.timeStart = self.timeStart
         event.timeEnd = self.timeEnd
         event.details = self.details
+        event.decodedLogDetails = self.log_details
         event.metrics = self.metrics
         event.parentInstance = self.parentInstance
         event.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid

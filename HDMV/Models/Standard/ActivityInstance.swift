@@ -33,7 +33,7 @@ final class ActivityInstance: LogModel {
     @Attribute var childrenDisplayModeRaw: String = ChildrenDisplayMode.all.rawValue
     
     var details: String?
-    var activity_details: Data?
+    var log_details: Data?
     
     var fitFilePath: String?
     
@@ -89,7 +89,7 @@ final class ActivityInstance: LogModel {
         activityRid: Int? = nil,
         parentRid: Int? = nil,
         details: String? = nil,
-        activity_details: ActivityDetails? = nil,
+        log_details: LogDetails? = nil,
         fitFilePath: String? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -101,22 +101,22 @@ final class ActivityInstance: LogModel {
         self.percentage = percentage
         self.fitFilePath = fitFilePath
         self.syncStatus = syncStatus
-        self.decodedActivityDetails = activity_details
+        self.decodedLogDetails = log_details
     }
     
-    var decodedActivityDetails: ActivityDetails? {
+    var decodedLogDetails: LogDetails? {
         get {
-            guard let data = activity_details else { return nil }
-            return try? JSONDecoder().decode(ActivityDetails.self, from: data)
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
         }
         set {
-            activity_details = try? JSONEncoder().encode(newValue)
+            log_details = try? JSONEncoder().encode(newValue)
         }
     }
     
     var resolvedOptionsPills: [ActivityOptionPill] {
         guard let activity = self.activity,
-              let mappedOptions = decodedActivityDetails?.options,
+              let mappedOptions = decodedLogDetails?.options,
               !mappedOptions.isEmpty else {
             return []
         }
@@ -158,7 +158,7 @@ final class ActivityInstance: LogModel {
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.fitFilePath = dto.fit_file_path
-        self.decodedActivityDetails = dto.activity_details
+        self.decodedLogDetails = dto.log_details
         self.personRids = dto.person_ids ?? []
         self.contextRids = dto.context_ids ?? []
         self.syncStatus = .synced
@@ -173,7 +173,7 @@ final class ActivityInstance: LogModel {
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
         self.fitFilePath = dto.fit_file_path
-        self.decodedActivityDetails = dto.activity_details
+        self.decodedLogDetails = dto.log_details
         self.personRids = dto.person_ids ?? []
         self.contextRids = dto.context_ids ?? []
         
@@ -202,7 +202,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let details: String?
     let percentage: Int?
     let fit_file_path: String?
-    let activity_details: ActivityDetails?
+    let log_details: LogDetails?
     let person_ids: [Int]?
     let context_ids: [Int]?
 }
@@ -221,7 +221,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     let details: String?
     let percentage: Int
     let fit_file_path: String?
-    let activity_details: ActivityDetails?
+    let log_details: LogDetails?
     let person_ids: [Int]
     let context_ids: [Int]
     
@@ -242,11 +242,11 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.person_ids = instance.personRids
         self.context_ids = instance.contextRids
         
-        if var details = instance.decodedActivityDetails {
+        if var details = instance.decodedLogDetails {
             details.removeFields()
-            self.activity_details = details
+            self.log_details = details
         } else {
-            self.activity_details = nil
+            self.log_details = nil
         }
     }
 }
@@ -271,7 +271,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     var parentTripRid: Int?
     var details: String?
     var fitFilePath: String?
-    var decodedActivityDetails: ActivityDetails?
+    var decodedLogDetails: LogDetails?
     
     var persons: [Person] = []
     var personRids: [Int] = []
@@ -292,7 +292,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         self.parentTripRid = instance.parentTripRid
         self.details = instance.details
         self.fitFilePath = instance.fitFilePath
-        self.decodedActivityDetails = instance.decodedActivityDetails
+        self.decodedLogDetails = instance.decodedLogDetails
         
         self.persons = instance.persons
         self.personRids = instance.personRids
@@ -312,7 +312,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.parentTripRid = self.parentTripRid
         instance.details = self.details
         instance.fitFilePath = self.fitFilePath
-        instance.decodedActivityDetails = self.decodedActivityDetails
+        instance.decodedLogDetails = self.decodedLogDetails
         
         instance.persons = self.persons
         instance.personRids = self.persons.compactMap { $0.rid }

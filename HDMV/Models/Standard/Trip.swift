@@ -40,7 +40,7 @@ final class Trip: LogModel {
     var personRids: [Int] = []
     
     var details: String?
-    var activity_details: Data?
+    var log_details: Data?
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = TripDTO
@@ -112,13 +112,13 @@ final class Trip: LogModel {
         }
     }
     
-    var decodedActivityDetails: ActivityDetails? {
+    var decodedLogDetails: LogDetails? {
         get {
-            guard let data = activity_details else { return nil }
-            return try? JSONDecoder().decode(ActivityDetails.self, from: data)
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
         }
         set {
-            activity_details = try? JSONEncoder().encode(newValue)
+            log_details = try? JSONEncoder().encode(newValue)
         }
     }
     
@@ -137,7 +137,7 @@ final class Trip: LogModel {
          fitFilePath: String? = nil,
          contextRids: [Int] = [],
          details: String? = nil,
-         activity_details: ActivityDetails? = nil,
+         log_details: LogDetails? = nil,
          syncStatus: SyncStatus = .unsynced)
     {
         self.rid = rid
@@ -150,7 +150,7 @@ final class Trip: LogModel {
         self.fitFilePath = fitFilePath
         self.contextRids = contextRids
         self.details = details
-        self.decodedActivityDetails = activity_details
+        self.decodedLogDetails = log_details
         self.syncStatus = syncStatus
     }
     
@@ -170,7 +170,7 @@ final class Trip: LogModel {
         self.fitFilePath = dto.fit_file_path
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
-        self.decodedActivityDetails = dto.activity_details
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
@@ -199,7 +199,7 @@ final class Trip: LogModel {
         
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
-        self.decodedActivityDetails = dto.activity_details
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
@@ -229,7 +229,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let person_ids: [Int]?
     let context_ids: [Int]?
     let details: String?
-    let activity_details: ActivityDetails?
+    let log_details: LogDetails?
 }
 
 
@@ -252,7 +252,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let person_ids: [Int]
     let context_ids: [Int]
     let details: String?
-    let activity_details: ActivityDetails?
+    let log_details: LogDetails?
     
     init?(from trip: Trip) {
         guard trip.isValid(),
@@ -278,11 +278,11 @@ struct TripPayload: Codable, InitializableWithModel {
         self.person_ids = trip.personRids
         self.context_ids = trip.contextRids
         
-        if var activityDetails = trip.decodedActivityDetails {
+        if var activityDetails = trip.decodedLogDetails {
             activityDetails.removeFields()
-            self.activity_details = activityDetails
+            self.log_details = activityDetails
         } else {
-            self.activity_details = nil
+            self.log_details = nil
         }
     }
     
@@ -319,7 +319,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     
     var amDriver: Bool
     var details: String?
-    var decodedActivityDetails: ActivityDetails?
+    var decodedLogDetails: LogDetails?
     
     var persons: [Person] = []
     var personRids: [Int] = []
@@ -357,7 +357,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         
         self.amDriver = trip.amDriver
         self.details = trip.details
-        self.decodedActivityDetails = trip.decodedActivityDetails
+        self.decodedLogDetails = trip.decodedLogDetails
         
         self.persons = trip.persons
         self.personRids = trip.personRids
@@ -369,7 +369,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         trip.timeEnd = timeEnd
         trip.amDriver = amDriver
         trip.details = details
-        trip.decodedActivityDetails = decodedActivityDetails
+        trip.decodedLogDetails = decodedLogDetails
         trip.fitFilePath = fitFilePath
         
         trip.parentInstance = parentInstance

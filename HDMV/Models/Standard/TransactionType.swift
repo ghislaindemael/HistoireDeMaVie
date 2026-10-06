@@ -23,6 +23,9 @@ final class TransactionType: Identifiable, Hashable, SyncableModel, EditableMode
     }
     @Relationship(deleteRule: .nullify, inverse: \TransactionType.parent)
     var children: [TransactionType] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \DataLogOptionMapping.transactionType)
+    var optionMappings: [DataLogOptionMapping] = []
     var icon: String?
     var cache: Bool = true
     var archived: Bool = false

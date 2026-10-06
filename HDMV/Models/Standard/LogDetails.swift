@@ -37,7 +37,7 @@ struct PlaceDetails: Codable, @unchecked Sendable {
 
 // MARK: The handler
 
-struct ActivityDetails: Codable, @unchecked Sendable {
+struct LogDetails: Codable, @unchecked Sendable {
     var food: FoodDetails?
     
     // Modern Activity media logs

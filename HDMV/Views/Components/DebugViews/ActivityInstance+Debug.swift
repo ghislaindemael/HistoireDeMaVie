@@ -48,9 +48,9 @@ extension ActivityInstance: DebugViewable {
             
             Text("Details: \(details ?? "N/A")")
             
-            if decodedActivityDetails != nil {
+            if decodedLogDetails != nil {
                 Text("Activity Details:")
-                Text(decodedActivityDetails.debugDescription)
+                Text(decodedLogDetails.debugDescription)
             }
         }
         .background(Color(.secondarySystemBackground))

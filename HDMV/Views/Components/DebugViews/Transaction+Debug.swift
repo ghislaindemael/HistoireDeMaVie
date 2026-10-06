@@ -52,7 +52,19 @@ extension Transaction: DebugViewable {
                 Text("Bank Amount: \(bankAmount.formatted()) \(bankCurrency)")
             }
             
-            Text("Is Cash: \(isCash ? "Yes" : "No")")
+            if let sourceAccountRid {
+                Text("Source Account RID: \(sourceAccountRid) (\(sourceAccount != nil ? "✅ Loaded" : "❌ Missing"))")
+            } else {
+                Text("Source Account RID: Unset")
+                    .foregroundStyle(.secondary)
+            }
+            
+            if let targetAccountRid {
+                Text("Target Account RID: \(targetAccountRid) (\(targetAccount != nil ? "✅ Loaded" : "❌ Missing"))")
+            } else {
+                Text("Target Account RID: Unset")
+                    .foregroundStyle(.secondary)
+            }
             
             Divider()
             

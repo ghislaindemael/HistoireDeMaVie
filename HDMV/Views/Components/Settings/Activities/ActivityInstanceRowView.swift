@@ -162,7 +162,7 @@ struct ActivityInstanceRowView: View {
     @ViewBuilder
     private var missingRequiredOptionsWarnings: some View {
         let missing = instance.activity?.optionMappings.filter { mapping in
-            !mapping.isDeleted && mapping.required && (instance.decodedActivityDetails?.options?[mapping.optionSlug] == nil || instance.decodedActivityDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+            !mapping.isDeleted && mapping.required && (instance.decodedLogDetails?.options?[mapping.optionSlug] == nil || instance.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
         } ?? []
         
         if !missing.isEmpty {
@@ -181,7 +181,7 @@ struct ActivityInstanceRowView: View {
 
     @ViewBuilder
     private var mealContentText: some View {
-        let foodDetails = instance.decodedActivityDetails?.food
+        let foodDetails = instance.decodedLogDetails?.food
         let hasFood = foodDetails != nil
         let mustLog = instance.activity?.must(.log_food) == true
         let canLogBackfill = settings.appMode == .backfill && instance.activity?.can(.log_food) == true
@@ -201,7 +201,7 @@ struct ActivityInstanceRowView: View {
     
     @ViewBuilder
     private var mediaContentText: some View {
-        let mediaList = instance.decodedActivityDetails?.media
+        let mediaList = instance.decodedLogDetails?.media
         let hasMedia = mediaList?.isEmpty == false
         let mustLog = instance.activity?.must(.log_media) == true
         let canLogBackfill = settings.appMode == .backfill && instance.activity?.can(.log_media) == true
@@ -225,7 +225,7 @@ struct ActivityInstanceRowView: View {
     
     @ViewBuilder
     private var linkedPlaceView: some View {
-        let placeId = instance.decodedActivityDetails?.place?.placeId
+        let placeId = instance.decodedLogDetails?.place?.placeId
         let hasPlace = placeId != nil
         let mustLink = instance.activity?.must(.link_place) == true
         let canLinkBackfill = settings.appMode == .backfill && instance.activity?.can(.link_place) == true

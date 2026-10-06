@@ -19,7 +19,11 @@ class DynamicOptionsLayoutEngine {
     }
     
     convenience init(instance: ActivityInstance) {
-        self.init(mappings: instance.activity?.optionMappings ?? [], decodedOptions: instance.decodedActivityDetails?.options)
+        self.init(mappings: instance.activity?.optionMappings ?? [], decodedOptions: instance.decodedLogDetails?.options)
+    }
+    
+    convenience init(transaction: Transaction) {
+        self.init(mappings: transaction.type?.optionMappings ?? [], decodedOptions: transaction.decodedLogDetails?.options)
     }
     
     func renderAll() -> AnyView {

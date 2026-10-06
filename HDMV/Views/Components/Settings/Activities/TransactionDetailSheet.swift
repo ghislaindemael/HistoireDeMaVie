@@ -5,6 +5,8 @@ struct TransactionDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
+    @Query(filter: #Predicate<DataBankAccount> { $0.archived == false }) private var bankAccounts: [DataBankAccount]
+    
     @StateObject var viewModel: TransactionDetailSheetViewModel
     
     private var isStandardCurrency: Bool {
@@ -147,7 +149,23 @@ struct TransactionDetailSheet: View {
                         }
                     }
                     
-                    Toggle("Paid in Cash", isOn: $viewModel.editor.isCash)
+                }
+                
+                // MARK: - 3.5 Accounts
+                Section("Accounts") {
+                    Picker("Source Account", selection: $viewModel.editor.sourceAccount) {
+                        Text("None").tag(DataBankAccount?(nil))
+                        ForEach(bankAccounts) { account in
+                            Text(account.name).tag(DataBankAccount?(account))
+                        }
+                    }
+                    
+                    Picker("Target Account", selection: $viewModel.editor.targetAccount) {
+                        Text("None").tag(DataBankAccount?(nil))
+                        ForEach(bankAccounts) { account in
+                            Text(account.name).tag(DataBankAccount?(account))
+                        }
+                    }
                 }
                 
                 // MARK: - 4. Advanced Accounting

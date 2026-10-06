@@ -43,7 +43,7 @@ struct ActivityInstanceDetailSheet: View {
                 if let activity = selectedActivity {
                     DynamicOptionsSection(
                         mappings: activity.optionMappings,
-                        decodedActivityDetails: $viewModel.editor.decodedActivityDetails
+                        decodedLogDetails: $viewModel.editor.decodedLogDetails
                     )
                     
                     if activity.canLogDetails() {
@@ -141,12 +141,12 @@ struct ActivityInstanceDetailSheet: View {
     private var specializedDetailsSection: some View {
         Group {
             if selectedActivity!.can(.log_food) {
-                FoodDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                FoodDetailsEditView(metadata: $viewModel.editor.decodedLogDetails)
             }
             
             if selectedActivity!.can(.log_media) {
                 Section(header: headerView("Media Items")) {
-                    MediaDetailsEditView(metadata: $viewModel.editor.decodedActivityDetails)
+                    MediaDetailsEditView(metadata: $viewModel.editor.decodedLogDetails)
                 }
             }
             
@@ -154,7 +154,7 @@ struct ActivityInstanceDetailSheet: View {
                 Section(header: headerView("Place")) {
                     PlaceSelectorView(
                         selectedPlace: detailsPlaceBinding,
-                        linkedPlaceRid: viewModel.editor.decodedActivityDetails?.place?.placeId,
+                        linkedPlaceRid: viewModel.editor.decodedLogDetails?.place?.placeId,
                         targetDate: viewModel.editor.timeStart
                     )
                 }
@@ -165,17 +165,17 @@ struct ActivityInstanceDetailSheet: View {
     private var detailsPlaceBinding: Binding<Place?> {
         Binding<Place?>(
             get: {
-                viewModel.editor.decodedActivityDetails?.place?.place
+                viewModel.editor.decodedLogDetails?.place?.place
             },
             set: { newPlace in
-                if viewModel.editor.decodedActivityDetails == nil {
-                    viewModel.editor.decodedActivityDetails = ActivityDetails()
+                if viewModel.editor.decodedLogDetails == nil {
+                    viewModel.editor.decodedLogDetails = LogDetails()
                 }
-                if viewModel.editor.decodedActivityDetails?.place == nil {
-                    viewModel.editor.decodedActivityDetails?.place = PlaceDetails()
+                if viewModel.editor.decodedLogDetails?.place == nil {
+                    viewModel.editor.decodedLogDetails?.place = PlaceDetails()
                 }
-                viewModel.editor.decodedActivityDetails?.place?.place = newPlace
-                viewModel.editor.decodedActivityDetails?.place?.placeId = newPlace?.rid
+                viewModel.editor.decodedLogDetails?.place?.place = newPlace
+                viewModel.editor.decodedLogDetails?.place?.placeId = newPlace?.rid
             }
         )
     }

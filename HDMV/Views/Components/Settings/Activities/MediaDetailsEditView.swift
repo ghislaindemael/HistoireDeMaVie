@@ -11,7 +11,7 @@ import SwiftData
 
 
 struct MediaDetailsEditView: View {
-    @Binding var metadata: ActivityDetails?
+    @Binding var metadata: LogDetails?
     
     @Query(sort: \DataMediaItem.name) private var allMediaItems: [DataMediaItem]
     
@@ -91,7 +91,7 @@ struct MediaDetailsEditView: View {
     
     private func addBlankMedia() {
         if metadata == nil {
-            metadata = ActivityDetails()
+            metadata = LogDetails()
         }
         if metadata?.media == nil {
             metadata?.media = []
@@ -111,7 +111,7 @@ struct MediaDetailsEditView: View {
 
 
 struct MediaItemEditorSheet: View {
-    @Binding var metadata: ActivityDetails?
+    @Binding var metadata: LogDetails?
     let index: Int
     
     let allMediaItems: [DataMediaItem]

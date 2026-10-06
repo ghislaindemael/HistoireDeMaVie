@@ -12,7 +12,7 @@ struct DynamicOptionsSection: View {
     @Environment(\.modelContext) private var modelContext
     
     let mappings: [DataLogOptionMapping]
-    @Binding var decodedActivityDetails: ActivityDetails?
+    @Binding var decodedLogDetails: LogDetails?
     
     // We sort the mappings by priority
     var sortedMappings: [DataLogOptionMapping] {
@@ -26,7 +26,7 @@ struct DynamicOptionsSection: View {
                     if let option = mapping.option {
                         DynamicOptionRow(
                             option: option,
-                            details: $decodedActivityDetails
+                            details: $decodedLogDetails
                         )
                     }
                 }
@@ -46,7 +46,7 @@ struct DynamicOptionsSection: View {
 
 struct DynamicOptionRow: View {
     let option: DataLogOption
-    @Binding var details: ActivityDetails?
+    @Binding var details: LogDetails?
     
     private var optionValue: Binding<String> {
         Binding(
@@ -55,7 +55,7 @@ struct DynamicOptionRow: View {
             },
             set: { newValue in
                 if details == nil {
-                    details = ActivityDetails()
+                    details = LogDetails()
                 }
                 if details?.options == nil {
                     details?.options = [:]

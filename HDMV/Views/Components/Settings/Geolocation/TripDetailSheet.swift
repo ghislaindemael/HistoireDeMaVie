@@ -53,7 +53,7 @@ struct TripDetailSheet: View {
                 
                 VehicleDynamicOptionsSection(
                     vehicleRid: viewModel.editor.vehicle?.rid ?? viewModel.editor.vehicleRid,
-                    decodedActivityDetails: $viewModel.editor.decodedActivityDetails
+                    decodedLogDetails: $viewModel.editor.decodedLogDetails
                 )
                 
                 Section(header: headerView("Companions & Context")) {

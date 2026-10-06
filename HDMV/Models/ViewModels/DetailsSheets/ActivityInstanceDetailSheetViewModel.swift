@@ -21,14 +21,14 @@ class ActivityInstanceDetailSheetViewModel: BaseDetailSheetViewModel<ActivityIns
     }
     
     override func onDone() {
-        var cleanDetails = editor.decodedActivityDetails
+        var cleanDetails = editor.decodedLogDetails
         
         if let currentMedia = cleanDetails?.media {
             let filteredMedia = currentMedia.filter { $0.itemId != -1 }
             cleanDetails?.media = filteredMedia.isEmpty ? nil : filteredMedia
         }
         
-        editor.decodedActivityDetails = cleanDetails
+        editor.decodedLogDetails = cleanDetails
         
         super.onDone()
     }

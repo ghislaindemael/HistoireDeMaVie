@@ -12,17 +12,12 @@ import SwiftData
 struct TransactionRowView: View {
     let transaction: Transaction
     let selectedDate: Date
-    
-    let onQuickAction: (() -> Void)?
-    
     init(
         transaction: Transaction,
-        selectedDate: Date = .now,
-        onQuickAction: (() -> Void)? = nil
+        selectedDate: Date = .now
     ) {
         self.transaction = transaction
         self.selectedDate = selectedDate
-        self.onQuickAction = onQuickAction
     }
     
     var body: some View {
@@ -97,10 +92,20 @@ struct TransactionRowView: View {
                         .foregroundStyle(.red)
                 }
                 
-                if transaction.isCash {
+                if let source = transaction.sourceAccount {
                     HStack(spacing: 2) {
-                        Image(systemName: "banknote")
-                        Text("Cash")
+                        Image(systemName: "arrow.up.right.circle")
+                        Text(source.name)
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+                }
+                
+                if let target = transaction.targetAccount {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.down.left.circle")
+                        Text(target.name)
                     }
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -156,18 +161,36 @@ struct TransactionRowView: View {
             
             LifeContextsDisplayView(contextRids: transaction.contextRids)
             
-            if let onQuickAction = onQuickAction {
-                Button(action: onQuickAction) {
-                    Text("Quick Action")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(6)
+            optionsPillsView
+        }
+    }
+    
+    // MARK: - Options Pills View
+    @ViewBuilder
+    private var optionsPillsView: some View {
+        let engine = DynamicOptionsLayoutEngine(transaction: transaction)
+        let layoutView = engine.renderAll()
+        
+        VStack(alignment: .leading, spacing: 4) {
+            layoutView
+            missingRequiredOptionsWarnings
+        }
+    }
+    
+    @ViewBuilder
+    private var missingRequiredOptionsWarnings: some View {
+        let missing = transaction.type?.optionMappings.filter { mapping in
+            !mapping.isDeleted && mapping.required && (transaction.decodedLogDetails?.options?[mapping.optionSlug] == nil || transaction.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
+        } ?? []
+        
+        if !missing.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(missing, id: \.id) { mapping in
+                    MissingDetailWarningView(
+                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
                 }
-                .padding(.top, 4)
             }
         }
     }

@@ -285,7 +285,7 @@ struct PlaceSelectorView: View {
         
         var latestActivityWithPlace: ActivityInstance? = nil
         for activity in recentActivities {
-            if activity.decodedActivityDetails?.place?.placeId != nil {
+            if activity.decodedLogDetails?.place?.placeId != nil {
                 latestActivityWithPlace = activity
                 break
             }
@@ -299,7 +299,7 @@ struct PlaceSelectorView: View {
         }
         
         if activityTime >= tripTime {
-            if let placeId = latestActivityWithPlace?.decodedActivityDetails?.place?.placeId {
+            if let placeId = latestActivityWithPlace?.decodedLogDetails?.place?.placeId {
                 self.suggestedPlace = fetchPlace(withId: placeId)
             }
         } else {

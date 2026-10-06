@@ -25,15 +25,26 @@ final class Transaction: LogModel {
     var bankAmount: Double?
     var bankCurrency: String?
     
-    var isCash: Bool = false
-    
     var typeRid: Int?
     var parentTripRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
+    var sourceAccountRid: Int?
+    var targetAccountRid: Int?
     var contextRids: [Int] = []
     
     var details: String?
+    var log_details: Data?
+    
+    var decodedLogDetails: LogDetails? {
+        get {
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
+        }
+        set {
+            log_details = try? JSONEncoder().encode(newValue)
+        }
+    }
     
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
@@ -45,6 +56,33 @@ final class Transaction: LogModel {
     @Transient var transactionTime: Date {
         get { timeStart }
         set { timeStart = newValue }
+    }
+    
+    var resolvedOptionsPills: [ActivityOptionPill] {
+        guard let transactionType = self.type,
+              let mappedOptions = decodedLogDetails?.options,
+              !mappedOptions.isEmpty else {
+            return []
+        }
+        
+        let sortedMappings = transactionType.optionMappings.sorted { $0.priority < $1.priority }
+        var pills: [ActivityOptionPill] = []
+        
+        for mapping in sortedMappings {
+            guard let option = mapping.option else { continue }
+            guard let selectedValueSlug = mappedOptions[option.slug] else { continue }
+            
+            let config = option.config
+            pills.append(ActivityOptionPill(
+                optionSlug: option.slug,
+                label: option.name,
+                value: config.getChoice(for: selectedValueSlug)?.label ?? selectedValueSlug,
+                type: option.type,
+                replacesActivityName: false
+            ))
+        }
+        
+        return pills
     }
     
     // MARK: Relationships
@@ -61,6 +99,12 @@ final class Transaction: LogModel {
     @Relationship(deleteRule: .nullify)
     var type: TransactionType?
     
+    @Relationship(deleteRule: .nullify)
+    var sourceAccount: DataBankAccount?
+    
+    @Relationship(deleteRule: .nullify)
+    var targetAccount: DataBankAccount?
+    
     // MARK: Init
     
     init(
@@ -74,18 +118,21 @@ final class Transaction: LogModel {
         myCost: Double? = nil,
         bankAmount: Double? = nil,
         bankCurrency: String? = nil,
-        isCash: Bool = false,
         typeRid: Int? = nil,
         parentInstanceRid: Int? = nil,
         parentTripRid: Int? = nil,
         payerRid: Int? = nil,
+        sourceAccountRid: Int? = nil,
+        targetAccountRid: Int? = nil,
         contextRids: [Int] = [],
         details: String? = nil,
         syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
         parentTrip: Trip? = nil,
         payer: Person? = nil,
-        type: TransactionType? = nil
+        type: TransactionType? = nil,
+        sourceAccount: DataBankAccount? = nil,
+        targetAccount: DataBankAccount? = nil
     ){
         self.rid = rid
         self.timeStart = timeStart
@@ -97,11 +144,12 @@ final class Transaction: LogModel {
         self.myCost = myCost
         self.bankAmount = bankAmount
         self.bankCurrency = bankCurrency
-        self.isCash = isCash
         self.typeRid = typeRid
         self.parentInstanceRid = parentInstanceRid
         self.parentTripRid = parentTripRid
         self.payerRid = payerRid
+        self.sourceAccountRid = sourceAccountRid
+        self.targetAccountRid = targetAccountRid
         self.contextRids = contextRids
         self.details = details
         self.syncStatus = syncStatus
@@ -109,6 +157,8 @@ final class Transaction: LogModel {
         self.parentTrip = parentTrip
         self.payer = payer
         self.type = type
+        self.sourceAccount = sourceAccount
+        self.targetAccount = targetAccount
     }
     
     convenience init(fromDto dto: TransactionDTO) {
@@ -122,12 +172,12 @@ final class Transaction: LogModel {
         self.myCost = dto.my_cost
         self.bankAmount = dto.bank_amount
         self.bankCurrency = dto.bank_currency
-        self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
-        self.parentTripRid = dto.parent_trip_id
         self.payerRid = dto.payer_id
+        self.sourceAccountRid = dto.source_account_id
+        self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
@@ -142,12 +192,12 @@ final class Transaction: LogModel {
         self.myCost = dto.my_cost
         self.bankAmount = dto.bank_amount
         self.bankCurrency = dto.bank_currency
-        self.isCash = dto.cash
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
-        self.parentTripRid = dto.parent_trip_id
         self.payerRid = dto.payer_id
+        self.sourceAccountRid = dto.source_account_id
+        self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
@@ -172,15 +222,16 @@ struct TransactionDTO: Codable, Identifiable {
     let bank_amount: Double?
     let bank_currency: String?
     
-    let cash: Bool
-    
     let type_id: Int?
     let parent_instance_id: Int?
     let parent_trip_id: Int?
     let payer_id: Int?
+    let source_account_id: Int?
+    let target_account_id: Int?
     let context_ids: [Int]?
         
     let details: String?
+    let log_details: LogDetails?
 }
 
 struct TransactionPayload: Codable, InitializableWithModel {
@@ -197,15 +248,16 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let bank_amount: Double?
     let bank_currency: String?
     
-    let cash: Bool
-    
     let type_id: Int?
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
     let payer_id: Int?
+    let source_account_id: Int?
+    let target_account_id: Int?
     let context_ids: [Int]
     
     let details: String?
+    let log_details: LogDetails?
     
     init?(from transaction: Transaction) {
         guard transaction.isValid() else {
@@ -224,15 +276,21 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.bank_amount = transaction.bankAmount
         self.bank_currency = transaction.bankCurrency
         
-        self.cash = transaction.isCash
-        
         self.type_id = transaction.typeRid
         self.parent_instance_id = transaction.parentInstanceRid
         self.parent_trip_id = transaction.parentTripRid
         self.payer_id = transaction.payerRid
+        self.source_account_id = transaction.sourceAccountRid
+        self.target_account_id = transaction.targetAccountRid
         self.context_ids = transaction.contextRids
         
         self.details = transaction.details
+        if var details = transaction.decodedLogDetails {
+            details.removeFields()
+            self.log_details = details
+        } else {
+            self.log_details = nil
+        }
     }
 }
 
@@ -250,20 +308,23 @@ struct TransactionEditor: EditorProtocol {
     var bankAmount: Double?
     var bankCurrency: String?
     
-    var isCash: Bool
-    
     var type: TransactionType?
     var parentInstance: ActivityInstance?
     var parentTrip: Trip?
     var payer: Person?
+    var sourceAccount: DataBankAccount?
+    var targetAccount: DataBankAccount?
     
     var typeRid: Int?
     var parentTripRid: Int?
     var parentInstanceRid: Int?
     var payerRid: Int?
+    var sourceAccountRid: Int?
+    var targetAccountRid: Int?
     var contextRids: [Int] = []
     
     var details: String?
+    var decodedLogDetails: LogDetails?
     
     var isIncome: Bool = false
     
@@ -273,6 +334,9 @@ struct TransactionEditor: EditorProtocol {
         self.timeStart = transaction.transactionTime
         self.executionDate = transaction.executionDate
         
+        // In the double-entry system, income vs expense is usually 
+        // derived from source/target accounts instead of sign,
+        // but keeping it here if your UI still needs the explicit toggle.
         self.isIncome = (transaction.amount ?? -1) > 0
 
         self.amount = transaction.amount.map { abs($0) }
@@ -281,8 +345,6 @@ struct TransactionEditor: EditorProtocol {
         self.bankAmount = transaction.bankAmount.map { abs($0) }
         self.currency = transaction.currency ?? "CHF"
         self.bankCurrency = transaction.bankCurrency ?? "CHF"
-        
-        self.isCash = transaction.isCash
         
         // Relationships
         self.type = transaction.type
@@ -297,9 +359,16 @@ struct TransactionEditor: EditorProtocol {
         self.payer = transaction.payer
         self.payerRid = transaction.payerRid
         
+        self.sourceAccount = transaction.sourceAccount
+        self.sourceAccountRid = transaction.sourceAccountRid
+        
+        self.targetAccount = transaction.targetAccount
+        self.targetAccountRid = transaction.targetAccountRid
+        
         self.contextRids = transaction.contextRids
         
         self.details = transaction.details
+        self.decodedLogDetails = transaction.decodedLogDetails
     }
     
     func applySign(to value: Double?) -> Double? {
@@ -320,8 +389,6 @@ struct TransactionEditor: EditorProtocol {
         transaction.currency = self.currency
         transaction.bankCurrency = self.bankCurrency
         
-        transaction.isCash = self.isCash
-        
         transaction.type = self.type
         transaction.typeRid = self.type?.rid ?? self.typeRid
         
@@ -334,9 +401,16 @@ struct TransactionEditor: EditorProtocol {
         transaction.payer = self.payer
         transaction.payerRid = self.payer?.rid ?? self.payerRid
         
+        transaction.sourceAccount = self.sourceAccount
+        transaction.sourceAccountRid = self.sourceAccount?.rid ?? self.sourceAccountRid
+        
+        transaction.targetAccount = self.targetAccount
+        transaction.targetAccountRid = self.targetAccount?.rid ?? self.targetAccountRid
+        
         transaction.contextRids = self.contextRids
         
         transaction.details = self.details
+        transaction.decodedLogDetails = self.decodedLogDetails
     }
     
     // MARK: - Semantic Helpers

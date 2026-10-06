@@ -3,10 +3,10 @@ import SwiftData
 
 struct VehicleDynamicOptionsSection: View {
     @Query private var mappings: [DataLogOptionMapping]
-    @Binding var decodedActivityDetails: ActivityDetails?
+    @Binding var decodedLogDetails: LogDetails?
     
-    init(vehicleRid: Int?, decodedActivityDetails: Binding<ActivityDetails?>) {
-        self._decodedActivityDetails = decodedActivityDetails
+    init(vehicleRid: Int?, decodedLogDetails: Binding<LogDetails?>) {
+        self._decodedLogDetails = decodedLogDetails
         let vId = vehicleRid ?? -1
         _mappings = Query(filter: #Predicate<DataLogOptionMapping> { $0.vehicleRid == vId }, sort: \DataLogOptionMapping.priority)
     }
@@ -15,7 +15,7 @@ struct VehicleDynamicOptionsSection: View {
         if !mappings.isEmpty {
             DynamicOptionsSection(
                 mappings: mappings,
-                decodedActivityDetails: $decodedActivityDetails
+                decodedLogDetails: $decodedLogDetails
             )
         }
     }

@@ -26,6 +26,19 @@ final class Interaction: LogModel {
     var contextRids: [Int] = []
     
     var details: String?
+    
+    var log_details: Data?
+    
+    var decodedLogDetails: LogDetails? {
+        get {
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
+        }
+        set {
+            log_details = try? JSONEncoder().encode(newValue)
+        }
+    }
+    
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     typealias DTO = InteractionDTO
@@ -86,6 +99,7 @@ final class Interaction: LogModel {
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
@@ -101,6 +115,7 @@ final class Interaction: LogModel {
         self.inPerson = dto.in_person
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
+        self.decodedLogDetails = dto.log_details
         
         let currentRids = Set(self.persons.compactMap { $0.rid })
         let newRids = Set(dto.person_ids)
@@ -138,6 +153,7 @@ struct InteractionDTO: Codable, Identifiable, Sendable {
     let parent_trip_id: Int?
     let context_ids: [Int]?
     var details: String?
+    var log_details: LogDetails?
 }
 
 
@@ -155,6 +171,7 @@ struct InteractionPayload: Codable, InitializableWithModel {
     @ExplicitNull var parent_trip_id: Int?
     var context_ids: [Int]
     var details: String?
+    var log_details: LogDetails?
     
     init?(from interaction: Interaction) {
         guard interaction.isValid() else {
@@ -171,6 +188,13 @@ struct InteractionPayload: Codable, InitializableWithModel {
         self.context_ids = interaction.contextRids
         self.details = interaction.details
         self.percentage = interaction.percentage
+        
+        if var details = interaction.decodedLogDetails {
+            details.removeFields()
+            self.log_details = details
+        } else {
+            self.log_details = nil
+        }
     }
 }
 
@@ -191,6 +215,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
     var parentTrip: Trip?
     var contextRids: [Int] = []
     var details: String?
+    var log_details: LogDetails?
     
     typealias Model = Interaction
     
@@ -220,6 +245,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
         self.parentTripRid = interaction.parentTripRid
         self.contextRids = interaction.contextRids
         self.details = interaction.details
+        self.log_details = interaction.decodedLogDetails
     }
     
     // MARK: - Apply back to model
@@ -238,6 +264,7 @@ struct InteractionEditor: EditorProtocol, LinkedParent {
         interaction.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         interaction.contextRids = self.contextRids
         interaction.details = self.details
+        interaction.decodedLogDetails = self.log_details
         
         interaction.markAsModified()
     }

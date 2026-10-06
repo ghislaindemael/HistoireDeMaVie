@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FoodDetailsEditView: View {
-    @Binding var metadata: ActivityDetails?
+    @Binding var metadata: LogDetails?
     
     @State private var showingAddCourse = false
     @State private var emptyCourses: Set<CourseType> = []
@@ -15,7 +15,7 @@ struct FoodDetailsEditView: View {
             },
             set: { newFoodDetails in
                 if metadata == nil {
-                    metadata = ActivityDetails()
+                    metadata = LogDetails()
                 }
                 metadata?.food = newFoodDetails
             }
