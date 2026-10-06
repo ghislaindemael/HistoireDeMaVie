@@ -11,6 +11,7 @@ import SwiftData
 struct DataManagementComponent: View {
     
     @Environment(\.modelContext) private var modelContext
+    @State private var isSyncingCatalogues: Bool = false
     @State private var isExpanded: Bool = false
     
     private let modelTypes: [any PersistentModel.Type] = [
@@ -40,6 +41,33 @@ struct DataManagementComponent: View {
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             VStack(spacing: 4) {
+                Button {
+                    Task {
+                        isSyncingCatalogues = true
+                        do {
+                            let syncer = CatalogueMasterSyncer(modelContext: modelContext)
+                            try await syncer.pullAllCatalogues()
+                            ToastManager.shared.showToast(message: "Catalogues Synced", systemImage: "checkmark.icloud.fill", color: .green)
+                        } catch {
+                            print("❌ Failed to sync catalogues: \(error)")
+                            ToastManager.shared.showToast(message: "Sync Failed", systemImage: "xmark.icloud", color: .red)
+                        }
+                        isSyncingCatalogues = false
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "icloud.and.arrow.down")
+                        Text(isSyncingCatalogues ? "Syncing Catalogues..." : "Download Full Catalogue")
+                        Spacer()
+                        if isSyncingCatalogues {
+                            ProgressView()
+                        }
+                    }
+                    .foregroundColor(.blue)
+                    .padding(.vertical, 8)
+                }
+                
+                Divider()
                 ForEach(modelTypes.indices, id: \.self) { index in
                     let modelType = modelTypes[index]
                     ModelRow(modelType: modelType)
