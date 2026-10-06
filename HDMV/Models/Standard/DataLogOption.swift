@@ -1,5 +1,5 @@
 //
-//  DataActivityOption.swift
+//  DataLogOption.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 05.06.2026.
@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-enum DataActivityOptionType: String, Codable {
+enum DataLogOptionType: String, Codable {
     case boolean
     case integer
     case decimal
@@ -20,16 +20,16 @@ enum DataActivityOptionType: String, Codable {
     case time
 }
 
-struct DataActivityOptionChoice: Codable, Equatable, Hashable {
+struct DataLogOptionChoice: Codable, Equatable, Hashable {
     var slug: String
     var label: String
     var icon: String?
     var archived: Bool?
 }
 
-struct DataActivityOptionConfig: Codable, Equatable {
+struct DataLogOptionConfig: Codable, Equatable {
     var multiselect: Bool?
-    var choices: [DataActivityOptionChoice]?
+    var choices: [DataLogOptionChoice]?
     var defaultValue: String?
     var min: Double?
     var max: Double?
@@ -39,7 +39,7 @@ struct DataActivityOptionConfig: Codable, Equatable {
 }
 
 @Model
-final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
+final class DataLogOption: Identifiable, Hashable, CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
     var slug: String
@@ -52,19 +52,19 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
     
     // Relationships
-    @Relationship(deleteRule: .cascade, inverse: \DataActivityOptionMapping.option)
-    var mappings: [DataActivityOptionMapping]? = []
+    @Relationship(deleteRule: .cascade, inverse: \DataLogOptionMapping.option)
+    var mappings: [DataLogOptionMapping]? = []
     
-    typealias Payload = DataActivityOptionPayload
-    typealias DTO = DataActivityOptionDTO
-    typealias Editor = DataActivityOptionEditor
+    typealias Payload = DataLogOptionPayload
+    typealias DTO = DataLogOptionDTO
+    typealias Editor = DataLogOptionEditor
     
     init(
         rid: Int? = nil,
         slug: String = "unset",
         name: String = "Unset",
-        type: DataActivityOptionType = .text,
-        config: DataActivityOptionConfig? = nil,
+        type: DataLogOptionType = .text,
+        config: DataLogOptionConfig? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
@@ -77,15 +77,15 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
         self.syncStatus = syncStatus
     }
     
-    var type: DataActivityOptionType {
-        get { DataActivityOptionType(rawValue: typeRaw) ?? .text }
+    var type: DataLogOptionType {
+        get { DataLogOptionType(rawValue: typeRaw) ?? .text }
         set { typeRaw = newValue.rawValue }
     }
     
-    var config: DataActivityOptionConfig? {
+    var config: DataLogOptionConfig? {
         get {
             guard let data = configRaw else { return nil }
-            return try? JSONDecoder().decode(DataActivityOptionConfig.self, from: data)
+            return try? JSONDecoder().decode(DataLogOptionConfig.self, from: data)
         }
         set {
             if let newConfig = newValue {
@@ -96,7 +96,7 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
         }
     }
     
-    convenience init(fromDto dto: DataActivityOptionDTO) {
+    convenience init(fromDto dto: DataLogOptionDTO) {
         self.init()
         self.rid = dto.id
         self.slug = dto.slug
@@ -110,7 +110,7 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
         self.syncStatus = .synced
     }
     
-    func update(fromDto dto: DataActivityOptionDTO) {
+    func update(fromDto dto: DataLogOptionDTO) {
         self.slug = dto.slug
         self.name = dto.name
         self.typeRaw = dto.type
@@ -133,23 +133,23 @@ final class DataActivityOption: Identifiable, Hashable, CatalogueModel {
 
 // MARK: - DTO and Payload
 
-struct DataActivityOptionDTO: Codable, Identifiable {
+struct DataLogOptionDTO: Codable, Identifiable {
     let id: Int
     let slug: String
     let name: String
     let type: String
-    let config: DataActivityOptionConfig?
+    let config: DataLogOptionConfig?
 }
 
-struct DataActivityOptionPayload: Codable, InitializableWithModel {
-    typealias Model = DataActivityOption
+struct DataLogOptionPayload: Codable, InitializableWithModel {
+    typealias Model = DataLogOption
     
     let slug: String
     let name: String
     let type: String
-    let config: DataActivityOptionConfig?
+    let config: DataLogOptionConfig?
     
-    init?(from model: DataActivityOption) {
+    init?(from model: DataLogOption) {
         guard model.isValid() else { return nil }
         self.slug = model.slug
         self.name = model.name
@@ -158,17 +158,17 @@ struct DataActivityOptionPayload: Codable, InitializableWithModel {
     }
 }
 
-struct DataActivityOptionEditor: CachableModel, EditorProtocol {
+struct DataLogOptionEditor: CachableModel, EditorProtocol {
     var slug: String
     var name: String
-    var type: DataActivityOptionType
-    var config: DataActivityOptionConfig?
+    var type: DataLogOptionType
+    var config: DataLogOptionConfig?
     var cache: Bool = true
     var archived: Bool = false
     
-    typealias Model = DataActivityOption
+    typealias Model = DataLogOption
     
-    init(from model: DataActivityOption) {
+    init(from model: DataLogOption) {
         self.slug = model.slug
         self.name = model.name
         self.type = model.type
@@ -177,7 +177,7 @@ struct DataActivityOptionEditor: CachableModel, EditorProtocol {
         self.archived = model.archived
     }
     
-    func apply(to model: DataActivityOption) {
+    func apply(to model: DataLogOption) {
         model.slug = self.slug
         model.name = self.name
         model.type = self.type
@@ -187,8 +187,8 @@ struct DataActivityOptionEditor: CachableModel, EditorProtocol {
     }
 }
 
-extension DataActivityOption: Equatable {
-    static func == (lhs: DataActivityOption, rhs: DataActivityOption) -> Bool {
+extension DataLogOption: Equatable {
+    static func == (lhs: DataLogOption, rhs: DataLogOption) -> Bool {
         lhs.id == rhs.id
     }
 }

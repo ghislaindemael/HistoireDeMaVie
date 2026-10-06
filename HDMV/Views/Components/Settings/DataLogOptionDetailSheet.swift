@@ -1,5 +1,5 @@
 //
-//  DataActivityOptionDetailSheet.swift
+//  DataLogOptionDetailSheet.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 05.06.2026.
@@ -8,17 +8,17 @@
 import SwiftUI
 import SwiftData
 
-struct DataActivityOptionDetailSheet: View {
+struct DataLogOptionDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    @StateObject private var viewModel: DataActivityOptionDetailSheetViewModel
+    @StateObject private var viewModel: DataLogOptionDetailSheetViewModel
     
     @State private var editingChoiceIndex: Int? = nil
     @State private var isShowingChoiceSheet: Bool = false
 
-    init(option: DataActivityOption, modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: DataActivityOptionDetailSheetViewModel(
+    init(option: DataLogOption, modelContext: ModelContext) {
+        _viewModel = StateObject(wrappedValue: DataLogOptionDetailSheetViewModel(
             model: option,
             modelContext: modelContext
         ))
@@ -36,19 +36,19 @@ struct DataActivityOptionDetailSheet: View {
                 
                 Section("Type") {
                     Picker("Type", selection: $viewModel.editor.type) {
-                        Text("Boolean").tag(DataActivityOptionType.boolean)
-                        Text("Integer").tag(DataActivityOptionType.integer)
-                        Text("Decimal").tag(DataActivityOptionType.decimal)
-                        Text("Rating").tag(DataActivityOptionType.rating)
-                        Text("Text").tag(DataActivityOptionType.text)
-                        Text("Dropdown").tag(DataActivityOptionType.dropdown)
-                        Text("Time").tag(DataActivityOptionType.time)
+                        Text("Boolean").tag(DataLogOptionType.boolean)
+                        Text("Integer").tag(DataLogOptionType.integer)
+                        Text("Decimal").tag(DataLogOptionType.decimal)
+                        Text("Rating").tag(DataLogOptionType.rating)
+                        Text("Text").tag(DataLogOptionType.text)
+                        Text("Dropdown").tag(DataLogOptionType.dropdown)
+                        Text("Time").tag(DataLogOptionType.time)
                     }
                     
                     Toggle("Replaces Activity Name", isOn: Binding(
                         get: { viewModel.editor.config?.replacesActivityName ?? false },
                         set: { val in
-                            if viewModel.editor.config == nil { viewModel.editor.config = DataActivityOptionConfig() }
+                            if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
                             viewModel.editor.config?.replacesActivityName = val
                         }
                     ))
@@ -59,7 +59,7 @@ struct DataActivityOptionDetailSheet: View {
                         Toggle("Multiselect", isOn: Binding(
                             get: { viewModel.editor.config?.multiselect ?? false },
                             set: { val in
-                                if viewModel.editor.config == nil { viewModel.editor.config = DataActivityOptionConfig() }
+                                if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
                                 viewModel.editor.config?.multiselect = val
                             }
                         ))
@@ -68,7 +68,7 @@ struct DataActivityOptionDetailSheet: View {
                         Picker("Default Value", selection: Binding(
                             get: { viewModel.editor.config?.defaultValue ?? "" },
                             set: { val in
-                                if viewModel.editor.config == nil { viewModel.editor.config = DataActivityOptionConfig() }
+                                if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
                                 viewModel.editor.config?.defaultValue = val.isEmpty ? nil : val
                             }
                         )) {
@@ -121,10 +121,27 @@ struct DataActivityOptionDetailSheet: View {
                     }
                 }
                 
+
                 Section("Usage") {
                     Toggle("Cached", isOn: $viewModel.editor.cache)
                     Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
+                
+                Section("Global Mappings") {
+                    Toggle("All Transactions", isOn: Binding(
+                        get: { viewModel.isForTransaction },
+                        set: { viewModel.isForTransaction = $0 }
+                    ))
+                    Toggle("All Interactions", isOn: Binding(
+                        get: { viewModel.isForInteraction },
+                        set: { viewModel.isForInteraction = $0 }
+                    ))
+                    Toggle("All Life Events", isOn: Binding(
+                        get: { viewModel.isForLifeEvent },
+                        set: { viewModel.isForLifeEvent = $0 }
+                    ))
+                }
+
             }
             .navigationTitle("Edit Option")
             .navigationBarTitleDisplayMode(.inline)

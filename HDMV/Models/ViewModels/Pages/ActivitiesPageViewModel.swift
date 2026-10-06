@@ -12,8 +12,8 @@ import SwiftData
 class ActivitiesPageViewModel: BasePageViewModel {
     
     private var activitySyncer: ActivitySyncer?
-    private var optionSyncer: DataActivityOptionSyncer?
-    private var mappingSyncer: DataActivityOptionMappingSyncer?
+    private var optionSyncer: DataLogOptionSyncer?
+    private var mappingSyncer: DataLogOptionMappingSyncer?
     
     @Published var activities: [Activity] = []
     
@@ -27,8 +27,8 @@ class ActivitiesPageViewModel: BasePageViewModel {
     override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.activitySyncer = ActivitySyncer(modelContext: modelContext)
-        self.optionSyncer = DataActivityOptionSyncer(modelContext: modelContext)
-        self.mappingSyncer = DataActivityOptionMappingSyncer(modelContext: modelContext)
+        self.optionSyncer = DataLogOptionSyncer(modelContext: modelContext)
+        self.mappingSyncer = DataLogOptionMappingSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     

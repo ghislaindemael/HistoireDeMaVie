@@ -35,6 +35,9 @@ final class Vehicle: CatalogueModel {
     @Relationship(deleteRule: .nullify, inverse: \Trip.vehicle)
     var trips: [Trip]?
     
+    @Relationship(deleteRule: .cascade, inverse: \DataLogOptionMapping.vehicle)
+    var optionMappings: [DataLogOptionMapping] = []
+    
     // MARK: Init
     
     init(rid: Int? = nil,

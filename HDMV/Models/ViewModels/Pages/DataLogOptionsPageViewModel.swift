@@ -1,5 +1,5 @@
 //
-//  DataActivityOptionsPageViewModel.swift
+//  DataLogOptionsPageViewModel.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 05.06.2026.
@@ -9,12 +9,12 @@ import Foundation
 import SwiftData
 
 @MainActor
-class DataActivityOptionsPageViewModel: BasePageViewModel {
+class DataLogOptionsPageViewModel: BasePageViewModel {
     
-    private var optionSyncer: DataActivityOptionSyncer?
-    private var mappingSyncer: DataActivityOptionMappingSyncer?
+    private var optionSyncer: DataLogOptionSyncer?
+    private var mappingSyncer: DataLogOptionMappingSyncer?
     
-    @Published var options: [DataActivityOption] = []
+    @Published var options: [DataLogOption] = []
     
     var hasLocalChanges: Bool {
         return options.contains(where: { $0.hasUnsyncedChanges })
@@ -22,8 +22,8 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
     
     override func setup(modelContext: ModelContext) {
         self.modelContext = modelContext
-        self.optionSyncer = DataActivityOptionSyncer(modelContext: modelContext)
-        self.mappingSyncer = DataActivityOptionMappingSyncer(modelContext: modelContext)
+        self.optionSyncer = DataLogOptionSyncer(modelContext: modelContext)
+        self.mappingSyncer = DataLogOptionMappingSyncer(modelContext: modelContext)
         fetchFromCache()
     }
     
@@ -31,7 +31,7 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
         guard let context = modelContext else { return }
         
         do {
-            let descriptor = FetchDescriptor<DataActivityOption>(
+            let descriptor = FetchDescriptor<DataLogOption>(
                 sortBy: [SortDescriptor(\.name)]
             )
             self.options = try context.fetch(descriptor)
@@ -60,7 +60,7 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
     }
     
     func purgeArchivedFromCache() {
-        executePurgeArchived(type: DataActivityOption.self, context: modelContext, fetchAction: fetchFromCache)
+        executePurgeArchived(type: DataLogOption.self, context: modelContext, fetchAction: fetchFromCache)
     }
     
     func uploadLocalChanges() async {
@@ -77,7 +77,7 @@ class DataActivityOptionsPageViewModel: BasePageViewModel {
     
     func createOption() {
         guard let context = modelContext else { return }
-        let newOption = DataActivityOption(syncStatus: .unsynced)
+        let newOption = DataLogOption(syncStatus: .unsynced)
         
         context.insert(newOption)
         options.append(newOption)

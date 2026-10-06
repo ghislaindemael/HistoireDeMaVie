@@ -1,5 +1,5 @@
 //
-//  DataActivityOptionsPage.swift
+//  DataLogOptionsPage.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 05.06.2026.
@@ -8,15 +8,15 @@
 import SwiftUI
 import SwiftData
 
-struct DataActivityOptionsPage: View {
+struct DataLogOptionsPage: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel = DataActivityOptionsPageViewModel()
+    @StateObject private var viewModel = DataLogOptionsPageViewModel()
     
-    @Query(FetchDescriptor<DataActivityOption>(
+    @Query(FetchDescriptor<DataLogOption>(
         sortBy: [SortDescriptor(\.name)]))
-    private var options: [DataActivityOption]
+    private var options: [DataLogOption]
     
-    @State private var optionToEdit: DataActivityOption?
+    @State private var optionToEdit: DataLogOption?
     
     var body: some View {
         NavigationStack {
@@ -24,7 +24,7 @@ struct DataActivityOptionsPage: View {
                 Section("All Options") {
                     ForEach(options) { option in
                         Button(action: { optionToEdit = option }) {
-                            DataActivityOptionRowView(option: option) { opt in
+                            DataLogOptionRowView(option: option) { opt in
                                 withAnimation(.snappy) {
                                     viewModel.updateModel(opt) { concreteOpt in
                                         concreteOpt.cache.toggle()
@@ -37,7 +37,7 @@ struct DataActivityOptionsPage: View {
                     .onDelete(perform: deleteOptions)
                 }
             }
-            .navigationTitle("Activity Options")
+            .navigationTitle("Log Options")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -49,7 +49,7 @@ struct DataActivityOptionsPage: View {
                 viewModel.setup(modelContext: modelContext)
             }
             .sheet(item: $optionToEdit) { option in
-                DataActivityOptionDetailSheet(option: option, modelContext: modelContext)
+                DataLogOptionDetailSheet(option: option, modelContext: modelContext)
             }
         }
     }

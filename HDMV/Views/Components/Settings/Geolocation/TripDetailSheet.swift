@@ -12,9 +12,6 @@ struct TripDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailSheetViewModel
-    
-    @Query(filter: #Predicate<DataActivityOptionMapping> { mapping in mapping.isForTrip == true }, sort: \DataActivityOptionMapping.priority)
-    private var tripOptionMappings: [DataActivityOptionMapping]
 
     let trip: Trip
     
@@ -54,12 +51,10 @@ struct TripDetailSheet: View {
                 pathSection
                 detailsSection
                 
-                if !tripOptionMappings.isEmpty {
-                    DynamicOptionsSection(
-                        mappings: tripOptionMappings,
-                        decodedActivityDetails: $viewModel.editor.decodedActivityDetails
-                    )
-                }
+                VehicleDynamicOptionsSection(
+                    vehicleRid: viewModel.editor.vehicle?.rid ?? viewModel.editor.vehicleRid,
+                    decodedActivityDetails: $viewModel.editor.decodedActivityDetails
+                )
                 
                 Section(header: headerView("Companions & Context")) {
                     NavigationLink {

@@ -11,11 +11,11 @@ import SwiftData
 struct DynamicOptionsSection: View {
     @Environment(\.modelContext) private var modelContext
     
-    let mappings: [DataActivityOptionMapping]
+    let mappings: [DataLogOptionMapping]
     @Binding var decodedActivityDetails: ActivityDetails?
     
     // We sort the mappings by priority
-    var sortedMappings: [DataActivityOptionMapping] {
+    var sortedMappings: [DataLogOptionMapping] {
         mappings.sorted { $0.priority < $1.priority }
     }
     
@@ -45,7 +45,7 @@ struct DynamicOptionsSection: View {
 }
 
 struct DynamicOptionRow: View {
-    let option: DataActivityOption
+    let option: DataLogOption
     @Binding var details: ActivityDetails?
     
     private var optionValue: Binding<String> {

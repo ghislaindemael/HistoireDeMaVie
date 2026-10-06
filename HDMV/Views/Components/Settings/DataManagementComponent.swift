@@ -14,8 +14,8 @@ struct DataManagementComponent: View {
     @State private var isExpanded: Bool = false
     
     private let modelTypes: [any PersistentModel.Type] = [
-        DataActivityOption.self,
-        DataActivityOptionMapping.self,
+        DataLogOption.self,
+        DataLogOptionMapping.self,
         ActivityInstance.self,
         AgendaEntry.self,
         Interaction.self,

@@ -1,5 +1,5 @@
 //
-//  DataActivityOptionSelectorView.swift
+//  DataLogOptionSelectorView.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 05.06.2026.
@@ -8,11 +8,11 @@
 import SwiftUI
 import SwiftData
 
-struct DataActivityOptionSelectorView: View {
+struct DataLogOptionSelectorView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \DataActivityOption.name) private var allOptions: [DataActivityOption]
+    @Query(sort: \DataLogOption.name) private var allOptions: [DataLogOption]
     
-    let onSelect: (DataActivityOption) -> Void
+    let onSelect: (DataLogOption) -> Void
     
     var body: some View {
         NavigationView {

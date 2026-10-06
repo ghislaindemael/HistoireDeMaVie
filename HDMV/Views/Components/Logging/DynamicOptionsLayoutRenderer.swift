@@ -9,11 +9,11 @@ import SwiftUI
 import SwiftData
 
 class DynamicOptionsLayoutEngine {
-    let mappings: [DataActivityOptionMapping]
+    let mappings: [DataLogOptionMapping]
     let decodedOptions: [String: String]?
     var consumedSlugs = Set<String>()
     
-    init(mappings: [DataActivityOptionMapping], decodedOptions: [String: String]?) {
+    init(mappings: [DataLogOptionMapping], decodedOptions: [String: String]?) {
         self.mappings = mappings
         self.decodedOptions = decodedOptions
     }
@@ -186,7 +186,7 @@ class DynamicOptionsLayoutEngine {
     
     // MARK: - Default Pill
     
-    private func defaultPill(for mapping: DataActivityOptionMapping) -> some View {
+    private func defaultPill(for mapping: DataLogOptionMapping) -> some View {
         let slug = mapping.optionSlug
         let label = getLabel(for: slug) ?? ""
         let icon = getIcon(for: slug)

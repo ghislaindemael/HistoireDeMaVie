@@ -132,7 +132,7 @@ struct ActivityDetailSheet: View {
                                 let mapping = sortedMappings[index]
                                 if let rid = mapping.rid {
                                     Task {
-                                        _ = try? await DataActivityOptionMappingService().delete(rid: rid)
+                                        _ = try? await DataLogOptionMappingService().delete(rid: rid)
                                     }
                                 }
                                 modelContext.delete(mapping)
@@ -154,8 +154,8 @@ struct ActivityDetailSheet: View {
                 viewModel.onDone()
             }
             .sheet(isPresented: $isShowingOptionSelector) {
-                DataActivityOptionSelectorView { selectedOption in
-                    let newMapping = DataActivityOptionMapping(
+                DataLogOptionSelectorView { selectedOption in
+                    let newMapping = DataLogOptionMapping(
                         activityRid: viewModel.model.rid ?? 0,
                         optionSlug: selectedOption.slug,
                         priority: viewModel.model.optionMappings.count,

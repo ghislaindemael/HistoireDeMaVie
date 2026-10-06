@@ -24,8 +24,8 @@ final class Activity: Identifiable, Hashable, CatalogueModel, Capable {
     @Relationship(deleteRule: .nullify, inverse: \Activity.parent)
     var children: [Activity] = []
     
-    @Relationship(deleteRule: .cascade, inverse: \DataActivityOptionMapping.activity)
-    var optionMappings: [DataActivityOptionMapping] = []
+    @Relationship(deleteRule: .cascade, inverse: \DataLogOptionMapping.activity)
+    var optionMappings: [DataLogOptionMapping] = []
     
     var icon: String?
     var allowedCapabilities: [ActivityCapability] = []

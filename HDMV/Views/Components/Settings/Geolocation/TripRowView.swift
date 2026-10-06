@@ -13,12 +13,14 @@ struct TripRowView: View {
     let trip: Trip
     let onEnd: (() -> Void)?
     
-    @Query(filter: #Predicate<DataActivityOptionMapping> { mapping in mapping.isForTrip == true }, sort: \DataActivityOptionMapping.priority)
-    private var tripOptionMappings: [DataActivityOptionMapping]
+    @Query private var tripOptionMappings: [DataLogOptionMapping]
 
     init(trip: Trip, onEnd: (() -> Void)? = nil) {
         self.trip = trip
         self.onEnd = onEnd
+        
+        let vId = trip.vehicleRid ?? -1
+        _tripOptionMappings = Query(filter: #Predicate<DataLogOptionMapping> { $0.vehicleRid == vId }, sort: \DataLogOptionMapping.priority)
     }
     
     
