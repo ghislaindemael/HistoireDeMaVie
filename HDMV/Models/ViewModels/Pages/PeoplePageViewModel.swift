@@ -76,13 +76,15 @@ class PeoplePageViewModel: BasePageViewModel {
     func createPerson() {
         guard let context = modelContext else { return }
         let newPerson = Person(
-            slug: "unset",
+            slug: "!unset",
             name: "Unset",
             familyName: "Unset",
+            cache: true,
             syncStatus: .unsynced)
         context.insert(newPerson)
         do {
             try context.save()
+            fetchFromCache()
         } catch {
             print("Failed to create Person: \(error)")
         }

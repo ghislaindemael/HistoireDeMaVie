@@ -11,7 +11,7 @@ import SwiftData
 @Model
 final class Person: CatalogueModel, EditableModel, CachableObject {
     @Attribute(.unique) var rid: Int?
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var familyName: String
     var surname: String?
@@ -44,7 +44,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
         familyName: String = "unset",
         surname: String? = nil,
         birthdate: Date? = nil,
-        cache: Bool = true,
+        cache: Bool = false,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -102,7 +102,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
 // MARK: - DTOs for Network
 struct PersonDTO: Codable, Identifiable, Sendable {
     var id: Int
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var family_name: String
     var surname: String?
@@ -111,7 +111,7 @@ struct PersonDTO: Codable, Identifiable, Sendable {
 }
 
 struct PersonPayload: Codable, Sendable, InitializableWithModel {
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var family_name: String
     var surname: String?
@@ -136,7 +136,7 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
 }
 
 struct PersonEditor: CachableModel, EditorProtocol {
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var familyName: String
     var surname: String?

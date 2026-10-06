@@ -45,6 +45,15 @@ struct PeoplePage: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        modelContext.delete(person)
+                        try? modelContext.save()
+                        viewModel.fetchFromCache()
+                    } label: {
+                        Label(person.syncStatus == .synced ? "Remove from Device" : "Delete", systemImage: "trash")
+                    }
+                }
             }
         }
     }

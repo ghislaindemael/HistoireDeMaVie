@@ -13,16 +13,15 @@ struct PersonRowView: View {
     let onCacheToggle: (Person) -> Void
     
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Label("\(person.fullName)", systemImage: "")
-                Spacer()
-                
-                CacheToggleButton(model: person) { p in
-                    onCacheToggle(p)
-                }
-                
-                SyncStatusIndicator(status: person.syncStatus)
+        HStack {
+            UnsettableTextView(
+                text: person.isValid() ? person.fullName : "unset",
+                font: .body.bold(),
+                isItalicized: person.archived
+            )
+            Spacer()
+            CatalogueRowControlsView(model: person) { p in
+                onCacheToggle(p)
             }
         }
     }

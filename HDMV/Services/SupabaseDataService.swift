@@ -24,13 +24,34 @@ class SupabaseDataService<DTO: Identifiable & Codable, Payload: Codable>: DataSe
 
     func fetch(includeArchived: Bool, orderColumn: String) async throws -> [DTO] {
         guard let client = supabaseClient else { throw URLError(.cannotConnectToHost) }
-        var query = client.from(tableName).select()
-        if !includeArchived {
-            query = query.eq("archived", value: false)
+        
+        var allResults: [DTO] = []
+        let limit = 1000
+        var offset = 0
+        var hasMore = true
+        
+        while hasMore {
+            var query = client.from(tableName).select()
+            if !includeArchived {
+                query = query.eq("archived", value: false)
+            }
+            
+            let batch: [DTO] = try await query
+                .order(orderColumn, ascending: true)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+            
+            allResults.append(contentsOf: batch)
+            
+            if batch.count < limit {
+                hasMore = false
+            } else {
+                offset += limit
+            }
         }
-        return try await query.order(orderColumn, ascending: true)
-            .execute()
-            .value
+        
+        return allResults
     }
     
     func fetchForDate(date: Date) async throws -> [DTO] {

@@ -76,6 +76,10 @@ class LifeEventSyncer: BaseSyncer<LifeEvent, LifeEventDTO, LifeEventPayload> {
         let ridsToDelete = localRids.subtracting(serverRids)
         for rid in ridsToDelete {
             if let modelToDelete = localCache[rid], modelToDelete.syncStatus == .synced {
+                // WORKAROUND: Force SwiftData to resolve the primitive array fault before deletion
+                // Without this, SwiftData crashes trying to access detached backing data during save()
+                _ = modelToDelete.contextRids 
+                
                 modelContext.delete(modelToDelete)
             }
         }
