@@ -69,6 +69,9 @@ class DataLogOptionsPageViewModel: BasePageViewModel {
         guard let syncer = optionSyncer else { return }
         do {
             _ = try await syncer.pushChanges()
+            if let mappingSyncer = mappingSyncer {
+                _ = try await mappingSyncer.pushChanges()
+            }
             fetchFromCache()
         } catch {
             print("Failed to push options to server: \(error)")

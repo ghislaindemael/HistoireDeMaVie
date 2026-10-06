@@ -230,6 +230,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         
         model.vehicle = self.vehicle
         model.vehicleRid = self.vehicleRid
+        model.vehicleTypeSlug = self.vehicleTypeSlug
         
         model.transactionType = self.transactionType
         model.transactionTypeRid = self.transactionTypeRid

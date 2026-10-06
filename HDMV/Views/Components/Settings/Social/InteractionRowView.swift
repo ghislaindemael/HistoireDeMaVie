@@ -95,26 +95,6 @@ struct InteractionRowView: View {
         
         VStack(alignment: .leading, spacing: 4) {
             layoutView
-            missingRequiredOptionsWarnings
-        }
-    }
-    
-    @ViewBuilder
-    private var missingRequiredOptionsWarnings: some View {
-        let missing = optionMappings.filter { mapping in
-            !mapping.isDeleted && mapping.required && (interaction.decodedLogDetails?.options?[mapping.optionSlug] == nil || interaction.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
-        }
-        
-        if !missing.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(missing, id: \.id) { mapping in
-                    MissingDetailWarningView(
-                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
-                        iconName: "exclamationmark.triangle.fill",
-                        isRequired: true
-                    )
-                }
-            }
         }
     }
 }

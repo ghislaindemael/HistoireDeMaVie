@@ -163,26 +163,6 @@ struct TransactionRowView: View {
         
         VStack(alignment: .leading, spacing: 4) {
             layoutView
-            missingRequiredOptionsWarnings
-        }
-    }
-    
-    @ViewBuilder
-    private var missingRequiredOptionsWarnings: some View {
-        let missing = transaction.type?.optionMappings.filter { mapping in
-            !mapping.isDeleted && mapping.required && (transaction.decodedLogDetails?.options?[mapping.optionSlug] == nil || transaction.decodedLogDetails?.options?[mapping.optionSlug]?.isEmpty == true)
-        } ?? []
-        
-        if !missing.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(missing, id: \.id) { mapping in
-                    MissingDetailWarningView(
-                        message: "Missing \(mapping.option?.name ?? mapping.optionSlug)",
-                        iconName: "exclamationmark.triangle.fill",
-                        isRequired: true
-                    )
-                }
-            }
         }
     }
 }

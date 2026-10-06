@@ -20,7 +20,10 @@ struct TripRowView: View {
         self.onEnd = onEnd
         
         let vId = trip.vehicleRid ?? -1
-        _tripOptionMappings = Query(filter: #Predicate<DataLogOptionMapping> { $0.vehicleRid == vId }, sort: \DataLogOptionMapping.priority)
+        let vSlug = trip.vehicle?.typeSlug ?? "unset"
+        _tripOptionMappings = Query(filter: #Predicate<DataLogOptionMapping> { 
+            $0.vehicleRid == vId || $0.vehicleTypeSlug == vSlug 
+        }, sort: \DataLogOptionMapping.priority)
     }
     
     

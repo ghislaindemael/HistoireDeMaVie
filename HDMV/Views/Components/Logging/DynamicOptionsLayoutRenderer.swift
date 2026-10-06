@@ -13,6 +13,17 @@ class DynamicOptionsLayoutEngine {
     let decodedOptions: [String: String]?
     var consumedSlugs = Set<String>()
     
+    lazy var slugsHandledByLayouts: Set<String> = {
+        var slugs = Set<String>()
+        for mapping in mappings.filter({ !$0.isDeleted }) {
+            if let layout = mapping.option?.config?.layoutNode {
+                slugs.formUnion(layout.referencedSlugs)
+                slugs.insert(mapping.optionSlug)
+            }
+        }
+        return slugs
+    }()
+    
     init(mappings: [DataLogOptionMapping], decodedOptions: [String: String]?) {
         self.mappings = mappings
         self.decodedOptions = decodedOptions
@@ -44,14 +55,7 @@ class DynamicOptionsLayoutEngine {
             }
         }
         
-        // Find all slugs that are handled by any custom layout
-        var slugsHandledByLayouts = Set<String>()
-        for mapping in activeMappings {
-            if let layout = mapping.option?.config?.layoutNode {
-                slugsHandledByLayouts.formUnion(layout.referencedSlugs)
-            }
-        }
-        
+        // Find all slugs that are handled by any custom layout (now uses lazy property)
         for mapping in activeMappings {
             if consumedSlugs.contains(mapping.optionSlug) { continue }
             
@@ -65,8 +69,32 @@ class DynamicOptionsLayoutEngine {
                     continue // Skip rendering default pill, it will be handled by a layout node later!
                 }
                 
-                views.append(AnyView(defaultPill(for: mapping)))
+                let isLogged = getValue(for: mapping.optionSlug) != nil
+                let isRequired = mapping.required == true
+                let shouldShow: Bool
+                if isLogged {
+                    shouldShow = true
+                } else if isRequired {
+                    shouldShow = true
+                } else if SettingsStore.shared.appMode == .backfill {
+                    shouldShow = true
+                } else {
+                    shouldShow = false
+                }
+                
+                if shouldShow {
+                    views.append(AnyView(defaultPill(forSlug: mapping.optionSlug, mapping: mapping, isLogged: isLogged, isRequired: isRequired)))
+                }
                 consumedSlugs.insert(mapping.optionSlug)
+            }
+        }
+        
+        // Handle any unmapped logged slugs that weren't consumed
+        if let decoded = decodedOptions {
+            let sortedUnmapped = decoded.keys.filter { !consumedSlugs.contains($0) }.sorted()
+            for slug in sortedUnmapped {
+                views.append(AnyView(defaultPill(forSlug: slug, mapping: nil, isLogged: true, isRequired: false)))
+                consumedSlugs.insert(slug)
             }
         }
         
@@ -171,18 +199,42 @@ class DynamicOptionsLayoutEngine {
             return AnyView(Spacer())
             
         case .unrenderedOptions:
-            // Find mappings that are not consumed yet
-            let unrendered = mappings
-                .filter { !$0.isDeleted }
-                .sorted(by: { $0.priority < $1.priority })
-                .filter { !consumedSlugs.contains($0.optionSlug) }
+            let loggedSlugs = decodedOptions != nil ? Array(decodedOptions!.keys) : []
+            let mappedSlugs = mappings.filter { !$0.isDeleted }.map { $0.optionSlug }
+            let allSlugs = Set(loggedSlugs).union(mappedSlugs).filter { !consumedSlugs.contains($0) && !slugsHandledByLayouts.contains($0) }
             
-            let views = unrendered.map { mapping -> AnyView in
-                consumedSlugs.insert(mapping.optionSlug)
-                return AnyView(defaultPill(for: mapping))
+            let unrenderedSlugs = allSlugs.sorted { s1, s2 in
+                let p1 = mappings.first(where: { $0.optionSlug == s1 })?.priority ?? 999
+                let p2 = mappings.first(where: { $0.optionSlug == s2 })?.priority ?? 999
+                if p1 == p2 { return s1 < s2 }
+                return p1 < p2
             }
             
-            return AnyView(HStack(spacing: 8) {
+            let views = unrenderedSlugs.compactMap { slug -> AnyView? in
+                let isLogged = getValue(for: slug) != nil
+                let mapping = mappings.first(where: { $0.optionSlug == slug && !$0.isDeleted })
+                let isRequired = mapping?.required == true
+                
+                let shouldShow: Bool
+                if isLogged {
+                    shouldShow = true
+                } else {
+                    if isRequired {
+                        shouldShow = true
+                    } else if SettingsStore.shared.appMode == .backfill && mapping != nil {
+                        shouldShow = true
+                    } else {
+                        shouldShow = false
+                    }
+                }
+                
+                guard shouldShow else { return nil }
+                
+                consumedSlugs.insert(slug)
+                return AnyView(defaultPill(forSlug: slug, mapping: mapping, isLogged: isLogged, isRequired: isRequired))
+            }
+            
+            return AnyView(VStack(spacing: 4) {
                 ForEach(0..<views.count, id: \.self) { i in views[i] }
             })
         }
@@ -190,34 +242,37 @@ class DynamicOptionsLayoutEngine {
     
     // MARK: - Default Pill
     
-    private func defaultPill(for mapping: DataLogOptionMapping) -> some View {
-        let slug = mapping.optionSlug
-        let label = getLabel(for: slug) ?? ""
+    private func defaultPill(forSlug slug: String, mapping: DataLogOptionMapping?, isLogged: Bool, isRequired: Bool) -> some View {
+        let label = getLabel(for: slug) ?? slug
         let icon = getIcon(for: slug)
         
-        let val = getValue(for: slug) ?? ""
-        let def = mapping.option?.config?.defaultValue ?? ""
-        if val == def || val.isEmpty {
-            return AnyView(EmptyView())
-        }
-        
-        return AnyView(
-            HStack(spacing: 6) {
-                if let icon = icon {
-                    Image(systemName: icon)
+        if isLogged {
+            return AnyView(
+                HStack(spacing: 6) {
+                    if let icon = icon {
+                        Image(systemName: icon)
+                            .font(.subheadline)
+                    }
+                    Text(label)
                         .font(.subheadline)
+                        .fontWeight(.medium)
+                    Spacer() // Full width
                 }
-                Text(label)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                Spacer() // Full width
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.teal.opacity(0.2))
-            .foregroundStyle(Color.teal)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.teal.opacity(0.15))
+                .foregroundStyle(Color.teal)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            )
+        } else {
+            return AnyView(
+                MissingDetailWarningView(
+                    message: "Missing \(mapping?.option?.name ?? label)",
+                    iconName: icon ?? "exclamationmark.triangle.fill",
+                    isRequired: isRequired
+                )
+            )
+        }
     }
     
     // MARK: - Helpers
