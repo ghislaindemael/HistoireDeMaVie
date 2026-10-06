@@ -49,16 +49,16 @@ struct LifeEventRowView: View {
             VStack(alignment: .leading) {
                 HStack() {
                     IconView(
-                        iconString: event.type.icon,
+                        iconString: event.type?.icon ?? "questionmark.circle",
                         size: 30,
-                        tint: event.type == .unset ? .red : .primary,
+                        tint: event.type == nil ? .red : .primary,
                     )
                     
                     VStack(alignment: .leading) {
-                        Text(event.type.name)
+                        Text(event.type?.name ?? "Unknown Type")
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(event.type != .unset ? Color.primary : Color.red)
+                            .foregroundStyle(event.type != nil ? Color.primary : Color.red)
                         DateRangeDisplayView(
                             startDate: event.timeStart,
                             endDate: event.timeEnd,

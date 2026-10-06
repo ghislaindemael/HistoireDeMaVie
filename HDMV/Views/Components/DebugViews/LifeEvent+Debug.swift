@@ -15,7 +15,7 @@ extension LifeEvent: DebugViewable {
                 SyncStatusIndicator(status: syncStatus)
             }
             
-            Text("Type: \(type.name) (\(typeSlug))")
+            Text("Type: \(type?.name ?? "Unknown Type")")
                 .font(.headline)
             
             Text("Start: \(timeStart.formatted(date: .abbreviated, time: .shortened))")
@@ -41,8 +41,8 @@ extension LifeEvent: DebugViewable {
                 Text("Details: \(details)")
             }
             
-            if let metrics {
-                Text("Metrics: \(metrics)")
+            if let log_details = decodedLogDetails {
+                Text("Log Options Mapping Count: \(log_details.options?.count ?? 0)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

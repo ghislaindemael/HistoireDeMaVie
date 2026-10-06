@@ -11,7 +11,7 @@ import Foundation
 class LifeEventService: SupabaseDataService<LifeEventDTO, LifeEventPayload > {
     
     init() {
-        super.init(tableName: "my_life_events")
+        super.init(tableName: "my_life_events_v2")
     }
     
     // MARK: Semantic methods

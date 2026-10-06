@@ -36,8 +36,7 @@ struct LifeEventDetailSheet: View {
                 
                 TimeSection(editor: $viewModel.editor)
                 detailsSection
-                metricSection
-
+                
                 HierarchySectionView(
                     model: lifeEvent,
                     hasParent: !viewModel.editor.hasNoParent(),
@@ -56,6 +55,8 @@ struct LifeEventDetailSheet: View {
         }
     }
     
+    @Query(sort: \LifeEventType.name) private var lifeEventTypes: [LifeEventType]
+    
     // MARK: - UI Sections
     
     private var detailsSection: some View {
@@ -66,11 +67,19 @@ struct LifeEventDetailSheet: View {
             )
             
             Section("Details") {
-                Picker("Type", selection: $viewModel.editor.type) {
-                ForEach(LifeEventType.allCases) { type in
-                    Text(type.name).tag(type as LifeEventType)
+                NavigationLink(destination: LifeEventTypeSelectorView(selectedType: $viewModel.editor.type)) {
+                    HStack {
+                        Text("Type")
+                        Spacer()
+                        if let type = viewModel.editor.type {
+                            Text(type.label)
+                                .foregroundColor(.primary)
+                        } else {
+                            Text("Select Type")
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
-            }
             
             NavigationLink {
                 MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
@@ -90,68 +99,6 @@ struct LifeEventDetailSheet: View {
             }
         }
     }
-    
-    @ViewBuilder
-    private var metricSection: some View {
-        
-        Section("Metrics") {
-            HStack {
-                Text("Importance")
-                Slider(
-                    value: $viewModel.editor.metrics.importance.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-            
-            HStack {
-                Text("Stress")
-                Slider(
-                    value: $viewModel.editor.metrics.stress.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-            
-            HStack {
-                Text("Mood")
-                Slider(
-                    value: $viewModel.editor.metrics.mood.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-            
-            HStack {
-                Text("Energy")
-                Slider(
-                    value: $viewModel.editor.metrics.energy.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-            
-            HStack {
-                Text("Engagement")
-                Slider(
-                    value: $viewModel.editor.metrics.engagement.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-            
-            HStack {
-                Text("Fatigue")
-                Slider(
-                    value: $viewModel.editor.metrics.fatigue.or0Double(),
-                    in: 0...100,
-                    step: 1
-                )
-            }
-        }
-    }
-
-    
     
 }
 

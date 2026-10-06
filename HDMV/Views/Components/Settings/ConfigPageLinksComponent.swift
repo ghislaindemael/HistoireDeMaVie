@@ -35,6 +35,7 @@ struct ConfigPageLinksComponent: View {
         ConfigPageLink(title: "Media Items", destination: AnyView(DataMediaItemsPage())),
         ConfigPageLink(title: "Vehicle", destination: AnyView(VehiclesPage())),
         ConfigPageLink(title: "Transaction Types", destination: AnyView(TransactionTypesPage())),
+        ConfigPageLink(title: "Life Event Types", destination: AnyView(LifeEventTypesPage())),
         ConfigPageLink(title: "Transit Lines", destination: AnyView(TransitLinesPage()))
     ]
     

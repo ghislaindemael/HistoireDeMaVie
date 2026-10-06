@@ -32,6 +32,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
     @Relationship(deleteRule: .nullify) var activity: Activity?
     @Relationship(deleteRule: .nullify) var vehicle: Vehicle?
     @Relationship(deleteRule: .nullify) var transactionType: TransactionType?
+    @Relationship(deleteRule: .nullify) var lifeEventType: LifeEventType?
     var option: DataLogOption?
     
     typealias Payload = DataLogOptionMappingPayload
@@ -171,6 +172,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
     var transactionType: TransactionType?
     var transactionTypeRid: Int?
     
+    var lifeEventType: LifeEventType?
     var lifeEventTypeRid: Int?
     
     var isForInteraction: Bool = false
@@ -196,6 +198,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         self.transactionType = model.transactionType
         self.transactionTypeRid = model.transactionTypeRid
         
+        self.lifeEventType = model.lifeEventType
         self.lifeEventTypeRid = model.lifeEventTypeRid
         
         self.isForInteraction = model.isForInteraction
@@ -220,6 +223,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         model.transactionType = self.transactionType
         model.transactionTypeRid = self.transactionTypeRid
         
+        model.lifeEventType = self.lifeEventType
         model.lifeEventTypeRid = self.lifeEventTypeRid
         
         model.isForInteraction = self.isForInteraction

@@ -12,12 +12,11 @@ import Foundation
 final class LifeEvent: LogModel {
     
     @Attribute(.unique) var rid: Int?
-    var typeSlug: String = LifeEventType.unset.rawValue
     var timeStart: Date = Date()
     var timeEnd: Date?
     var details: String?
-    var metrics: LifeEventMetrics?
     
+    var typeRid: Int?
     var parentInstanceRid: Int?
     var parentTripRid: Int?
     var contextRids: [Int] = []
@@ -36,16 +35,14 @@ final class LifeEvent: LogModel {
     
     var syncStatusRaw: String = SyncStatus.undef.rawValue
     
-    var type: LifeEventType {
-        get { LifeEventType(rawValue: typeSlug) ?? .unset }
-        set { typeSlug = newValue.rawValue }
-    }
-    
     typealias DTO = LifeEventDTO
     typealias Payload = LifeEventPayload
     typealias Editor = LifeEventEditor
     
     // MARK: Relationships
+    
+    @Relationship(deleteRule: .nullify)
+    var type: LifeEventType?
     
     @Relationship(deleteRule: .nullify)
     var parentInstance: ActivityInstance?
@@ -56,21 +53,20 @@ final class LifeEvent: LogModel {
     // MARK: Init
     
     init(rid: Int? = nil,
-         type: LifeEventType? = .unset,
+         type: LifeEventType? = nil,
          timeStart: Date = .now,
          timeEnd: Date? = nil,
          details: String? = nil,
-         metrics: LifeEventMetrics? = nil,
          parentInstance: ActivityInstance? = nil,
          contextRids: [Int] = [],
          syncStatus: SyncStatus = .unsynced
     ){
         self.rid = rid
-        self.type = type ?? .unset
+        self.type = type
+        self.typeRid = type?.rid
         self.timeStart = timeStart
         self.timeEnd = timeEnd
         self.details = details
-        self.metrics = metrics
         self.parentInstance = parentInstance
         self.contextRids = contextRids
         self.syncStatus = syncStatus
@@ -79,11 +75,10 @@ final class LifeEvent: LogModel {
     convenience init(fromDto dto: LifeEventDTO) {
         self.init()
         self.rid = dto.id
-        self.type = dto.type
+        self.typeRid = dto.type_id
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.details = dto.details
-        self.metrics = dto.metrics
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
@@ -92,11 +87,10 @@ final class LifeEvent: LogModel {
     }
     
     func update(fromDto dto: LifeEventDTO) {
-        self.type = dto.type
+        self.typeRid = dto.type_id
         self.timeStart = dto.time_start
         self.timeEnd = dto.time_end
         self.details = dto.details
-        self.metrics = dto.metrics 
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
@@ -112,11 +106,10 @@ final class LifeEvent: LogModel {
 
 struct LifeEventDTO: Identifiable, Codable, Sendable {
     let id: Int
-    let type: LifeEventType
+    let type_id: Int?
     let time_start: Date
     let time_end: Date?
     let details: String?
-    let metrics: LifeEventMetrics?
     let parent_instance_id: Int?
     let parent_trip_id: Int?
     let context_ids: [Int]?
@@ -126,11 +119,10 @@ struct LifeEventDTO: Identifiable, Codable, Sendable {
 
 struct LifeEventPayload: Codable, InitializableWithModel {
     
-    let type: LifeEventType
+    let type_id: Int?
     let time_start: Date
     let time_end: Date?
     let details: String?
-    let metrics: LifeEventMetrics?
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
     var context_ids: [Int]
@@ -142,11 +134,10 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         guard event.isValid()
         else { return nil }
         
-        self.type = event.type
+        self.type_id = event.type?.rid ?? event.typeRid
         self.time_start = event.timeStart
         self.time_end = event.timeEnd
         self.details = event.details
-        self.metrics = event.metrics
         self.parent_instance_id = event.parentInstanceRid
         self.parent_trip_id = event.parentTripRid
         self.context_ids = event.contextRids
@@ -163,12 +154,12 @@ struct LifeEventPayload: Codable, InitializableWithModel {
 
 struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
 
-    var type: LifeEventType
+    var type: LifeEventType?
+    var typeRid: Int?
     var timeStart: Date
     var timeEnd: Date?
     var details: String?
     var log_details: LogDetails?
-    var metrics: LifeEventMetrics
     var parentInstance: ActivityInstance?
     var parentInstanceRid: Int?
     var parentTrip: Trip?
@@ -179,11 +170,11 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     
     init(from event: LifeEvent) {
         self.type = event.type
+        self.typeRid = event.typeRid
         self.timeStart = event.timeStart
         self.timeEnd = event.timeEnd
         self.details = event.details
         self.log_details = event.decodedLogDetails
-        self.metrics = event.metrics ?? LifeEventMetrics()
         self.parentInstance = event.parentInstance
         self.parentInstanceRid = event.parentInstanceRid
         self.parentTrip = event.parentTrip
@@ -194,11 +185,11 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     func apply(to event: LifeEvent) {
         
         event.type = self.type
+        event.typeRid = self.type?.rid ?? self.typeRid
         event.timeStart = self.timeStart
         event.timeEnd = self.timeEnd
         event.details = self.details
         event.decodedLogDetails = self.log_details
-        event.metrics = self.metrics
         event.parentInstance = self.parentInstance
         event.parentInstanceRid = self.parentInstance?.rid ?? self.parentInstanceRid
         event.parentTrip = self.parentTrip

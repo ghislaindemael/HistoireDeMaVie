@@ -54,8 +54,20 @@ struct QuoteDetailSheet: View {
                 Section("Media & People") {
                     PersonSelectorView(selectedPerson: $viewModel.editor.person)
                     
-                    DataMediaItemSelectorView(selectedItem: $selectedMediaItem)
-                        .onChange(of: selectedMediaItem) { _, newValue in
+                    NavigationLink(destination: DataMediaItemSelectorView(selectedItem: $selectedMediaItem)) {
+                        HStack {
+                            Text("Media Item")
+                            Spacer()
+                            if let item = selectedMediaItem {
+                                Text(item.name)
+                                    .foregroundColor(.primary)
+                            } else {
+                                Text("Select Media Item")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .onChange(of: selectedMediaItem) { _, newValue in
                             if let item = newValue, let id = item.rid {
                                 if viewModel.editor.mediaDetails != nil {
                                     viewModel.editor.mediaDetails!.itemId = id

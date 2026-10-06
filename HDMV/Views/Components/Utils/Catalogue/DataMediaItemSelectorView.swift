@@ -12,12 +12,12 @@ struct DataMediaItemSelectorView: View {
     
         
     var body: some View {
-        Picker("Select Media Item", selection: $selectedItem) {
-            Text("None").tag(nil as DataMediaItem?)
-            ForEach(items) { item in
-                Text(item.name).tag(item as DataMediaItem)
-            }
-        }
-        .pickerStyle(.menu)
+        GenericTreeSelectorView(
+            items: items,
+            childrenKeyPath: \.optionalChildren,
+            selection: $selectedItem,
+            title: "Select Media Item",
+            noneButtonText: "None"
+        )
     }
 }
