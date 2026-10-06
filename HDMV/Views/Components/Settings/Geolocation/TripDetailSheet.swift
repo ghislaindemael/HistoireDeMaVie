@@ -53,6 +53,7 @@ struct TripDetailSheet: View {
                 
                 VehicleDynamicOptionsSection(
                     vehicleRid: viewModel.editor.vehicle?.rid ?? viewModel.editor.vehicleRid,
+                    vehicleTypeSlug: viewModel.editor.vehicle?.typeSlug,
                     decodedLogDetails: $viewModel.editor.decodedLogDetails
                 )
                 

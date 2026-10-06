@@ -68,5 +68,31 @@ class DataLogOptionDetailSheetViewModel: BaseDetailSheetViewModel<DataLogOption,
         get { getGlobalMapping { $0.isForLifeEvent } != nil }
         set { setGlobalMapping(isOn: newValue, keyPath: \DataLogOptionMapping.isForLifeEvent) }
     }
+    
+    // MARK: - Vehicle Type Mappings
+    
+    func isForVehicleType(_ type: VehicleType) -> Bool {
+        return getGlobalMapping { $0.vehicleTypeSlug == type.rawValue } != nil
+    }
+    
+    func setForVehicleType(_ type: VehicleType, isOn: Bool) {
+        let existingMapping = model.mappings?.first(where: { $0.vehicleTypeSlug == type.rawValue })
+        
+        if isOn {
+            if existingMapping == nil {
+                let newMapping = DataLogOptionMapping(optionSlug: model.slug)
+                newMapping.vehicleTypeSlug = type.rawValue
+                newMapping.option = model
+                modelContext.insert(newMapping)
+                if model.mappings == nil { model.mappings = [] }
+                model.mappings?.append(newMapping)
+            }
+        } else {
+            if let mapping = existingMapping {
+                modelContext.delete(mapping)
+                model.mappings?.removeAll(where: { $0.id == mapping.id })
+            }
+        }
+    }
 
 }

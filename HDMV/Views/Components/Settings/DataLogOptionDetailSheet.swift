@@ -141,6 +141,38 @@ struct DataLogOptionDetailSheet: View {
                         set: { viewModel.isForLifeEvent = $0 }
                     ))
                 }
+                
+                Section("Vehicle Type Mappings") {
+                    ForEach(VehicleType.allCases.filter { $0 != .unset }, id: \.self) { type in
+                        Toggle(isOn: Binding(
+                            get: { viewModel.isForVehicleType(type) },
+                            set: { viewModel.setForVehicleType(type, isOn: $0) }
+                        )) {
+                            type.labelView
+                        }
+                    }
+                }
+                
+                Section("Conditionals (Optional)") {
+                    TextField("Depends On Slug", text: Binding(
+                        get: { viewModel.editor.config?.dependsOnSlug ?? "" },
+                        set: { val in
+                            if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                            viewModel.editor.config?.dependsOnSlug = val.isEmpty ? nil : val
+                        }
+                    ))
+                    .autocapitalization(.none)
+                    
+                    TextField("Show if value is (comma separated)", text: Binding(
+                        get: { viewModel.editor.config?.showIfValues?.joined(separator: ", ") ?? "" },
+                        set: { val in
+                            if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                            let values = val.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                            viewModel.editor.config?.showIfValues = values.isEmpty ? nil : values
+                        }
+                    ))
+                    .autocapitalization(.none)
+                }
 
             }
             .navigationTitle("Edit Option")

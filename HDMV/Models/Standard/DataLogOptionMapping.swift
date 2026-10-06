@@ -14,6 +14,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
     @Attribute(.unique) var rid: Int?
     var activityRid: Int?
     var vehicleRid: Int?
+    var vehicleTypeSlug: String?
     var transactionTypeRid: Int?
     var lifeEventTypeRid: Int?
     var isForInteraction: Bool = false
@@ -43,6 +44,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         rid: Int? = nil,
         activityRid: Int? = nil,
         vehicleRid: Int? = nil,
+        vehicleTypeSlug: String? = nil,
         transactionTypeRid: Int? = nil,
         lifeEventTypeRid: Int? = nil,
         isForInteraction: Bool = false,
@@ -56,6 +58,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.rid = rid
         self.activityRid = activityRid
         self.vehicleRid = vehicleRid
+        self.vehicleTypeSlug = vehicleTypeSlug
         self.transactionTypeRid = transactionTypeRid
         self.lifeEventTypeRid = lifeEventTypeRid
         self.isForInteraction = isForInteraction
@@ -72,6 +75,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.rid = dto.id
         self.activityRid = dto.activity_id
         self.vehicleRid = dto.vehicle_id
+        self.vehicleTypeSlug = dto.vehicle_type_slug
         self.transactionTypeRid = dto.transaction_type_id
         self.lifeEventTypeRid = dto.life_event_type_id
         self.isForInteraction = dto.is_for_interaction
@@ -86,6 +90,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
     func update(fromDto dto: DataLogOptionMappingDTO) {
         self.activityRid = dto.activity_id
         self.vehicleRid = dto.vehicle_id
+        self.vehicleTypeSlug = dto.vehicle_type_slug
         self.transactionTypeRid = dto.transaction_type_id
         self.lifeEventTypeRid = dto.life_event_type_id
         self.isForInteraction = dto.is_for_interaction
@@ -101,6 +106,7 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         let targets = [
             activityRid != nil,
             vehicleRid != nil,
+            vehicleTypeSlug != nil,
             transactionTypeRid != nil,
             lifeEventTypeRid != nil,
             isForInteraction,
@@ -121,6 +127,7 @@ struct DataLogOptionMappingDTO: Codable, Identifiable {
     let id: Int
     let activity_id: Int?
     let vehicle_id: Int?
+    let vehicle_type_slug: String?
     let transaction_type_id: Int?
     let life_event_type_id: Int?
     let is_for_interaction: Bool
@@ -137,6 +144,7 @@ struct DataLogOptionMappingPayload: Codable, InitializableWithModel {
     
     let activity_id: Int?
     let vehicle_id: Int?
+    let vehicle_type_slug: String?
     let transaction_type_id: Int?
     let life_event_type_id: Int?
     let is_for_interaction: Bool
@@ -151,6 +159,7 @@ struct DataLogOptionMappingPayload: Codable, InitializableWithModel {
         guard model.isValid() else { return nil }
         self.activity_id = model.activityRid
         self.vehicle_id = model.vehicleRid
+        self.vehicle_type_slug = model.vehicleTypeSlug
         self.transaction_type_id = model.transactionTypeRid
         self.life_event_type_id = model.lifeEventTypeRid
         self.is_for_interaction = model.isForInteraction
@@ -168,6 +177,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
     
     var vehicle: Vehicle?
     var vehicleRid: Int?
+    var vehicleTypeSlug: String?
     
     var transactionType: TransactionType?
     var transactionTypeRid: Int?
@@ -194,6 +204,7 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         
         self.vehicle = model.vehicle
         self.vehicleRid = model.vehicleRid
+        self.vehicleTypeSlug = model.vehicleTypeSlug
         
         self.transactionType = model.transactionType
         self.transactionTypeRid = model.transactionTypeRid

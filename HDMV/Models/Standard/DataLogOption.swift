@@ -36,6 +36,11 @@ struct DataLogOptionConfig: Codable, Equatable {
     var step: Double?
     var layoutNode: ActivityLayoutNode?
     var replacesActivityName: Bool?
+    
+    // Conditionals
+    var dependsOnSlug: String?
+    var showIfValues: [String]?
+    var hideIfValues: [String]?
 }
 
 @Model
