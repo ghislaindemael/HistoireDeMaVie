@@ -87,32 +87,36 @@ struct FoodItemSelectorSheet: View {
     
     @ViewBuilder
     private func itemRow(_ item: DataFoodItem) -> some View {
-        Button(action: {
-            addItem(item)
-        }) {
+        HStack {
             VStack(alignment: .leading) {
                 Text(item.name).foregroundColor(.primary)
                 if let parent = item.parent {
                     Text(parent.name).font(.caption).foregroundColor(.secondary)
                 }
             }
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle()) // Make the whole HStack tappable
+        .onTapGesture {
+            addItem(item)
+        }
     }
     
     @ViewBuilder
     private func recipeRow(_ recipe: DataFoodRecipe) -> some View {
-        Button(action: {
-            applyRecipe(recipe)
-        }) {
+        HStack {
             VStack(alignment: .leading) {
                 Text(recipe.name).foregroundColor(.primary)
                 if let parent = recipe.parent {
                     Text(parent.name).font(.caption).foregroundColor(.secondary)
                 }
             }
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle()) // Make the whole HStack tappable
+        .onTapGesture {
+            applyRecipe(recipe)
+        }
     }
     
     private func addRawText(_ text: String) {

@@ -6,8 +6,10 @@ struct DataMediaItemSelectorView: View {
     
     @Binding var selectedItem: DataMediaItem?
     
-    @Query(FetchDescriptor<DataMediaItem>(
-        sortBy: [SortDescriptor(\.name)]))
+    @Query(
+        filter: #Predicate<DataMediaItem> { $0.parent == nil },
+        sort: \.name
+    )
     private var items: [DataMediaItem]
     
         

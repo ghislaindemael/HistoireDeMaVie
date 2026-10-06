@@ -22,5 +22,13 @@ final class DataFoodItemSyncer: BaseSyncer<DataFoodItem, DataFoodItemDTO, DataFo
         fatalError("deletion not implemented")
     }
     
-    override func resolveRelationships() throws {}
+    override func resolveRelationships() throws {
+        let itemLookup: [Int: DataFoodItem] = try getLookupMap()
+        try resolveRelationship(
+            for: DataFoodItem.self,
+            relationshipKeyPath: \DataFoodItem.parent,
+            ridKeyPath: \DataFoodItem.parentId,
+            lookupMap: itemLookup
+        )
+    }
 }
