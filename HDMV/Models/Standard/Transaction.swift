@@ -28,7 +28,6 @@ final class Transaction: LogModel {
     var typeRid: Int?
     var parentTripRid: Int?
     var parentInstanceRid: Int?
-    var payerRid: Int?
     var sourceAccountRid: Int?
     var targetAccountRid: Int?
     var contextRids: [Int] = []
@@ -99,8 +98,6 @@ final class Transaction: LogModel {
     @Relationship(deleteRule: .nullify)
     var parentTrip: Trip?
     
-    @Relationship(deleteRule: .nullify)
-    var payer: Person?
     
     @Relationship(deleteRule: .nullify)
     var type: TransactionType?
@@ -127,7 +124,6 @@ final class Transaction: LogModel {
         typeRid: Int? = nil,
         parentInstanceRid: Int? = nil,
         parentTripRid: Int? = nil,
-        payerRid: Int? = nil,
         sourceAccountRid: Int? = nil,
         targetAccountRid: Int? = nil,
         contextRids: [Int] = [],
@@ -135,7 +131,6 @@ final class Transaction: LogModel {
         syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
         parentTrip: Trip? = nil,
-        payer: Person? = nil,
         type: TransactionType? = nil,
         sourceAccount: DataBankAccount? = nil,
         targetAccount: DataBankAccount? = nil
@@ -153,7 +148,6 @@ final class Transaction: LogModel {
         self.typeRid = typeRid
         self.parentInstanceRid = parentInstanceRid
         self.parentTripRid = parentTripRid
-        self.payerRid = payerRid
         self.sourceAccountRid = sourceAccountRid
         self.targetAccountRid = targetAccountRid
         self.contextRids = contextRids
@@ -161,7 +155,6 @@ final class Transaction: LogModel {
         self.syncStatus = syncStatus
         self.parentInstance = parentInstance
         self.parentTrip = parentTrip
-        self.payer = payer
         self.type = type
         self.sourceAccount = sourceAccount
         self.targetAccount = targetAccount
@@ -181,7 +174,6 @@ final class Transaction: LogModel {
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
-        self.payerRid = dto.payer_id
         self.sourceAccountRid = dto.source_account_id
         self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
@@ -201,7 +193,6 @@ final class Transaction: LogModel {
         self.typeRid = dto.type_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
-        self.payerRid = dto.payer_id
         self.sourceAccountRid = dto.source_account_id
         self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
@@ -231,7 +222,6 @@ struct TransactionDTO: Codable, Identifiable {
     let type_id: Int?
     let parent_instance_id: Int?
     let parent_trip_id: Int?
-    let payer_id: Int?
     let source_account_id: Int?
     let target_account_id: Int?
     let context_ids: [Int]?
@@ -257,7 +247,6 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let type_id: Int?
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
-    let payer_id: Int?
     let source_account_id: Int?
     let target_account_id: Int?
     let context_ids: [Int]
@@ -285,7 +274,6 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.type_id = transaction.typeRid
         self.parent_instance_id = transaction.parentInstanceRid
         self.parent_trip_id = transaction.parentTripRid
-        self.payer_id = transaction.payerRid
         self.source_account_id = transaction.sourceAccountRid
         self.target_account_id = transaction.targetAccountRid
         self.context_ids = transaction.contextRids
@@ -317,14 +305,12 @@ struct TransactionEditor: EditorProtocol {
     var type: TransactionType?
     var parentInstance: ActivityInstance?
     var parentTrip: Trip?
-    var payer: Person?
     var sourceAccount: DataBankAccount?
     var targetAccount: DataBankAccount?
     
     var typeRid: Int?
     var parentTripRid: Int?
     var parentInstanceRid: Int?
-    var payerRid: Int?
     var sourceAccountRid: Int?
     var targetAccountRid: Int?
     var contextRids: [Int] = []
@@ -362,8 +348,6 @@ struct TransactionEditor: EditorProtocol {
         self.parentTrip = transaction.parentTrip
         self.parentTripRid = transaction.parentTripRid
         
-        self.payer = transaction.payer
-        self.payerRid = transaction.payerRid
         
         self.sourceAccount = transaction.sourceAccount
         self.sourceAccountRid = transaction.sourceAccountRid
@@ -404,8 +388,6 @@ struct TransactionEditor: EditorProtocol {
         transaction.parentTrip = self.parentTrip
         transaction.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         
-        transaction.payer = self.payer
-        transaction.payerRid = self.payer?.rid ?? self.payerRid
         
         transaction.sourceAccount = self.sourceAccount
         transaction.sourceAccountRid = self.sourceAccount?.rid ?? self.sourceAccountRid

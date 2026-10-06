@@ -121,20 +121,10 @@ struct TransactionRowView: View {
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             
-            let hasPayer = transaction.payer != nil
             let hasParent = transaction.parentInstance != nil
             
-            if hasPayer || hasParent {
+            if hasParent {
                 HStack(spacing: 8) {
-                    if let payer = transaction.payer {
-                        Label(payer.fullName, systemImage: "person.fill")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(Color.secondaryBackground)
-                            .cornerRadius(4)
-                    }
-                    
                     if let parent = transaction.parentInstance {
                         Label(parent.activity?.name ?? "Activity", systemImage: parent.activity?.icon ?? "flowchart.fill")
                             .font(.caption)

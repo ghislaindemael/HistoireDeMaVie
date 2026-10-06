@@ -23,6 +23,7 @@ final class DataBankAccount: CatalogueModel {
     var cache: Bool = false
     
     @Attribute var syncStatusRaw: String = SyncStatus.undef.rawValue
+    var hasUnsyncedChanges: Bool { syncStatus != .synced }
     
     typealias DTO = DataBankAccountDTO
     typealias Payload = DataBankAccountPayload
@@ -65,7 +66,7 @@ final class DataBankAccount: CatalogueModel {
         self.currency = dto.currency
         self.institution = dto.institution
         self.accountTypeRaw = dto.type
-        self.archived = dto.is_archived
+        self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
@@ -74,7 +75,7 @@ final class DataBankAccount: CatalogueModel {
         self.currency = dto.currency
         self.institution = dto.institution
         self.accountTypeRaw = dto.type
-        self.archived = dto.is_archived
+        self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
     
@@ -89,7 +90,7 @@ struct DataBankAccountDTO: Codable, Identifiable {
     let currency: String
     let institution: String?
     let type: String
-    let is_archived: Bool
+    let archived: Bool
 }
 
 struct DataBankAccountPayload: Codable, InitializableWithModel {
@@ -99,7 +100,7 @@ struct DataBankAccountPayload: Codable, InitializableWithModel {
     let currency: String
     let institution: String?
     let type: String
-    let is_archived: Bool
+    let archived: Bool
     
     init?(from model: DataBankAccount) {
         guard model.isValid() else { return nil }
@@ -107,7 +108,7 @@ struct DataBankAccountPayload: Codable, InitializableWithModel {
         self.currency = model.currency
         self.institution = model.institution
         self.type = model.accountTypeRaw
-        self.is_archived = model.archived
+        self.archived = model.archived
     }
 }
 

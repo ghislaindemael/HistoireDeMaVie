@@ -11,7 +11,7 @@ import Foundation
 class TransactionService: SupabaseDataService<TransactionDTO, TransactionPayload> {
     
     init() {
-        super.init(tableName: "my_transactions")
+        super.init(tableName: "my_transactions_v2")
     }
     
     // MARK: - Semantic Methods (Using Base Class)

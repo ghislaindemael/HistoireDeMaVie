@@ -77,13 +77,6 @@ extension Transaction: DebugViewable {
                     .foregroundStyle(.red)
             }
             
-            if let payerRid {
-                Text("Payer RID: \(payerRid) (\(payer != nil ? "✅ Loaded" : "❌ Missing"))")
-            } else {
-                Text("Payer RID: Unset")
-                    .foregroundStyle(.orange)
-            }
-            
             if let parentInstanceRid {
                 Text("Parent Instance RID: \(parentInstanceRid) (\(parentInstance != nil ? "✅ Loaded" : "❌ Missing"))")
             } else {

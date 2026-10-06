@@ -98,7 +98,7 @@ class TransactionSyncer: BaseLogSyncer<Transaction, TransactionDTO, TransactionP
         // 1. Fetch Lookup Maps
         let typesLookup: [Int: TransactionType] = try getLookupMap()
         let instancesLookup: [Int: ActivityInstance] = try getLookupMap()
-        let peopleLookup: [Int: Person] = try getLookupMap()
+        let bankAccountsLookup: [Int: DataBankAccount] = try getLookupMap()
         
         // 2. Resolve Transaction Type
         try resolveRelationship(
@@ -116,22 +116,20 @@ class TransactionSyncer: BaseLogSyncer<Transaction, TransactionDTO, TransactionP
             lookupMap: instancesLookup
         )
         
-        // 4. Resolve Payer (Person)
+        // 4. Resolve Accounts
         try resolveRelationship(
             for: Transaction.self,
-            relationshipKeyPath: \Transaction.payer,
-            ridKeyPath: \Transaction.payerRid,
-            lookupMap: peopleLookup
+            relationshipKeyPath: \Transaction.sourceAccount,
+            ridKeyPath: \Transaction.sourceAccountRid,
+            lookupMap: bankAccountsLookup
         )
         
-        // Note: If you have a LifeContext model linked to contextRid, resolve it here too!
-        // let contextLookup: [Int: LifeContext] = try getLookupMap()
-        // try resolveRelationship(
-        //     for: Transaction.self,
-        //     relationshipKeyPath: \Transaction.context, 
-        //     ridKeyPath: \Transaction.contextRid,
-        //     lookupMap: contextLookup
-        // )
+        try resolveRelationship(
+            for: Transaction.self,
+            relationshipKeyPath: \Transaction.targetAccount,
+            ridKeyPath: \Transaction.targetAccountRid,
+            lookupMap: bankAccountsLookup
+        )
         
         print("All Transaction relationships resolved.")
     }

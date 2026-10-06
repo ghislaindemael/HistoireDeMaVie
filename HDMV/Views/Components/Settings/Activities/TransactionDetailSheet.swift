@@ -97,7 +97,6 @@ struct TransactionDetailSheet: View {
                         }
                     }
                     
-                    PersonSelectorView(selectedPerson: $viewModel.editor.payer)
                 }
                 
                 // MARK: - 3. Primary Amount
