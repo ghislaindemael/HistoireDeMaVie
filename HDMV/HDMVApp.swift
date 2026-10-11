@@ -20,6 +20,7 @@ struct HDMVApp: App {
             LifeEvent.self,
             Path.self,
             Place.self,
+            PlaceType.self,
             Person.self,
             Interaction.self,
             Trip.self,

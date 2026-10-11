@@ -14,7 +14,7 @@ final class TransactionType: Identifiable, Hashable, SyncableModel, EditableMode
     
     @Attribute(.unique) var rid: Int?
     var name: String
-    var slug: String
+    @Attribute(.unique) var slug: String
     var parentRid: Int?
     var parent: TransactionType? {
         didSet {

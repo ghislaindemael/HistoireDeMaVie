@@ -47,7 +47,7 @@ struct DataLogOptionConfig: Codable, Equatable {
 final class DataLogOption: Identifiable, Hashable, CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var typeRaw: String
     var configRaw: Data? // JSONB stored as Data

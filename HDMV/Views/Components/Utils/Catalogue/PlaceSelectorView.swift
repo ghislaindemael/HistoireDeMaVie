@@ -257,6 +257,16 @@ struct PlaceSelectorView: View {
         return try? modelContext.fetch(descriptor).first
     }
     
+    private func isValidSuggestion(_ place: Place) -> Bool {
+        if place.isVirtual {
+            return false
+        }
+        if isForTrip && place.decodedOptions?.reachableInTrip == false {
+            return false
+        }
+        return true
+    }
+    
     private func computeSuggestedPlace() {
         guard !hasComputedSuggestion, !disableSuggestion else { return }
         hasComputedSuggestion = true
@@ -270,9 +280,12 @@ struct PlaceSelectorView: View {
         let recentTrips = (try? modelContext.fetch(tripsDescriptor)) ?? []
         
         var latestTrip: Trip? = nil
+        var latestTripPlace: Place? = nil
         for trip in recentTrips {
-            if let end = trip.timeEnd, end <= date, trip.placeEndRid != nil {
+            guard let end = trip.timeEnd, end <= date, let placeId = trip.placeEndRid else { continue }
+            if let place = trip.placeEnd ?? fetchPlace(withId: placeId), isValidSuggestion(place) {
                 latestTrip = trip
+                latestTripPlace = place
                 break
             }
         }
@@ -284,9 +297,12 @@ struct PlaceSelectorView: View {
         let recentActivities = (try? modelContext.fetch(activitiesDescriptor)) ?? []
         
         var latestActivityWithPlace: ActivityInstance? = nil
+        var latestActivityPlace: Place? = nil
         for activity in recentActivities {
-            if activity.decodedLogDetails?.place?.placeId != nil {
+            guard let placeId = activity.decodedLogDetails?.place?.placeId else { continue }
+            if let place = fetchPlace(withId: placeId), isValidSuggestion(place) {
                 latestActivityWithPlace = activity
+                latestActivityPlace = place
                 break
             }
         }
@@ -299,11 +315,9 @@ struct PlaceSelectorView: View {
         }
         
         if activityTime >= tripTime {
-            if let placeId = latestActivityWithPlace?.decodedLogDetails?.place?.placeId {
-                self.suggestedPlace = fetchPlace(withId: placeId)
-            }
+            self.suggestedPlace = latestActivityPlace
         } else {
-            self.suggestedPlace = latestTrip?.placeEnd
+            self.suggestedPlace = latestTripPlace
         }
     }
     

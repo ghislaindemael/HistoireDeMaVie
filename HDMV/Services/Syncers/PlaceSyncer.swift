@@ -44,6 +44,14 @@ final class PlaceSyncer: BaseSyncer<Place, PlaceDTO, PlacePayload> {
             lookupMap: cityLookup
         )
         
+        let placeTypeLookup: [Int: PlaceType] = try getLookupMap()
+        try resolveRelationship(
+            for: Place.self,
+            relationshipKeyPath: \Place.placeType,
+            ridKeyPath: \Place.placeTypeRid,
+            lookupMap: placeTypeLookup
+        )
+        
         print("All Place relationships resolved.")
     }
     

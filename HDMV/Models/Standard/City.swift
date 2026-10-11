@@ -12,8 +12,8 @@ import SwiftData
 final class City: CatalogueModel{
     
     @Attribute(.unique) var rid: Int?
-    @Attribute(.unique) var slug: String
-    @Attribute(.unique) var name: String
+    var slug: String
+    var name: String
     var countryRid: Int?
     var parentRid: Int?
 

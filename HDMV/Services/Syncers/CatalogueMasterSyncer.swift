@@ -17,6 +17,7 @@ class CatalogueMasterSyncer {
         try await VehicleSyncer(modelContext: modelContext).pullChanges()
         try await LifeEventTypesSyncer(modelContext: modelContext).pullChanges()
         try await TransactionTypesSyncer(modelContext: modelContext).pullChanges()
+        try await PlaceTypeSyncer(modelContext: modelContext).pullChanges()
         try await DataLogOptionSyncer(modelContext: modelContext).pullChanges()
         try await DataBankAccountsSyncer(modelContext: modelContext).pullChanges()
         try await DataMediaItemSyncer(modelContext: modelContext).pullChanges()

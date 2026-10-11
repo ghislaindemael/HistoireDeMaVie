@@ -14,7 +14,7 @@ final class Activity: Identifiable, Hashable, CatalogueModel, Capable {
     
     @Attribute(.unique) var rid: Int?
     var name: String
-    var slug: String
+    @Attribute(.unique) var slug: String
     var parentRid: Int?
     var parent: Activity? {
         didSet {

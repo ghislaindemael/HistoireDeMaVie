@@ -4,7 +4,7 @@ import SwiftData
 @Model
 final class DataFoodOption: Identifiable, Hashable, CatalogueModel {
     @Attribute(.unique) var rid: Int?
-    var slug: String
+    @Attribute(.unique) var slug: String
     var name: String
     var typeRaw: String
     var enumValuesRaw: Data? // [String]

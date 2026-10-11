@@ -16,13 +16,36 @@ struct PlaceRowView: View {
 
     
     var body: some View {
-        VStack{
+        VStack {
             HStack {
-                UnsettableTextView(
-                    text: place.name,
-                    font: .body,
-                    isItalicized: place.archived
-                )
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        if let icon = place.placeType?.icon, !icon.isEmpty {
+                            IconView(iconString: icon, size: 16)
+                        }
+                        UnsettableTextView(
+                            text: place.name,
+                            font: .body,
+                            isItalicized: place.archived
+                        )
+                        if place.isVirtual {
+                            Text("Virtual")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.12))
+                                .foregroundStyle(.blue)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    if let address = place.address, !address.isEmpty {
+                        Text(address)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
                 Spacer()
                 CatalogueRowControlsView(
                     model: place,
