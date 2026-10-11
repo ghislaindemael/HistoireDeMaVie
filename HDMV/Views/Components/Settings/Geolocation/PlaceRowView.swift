@@ -28,6 +28,14 @@ struct PlaceRowView: View {
                             font: .body,
                             isItalicized: place.archived
                         )
+                    }
+                    if let address = place.address, !address.isEmpty {
+                        Text(address)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    HStack(spacing: 6) {
                         if place.isVirtual {
                             Text("Virtual")
                                 .font(.caption2)
@@ -37,7 +45,8 @@ struct PlaceRowView: View {
                                 .background(Color.blue.opacity(0.12))
                                 .foregroundStyle(.blue)
                                 .clipShape(Capsule())
-                        } else if let geom = place.decodedOptions?.geometry {
+                        }
+                        if let geom = place.decodedOptions?.geometry {
                             HStack(spacing: 3) {
                                 Image(systemName: geom.iconName)
                                 Text(geom.typeTitle)
@@ -50,12 +59,6 @@ struct PlaceRowView: View {
                             .foregroundStyle(.secondary)
                             .clipShape(Capsule())
                         }
-                    }
-                    if let address = place.address, !address.isEmpty {
-                        Text(address)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
                     }
                 }
                 Spacer()

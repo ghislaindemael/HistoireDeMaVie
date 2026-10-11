@@ -21,6 +21,39 @@ final class PlacesService: SupabaseDataService<PlaceDTO, PlacePayload> {
         try await fetch(includeArchived: includeArchived)
     }
     
+    func fetchPlaces(forCityId cityId: Int, includeArchived: Bool = false) async throws -> [PlaceDTO] {
+        guard let client = supabaseClient else { throw URLError(.cannotConnectToHost) }
+        
+        var allResults: [PlaceDTO] = []
+        let limit = 1000
+        var offset = 0
+        var hasMore = true
+        
+        while hasMore {
+            var query = client.from(tableName).select()
+            query = query.eq("city_id", value: cityId)
+            if !includeArchived {
+                query = query.eq("archived", value: false)
+            }
+            
+            let batch: [PlaceDTO] = try await query
+                .order("name", ascending: true)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+            
+            allResults.append(contentsOf: batch)
+            
+            if batch.count < limit {
+                hasMore = false
+            } else {
+                offset += limit
+            }
+        }
+        
+        return allResults
+    }
+    
     func createPlace(payload: PlacePayload) async throws -> PlaceDTO {
         try await create(payload: payload)
     }

@@ -28,6 +28,43 @@ final class PlaceSyncer: BaseSyncer<Place, PlaceDTO, PlacePayload> {
         return try await placesService.updatePlace(rid: rid, payload: payload)
     }
     
+    func pullChanges(cityRid: Int) async throws {
+        let dtos = try await placesService.fetchPlaces(forCityId: cityRid, includeArchived: settings.includeArchived)
+        let serverRids = Set(dtos.map { $0.id })
+        
+        let predicate = #Predicate<Place> { place in
+            place.cityRid == cityRid
+        }
+        let descriptor = FetchDescriptor<Place>(predicate: predicate)
+        let relevantLocalModels = try modelContext.fetch(descriptor)
+        
+        let modelsWithRid = relevantLocalModels.filter { $0.rid != nil }
+        let localCache = Dictionary(modelsWithRid.map { ($0.rid!, $0) }, uniquingKeysWith: { (first, _) in return first })
+        let localRids = Set(localCache.keys)
+        
+        for dto in dtos {
+            if let existingModel = localCache[dto.id] {
+                guard existingModel.syncStatus == .synced else { continue }
+                existingModel.update(fromDto: dto)
+            } else {
+                let newModel = Place(fromDto: dto)
+                modelContext.insert(newModel)
+            }
+        }
+        
+        let ridsToDelete = localRids.subtracting(serverRids)
+        for rid in ridsToDelete {
+            if let modelToDelete = localCache[rid], modelToDelete.syncStatus == .synced {
+                modelContext.delete(modelToDelete)
+            }
+        }
+        
+        try resolveRelationships()
+        if modelContext.hasChanges {
+            try modelContext.save()
+        }
+    }
+    
     override func deleteFromServer(_ id: Int) async throws {
         fatalError("City deletion not implemented")
     }

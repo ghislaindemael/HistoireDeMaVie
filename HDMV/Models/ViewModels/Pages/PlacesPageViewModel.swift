@@ -52,7 +52,11 @@ class PlacesPageViewModel: BasePageViewModel {
             return
         }
         do {
-            try await syncer.pullChanges()
+            if let city = selectedCity, let cityRid = city.rid {
+                try await syncer.pullChanges(cityRid: cityRid)
+            } else {
+                try await syncer.pullChanges()
+            }
             fetchFromCache()
         } catch {
             print("Failed to refresh data from server: \(error)")
