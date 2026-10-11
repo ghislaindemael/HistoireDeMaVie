@@ -37,6 +37,18 @@ struct PlaceRowView: View {
                                 .background(Color.blue.opacity(0.12))
                                 .foregroundStyle(.blue)
                                 .clipShape(Capsule())
+                        } else if let geom = place.decodedOptions?.geometry {
+                            HStack(spacing: 3) {
+                                Image(systemName: geom.iconName)
+                                Text(geom.typeTitle)
+                            }
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.12))
+                            .foregroundStyle(.secondary)
+                            .clipShape(Capsule())
                         }
                     }
                     if let address = place.address, !address.isEmpty {

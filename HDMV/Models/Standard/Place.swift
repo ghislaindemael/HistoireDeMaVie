@@ -184,6 +184,74 @@ struct PlaceGeometry: Codable, Sendable, Equatable {
     // For Circle/Zone: radius in meters
     var radiusMeters: Double?
     
+    enum CodingKeys: String, CodingKey {
+        case type
+        case coordinates
+        case radiusMeters
+        case geometry
+        case pointCoordinates
+        case lineCoordinates
+        case polygonCoordinates
+    }
+    
+    init(type: PlaceGeometryType, pointCoordinates: [Double]? = nil, lineCoordinates: [[Double]]? = nil, polygonCoordinates: [[[Double]]]? = nil, radiusMeters: Double? = nil) {
+        self.type = type
+        self.pointCoordinates = pointCoordinates
+        self.lineCoordinates = lineCoordinates
+        self.polygonCoordinates = polygonCoordinates
+        self.radiusMeters = radiusMeters
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Resilience: if a full Feature was pasted, unwrap inner geometry
+        if container.contains(.geometry) {
+            let inner = try container.decode(PlaceGeometry.self, forKey: .geometry)
+            self = inner
+            return
+        }
+        
+        self.type = try container.decode(PlaceGeometryType.self, forKey: .type)
+        self.radiusMeters = try container.decodeIfPresent(Double.self, forKey: .radiusMeters)
+        
+        switch type {
+        case .point, .circle:
+            if let coords = try? container.decode([Double].self, forKey: .coordinates) {
+                self.pointCoordinates = coords
+            } else {
+                self.pointCoordinates = try container.decodeIfPresent([Double].self, forKey: .pointCoordinates)
+            }
+        case .lineString:
+            if let coords = try? container.decode([[Double]].self, forKey: .coordinates) {
+                self.lineCoordinates = coords
+            } else {
+                self.lineCoordinates = try container.decodeIfPresent([[Double]].self, forKey: .lineCoordinates)
+            }
+        case .polygon:
+            if let coords = try? container.decode([[[Double]]].self, forKey: .coordinates) {
+                self.polygonCoordinates = coords
+            } else {
+                self.polygonCoordinates = try container.decodeIfPresent([[[Double]]].self, forKey: .polygonCoordinates)
+            }
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encodeIfPresent(radiusMeters, forKey: .radiusMeters)
+        
+        switch type {
+        case .point, .circle:
+            try container.encodeIfPresent(pointCoordinates, forKey: .coordinates)
+        case .lineString:
+            try container.encodeIfPresent(lineCoordinates, forKey: .coordinates)
+        case .polygon:
+            try container.encodeIfPresent(polygonCoordinates, forKey: .coordinates)
+        }
+    }
+    
     // MARK: - Convenience initializers
     static func point(latitude: Double, longitude: Double, altitude: Double? = nil) -> PlaceGeometry {
         if let alt = altitude {
@@ -245,6 +313,55 @@ struct PlaceGeometry: Codable, Sendable, Equatable {
             return poly.first?.first?[2]
         }
         return nil
+    }
+    
+    // MARK: - UI Helpers
+    var iconName: String {
+        switch type {
+        case .point:
+            return "mappin.and.ellipse"
+        case .circle:
+            return "circle.circle"
+        case .lineString:
+            return "point.topleft.down.to.point.bottomright.curvepath"
+        case .polygon:
+            return "skew"
+        }
+    }
+    
+    var typeTitle: String {
+        switch type {
+        case .point:
+            return "Point"
+        case .circle:
+            return "Circle Zone"
+        case .lineString:
+            return "Line / Street"
+        case .polygon:
+            return "Polygon Zone"
+        }
+    }
+    
+    var summaryText: String {
+        switch type {
+        case .point:
+            if let lat = centerLatitude, let lon = centerLongitude {
+                return String(format: "%.4f, %.4f", lat, lon)
+            }
+            return "Spot"
+        case .circle:
+            if let lat = centerLatitude, let lon = centerLongitude {
+                let r = Int(radiusMeters ?? 50)
+                return String(format: "%.4f, %.4f • %dm", lat, lon, r)
+            }
+            return "\(Int(radiusMeters ?? 50))m radius"
+        case .lineString:
+            let count = lineCoordinates?.count ?? 0
+            return "\(count) points"
+        case .polygon:
+            let count = polygonCoordinates?.first?.count ?? 0
+            return "\(count) vertices"
+        }
     }
 }
 

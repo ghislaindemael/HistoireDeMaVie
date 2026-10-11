@@ -65,90 +65,27 @@ struct PlaceDetailSheet: View {
                 
                 if !viewModel.editor.isVirtual {
                     Section("Location & Geometry") {
-                        Picker("Type", selection: Binding(
-                            get: { viewModel.editor.geometry?.type ?? .point },
-                            set: { newType in
-                                let lat = viewModel.editor.geometry?.centerLatitude ?? 0.0
-                                let lon = viewModel.editor.geometry?.centerLongitude ?? 0.0
-                                let radius = viewModel.editor.geometry?.radiusMeters ?? 50.0
-                                switch newType {
-                                case .point:
-                                    viewModel.editor.geometry = .point(latitude: lat, longitude: lon)
-                                case .circle:
-                                    viewModel.editor.geometry = .circle(latitude: lat, longitude: lon, radiusMeters: radius)
-                                case .lineString:
-                                    viewModel.editor.geometry = .line(coordinates: viewModel.editor.geometry?.lineCoordinates ?? [[lon, lat]])
-                                case .polygon:
-                                    viewModel.editor.geometry = .polygon(coordinates: viewModel.editor.geometry?.polygonCoordinates ?? [[[lon, lat]]])
-                                }
-                            }
-                        )) {
-                            Text("Point (Spot / Venue)").tag(PlaceGeometryType.point)
-                            Text("Zone / Circle (Park / Piazza)").tag(PlaceGeometryType.circle)
-                            Text("Line (Street / Path)").tag(PlaceGeometryType.lineString)
-                            Text("Polygon (Zone boundary)").tag(PlaceGeometryType.polygon)
-                        }
-                        
-                        HStack {
-                            Text("Latitude")
-                            Spacer()
-                            TextField("e.g. 47.3769", value: Binding(
-                                get: { viewModel.editor.geometry?.centerLatitude ?? 0.0 },
-                                set: { newLat in
-                                    let lon = viewModel.editor.geometry?.centerLongitude ?? 0.0
-                                    let radius = viewModel.editor.geometry?.radiusMeters ?? 50.0
-                                    let type = viewModel.editor.geometry?.type ?? .point
-                                    if type == .circle {
-                                        viewModel.editor.geometry = .circle(latitude: newLat, longitude: lon, radiusMeters: radius)
-                                    } else {
-                                        viewModel.editor.geometry = .point(latitude: newLat, longitude: lon)
-                                    }
-                                }
-                            ), format: .number)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.numbersAndPunctuation)
-                        }
-                        
-                        HStack {
-                            Text("Longitude")
-                            Spacer()
-                            TextField("e.g. 8.5417", value: Binding(
-                                get: { viewModel.editor.geometry?.centerLongitude ?? 0.0 },
-                                set: { newLon in
-                                    let lat = viewModel.editor.geometry?.centerLatitude ?? 0.0
-                                    let radius = viewModel.editor.geometry?.radiusMeters ?? 50.0
-                                    let type = viewModel.editor.geometry?.type ?? .point
-                                    if type == .circle {
-                                        viewModel.editor.geometry = .circle(latitude: lat, longitude: newLon, radiusMeters: radius)
-                                    } else {
-                                        viewModel.editor.geometry = .point(latitude: lat, longitude: newLon)
-                                    }
-                                }
-                            ), format: .number)
-                            .multilineTextAlignment(.trailing)
-                            .keyboardType(.numbersAndPunctuation)
-                        }
-                        
-                        if viewModel.editor.geometry?.type == .circle {
+                        if let geom = viewModel.editor.geometry {
                             HStack {
-                                Text("Radius (meters)")
+                                Label(geom.typeTitle, systemImage: geom.iconName)
+                                    .fontWeight(.medium)
                                 Spacer()
-                                TextField("e.g. 100", value: Binding(
-                                    get: { viewModel.editor.geometry?.radiusMeters ?? 50.0 },
-                                    set: { newRadius in
-                                        let lat = viewModel.editor.geometry?.centerLatitude ?? 0.0
-                                        let lon = viewModel.editor.geometry?.centerLongitude ?? 0.0
-                                        viewModel.editor.geometry = .circle(latitude: lat, longitude: lon, radiusMeters: newRadius)
-                                    }
-                                ), format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numbersAndPunctuation)
+                                Text(geom.summaryText)
+                                    .foregroundStyle(.secondary)
                             }
-                        }
-                        
-                        if viewModel.editor.geometry != nil {
-                            Button("Clear GPS Coordinates", role: .destructive) {
-                                viewModel.editor.geometry = nil
+                            
+                            PlaceGeometryMapView(geometry: geom)
+                                .frame(height: 180)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        } else {
+                            HStack {
+                                Label("No Coordinates Set", systemImage: "location.slash")
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("Managed in DB / Web")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                     }
