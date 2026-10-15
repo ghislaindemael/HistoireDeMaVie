@@ -52,6 +52,7 @@ struct ClaimTransactionsSectionView: View {
                                 .foregroundColor(.accentColor)
                         }
                     }
+                    .draggable(DraggableLogItem.transaction(transaction.persistentModelID))
                 }
             }
         }

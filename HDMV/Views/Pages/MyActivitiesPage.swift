@@ -101,6 +101,7 @@ struct MyActivitiesPage: View {
                                 instanceToEdit: $instanceToEdit,
                                 tripToEdit: $tripToEdit,
                                 interactionToEdit: $interactionToEdit,
+                                transactionToEdit: $transactionToEdit,
                                 lifeEventToEdit: $lifeEventToEdit,
                                 quoteToEdit: $quoteToEdit
                             )
@@ -148,7 +149,7 @@ struct MyActivitiesPage: View {
                 modelContext: modelContext
             )
         }
-        .sheet(item: $transactionToEdit) { transaction in
+        .sheet(item: $transactionToEdit, onDismiss: { viewModel.fetchDailyData() }) { transaction in
             TransactionDetailSheet(
                 transaction: transaction,
                 modelContext: modelContext

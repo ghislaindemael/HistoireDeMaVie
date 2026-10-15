@@ -475,6 +475,10 @@ class MyActivitiesPageViewModel: ObservableObject {
                 if let child = context.model(for: childID) as? Quote {
                     move(child)
                 }
+            case .transaction(let childID):
+                if let child = context.model(for: childID) as? Transaction {
+                    move(child)
+                }
         }
         
         do {

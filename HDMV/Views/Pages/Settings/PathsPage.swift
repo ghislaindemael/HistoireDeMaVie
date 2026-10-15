@@ -55,7 +55,9 @@ struct PathsPage: View {
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
-                onAdd: { viewModel.createLocalPath() }
+                onAdd: { viewModel.createLocalPath() },
+                fetchArchivedAction: { await viewModel.fetchArchivedFromServer() },
+                purgeArchivedAction: { viewModel.purgeArchivedFromCache() }
             )
             .sheet(item: $pathToEdit) { path in
                 PathDetailSheet(path: path, modelContext: modelContext)

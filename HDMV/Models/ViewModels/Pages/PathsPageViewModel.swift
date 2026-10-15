@@ -85,6 +85,26 @@ class PathsPageViewModel: ObservableObject {
         }
     }
     
+    func fetchArchivedFromServer() async {
+        SettingsStore.shared.includeArchived = true
+        defer { SettingsStore.shared.includeArchived = false }
+        await refreshFromServer()
+    }
     
+    func purgeArchivedFromCache() {
+        guard let context = modelContext else { return }
+        do {
+            let allPaths = try context.fetch(FetchDescriptor<Path>())
+            for path in allPaths {
+                if path.archived {
+                    context.delete(path)
+                }
+            }
+            try context.save()
+            fetchFromCache()
+        } catch {
+            print("Failed to purge archived paths: \(error)")
+        }
+    }
 
 }

@@ -19,6 +19,7 @@ struct ParentModelHierarchyView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var transactionToEdit: Transaction?
     @Binding var lifeEventToEdit: LifeEvent?
     @Binding var quoteToEdit: Quote?
     
@@ -138,6 +139,7 @@ struct ParentModelHierarchyView: View {
                         instanceToEdit: $instanceToEdit,
                         tripToEdit: $tripToEdit,
                         interactionToEdit: $interactionToEdit,
+                        transactionToEdit: $transactionToEdit,
                         lifeEventToEdit: $lifeEventToEdit,
                         quoteToEdit: $quoteToEdit,
                         level: level + 1

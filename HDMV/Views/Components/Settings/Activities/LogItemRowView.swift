@@ -18,6 +18,7 @@ struct LogItemRowView: View {
     @Binding var instanceToEdit: ActivityInstance?
     @Binding var tripToEdit: Trip?
     @Binding var interactionToEdit: Interaction?
+    @Binding var transactionToEdit: Transaction?
     @Binding var lifeEventToEdit: LifeEvent?
     @Binding var quoteToEdit: Quote?
     
@@ -51,6 +52,7 @@ struct LogItemRowView: View {
                     instanceToEdit: $instanceToEdit,
                     tripToEdit: $tripToEdit,
                     interactionToEdit: $interactionToEdit,
+                    transactionToEdit: $transactionToEdit,
                     lifeEventToEdit: $lifeEventToEdit,
                     quoteToEdit: $quoteToEdit
                 )
@@ -80,6 +82,11 @@ struct LogItemRowView: View {
                     
             case let transaction as Transaction:
                 TransactionRowView(transaction: transaction)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) {
+                        transactionToEdit = transaction
+                    }
+                    .draggable(DraggableLogItem.transaction(transaction.persistentModelID))
                 
             default:
                 EmptyView()
