@@ -32,19 +32,11 @@ struct LinkedFilesPillView: View {
     }
     
     init(trip: Trip) {
-        var paths: [String] = trip.linkedFilePaths
-        for child in trip.childTrips {
-            paths.append(contentsOf: child.linkedFilePaths)
-        }
-        self.init(filePaths: paths)
+        self.init(filePaths: trip.linkedFilePaths)
     }
     
     init(instance: ActivityInstance) {
-        var paths: [String] = instance.linkedFilePaths
-        for childTrip in instance.childTrips {
-            paths.append(contentsOf: childTrip.linkedFilePaths)
-        }
-        self.init(filePaths: paths)
+        self.init(filePaths: instance.linkedFilePaths)
     }
     
     var body: some View {
