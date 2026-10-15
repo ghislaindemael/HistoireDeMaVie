@@ -12,6 +12,8 @@ import Supabase
 enum GPXImportIntent {
     case newTrip
     case existingTrip
+    case newActivity
+    case existingActivity
     case newPath
     case existingPath
 }
@@ -25,6 +27,9 @@ struct GPXImportSheet: View {
     @Query(sort: \Trip.timeStart, order: .reverse)
     private var allTrips: [Trip]
     
+    @Query(sort: \ActivityInstance.timeStart, order: .reverse)
+    private var allActivities: [ActivityInstance]
+    
     @Query(sort: \Path.name)
     private var allPaths: [Path]
     
@@ -36,6 +41,7 @@ struct GPXImportSheet: View {
     
     @State private var newPathName: String = "Imported Route"
     @State private var selectedTrip: Trip?
+    @State private var selectedActivity: ActivityInstance?
     @State private var selectedPath: Path?
     
     var body: some View {
@@ -106,6 +112,8 @@ struct GPXImportSheet: View {
             Picker("Import As", selection: $intent) {
                 Text("New Trip").tag(GPXImportIntent.newTrip)
                 Text("Update Trip").tag(GPXImportIntent.existingTrip)
+                Text("New Activity").tag(GPXImportIntent.newActivity)
+                Text("Update Activity").tag(GPXImportIntent.existingActivity)
                 Text("New Path").tag(GPXImportIntent.newPath)
                 Text("Update Path").tag(GPXImportIntent.existingPath)
             }
@@ -133,6 +141,24 @@ struct GPXImportSheet: View {
                         Text("Warning: This will overwrite the selected Trip's GPS data and attach this file to it.")
                             .font(.caption)
                             .foregroundStyle(.orange)
+                    }
+
+                case .newActivity:
+                    Text("This will log a brand new completed Activity based on the timestamps in the GPX file.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                case .existingActivity:
+                    Picker("Select Activity", selection: $selectedActivity) {
+                        Text("Select an Activity...").tag(ActivityInstance?.none)
+                        ForEach(allActivities.prefix(50)) { activity in
+                            Text("\(activity.activity?.name ?? "Activity") - \(activity.timeStart.formatted(date: .abbreviated, time: .shortened))").tag(ActivityInstance?.some(activity))
+                        }
+                    }
+                    if selectedActivity != nil {
+                        Text("This will attach this GPX file to the selected Activity.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                     
                 case .newPath:
@@ -182,6 +208,8 @@ struct GPXImportSheet: View {
         switch intent {
             case .newTrip: return "Log Trip & Vault File"
             case .existingTrip: return "Update Trip & Vault File"
+            case .newActivity: return "Log Activity & Vault File"
+            case .existingActivity: return "Update Activity & Vault File"
             case .newPath: return "Save Path & Vault File"
             case .existingPath: return "Update Path & Vault File"
         }
@@ -190,6 +218,7 @@ struct GPXImportSheet: View {
     private var isImportDisabled: Bool {
         if parsedData == nil || isImporting { return true }
         if intent == .existingTrip && selectedTrip == nil { return true }
+        if intent == .existingActivity && selectedActivity == nil { return true }
         if intent == .existingPath && selectedPath == nil { return true }
         return false
     }
@@ -210,7 +239,9 @@ struct GPXImportSheet: View {
             let calendar = Calendar.current
             if let matchingTrip = allTrips.first(where: { calendar.isDate($0.timeStart, inSameDayAs: data.timeStart) }) {
                 self.selectedTrip = matchingTrip
-                // intent remains .newTrip as per user request
+            }
+            if let matchingActivity = allActivities.first(where: { calendar.isDate($0.timeStart, inSameDayAs: data.timeStart) }) {
+                self.selectedActivity = matchingActivity
             }
             
         } else {
@@ -234,15 +265,34 @@ struct GPXImportSheet: View {
                     let newTrip = Trip(timeStart: data.timeStart, timeEnd: data.timeEnd)
                     newTrip.pathMetrics = data.metrics
                     newTrip.geojsonTrack = data.geojsonCoordinates
-                    newTrip.fitFilePath = vaultPath
+                    if let path = vaultPath {
+                        newTrip.linkedFilePaths = [path]
+                    }
                     modelContext.insert(newTrip)
                     
                 case .existingTrip:
                     guard let trip = selectedTrip else { return }
                     trip.pathMetrics = data.metrics
                     trip.geojsonTrack = data.geojsonCoordinates
-                    trip.fitFilePath = vaultPath
+                    if let path = vaultPath, !trip.linkedFilePaths.contains(path) {
+                        trip.linkedFilePaths.append(path)
+                    }
                     trip.markAsModified()
+
+                case .newActivity:
+                    let newActivity = ActivityInstance(
+                        timeStart: data.timeStart,
+                        timeEnd: data.timeEnd,
+                        linkedFilePaths: vaultPath.map { [$0] } ?? []
+                    )
+                    modelContext.insert(newActivity)
+
+                case .existingActivity:
+                    guard let activity = selectedActivity else { return }
+                    if let path = vaultPath, !activity.linkedFilePaths.contains(path) {
+                        activity.linkedFilePaths.append(path)
+                    }
+                    activity.markAsModified()
                     
                 case .newPath:
                     let newPath = Path(name: newPathName, metrics: data.metrics, geojsonTrack: data.geojsonCoordinates)
@@ -279,15 +329,21 @@ struct GPXImportSheet: View {
             case .existingTrip:
                 recordId = selectedTrip?.rid.map { String($0) } ?? UUID().uuidString.prefix(8).description
                 recordType = "trip"
+            case .existingActivity:
+                recordId = selectedActivity?.rid.map { String($0) } ?? UUID().uuidString.prefix(8).description
+                recordType = "activity"
             case .existingPath:
                 recordId = selectedPath?.rid.map { String($0) } ?? UUID().uuidString.prefix(8).description
                 recordType = "path"
+            case .newActivity:
+                recordId = UUID().uuidString.prefix(8).description
+                recordType = "activity"
             default:
                 recordId = UUID().uuidString.prefix(8).description
                 recordType = intent == .newTrip ? "trip" : "path"
         }
         
-        let storagePath = "fit_files/\(datePrefix)_\(recordType)_\(recordId).gpx"
+        let storagePath = "linked_files/\(datePrefix)_\(recordType)_\(recordId).gpx"
         
         try await client.storage.from("vault").upload(
             storagePath,

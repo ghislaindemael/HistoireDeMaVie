@@ -34,7 +34,7 @@ final class Trip: LogModel {
     
     var transitLineRid: Int?
     
-    var fitFilePath: String?
+    var linkedFilePaths: [String] = []
     
     var persons: [Person] = []
     var personRids: [Int] = []
@@ -134,7 +134,7 @@ final class Trip: LogModel {
          amDriver: Bool = false,
          path: Path? = nil,
          transitLine: TransitLine? = nil,
-         fitFilePath: String? = nil,
+         linkedFilePaths: [String] = [],
          contextRids: [Int] = [],
          details: String? = nil,
          log_details: LogDetails? = nil,
@@ -147,7 +147,7 @@ final class Trip: LogModel {
         self.parentInstanceRid = parentInstance?.rid
         self.amDriver = amDriver
         self.transitLineRid = transitLine?.rid
-        self.fitFilePath = fitFilePath
+        self.linkedFilePaths = linkedFilePaths
         self.contextRids = contextRids
         self.details = details
         self.decodedLogDetails = log_details
@@ -167,7 +167,7 @@ final class Trip: LogModel {
         self.pathRid = dto.path_id
         self.transitLineRid = dto.transit_line_id
         self.personRids = dto.person_ids ?? []
-        self.fitFilePath = dto.fit_file_path
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.contextRids = dto.context_ids ?? []
         self.details = dto.details
         self.decodedLogDetails = dto.log_details
@@ -187,7 +187,7 @@ final class Trip: LogModel {
         self.amDriver = dto.am_driver
         self.pathRid = dto.path_id
         self.transitLineRid = dto.transit_line_id
-        self.fitFilePath = dto.fit_file_path
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         
         self.personRids = dto.person_ids ?? []
         
@@ -225,7 +225,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
-    let fit_file_path: String?
+    let linked_file_paths: [String]?
     let person_ids: [Int]?
     let context_ids: [Int]?
     let details: String?
@@ -248,7 +248,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
-    let fit_file_path: String?
+    let linked_file_paths: [String]
     let person_ids: [Int]
     let context_ids: [Int]
     let details: String?
@@ -273,7 +273,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.transit_line_id = trip.transitLineRid
         self.path_metrics = trip.pathMetrics
         self.geojson_track = trip.geojsonTrack
-        self.fit_file_path = trip.fitFilePath
+        self.linked_file_paths = trip.linkedFilePaths
         self.details = trip.details
         self.person_ids = trip.personRids
         self.context_ids = trip.contextRids
@@ -315,7 +315,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
     var pathMetrics: PathMetrics?
     var geojsonTrack: GeoJSONLineString?
     
-    var fitFilePath: String?
+    var linkedFilePaths: [String] = []
     
     var amDriver: Bool
     var details: String?
@@ -353,7 +353,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         self.pathMetrics = trip.pathMetrics
         self.geojsonTrack = trip.geojsonTrack
         
-        self.fitFilePath = trip.fitFilePath
+        self.linkedFilePaths = trip.linkedFilePaths
         
         self.amDriver = trip.amDriver
         self.details = trip.details
@@ -370,7 +370,7 @@ struct TripEditor: TimeBound, EditorProtocol, LinkedParent {
         trip.amDriver = amDriver
         trip.details = details
         trip.decodedLogDetails = decodedLogDetails
-        trip.fitFilePath = fitFilePath
+        trip.linkedFilePaths = linkedFilePaths
         
         trip.parentInstance = parentInstance
         trip.parentInstanceRid = parentInstance?.rid ?? parentInstanceRid

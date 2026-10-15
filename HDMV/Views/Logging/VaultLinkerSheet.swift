@@ -168,7 +168,7 @@ struct VaultLinkerSheet: View {
             guard let tripId = trip.rid else { return }
             
             let fileExtension = fileURL.pathExtension.isEmpty ? "fit" : fileURL.pathExtension
-            let storagePath = "fit_files/\(datePrefix)_trip_\(tripId).\(fileExtension)"
+            let storagePath = "linked_files/\(datePrefix)_trip_\(tripId).\(fileExtension)"
             
             try await client.storage.from("vault").upload(
                 storagePath,
@@ -176,7 +176,9 @@ struct VaultLinkerSheet: View {
                 options: FileOptions(contentType: "application/octet-stream", upsert: true)
             )
             
-            trip.fitFilePath = storagePath
+            if !trip.linkedFilePaths.contains(storagePath) {
+                trip.linkedFilePaths.append(storagePath)
+            }
             trip.markAsModified()
             try modelContext.save()
             VaultImportService.shared.cleanupFile()
@@ -205,7 +207,7 @@ struct VaultLinkerSheet: View {
             guard let activityId = activity.rid else { return }
             
             let fileExtension = fileURL.pathExtension.isEmpty ? "fit" : fileURL.pathExtension
-            let storagePath = "fit_files/\(datePrefix)_activity_\(activityId).\(fileExtension)"
+            let storagePath = "linked_files/\(datePrefix)_activity_\(activityId).\(fileExtension)"
             
             try await client.storage.from("vault").upload(
                 storagePath,
@@ -213,7 +215,9 @@ struct VaultLinkerSheet: View {
                 options: FileOptions(contentType: "application/octet-stream", upsert: true)
             )
             
-            activity.fitFilePath = storagePath
+            if !activity.linkedFilePaths.contains(storagePath) {
+                activity.linkedFilePaths.append(storagePath)
+            }
             activity.markAsModified()
             try modelContext.save()
             VaultImportService.shared.cleanupFile()
@@ -251,11 +255,11 @@ struct VaultFilteredResultsView: View {
         _activities = Query(filter: activityPredicate, sort: \.timeStart, order: .reverse)
     }
     
-    private var unlinkedTrips: [Trip] { trips.filter { $0.fitFilePath == nil } }
-    private var linkedTrips: [Trip] { trips.filter { $0.fitFilePath != nil } }
+    private var unlinkedTrips: [Trip] { trips.filter { $0.linkedFilePaths.isEmpty } }
+    private var linkedTrips: [Trip] { trips.filter { !$0.linkedFilePaths.isEmpty } }
     
-    private var unlinkedActivities: [ActivityInstance] { activities.filter { $0.fitFilePath == nil } }
-    private var linkedActivities: [ActivityInstance] { activities.filter { $0.fitFilePath != nil } }
+    private var unlinkedActivities: [ActivityInstance] { activities.filter { $0.linkedFilePaths.isEmpty } }
+    private var linkedActivities: [ActivityInstance] { activities.filter { !$0.linkedFilePaths.isEmpty } }
     
     var body: some View {
         if selectedTarget == .trip {

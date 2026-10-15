@@ -35,7 +35,7 @@ final class ActivityInstance: LogModel {
     var details: String?
     var log_details: Data?
     
-    var fitFilePath: String?
+    var linkedFilePaths: [String] = []
     
     var persons: [Person] = []
     var personRids: [Int] = []
@@ -90,7 +90,7 @@ final class ActivityInstance: LogModel {
         parentRid: Int? = nil,
         details: String? = nil,
         log_details: LogDetails? = nil,
-        fitFilePath: String? = nil,
+        linkedFilePaths: [String] = [],
         syncStatus: SyncStatus = .unsynced
     ) {
         self.timeStart = timeStart
@@ -99,7 +99,7 @@ final class ActivityInstance: LogModel {
         self.parentInstanceRid = parentRid
         self.details = details
         self.percentage = percentage
-        self.fitFilePath = fitFilePath
+        self.linkedFilePaths = linkedFilePaths
         self.syncStatus = syncStatus
         self.decodedLogDetails = log_details
     }
@@ -157,7 +157,7 @@ final class ActivityInstance: LogModel {
         self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
-        self.fitFilePath = dto.fit_file_path
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.decodedLogDetails = dto.log_details
         self.personRids = dto.person_ids ?? []
         self.contextRids = dto.context_ids ?? []
@@ -172,7 +172,7 @@ final class ActivityInstance: LogModel {
         self.parentTripRid = dto.parent_trip_id
         self.details = dto.details
         self.percentage = dto.percentage ?? 100
-        self.fitFilePath = dto.fit_file_path
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.decodedLogDetails = dto.log_details
         self.personRids = dto.person_ids ?? []
         self.contextRids = dto.context_ids ?? []
@@ -201,7 +201,7 @@ struct ActivityInstanceDTO: Codable, Identifiable {
     let parent_trip_id: Int?
     let details: String?
     let percentage: Int?
-    let fit_file_path: String?
+    let linked_file_paths: [String]?
     let log_details: LogDetails?
     let person_ids: [Int]?
     let context_ids: [Int]?
@@ -220,7 +220,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
     
     let details: String?
     let percentage: Int
-    let fit_file_path: String?
+    let linked_file_paths: [String]
     let log_details: LogDetails?
     let person_ids: [Int]
     let context_ids: [Int]
@@ -238,7 +238,7 @@ struct ActivityInstancePayload: Codable, InitializableWithModel {
         self.parent_trip_id = instance.parentTripRid
         self.details = instance.details
         self.percentage = instance.percentage
-        self.fit_file_path = instance.fitFilePath
+        self.linked_file_paths = instance.linkedFilePaths
         self.person_ids = instance.personRids
         self.context_ids = instance.contextRids
         
@@ -270,7 +270,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
     }
     var parentTripRid: Int?
     var details: String?
-    var fitFilePath: String?
+    var linkedFilePaths: [String] = []
     var decodedLogDetails: LogDetails?
     
     var persons: [Person] = []
@@ -291,7 +291,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         self.parentTrip = instance.parentTrip
         self.parentTripRid = instance.parentTripRid
         self.details = instance.details
-        self.fitFilePath = instance.fitFilePath
+        self.linkedFilePaths = instance.linkedFilePaths
         self.decodedLogDetails = instance.decodedLogDetails
         
         self.persons = instance.persons
@@ -311,7 +311,7 @@ struct ActivityInstanceEditor: TimeTrackable, EditorProtocol, LinkedParent {
         instance.parentTrip = self.parentTrip
         instance.parentTripRid = self.parentTripRid
         instance.details = self.details
-        instance.fitFilePath = self.fitFilePath
+        instance.linkedFilePaths = self.linkedFilePaths
         instance.decodedLogDetails = self.decodedLogDetails
         
         instance.persons = self.persons

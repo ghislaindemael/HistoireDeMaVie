@@ -100,12 +100,7 @@ struct TripRowView: View {
                     Text(details)
                 }
                 
-                if trip.fitFilePath != nil {
-                    Label("Vaulted", systemImage: "archivebox.fill")
-                        .padding(8)
-                        .background(Color.green.opacity(0.2), in: Capsule())
-                        .foregroundColor(.green)
-                }
+                LinkedFilesPillView(trip: trip)
                 
                 LifeContextsDisplayView(contextRids: trip.contextRids)
                 
