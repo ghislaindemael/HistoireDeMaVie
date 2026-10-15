@@ -19,6 +19,7 @@ struct ConfigPageLinksComponent: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject private var settings = SettingsStore.shared
     @State private var isExpanded: Bool = false
+    @State private var isSyncingCatalogues: Bool = false
     
     private let configPages: [ConfigPageLink] = [
         ConfigPageLink(title: "Life Contexts", destination: AnyView(LifeContextsPage())),
@@ -47,6 +48,34 @@ struct ConfigPageLinksComponent: View {
     var body: some View {
         DisclosureGroup("Configuration", isExpanded: $isExpanded) {
             VStack(spacing: 4) {
+                Button {
+                    Task {
+                        isSyncingCatalogues = true
+                        do {
+                            let syncer = CatalogueMasterSyncer(modelContext: modelContext)
+                            try await syncer.pullAllCatalogues()
+                            ToastManager.shared.showToast(message: "Catalogues Synced", systemImage: "checkmark.icloud.fill", color: .green)
+                        } catch {
+                            print("❌ Failed to sync catalogues: \(error)")
+                            ToastManager.shared.showToast(message: "Sync Failed", systemImage: "xmark.icloud", color: .red)
+                        }
+                        isSyncingCatalogues = false
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "icloud.and.arrow.down")
+                        Text(isSyncingCatalogues ? "Syncing Catalogues..." : "Download Full Catalogue")
+                        Spacer()
+                        if isSyncingCatalogues {
+                            ProgressView()
+                        }
+                    }
+                    .foregroundColor(.blue)
+                    .padding(.vertical, 8)
+                }
+                
+                Divider()
+                
                 ForEach(configPages.indices, id: \.self) { index in
                     let page = configPages[index]
                     

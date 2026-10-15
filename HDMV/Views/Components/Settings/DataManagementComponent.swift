@@ -11,27 +11,18 @@ import SwiftData
 struct DataManagementComponent: View {
     
     @Environment(\.modelContext) private var modelContext
-    @State private var isSyncingCatalogues: Bool = false
+    @State private var isRepairingRelationships: Bool = false
     @State private var isExpanded: Bool = false
     
     private let modelTypes: [any PersistentModel.Type] = [
-        DataLogOption.self,
-        DataLogOptionMapping.self,
         ActivityInstance.self,
-        AgendaEntry.self,
-        Interaction.self,
-        LifeContext.self,
-        DataMediaItem.self,
-        LifeEvent.self,
-        Path.self,
-        Person.self,
-        Transaction.self,
         Trip.self,
-        TransitLine.self,
-        TransitStop.self,
-        DataFoodItem.self,
-        DataFoodRecipe.self,
-        Quote.self
+        Transaction.self,
+        Interaction.self,
+        LifeEvent.self,
+        Quote.self,
+        AgendaEntry.self,
+        VaultTask.self
     ]
     
     init(expanded: Bool = false) {
@@ -43,23 +34,30 @@ struct DataManagementComponent: View {
             VStack(spacing: 4) {
                 Button {
                     Task {
-                        isSyncingCatalogues = true
+                        isRepairingRelationships = true
                         do {
-                            let syncer = CatalogueMasterSyncer(modelContext: modelContext)
-                            try await syncer.pullAllCatalogues()
-                            ToastManager.shared.showToast(message: "Catalogues Synced", systemImage: "checkmark.icloud.fill", color: .green)
+                            try ActivityInstanceSyncer(modelContext: modelContext).resolveRelationships()
+                            try TripSyncer(modelContext: modelContext).resolveRelationships()
+                            try LifeEventSyncer(modelContext: modelContext).resolveRelationships()
+                            try TransactionSyncer(modelContext: modelContext).resolveRelationships()
+                            try InteractionSyncer(modelContext: modelContext).resolveRelationships()
+                            try QuoteSyncer(modelContext: modelContext).resolveRelationships()
+                            if modelContext.hasChanges {
+                                try modelContext.save()
+                            }
+                            ToastManager.shared.showToast(message: "Relationships Repaired", systemImage: "checkmark.shield.fill", color: .green)
                         } catch {
-                            print("❌ Failed to sync catalogues: \(error)")
-                            ToastManager.shared.showToast(message: "Sync Failed", systemImage: "xmark.icloud", color: .red)
+                            print("❌ Failed to repair relationships: \(error)")
+                            ToastManager.shared.showToast(message: "Repair Failed", systemImage: "xmark.shield.fill", color: .red)
                         }
-                        isSyncingCatalogues = false
+                        isRepairingRelationships = false
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "icloud.and.arrow.down")
-                        Text(isSyncingCatalogues ? "Syncing Catalogues..." : "Download Full Catalogue")
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text(isRepairingRelationships ? "Resolving Relationships..." : "Resolve Relationships & Links")
                         Spacer()
-                        if isSyncingCatalogues {
+                        if isRepairingRelationships {
                             ProgressView()
                         }
                     }

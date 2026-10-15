@@ -36,6 +36,47 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
         // try await tripService.deleteTrip(id: id)
     }
     
+    override func resolveRelationships(for syncedTrip: Trip) throws {
+        guard let newParentRid = syncedTrip.rid else { return }
+
+        for child in syncedTrip.childActivities {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedTrip.childTrips {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedTrip.childLifeEvents {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedTrip.childTransactions {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedTrip.childInteractions {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedTrip.childQuotes {
+            if child.parentTripRid != newParentRid {
+                child.parentTripRid = newParentRid
+                child.markAsModified()
+            }
+        }
+    }
+    
     override func resolveRelationships() throws {
         print("Resolving Trip relationships...")
         
@@ -77,6 +118,51 @@ class TripSyncer: BaseLogSyncer<Trip, TripDTO, TripPayload> {
             relationshipKeyPath: \Trip.path,
             ridKeyPath: \Trip.pathRid,
             lookupMap: pathLookup
+        )
+        
+        let tripLookup: [Int: Trip] = try getLookupMap()
+        
+        // Reparent children whose parent Trip was downloaded or restored
+        try resolveRelationship(
+            for: LifeEvent.self,
+            relationshipKeyPath: \LifeEvent.parentTrip,
+            ridKeyPath: \LifeEvent.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        try resolveRelationship(
+            for: ActivityInstance.self,
+            relationshipKeyPath: \ActivityInstance.parentTrip,
+            ridKeyPath: \ActivityInstance.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        try resolveRelationship(
+            for: Transaction.self,
+            relationshipKeyPath: \Transaction.parentTrip,
+            ridKeyPath: \Transaction.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        try resolveRelationship(
+            for: Interaction.self,
+            relationshipKeyPath: \Interaction.parentTrip,
+            ridKeyPath: \Interaction.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        try resolveRelationship(
+            for: Quote.self,
+            relationshipKeyPath: \Quote.parentTrip,
+            ridKeyPath: \Quote.parentTripRid,
+            lookupMap: tripLookup
+        )
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.parentTrip,
+            ridKeyPath: \Trip.parentTripRid,
+            lookupMap: tripLookup
         )
         
         print("All Trip relationships resolved.")

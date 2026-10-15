@@ -138,8 +138,8 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         self.time_start = event.timeStart
         self.time_end = event.timeEnd
         self.details = event.details
-        self.parent_instance_id = event.parentInstanceRid
-        self.parent_trip_id = event.parentTripRid
+        self.parent_instance_id = event.parentInstance?.rid ?? event.parentInstanceRid
+        self.parent_trip_id = event.parentTrip?.rid ?? event.parentTripRid
         self.context_ids = event.contextRids
         
         if var details = event.decodedLogDetails {

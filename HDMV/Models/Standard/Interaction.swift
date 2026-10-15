@@ -180,8 +180,8 @@ struct InteractionPayload: Codable, InitializableWithModel {
         }
         self.time_start = interaction.timeStart
         self.time_end = interaction.timeEnd
-        self.parent_instance_id = interaction.parentInstanceRid
-        self.parent_trip_id = interaction.parentTripRid
+        self.parent_instance_id = interaction.parentInstance?.rid ?? interaction.parentInstanceRid
+        self.parent_trip_id = interaction.parentTrip?.rid ?? interaction.parentTripRid
         self.person_ids = interaction.personRids
         self.timed = interaction.timed
         self.in_person = interaction.inPerson

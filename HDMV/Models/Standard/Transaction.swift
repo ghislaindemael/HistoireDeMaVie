@@ -272,8 +272,8 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.bank_currency = transaction.bankCurrency
         
         self.type_id = transaction.typeRid
-        self.parent_instance_id = transaction.parentInstanceRid
-        self.parent_trip_id = transaction.parentTripRid
+        self.parent_instance_id = transaction.parentInstance?.rid ?? transaction.parentInstanceRid
+        self.parent_trip_id = transaction.parentTrip?.rid ?? transaction.parentTripRid
         self.source_account_id = transaction.sourceAccountRid
         self.target_account_id = transaction.targetAccountRid
         self.context_ids = transaction.contextRids

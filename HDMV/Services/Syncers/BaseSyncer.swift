@@ -61,7 +61,27 @@ Payload.Model == Model
         let localItems = try fetchLocalModels(with: SyncStatus.local)
         let failedItems = try fetchLocalModels(with: SyncStatus.failed)
         
-        let itemsToSync = unsyncedItems + localItems + failedItems
+        var itemsToSync = unsyncedItems + localItems + failedItems
+        
+        if Model.self is any LinkedParent.Type {
+            itemsToSync.sort { a, b in
+                func depth(of item: Model) -> Int {
+                    guard let linked = item as? any LinkedParent else { return 0 }
+                    var d = 0
+                    var curInstance = linked.parentInstance
+                    var curTrip = linked.parentTrip
+                    while (curInstance != nil || curTrip != nil) && d < 20 {
+                        d += 1
+                        let nextTrip = curInstance?.parentTrip ?? curTrip?.parentTrip
+                        let nextInstance = curInstance?.parentInstance ?? curTrip?.parentInstance
+                        curTrip = nextTrip
+                        curInstance = nextInstance
+                    }
+                    return d
+                }
+                return depth(of: a) < depth(of: b)
+            }
+        }
         
         print("🔍 PUSH CHECK [\(Model.self)]:")
         print("   - Unsynced (New): \(unsyncedItems.count)")

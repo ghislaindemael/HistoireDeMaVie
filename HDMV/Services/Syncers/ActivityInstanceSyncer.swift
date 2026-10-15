@@ -39,32 +39,39 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
     override func resolveRelationships(for syncedInstance: ActivityInstance) throws {
         guard let newParentRid = syncedInstance.rid else { return }
 
-        let targetParentID = syncedInstance.id            
-        let parentRelationshipPredicate = #Predicate<ActivityInstance> { child in
-            child.parentInstance?.id == targetParentID
+        for child in syncedInstance.childActivities {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
+                child.markAsModified()
+            }
         }
-        
-        let parentRidPredicate = #Predicate<ActivityInstance> { child in
-            child.parentInstanceRid == nil || child.parentInstanceRid != newParentRid
+        for child in syncedInstance.childTrips {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
+                child.markAsModified()
+            }
         }
-        
-        let combinedPredicate = #Predicate<ActivityInstance> { child in
-            parentRelationshipPredicate.evaluate(child) &&
-            parentRidPredicate.evaluate(child)
+        for child in syncedInstance.childLifeEvents {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
+                child.markAsModified()
+            }
         }
-        let descriptor = FetchDescriptor<ActivityInstance>(predicate: combinedPredicate)
-        let childrenToFix = try modelContext.fetch(descriptor)
-        
-        if !childrenToFix.isEmpty {
-            print("Resolving child parentRids for ActivityInstance rid: \(newParentRid)...")
+        for child in syncedInstance.childTransactions {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
+                child.markAsModified()
+            }
         }
-        
-        for child in childrenToFix {
-            print("  -> Fixing stale parentRid for child instance \(child.id)")
-            child.parentInstanceRid = newParentRid
-            
-            if child.syncStatus == .synced {
-                print("  -> Marking child \(child.id) as .local to push parentRid update.")
+        for child in syncedInstance.childInteractions {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
+                child.markAsModified()
+            }
+        }
+        for child in syncedInstance.childQuotes {
+            if child.parentInstanceRid != newParentRid {
+                child.parentInstanceRid = newParentRid
                 child.markAsModified()
             }
         }
@@ -156,6 +163,42 @@ class ActivityInstanceSyncer: BaseLogSyncer<ActivityInstance, ActivityInstanceDT
             relationshipKeyPath: \ActivityInstance.parentTrip,
             ridKeyPath: \ActivityInstance.parentTripRid,
             lookupMap: tripLookup
+        )
+        
+        // Reparent children whose parent ActivityInstance was downloaded or restored
+        try resolveRelationship(
+            for: LifeEvent.self,
+            relationshipKeyPath: \LifeEvent.parentInstance,
+            ridKeyPath: \LifeEvent.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: Trip.self,
+            relationshipKeyPath: \Trip.parentInstance,
+            ridKeyPath: \Trip.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: Transaction.self,
+            relationshipKeyPath: \Transaction.parentInstance,
+            ridKeyPath: \Transaction.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: Interaction.self,
+            relationshipKeyPath: \Interaction.parentInstance,
+            ridKeyPath: \Interaction.parentInstanceRid,
+            lookupMap: instanceLookup
+        )
+        
+        try resolveRelationship(
+            for: Quote.self,
+            relationshipKeyPath: \Quote.parentInstance,
+            ridKeyPath: \Quote.parentInstanceRid,
+            lookupMap: instanceLookup
         )
         
         print("All ActivityInstance relationships resolved.")
