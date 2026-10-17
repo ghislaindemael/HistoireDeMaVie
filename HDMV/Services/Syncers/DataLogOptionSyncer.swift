@@ -12,6 +12,23 @@ import SwiftData
 final class DataLogOptionSyncer: BaseSyncer<DataLogOption, DataLogOptionDTO, DataLogOptionPayload> {
     
     private let optionsService = DataLogOptionService()
+    
+    override func pushChanges() async throws {
+        // Enforce slug uniqueness before pushing to remote
+        let allOptions = try modelContext.fetch(FetchDescriptor<DataLogOption>())
+        var seenSlugs = Set<String>()
+        for option in allOptions {
+            guard !option.archived, option.isValid() else { continue }
+            let normalized = option.slug.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            if seenSlugs.contains(normalized) {
+                print("⚠️ DataLogOptionSyncer: Duplicate slug '\(normalized)' detected. Aborting push.")
+                return
+            }
+            seenSlugs.insert(normalized)
+        }
+        
+        try await super.pushChanges()
+    }
         
     override func fetchRemoteModels(date: Date?) async throws -> [DataLogOptionDTO] {
         return try await optionsService.fetchOptions()

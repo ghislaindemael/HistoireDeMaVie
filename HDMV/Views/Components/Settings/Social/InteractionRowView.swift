@@ -90,7 +90,11 @@ struct InteractionRowView: View {
     // MARK: - Options Pills View
     @ViewBuilder
     private var optionsPillsView: some View {
-        let engine = DynamicOptionsLayoutEngine(mappings: optionMappings, decodedOptions: interaction.decodedLogDetails?.options)
+        let engine = DynamicOptionsLayoutEngine(
+            mappings: optionMappings,
+            decodedOptions: interaction.decodedLogDetails?.options,
+            modelContext: interaction.modelContext
+        )
         let layoutView = engine.renderAll()
         
         VStack(alignment: .leading, spacing: 4) {

@@ -19,10 +19,22 @@ struct DynamicOptionsSection: View {
     // We sort the mappings by priority without duplicate slugs
     var sortedMappings: [DataLogOptionMapping] {
         var result: [DataLogOptionMapping] = []
-        var seen = Set<String>()
-        for mapping in mappings.sorted(by: { $0.priority < $1.priority }) {
-            if !seen.contains(mapping.optionSlug) {
-                seen.insert(mapping.optionSlug)
+        var seenSlugs = Set<String>()
+        var seenOptionIds = Set<PersistentIdentifier>()
+        
+        for mapping in mappings.filter({ !$0.isDeleted && !$0.archived }).sorted(by: { $0.priority < $1.priority }) {
+            let opt = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug })
+            if let opt = opt {
+                if seenOptionIds.contains(opt.persistentModelID) { continue }
+                seenOptionIds.insert(opt.persistentModelID)
+            }
+            
+            let slug = opt?.slug ?? mapping.optionSlug
+            if !slug.isEmpty && !seenSlugs.contains(slug) {
+                seenSlugs.insert(slug)
+                if !mapping.optionSlug.isEmpty {
+                    seenSlugs.insert(mapping.optionSlug)
+                }
                 result.append(mapping)
             }
         }
@@ -30,7 +42,14 @@ struct DynamicOptionsSection: View {
     }
     
     private var mappedOptionSlugs: Set<String> {
-        Set(sortedMappings.map(\.optionSlug))
+        var slugs = Set<String>()
+        for mapping in sortedMappings {
+            slugs.insert(mapping.optionSlug)
+            if let opt = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug }) {
+                slugs.insert(opt.slug)
+            }
+        }
+        return slugs
     }
     
     private var existingOneOffSlugs: Set<String> {
@@ -39,7 +58,9 @@ struct DynamicOptionsSection: View {
     }
     
     private var oneOffOptions: [DataLogOption] {
-        allOptions.filter { existingOneOffSlugs.contains($0.slug) }
+        allOptions.filter { option in
+            existingOneOffSlugs.contains(option.slug) && !mappedOptionSlugs.contains(option.slug)
+        }
     }
     
     var body: some View {

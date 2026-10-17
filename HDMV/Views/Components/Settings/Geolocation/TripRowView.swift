@@ -88,7 +88,11 @@ struct TripRowView: View {
                     .cornerRadius(8)
                 }
                 
-                let engine = DynamicOptionsLayoutEngine(mappings: tripOptionMappings, decodedOptions: trip.decodedLogDetails?.options)
+                let engine = DynamicOptionsLayoutEngine(
+                    mappings: tripOptionMappings,
+                    decodedOptions: trip.decodedLogDetails?.options,
+                    modelContext: trip.modelContext
+                )
                 engine.renderAll()
                 
                 if !trip.persons.isEmpty {

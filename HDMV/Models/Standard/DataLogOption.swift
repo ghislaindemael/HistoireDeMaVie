@@ -233,7 +233,9 @@ struct DataLogOptionEditor: CachableModel, EditorProtocol {
     }
     
     func apply(to model: DataLogOption) {
-        model.slug = self.slug
+        if !model.slug.isNotUnset() || model.slug == "!unset" {
+            model.slug = self.slug
+        }
         model.name = self.name
         model.type = self.type
         model.category = self.category

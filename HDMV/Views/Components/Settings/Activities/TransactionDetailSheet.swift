@@ -18,8 +18,9 @@ struct TransactionDetailSheet: View {
         let allMappings = (globalTransactionMappings + typeMappings).sorted { $0.priority < $1.priority }
         
         for mapping in allMappings {
-            if !seenSlugs.contains(mapping.optionSlug) {
-                seenSlugs.insert(mapping.optionSlug)
+            let slug = mapping.option?.slug ?? mapping.optionSlug
+            if !slug.isEmpty && !seenSlugs.contains(slug) {
+                seenSlugs.insert(slug)
                 result.append(mapping)
             }
         }

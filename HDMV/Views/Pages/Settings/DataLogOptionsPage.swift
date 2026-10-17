@@ -259,12 +259,6 @@ struct DataLogOptionsPage: View {
     }
     
     private func handleAddOption() {
-        if let unset = unsetOptions.first {
-            optionToEdit = unset
-        } else if let newOption = viewModel.createOption() {
-            withAnimation(.snappy) {
-                optionToEdit = newOption
-            }
-        }
+        viewModel.createOption()
     }
 }

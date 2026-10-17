@@ -57,37 +57,32 @@ final class Transaction: LogModel {
         set { timeStart = newValue }
     }
     
-    var resolvedOptionsPills: [ActivityOptionPill] {
-        guard let transactionType = self.type,
-              let mappedOptions = decodedLogDetails?.options,
-              !mappedOptions.isEmpty else {
-            return []
+    var combinedOptionMappings: [DataLogOptionMapping] {
+        var result: [DataLogOptionMapping] = []
+        var seenSlugs = Set<String>()
+        
+        let typeMappings = self.type?.optionMappings.filter { !$0.archived } ?? []
+        let globalMappings: [DataLogOptionMapping]
+        if let context = self.modelContext {
+            let descriptor = FetchDescriptor<DataLogOptionMapping>(
+                predicate: #Predicate<DataLogOptionMapping> {
+                    $0.isForTransaction && !$0.archived
+                }
+            )
+            globalMappings = (try? context.fetch(descriptor)) ?? []
+        } else {
+            globalMappings = []
         }
         
-        let sortedMappings = transactionType.optionMappings.sorted { $0.priority < $1.priority }
-        var pills: [ActivityOptionPill] = []
-        
-        for mapping in sortedMappings {
-            guard let option = mapping.option else { continue }
-            guard let selectedValueSlug = mappedOptions[option.slug] else { continue }
-            
-            let config = option.config
-            let choice = config?.choices?.first(where: { $0.slug == selectedValueSlug })
-            let label = choice?.label ?? selectedValueSlug
-            let icon = choice?.icon
-            let isDefault = (selectedValueSlug == config?.defaultValue)
-            let replaces = config?.replacesActivityName ?? false
-            
-            pills.append(ActivityOptionPill(
-                optionSlug: option.slug,
-                label: label,
-                icon: icon,
-                isDefault: isDefault,
-                replacesActivityName: replaces
-            ))
+        let allMappings = (globalMappings + typeMappings).sorted { $0.priority < $1.priority }
+        for mapping in allMappings {
+            let slug = mapping.option?.slug ?? mapping.optionSlug
+            if !slug.isEmpty && !seenSlugs.contains(slug) {
+                seenSlugs.insert(slug)
+                result.append(mapping)
+            }
         }
-        
-        return pills
+        return result
     }
     
     // MARK: Relationships
