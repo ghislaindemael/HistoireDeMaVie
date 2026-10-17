@@ -15,6 +15,7 @@ struct QuoteDetailSheet: View {
     @StateObject var viewModel: QuoteDetailSheetViewModel
     
     @State private var selectedMediaItem: DataMediaItem?
+    @State private var isShowingOCRScanner: Bool = false
     @Query private var allMediaItems: [DataMediaItem]
     
     let quote: Quote
@@ -36,9 +37,51 @@ struct QuoteDetailSheet: View {
                 
                 TimeSection(editor: $viewModel.editor, hideEndTime: true)
                 
-                Section("Details") {
-                    TextField("Quote Text", text: $viewModel.editor.text, axis: .vertical)
-                        .lineLimit(3...)
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Quote Content")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            Spacer()
+                            Button {
+                                isShowingOCRScanner = true
+                            } label: {
+                                Label("Snap Photo", systemImage: "camera.viewfinder")
+                                    .font(.subheadline)
+                                    .foregroundColor(.accentColor)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        TextField("Quote Text", text: $viewModel.editor.text, axis: .vertical)
+                            .lineLimit(3...)
+                        
+                        if viewModel.editor.text.isEmpty {
+                            Button {
+                                isShowingOCRScanner = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "camera.viewfinder")
+                                        .foregroundColor(.accentColor)
+                                    Text("Take a photo of the book page to extract quote")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary.opacity(0.6))
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 10)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(8)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 2)
                     
                     TextField("Author Name", text: Binding(
                         get: { viewModel.editor.authorString ?? "" },
@@ -49,6 +92,8 @@ struct QuoteDetailSheet: View {
                         get: { viewModel.editor.context ?? "" },
                         set: { viewModel.editor.context = $0.isEmpty ? nil : $0 }
                     ))
+                } header: {
+                    Text("Details")
                 }
                 
                 Section("Media & People") {
@@ -134,6 +179,14 @@ struct QuoteDetailSheet: View {
             .standardSheetToolbar() {
                 viewModel.onDone()
                 dismiss()
+            }
+            .sheet(isPresented: $isShowingOCRScanner) {
+                QuoteOCRScannerSheet(
+                    existingQuoteText: viewModel.editor.text,
+                    onQuoteExtracted: { scannedQuote in
+                        viewModel.editor.text = scannedQuote
+                    }
+                )
             }
         }
     }

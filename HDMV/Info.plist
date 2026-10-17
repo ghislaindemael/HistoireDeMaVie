@@ -70,5 +70,9 @@
 			</dict>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>HDMV needs access to your camera to scan book pages and capture quotes via text recognition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HDMV needs access to your photo library to select page photos and extract quotes via text recognition.</string>
 </dict>
 </plist>
