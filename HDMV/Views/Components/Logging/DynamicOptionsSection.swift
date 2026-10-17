@@ -10,28 +10,81 @@ import SwiftData
 
 struct DynamicOptionsSection: View {
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \DataLogOption.name) private var allOptions: [DataLogOption]
     
     let mappings: [DataLogOptionMapping]
     @Binding var decodedLogDetails: LogDetails?
+    @Binding var isShowingOptionSelector: Bool
     
-    // We sort the mappings by priority
+    // We sort the mappings by priority without duplicate slugs
     var sortedMappings: [DataLogOptionMapping] {
-        mappings.sorted { $0.priority < $1.priority }
+        var result: [DataLogOptionMapping] = []
+        var seen = Set<String>()
+        for mapping in mappings.sorted(by: { $0.priority < $1.priority }) {
+            if !seen.contains(mapping.optionSlug) {
+                seen.insert(mapping.optionSlug)
+                result.append(mapping)
+            }
+        }
+        return result
+    }
+    
+    private var mappedOptionSlugs: Set<String> {
+        Set(sortedMappings.map(\.optionSlug))
+    }
+    
+    private var existingOneOffSlugs: Set<String> {
+        guard let keys = decodedLogDetails?.options?.keys else { return [] }
+        return Set(keys).subtracting(mappedOptionSlugs)
+    }
+    
+    private var oneOffOptions: [DataLogOption] {
+        allOptions.filter { existingOneOffSlugs.contains($0.slug) }
     }
     
     var body: some View {
-        if !sortedMappings.isEmpty {
-            Section(header: headerView("Options")) {
-                ForEach(sortedMappings) { mapping in
-                    if let option = mapping.option {
-                        DynamicOptionRow(
-                            option: option,
-                            details: $decodedLogDetails
-                        )
+        Section(header: headerView("Options")) {
+            ForEach(sortedMappings) { mapping in
+                if let option = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug }) {
+                    DynamicOptionRow(
+                        option: option,
+                        details: $decodedLogDetails
+                    )
+                }
+            }
+            
+            ForEach(oneOffOptions) { option in
+                DynamicOptionRow(
+                    option: option,
+                    details: $decodedLogDetails
+                )
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        removeOneOffOption(option.slug)
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
+                }
+                .contextMenu {
+                    Button(role: .destructive) {
+                        removeOneOffOption(option.slug)
+                    } label: {
+                        Label("Remove Option", systemImage: "trash")
                     }
                 }
             }
+            
+            Button {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                isShowingOptionSelector = true
+            } label: {
+                Label("Add Option", systemImage: "plus")
+            }
         }
+    }
+    
+    private func removeOneOffOption(_ slug: String) {
+        decodedLogDetails?.options?.removeValue(forKey: slug)
     }
     
     private func headerView(_ title: String) -> some View {
@@ -41,6 +94,60 @@ struct DynamicOptionsSection: View {
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
+    }
+}
+
+struct DynamicOptionSelectorSheet: View {
+    let mappings: [DataLogOptionMapping]
+    @Binding var decodedLogDetails: LogDetails?
+    
+    private var allUsedSlugs: Set<String> {
+        var slugs = Set(mappings.map(\.optionSlug))
+        if let options = decodedLogDetails?.options {
+            slugs.formUnion(options.keys)
+        }
+        return slugs
+    }
+    
+    var body: some View {
+        DataLogOptionSelectorView(
+            excludedSlugs: allUsedSlugs,
+            onSelect: { selectedOption in
+                addOption(selectedOption)
+            }
+        )
+    }
+    
+    private func addOption(_ option: DataLogOption) {
+        if decodedLogDetails == nil {
+            decodedLogDetails = LogDetails()
+        }
+        if decodedLogDetails?.options == nil {
+            decodedLogDetails?.options = [:]
+        }
+        
+        if let defaultValue = option.config?.defaultValue, !defaultValue.isEmpty {
+            decodedLogDetails?.options?[option.slug] = defaultValue
+        } else if option.type == .boolean {
+            decodedLogDetails?.options?[option.slug] = "true"
+        } else {
+            decodedLogDetails?.options?[option.slug] = ""
+        }
+    }
+}
+
+extension View {
+    func dynamicOptionSelectorSheet(
+        isPresented: Binding<Bool>,
+        mappings: [DataLogOptionMapping] = [],
+        decodedLogDetails: Binding<LogDetails?>
+    ) -> some View {
+        self.sheet(isPresented: isPresented) {
+            DynamicOptionSelectorSheet(
+                mappings: mappings,
+                decodedLogDetails: decodedLogDetails
+            )
+        }
     }
 }
 
@@ -60,12 +167,7 @@ struct DynamicOptionRow: View {
                 if details?.options == nil {
                     details?.options = [:]
                 }
-                
-                if newValue.isEmpty {
-                    details?.options?[option.slug] = nil
-                } else {
-                    details?.options?[option.slug] = newValue
-                }
+                details?.options?[option.slug] = newValue
             }
         )
     }

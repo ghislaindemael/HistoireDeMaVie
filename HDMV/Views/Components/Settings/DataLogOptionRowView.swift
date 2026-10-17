@@ -25,6 +25,12 @@ struct DataLogOptionRowView: View {
                     Text(option.typeRaw.capitalized)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if let category = option.category, !category.isEmpty {
+                        Text("•")
+                        Text(category)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             

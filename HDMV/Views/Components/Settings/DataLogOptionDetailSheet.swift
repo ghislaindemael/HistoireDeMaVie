@@ -13,9 +13,18 @@ struct DataLogOptionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @StateObject private var viewModel: DataLogOptionDetailSheetViewModel
+    @Query private var allOptions: [DataLogOption]
     
     @State private var editingChoiceIndex: Int? = nil
     @State private var isShowingChoiceSheet: Bool = false
+    
+    private var isDuplicateSlug: Bool {
+        let currentSlug = viewModel.editor.slug.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !currentSlug.isEmpty, currentSlug != "!unset" else { return false }
+        return allOptions.contains { opt in
+            opt.id != viewModel.model.id && opt.slug.lowercased() == currentSlug
+        }
+    }
 
     init(option: DataLogOption, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: DataLogOptionDetailSheetViewModel(
@@ -29,9 +38,20 @@ struct DataLogOptionDetailSheet: View {
             Form {
                 Section("Basics") {
                     TextField("Name", text: $viewModel.editor.name)
-                    TextField("Slug", text: $viewModel.editor.slug)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Slug", text: $viewModel.editor.slug)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                        if isDuplicateSlug {
+                            Text("A log option with this slug already exists.")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                    TextField("Category", text: Binding(
+                        get: { viewModel.editor.category ?? "" },
+                        set: { viewModel.editor.category = $0.isEmpty ? nil : $0 }
+                    ))
                 }
                 
                 Section("Type") {
@@ -175,9 +195,9 @@ struct DataLogOptionDetailSheet: View {
                 }
 
             }
-            .navigationTitle("Edit Option")
-            .navigationBarTitleDisplayMode(.inline)
-            .standardSheetToolbar() {
+            .standardSheetToolbar(
+                isDoneDisabled: isDuplicateSlug || viewModel.editor.slug.trimmingCharacters(in: .whitespaces).isEmpty
+            ) {
                 viewModel.onDone()
             }
             .sheet(isPresented: $isShowingChoiceSheet) {

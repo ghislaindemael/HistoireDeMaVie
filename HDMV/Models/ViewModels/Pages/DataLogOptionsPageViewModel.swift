@@ -32,7 +32,7 @@ class DataLogOptionsPageViewModel: BasePageViewModel {
         
         do {
             let descriptor = FetchDescriptor<DataLogOption>(
-                sortBy: [SortDescriptor(\.name)]
+                sortBy: [SortDescriptor(\.slug)]
             )
             self.options = try context.fetch(descriptor)
         } catch {
@@ -78,16 +78,38 @@ class DataLogOptionsPageViewModel: BasePageViewModel {
         }
     }
     
-    func createOption() {
-        guard let context = modelContext else { return }
-        let newOption = DataLogOption(syncStatus: .unsynced)
+    @discardableResult
+    func createOption() -> DataLogOption? {
+        guard let context = modelContext else { return nil }
         
+        // Enforce unique slug: only a single unset option can exist at any time
+        let descriptor = FetchDescriptor<DataLogOption>()
+        if let all = try? context.fetch(descriptor),
+           let existingUnset = all.first(where: { !$0.isValid() || $0.slug == "!unset" || $0.slug.hasPrefix("!") }) {
+            print("⚠️ An unset DataLogOption already exists (\(existingUnset.slug)). Configure it first!")
+            return existingUnset
+        }
+        
+        let newOption = DataLogOption(syncStatus: .unsynced)
         context.insert(newOption)
-        options.append(newOption)
+        options.insert(newOption, at: 0)
+        do {
+            try context.save()
+            return newOption
+        } catch {
+            print("Failed to create Option: \(error)")
+            return nil
+        }
+    }
+    
+    func deleteOption(_ option: DataLogOption) {
+        guard let context = modelContext else { return }
+        context.delete(option)
+        options.removeAll { $0.id == option.id }
         do {
             try context.save()
         } catch {
-            print("Failed to create Option: \(error)")
+            print("Failed to delete Option: \(error)")
         }
     }
 }

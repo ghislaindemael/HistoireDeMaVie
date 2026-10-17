@@ -12,6 +12,15 @@ struct TripDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailSheetViewModel
+    @State private var isShowingOptionSelector: Bool = false
+    
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.archived == false }) private var allMappings: [DataLogOptionMapping]
+    
+    private var vehicleOptionMappings: [DataLogOptionMapping] {
+        let vId = viewModel.editor.vehicle?.rid ?? viewModel.editor.vehicleRid ?? -1
+        let vSlug = viewModel.editor.vehicle?.typeSlug ?? "unset"
+        return allMappings.filter { $0.vehicleRid == vId || $0.vehicleTypeSlug == vSlug }
+    }
 
     let trip: Trip
     
@@ -54,7 +63,8 @@ struct TripDetailSheet: View {
                 VehicleDynamicOptionsSection(
                     vehicleRid: viewModel.editor.vehicle?.rid ?? viewModel.editor.vehicleRid,
                     vehicleTypeSlug: viewModel.editor.vehicle?.typeSlug,
-                    decodedLogDetails: $viewModel.editor.decodedLogDetails
+                    decodedLogDetails: $viewModel.editor.decodedLogDetails,
+                    isShowingOptionSelector: $isShowingOptionSelector
                 )
                 
                 Section(header: headerView("Companions & Context")) {
@@ -103,6 +113,11 @@ struct TripDetailSheet: View {
                 viewModel.onDone()
                 dismiss()
             })
+            .dynamicOptionSelectorSheet(
+                isPresented: $isShowingOptionSelector,
+                mappings: vehicleOptionMappings,
+                decodedLogDetails: $viewModel.editor.decodedLogDetails
+            )
             .sheet(isPresented: $viewModel.isShowingPathSelector) {
                 PathSelectorSheet(
                     startPlaceId: viewModel.editor.placeStart?.rid,

@@ -11,6 +11,8 @@ import SwiftUI
 struct StandardSheetToolbar: ViewModifier {
     @Environment(\.dismiss) private var dismiss
     
+    var isDoneDisabled: Bool = false
+    
     /// Called when the Done button is tapped.
     let onDone: () async -> Void
         
@@ -27,6 +29,7 @@ struct StandardSheetToolbar: ViewModifier {
                         Task { await onDone() }
                         dismiss()
                     }
+                    .disabled(isDoneDisabled)
                 }
             }
     }
@@ -35,11 +38,13 @@ struct StandardSheetToolbar: ViewModifier {
 extension View {
     /// Adds a standard Cancel/Done toolbar for model creation sheets.
     func standardSheetToolbar(
+        isDoneDisabled: Bool = false,
         onDone: @escaping () async -> Void
     ) -> some View {
         self.modifier(
             StandardSheetToolbar(
-                onDone: onDone,
+                isDoneDisabled: isDoneDisabled,
+                onDone: onDone
             )
         )
     }

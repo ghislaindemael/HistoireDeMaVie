@@ -50,6 +50,7 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
     @Attribute(.unique) var slug: String
     var name: String
     var typeRaw: String
+    var category: String?
     var configRaw: Data? // JSONB stored as Data
     var cache: Bool = true
     var archived: Bool = false
@@ -66,9 +67,10 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
     
     init(
         rid: Int? = nil,
-        slug: String = "unset",
+        slug: String = "!unset",
         name: String = "Unset",
         type: DataLogOptionType = .text,
+        category: String? = nil,
         config: DataLogOptionConfig? = nil,
         syncStatus: SyncStatus = .unsynced
     ) {
@@ -76,6 +78,7 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
         self.slug = slug
         self.name = name
         self.typeRaw = type.rawValue
+        self.category = category
         if let config = config {
             self.configRaw = try? JSONEncoder().encode(config)
         }
@@ -107,6 +110,7 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
         self.slug = dto.slug
         self.name = dto.name
         self.typeRaw = dto.type
+        self.category = dto.category
         
         if let configDict = dto.config {
             self.configRaw = try? JSONEncoder().encode(configDict)
@@ -119,6 +123,7 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
         self.slug = dto.slug
         self.name = dto.name
         self.typeRaw = dto.type
+        self.category = dto.category
         
         if let configDict = dto.config {
             self.configRaw = try? JSONEncoder().encode(configDict)
@@ -128,7 +133,7 @@ final class DataLogOption: Identifiable, Hashable, CatalogueModel {
     }
     
     func isValid() -> Bool {
-        return slug != "unset" && name != "Unset"
+        return slug.isNotUnset() && name.isNotUnset()
     }
     
     var hasUnsyncedChanges: Bool {
@@ -143,7 +148,31 @@ struct DataLogOptionDTO: Codable, Identifiable {
     let slug: String
     let name: String
     let type: String
+    let category: String?
     let config: DataLogOptionConfig?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, slug, name, type, category, config
+    }
+    
+    init(id: Int, slug: String, name: String, type: String, category: String? = nil, config: DataLogOptionConfig? = nil) {
+        self.id = id
+        self.slug = slug
+        self.name = name
+        self.type = type
+        self.category = category
+        self.config = config
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int.self, forKey: .id)
+        self.slug = try container.decode(String.self, forKey: .slug)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.type = try container.decode(String.self, forKey: .type)
+        self.category = try container.decodeIfPresent(String.self, forKey: .category)
+        self.config = try container.decodeIfPresent(DataLogOptionConfig.self, forKey: .config)
+    }
 }
 
 struct DataLogOptionPayload: Codable, InitializableWithModel {
@@ -152,14 +181,33 @@ struct DataLogOptionPayload: Codable, InitializableWithModel {
     let slug: String
     let name: String
     let type: String
+    let category: String?
     let config: DataLogOptionConfig?
+    
+    enum CodingKeys: String, CodingKey {
+        case slug, name, type, category, config
+    }
     
     init?(from model: DataLogOption) {
         guard model.isValid() else { return nil }
         self.slug = model.slug
         self.name = model.name
         self.type = model.typeRaw
+        self.category = model.category
         self.config = model.config
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(slug, forKey: .slug)
+        try container.encode(name, forKey: .name)
+        try container.encode(type, forKey: .type)
+        if let category = category {
+            try container.encode(category, forKey: .category)
+        }
+        if let config = config {
+            try container.encode(config, forKey: .config)
+        }
     }
 }
 
@@ -167,6 +215,7 @@ struct DataLogOptionEditor: CachableModel, EditorProtocol {
     var slug: String
     var name: String
     var type: DataLogOptionType
+    var category: String?
     var config: DataLogOptionConfig?
     var cache: Bool = true
     var archived: Bool = false
@@ -177,6 +226,7 @@ struct DataLogOptionEditor: CachableModel, EditorProtocol {
         self.slug = model.slug
         self.name = model.name
         self.type = model.type
+        self.category = model.category
         self.config = model.config
         self.cache = model.cache
         self.archived = model.archived
@@ -186,6 +236,7 @@ struct DataLogOptionEditor: CachableModel, EditorProtocol {
         model.slug = self.slug
         model.name = self.name
         model.type = self.type
+        model.category = self.category
         model.config = self.config
         model.cache = self.cache
         model.archived = self.archived

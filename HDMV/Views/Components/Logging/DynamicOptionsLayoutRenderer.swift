@@ -42,10 +42,6 @@ class DynamicOptionsLayoutEngine {
             .filter({ !$0.isDeleted })
             .sorted(by: { $0.priority < $1.priority })
         
-        if activeMappings.isEmpty {
-            return AnyView(EmptyView())
-        }
-        
         var views = [AnyView]()
         
         // Consume any slug that replaces the activity name so it doesn't draw a pill
@@ -374,7 +370,7 @@ class DynamicOptionsLayoutEngine {
                 return formatted
             }
             return value
-        case .date(let _style):
+        case .date(_):
             // Fallback for simple dates
             return value
         }

@@ -12,6 +12,7 @@ struct InteractionDetailSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
+    @State private var isShowingOptionSelector: Bool = false
     
     @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForInteraction && $0.archived == false }) 
     private var optionMappings: [DataLogOptionMapping]
@@ -46,6 +47,11 @@ struct InteractionDetailSheet: View {
                 viewModel.onDone()
                 dismiss()
             })
+            .dynamicOptionSelectorSheet(
+                isPresented: $isShowingOptionSelector,
+                mappings: optionMappings,
+                decodedLogDetails: $viewModel.editor.log_details
+            )
         }
     }
     
@@ -87,7 +93,8 @@ struct InteractionDetailSheet: View {
         Group {
             DynamicOptionsSection(
                 mappings: optionMappings,
-                decodedLogDetails: $viewModel.editor.log_details
+                decodedLogDetails: $viewModel.editor.log_details,
+                isShowingOptionSelector: $isShowingOptionSelector
             )
             
             Section("Details") {

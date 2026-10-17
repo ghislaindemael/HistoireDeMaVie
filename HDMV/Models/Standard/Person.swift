@@ -102,7 +102,7 @@ final class Person: CatalogueModel, EditableModel, CachableObject {
 // MARK: - DTOs for Network
 struct PersonDTO: Codable, Identifiable, Sendable {
     var id: Int
-    @Attribute(.unique) var slug: String
+    var slug: String
     var name: String
     var family_name: String
     var surname: String?
@@ -111,7 +111,7 @@ struct PersonDTO: Codable, Identifiable, Sendable {
 }
 
 struct PersonPayload: Codable, Sendable, InitializableWithModel {
-    @Attribute(.unique) var slug: String
+    var slug: String
     var name: String
     var family_name: String
     var surname: String?
@@ -136,7 +136,7 @@ struct PersonPayload: Codable, Sendable, InitializableWithModel {
 }
 
 struct PersonEditor: CachableModel, EditorProtocol {
-    @Attribute(.unique) var slug: String
+    var slug: String
     var name: String
     var familyName: String
     var surname: String?

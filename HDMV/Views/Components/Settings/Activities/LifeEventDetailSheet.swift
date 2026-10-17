@@ -13,9 +13,26 @@ struct LifeEventDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @StateObject var viewModel: LifeEventDetailSheetViewModel
+    @State private var isShowingOptionSelector: Bool = false
     
     @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForLifeEvent && $0.archived == false }) 
     private var optionMappings: [DataLogOptionMapping]
+    
+    private var combinedOptionMappings: [DataLogOptionMapping] {
+        var result: [DataLogOptionMapping] = []
+        var seenSlugs = Set<String>()
+        
+        let typeMappings = viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? []
+        let allMappings = (optionMappings + typeMappings).sorted { $0.priority < $1.priority }
+        
+        for mapping in allMappings {
+            if !seenSlugs.contains(mapping.optionSlug) {
+                seenSlugs.insert(mapping.optionSlug)
+                result.append(mapping)
+            }
+        }
+        return result
+    }
     
     let lifeEvent: LifeEvent
     
@@ -52,6 +69,11 @@ struct LifeEventDetailSheet: View {
                 viewModel.onDone()
                 dismiss()
             }
+            .dynamicOptionSelectorSheet(
+                isPresented: $isShowingOptionSelector,
+                mappings: combinedOptionMappings,
+                decodedLogDetails: $viewModel.editor.log_details
+            )
         }
     }
     
@@ -62,8 +84,9 @@ struct LifeEventDetailSheet: View {
     private var detailsSection: some View {
         Group {
             DynamicOptionsSection(
-                mappings: optionMappings,
-                decodedLogDetails: $viewModel.editor.log_details
+                mappings: combinedOptionMappings,
+                decodedLogDetails: $viewModel.editor.log_details,
+                isShowingOptionSelector: $isShowingOptionSelector
             )
             
             Section("Details") {

@@ -13,6 +13,7 @@ struct ActivityInstanceDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @StateObject var viewModel: ActivityInstanceDetailSheetViewModel
+    @State private var isShowingOptionSelector: Bool = false
     
     let instance: ActivityInstance
     
@@ -40,15 +41,14 @@ struct ActivityInstanceDetailSheet: View {
                 
                 basicsSection
                 detailsSection
-                if let activity = selectedActivity {
-                    DynamicOptionsSection(
-                        mappings: activity.optionMappings,
-                        decodedLogDetails: $viewModel.editor.decodedLogDetails
-                    )
-                    
-                    if activity.canLogDetails() {
-                        specializedDetailsSection
-                    }
+                DynamicOptionsSection(
+                    mappings: selectedActivity?.optionMappings ?? [],
+                    decodedLogDetails: $viewModel.editor.decodedLogDetails,
+                    isShowingOptionSelector: $isShowingOptionSelector
+                )
+                
+                if let activity = selectedActivity, activity.canLogDetails() {
+                    specializedDetailsSection
                 }
                 
                 
@@ -73,6 +73,11 @@ struct ActivityInstanceDetailSheet: View {
                 viewModel.onDone()
                 dismiss()
             }
+            .dynamicOptionSelectorSheet(
+                isPresented: $isShowingOptionSelector,
+                mappings: selectedActivity?.optionMappings ?? [],
+                decodedLogDetails: $viewModel.editor.decodedLogDetails
+            )
         }
     }
     

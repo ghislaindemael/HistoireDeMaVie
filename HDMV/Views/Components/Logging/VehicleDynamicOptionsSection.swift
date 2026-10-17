@@ -4,9 +4,11 @@ import SwiftData
 struct VehicleDynamicOptionsSection: View {
     @Query private var mappings: [DataLogOptionMapping]
     @Binding var decodedLogDetails: LogDetails?
+    @Binding var isShowingOptionSelector: Bool
     
-    init(vehicleRid: Int?, vehicleTypeSlug: String?, decodedLogDetails: Binding<LogDetails?>) {
+    init(vehicleRid: Int?, vehicleTypeSlug: String?, decodedLogDetails: Binding<LogDetails?>, isShowingOptionSelector: Binding<Bool>) {
         self._decodedLogDetails = decodedLogDetails
+        self._isShowingOptionSelector = isShowingOptionSelector
         let vId = vehicleRid ?? -1
         let vSlug = vehicleTypeSlug ?? "unset"
         
@@ -17,11 +19,10 @@ struct VehicleDynamicOptionsSection: View {
     }
     
     var body: some View {
-        if !mappings.isEmpty {
-            DynamicOptionsSection(
-                mappings: mappings,
-                decodedLogDetails: $decodedLogDetails
-            )
-        }
+        DynamicOptionsSection(
+            mappings: mappings,
+            decodedLogDetails: $decodedLogDetails,
+            isShowingOptionSelector: $isShowingOptionSelector
+        )
     }
 }

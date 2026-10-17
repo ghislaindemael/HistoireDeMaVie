@@ -6,8 +6,25 @@ struct TransactionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @Query(filter: #Predicate<DataBankAccount> { $0.archived == false }) private var bankAccounts: [DataBankAccount]
-    
+    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForTransaction && $0.archived == false }) private var globalTransactionMappings: [DataLogOptionMapping]
     @StateObject var viewModel: TransactionDetailSheetViewModel
+    @State private var isShowingOptionSelector: Bool = false
+    
+    private var combinedOptionMappings: [DataLogOptionMapping] {
+        var result: [DataLogOptionMapping] = []
+        var seenSlugs = Set<String>()
+        
+        let typeMappings = viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? []
+        let allMappings = (globalTransactionMappings + typeMappings).sorted { $0.priority < $1.priority }
+        
+        for mapping in allMappings {
+            if !seenSlugs.contains(mapping.optionSlug) {
+                seenSlugs.insert(mapping.optionSlug)
+                result.append(mapping)
+            }
+        }
+        return result
+    }
     
     private var isStandardCurrency: Bool {
         let cur = viewModel.editor.currency ?? "CHF"
@@ -98,6 +115,13 @@ struct TransactionDetailSheet: View {
                     }
                     
                 }
+                
+                // MARK: - 2.5 Log Options
+                DynamicOptionsSection(
+                    mappings: combinedOptionMappings,
+                    decodedLogDetails: $viewModel.editor.decodedLogDetails,
+                    isShowingOptionSelector: $isShowingOptionSelector
+                )
                 
                 // MARK: - 3. Primary Amount
                 Section("Primary Amount") {
@@ -242,6 +266,11 @@ struct TransactionDetailSheet: View {
                     }
                 }
             }
+            .dynamicOptionSelectorSheet(
+                isPresented: $isShowingOptionSelector,
+                mappings: combinedOptionMappings,
+                decodedLogDetails: $viewModel.editor.decodedLogDetails
+            )
         }
     }
 }

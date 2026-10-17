@@ -103,7 +103,10 @@ struct VehicleDetailSheet: View {
                     }
                     
                     Button("Add Option") {
-                        isShowingOptionSelector = true
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        DispatchQueue.main.async {
+                            isShowingOptionSelector = true
+                        }
                     }
                 }
 
