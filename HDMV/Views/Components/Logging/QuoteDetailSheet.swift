@@ -58,28 +58,6 @@ struct QuoteDetailSheet: View {
                         TextField("Quote Text", text: $viewModel.editor.text, axis: .vertical)
                             .lineLimit(3...)
                         
-                        if viewModel.editor.text.isEmpty {
-                            Button {
-                                isShowingOCRScanner = true
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "camera.viewfinder")
-                                        .foregroundColor(.accentColor)
-                                    Text("Take a photo of the book page to extract quote")
-                                        .font(.footnote)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary.opacity(0.6))
-                                }
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 10)
-                                .background(Color(.secondarySystemBackground))
-                                .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
                     .padding(.vertical, 2)
                     
