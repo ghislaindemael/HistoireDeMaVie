@@ -57,32 +57,6 @@ final class Transaction: LogModel {
         set { timeStart = newValue }
     }
     
-    var combinedOptionMappings: [DataLogOptionMapping] {
-        var result: [DataLogOptionMapping] = []
-        var seenSlugs = Set<String>()
-        
-        let typeMappings = self.type?.optionMappings.filter { !$0.archived } ?? []
-        var globalMappings: [DataLogOptionMapping] = []
-        if let context = self.modelContext {
-            let descriptor = FetchDescriptor<DataLogOption>()
-            if let allOptions = try? context.fetch(descriptor) {
-                globalMappings = allOptions
-                    .filter { $0.config?.isForTransaction == true && !$0.archived }
-                    .map { DataLogOptionMapping(transientOption: $0) }
-            }
-        }
-        
-        let allMappings = (globalMappings + typeMappings).sorted { $0.priority < $1.priority }
-        for mapping in allMappings {
-            let slug = mapping.option?.slug ?? mapping.optionSlug
-            if !slug.isEmpty && !seenSlugs.contains(slug) {
-                seenSlugs.insert(slug)
-                result.append(mapping)
-            }
-        }
-        return result
-    }
-    
     // MARK: Relationships
     
     @Relationship(deleteRule: .nullify)

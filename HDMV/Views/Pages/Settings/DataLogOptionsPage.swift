@@ -255,6 +255,7 @@ struct DataLogOptionsPage: View {
             .sheet(item: $optionToEdit) { option in
                 DataLogOptionDetailSheet(option: option, modelContext: modelContext)
             }
+            .syncingOverlay(viewModel.isLoading)
         }
     }
     

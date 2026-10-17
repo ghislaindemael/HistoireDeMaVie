@@ -17,14 +17,20 @@ final class DataLogOptionSyncer: BaseSyncer<DataLogOption, DataLogOptionDTO, Dat
         // Enforce slug uniqueness before pushing to remote
         let allOptions = try modelContext.fetch(FetchDescriptor<DataLogOption>())
         var seenSlugs = Set<String>()
+        var didModify = false
         for option in allOptions {
             guard !option.archived, option.isValid() else { continue }
-            let normalized = option.slug.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            if seenSlugs.contains(normalized) {
-                print("⚠️ DataLogOptionSyncer: Duplicate slug '\(normalized)' detected. Aborting push.")
-                return
+            let slug = option.slug.trimmingCharacters(in: .whitespacesAndNewlines)
+            if seenSlugs.contains(slug) {
+                print("⚠️ DataLogOptionSyncer: Duplicate slug '\(slug)' detected for option \(option.id). Marking as failed.")
+                option.syncStatus = .failed
+                didModify = true
+            } else {
+                seenSlugs.insert(slug)
             }
-            seenSlugs.insert(normalized)
+        }
+        if didModify {
+            try? modelContext.save()
         }
         
         try await super.pushChanges()
@@ -43,7 +49,7 @@ final class DataLogOptionSyncer: BaseSyncer<DataLogOption, DataLogOptionDTO, Dat
     }
     
     override func deleteFromServer(_ id: Int) async throws {
-        fatalError("DataLogOption deletion not implemented")
+        _ = try await optionsService.delete(rid: id)
     }
     
     override func resolveRelationships() throws {

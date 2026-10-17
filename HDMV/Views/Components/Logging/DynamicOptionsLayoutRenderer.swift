@@ -8,19 +8,48 @@
 import SwiftUI
 import SwiftData
 
+struct DynamicOptionItem: Identifiable {
+    var id: String { slug }
+    let slug: String
+    let priority: Int
+    let required: Bool
+    let option: DataLogOption?
+    let layoutNode: ActivityLayoutNode?
+    let replacesActivityName: Bool
+    
+    init(mapping: DataLogOptionMapping) {
+        let opt = mapping.option
+        self.slug = opt?.slug ?? mapping.optionSlug
+        self.priority = mapping.priority
+        self.required = mapping.required
+        self.option = opt
+        self.layoutNode = opt?.config?.layoutNode
+        self.replacesActivityName = opt?.config?.replacesActivityName ?? false
+    }
+    
+    init(option: DataLogOption) {
+        self.slug = option.slug
+        self.priority = option.config?.priority ?? 0
+        self.required = option.config?.required ?? false
+        self.option = option
+        self.layoutNode = option.config?.layoutNode
+        self.replacesActivityName = option.config?.replacesActivityName ?? false
+    }
+}
+
 class DynamicOptionsLayoutEngine {
-    let mappings: [DataLogOptionMapping]
+    let items: [DynamicOptionItem]
     let decodedOptions: [String: String]?
     let modelContext: ModelContext?
     var consumedSlugs = Set<String>()
     
     lazy var slugsHandledByLayouts: Set<String> = {
         var slugs = Set<String>()
-        for mapping in mappings.filter({ !$0.isDeleted }) {
-            if let layout = mapping.option?.config?.layoutNode {
+        for item in items {
+            if let layout = item.layoutNode {
                 slugs.formUnion(layout.referencedSlugs)
-                slugs.insert(mapping.optionSlug)
-                if let optSlug = mapping.option?.slug {
+                slugs.insert(item.slug)
+                if let optSlug = item.option?.slug {
                     slugs.insert(optSlug)
                 }
             }
@@ -28,10 +57,21 @@ class DynamicOptionsLayoutEngine {
         return slugs
     }()
     
-    init(mappings: [DataLogOptionMapping], decodedOptions: [String: String]?, modelContext: ModelContext? = nil) {
-        self.mappings = mappings
+    init(items: [DynamicOptionItem], decodedOptions: [String: String]?, modelContext: ModelContext? = nil) {
+        self.items = items
         self.decodedOptions = decodedOptions
         self.modelContext = modelContext
+    }
+    
+    convenience init(
+        mappings: [DataLogOptionMapping],
+        globalOptions: [DataLogOption] = [],
+        decodedOptions: [String: String]?,
+        modelContext: ModelContext? = nil
+    ) {
+        let mappingItems = mappings.filter({ !$0.isDeleted && !$0.archived }).map { DynamicOptionItem(mapping: $0) }
+        let globalItems = globalOptions.filter({ !$0.archived }).map { DynamicOptionItem(option: $0) }
+        self.init(items: mappingItems + globalItems, decodedOptions: decodedOptions, modelContext: modelContext)
     }
     
     convenience init(instance: ActivityInstance) {
@@ -43,21 +83,31 @@ class DynamicOptionsLayoutEngine {
     }
     
     convenience init(transaction: Transaction) {
+        var globals: [DataLogOption] = []
+        if let context = transaction.modelContext {
+            let descriptor = FetchDescriptor<DataLogOption>(
+                predicate: #Predicate<DataLogOption> { !$0.archived }
+            )
+            if let opts = try? context.fetch(descriptor) {
+                globals = opts.filter { $0.config?.isForTransaction == true }
+            }
+        }
         self.init(
-            mappings: transaction.combinedOptionMappings,
+            mappings: transaction.type?.optionMappings ?? [],
+            globalOptions: globals,
             decodedOptions: transaction.decodedLogDetails?.options,
             modelContext: transaction.modelContext
         )
     }
     
     func renderAll() -> AnyView {
-        var activeMappings = [DataLogOptionMapping]()
+        var activeItems = [DynamicOptionItem]()
         var seenSlugs = Set<String>()
         var seenIds = Set<PersistentIdentifier>()
         
-        for mapping in mappings.filter({ !$0.isDeleted && !$0.archived }).sorted(by: { $0.priority < $1.priority }) {
-            let opt = mapping.option ?? getOption(for: mapping.optionSlug)
-            let primarySlug = opt?.slug ?? mapping.optionSlug
+        for item in items.sorted(by: { $0.priority < $1.priority }) {
+            let opt = item.option ?? getOption(for: item.slug)
+            let primarySlug = opt?.slug ?? item.slug
             guard primarySlug.isNotUnset() && primarySlug != "!unset" && !primarySlug.isEmpty else {
                 continue
             }
@@ -68,43 +118,43 @@ class DynamicOptionsLayoutEngine {
             
             if seenSlugs.contains(primarySlug) { continue }
             seenSlugs.insert(primarySlug)
-            if !mapping.optionSlug.isEmpty {
-                seenSlugs.insert(mapping.optionSlug)
+            if !item.slug.isEmpty {
+                seenSlugs.insert(item.slug)
             }
-            activeMappings.append(mapping)
+            activeItems.append(item)
         }
         
         var views = [AnyView]()
         
         // Consume any slug that replaces the activity name so it doesn't draw a pill
-        for mapping in activeMappings {
-            let effectiveSlug = mapping.option?.slug ?? mapping.optionSlug
-            if mapping.option?.config?.replacesActivityName == true {
-                markConsumed(slug: effectiveSlug, mapping: mapping)
+        for item in activeItems {
+            let effectiveSlug = item.option?.slug ?? item.slug
+            if item.replacesActivityName {
+                markConsumed(slug: effectiveSlug)
             }
         }
         
         // Find all slugs that are handled by any custom layout
-        for mapping in activeMappings {
-            let effectiveSlug = mapping.option?.slug ?? mapping.optionSlug
+        for item in activeItems {
+            let effectiveSlug = item.option?.slug ?? item.slug
             guard effectiveSlug.isNotUnset() && effectiveSlug != "!unset" && !effectiveSlug.isEmpty else {
                 continue
             }
-            if isConsumed(effectiveSlug) || isConsumed(mapping.optionSlug) { continue }
+            if isConsumed(effectiveSlug) || isConsumed(item.slug) { continue }
             
-            if let layout = mapping.option?.config?.layoutNode {
+            if let layout = item.layoutNode {
                 for ref in layout.referencedSlugs {
                     markConsumed(slug: ref)
                 }
-                markConsumed(slug: effectiveSlug, mapping: mapping)
+                markConsumed(slug: effectiveSlug)
                 views.append(render(node: layout))
             } else {
-                if slugsHandledByLayouts.contains(effectiveSlug) || slugsHandledByLayouts.contains(mapping.optionSlug) {
+                if slugsHandledByLayouts.contains(effectiveSlug) || slugsHandledByLayouts.contains(item.slug) {
                     continue
                 }
                 
-                let isLogged = getValue(for: effectiveSlug) != nil || getValue(for: mapping.optionSlug) != nil
-                let isRequired = mapping.required == true
+                let isLogged = getValue(for: effectiveSlug) != nil || getValue(for: item.slug) != nil
+                let isRequired = item.required
                 let shouldShow: Bool
                 if isLogged {
                     shouldShow = true
@@ -117,9 +167,9 @@ class DynamicOptionsLayoutEngine {
                 }
                 
                 if shouldShow {
-                    views.append(AnyView(defaultPill(forSlug: effectiveSlug, mapping: mapping, isLogged: isLogged, isRequired: isRequired)))
+                    views.append(AnyView(defaultPill(forSlug: effectiveSlug, isLogged: isLogged, isRequired: isRequired)))
                 }
-                markConsumed(slug: effectiveSlug, mapping: mapping)
+                markConsumed(slug: effectiveSlug)
             }
         }
         
@@ -127,7 +177,7 @@ class DynamicOptionsLayoutEngine {
         if let decoded = decodedOptions {
             let sortedUnmapped = decoded.keys.filter { !isConsumed($0) }.sorted()
             for slug in sortedUnmapped {
-                views.append(AnyView(defaultPill(forSlug: slug, mapping: nil, isLogged: true, isRequired: false)))
+                views.append(AnyView(defaultPill(forSlug: slug, isLogged: true, isRequired: false)))
                 markConsumed(slug: slug)
             }
         }
@@ -234,20 +284,20 @@ class DynamicOptionsLayoutEngine {
             
         case .unrenderedOptions:
             let loggedSlugs = decodedOptions != nil ? Array(decodedOptions!.keys) : []
-            let mappedSlugs = mappings.filter { !$0.isDeleted && !$0.archived }.map { $0.optionSlug }
+            let mappedSlugs = items.map { $0.slug }
             let allSlugs = Set(loggedSlugs).union(mappedSlugs).filter { !isConsumed($0) && !slugsHandledByLayouts.contains($0) }
             
             let unrenderedSlugs = allSlugs.sorted { s1, s2 in
-                let p1 = mappings.first(where: { $0.optionSlug == s1 })?.priority ?? 999
-                let p2 = mappings.first(where: { $0.optionSlug == s2 })?.priority ?? 999
+                let p1 = items.first(where: { $0.slug == s1 })?.priority ?? 999
+                let p2 = items.first(where: { $0.slug == s2 })?.priority ?? 999
                 if p1 == p2 { return s1 < s2 }
                 return p1 < p2
             }
             
             let views = unrenderedSlugs.compactMap { slug -> AnyView? in
                 let isLogged = getValue(for: slug) != nil
-                let mapping = mappings.first(where: { !$0.isDeleted && ($0.optionSlug == slug || $0.option?.slug == slug) })
-                let isRequired = mapping?.required == true
+                let item = items.first(where: { $0.slug == slug || $0.option?.slug == slug })
+                let isRequired = item?.required == true
                 
                 let shouldShow: Bool
                 if isLogged {
@@ -255,7 +305,7 @@ class DynamicOptionsLayoutEngine {
                 } else {
                     if isRequired {
                         shouldShow = true
-                    } else if SettingsStore.shared.appMode == .backfill && mapping != nil {
+                    } else if SettingsStore.shared.appMode == .backfill && item != nil {
                         shouldShow = true
                     } else {
                         shouldShow = false
@@ -264,8 +314,8 @@ class DynamicOptionsLayoutEngine {
                 
                 guard shouldShow else { return nil }
                 
-                markConsumed(slug: slug, mapping: mapping)
-                return AnyView(defaultPill(forSlug: slug, mapping: mapping, isLogged: isLogged, isRequired: isRequired))
+                markConsumed(slug: slug)
+                return AnyView(defaultPill(forSlug: slug, isLogged: isLogged, isRequired: isRequired))
             }
             
             return AnyView(VStack(spacing: 4) {
@@ -276,9 +326,10 @@ class DynamicOptionsLayoutEngine {
     
     // MARK: - Default Pill
     
-    private func defaultPill(forSlug slug: String, mapping: DataLogOptionMapping?, isLogged: Bool, isRequired: Bool) -> some View {
+    private func defaultPill(forSlug slug: String, isLogged: Bool, isRequired: Bool) -> some View {
         let label = getLabel(for: slug) ?? slug
         let icon = getIcon(for: slug)
+        let option = getOption(for: slug)
         
         if isLogged {
             return AnyView(
@@ -301,7 +352,7 @@ class DynamicOptionsLayoutEngine {
         } else {
             return AnyView(
                 MissingDetailWarningView(
-                    message: "Missing \(mapping?.option?.name ?? label)",
+                    message: "Missing \(option?.name ?? label)",
                     iconName: icon ?? "exclamationmark.triangle.fill",
                     isRequired: isRequired
                 )
@@ -351,16 +402,8 @@ class DynamicOptionsLayoutEngine {
         consumedSlugs.contains(slug)
     }
     
-    private func markConsumed(slug: String, mapping: DataLogOptionMapping? = nil) {
+    private func markConsumed(slug: String) {
         consumedSlugs.insert(slug)
-        
-        if let m = mapping {
-            consumedSlugs.insert(m.optionSlug)
-            if let optSlug = m.option?.slug {
-                consumedSlugs.insert(optSlug)
-            }
-        }
-        
         if let opt = getOption(for: slug) {
             consumedSlugs.insert(opt.slug)
         }
@@ -383,9 +426,9 @@ class DynamicOptionsLayoutEngine {
     }
     
     private func getOption(for slug: String) -> DataLogOption? {
-        if let mapping = mappings.first(where: {
-            !$0.isDeleted && ($0.optionSlug == slug || $0.option?.slug == slug)
-        }), let option = mapping.option {
+        if let item = items.first(where: {
+            $0.slug == slug || $0.option?.slug == slug
+        }), let option = item.option {
             return option
         }
         if let context = modelContext {
@@ -471,8 +514,8 @@ class DynamicOptionsLayoutEngine {
             
         case .optionNotDefault(let slug):
             let val = getValue(for: slug) ?? ""
-            guard let mapping = mappings.first(where: { $0.optionSlug == slug && !$0.isDeleted }),
-                  let option = mapping.option else { return false }
+            guard let item = items.first(where: { $0.slug == slug || $0.option?.slug == slug }),
+                  let option = item.option ?? getOption(for: slug) else { return false }
             
             let def = option.config?.defaultValue ?? ""
             return !val.isEmpty && val != def

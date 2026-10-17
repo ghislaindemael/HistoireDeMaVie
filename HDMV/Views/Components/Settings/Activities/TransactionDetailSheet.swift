@@ -10,27 +10,8 @@ struct TransactionDetailSheet: View {
     @StateObject var viewModel: TransactionDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
     
-    private var globalTransactionMappings: [DataLogOptionMapping] {
-        allOptions
-            .filter { $0.config?.isForTransaction == true }
-            .map { DataLogOptionMapping(transientOption: $0) }
-    }
-    
-    private var combinedOptionMappings: [DataLogOptionMapping] {
-        var result: [DataLogOptionMapping] = []
-        var seenSlugs = Set<String>()
-        
-        let typeMappings = viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? []
-        let allMappings = (globalTransactionMappings + typeMappings).sorted { $0.priority < $1.priority }
-        
-        for mapping in allMappings {
-            let slug = mapping.option?.slug ?? mapping.optionSlug
-            if !slug.isEmpty && !seenSlugs.contains(slug) {
-                seenSlugs.insert(slug)
-                result.append(mapping)
-            }
-        }
-        return result
+    private var globalTransactionOptions: [DataLogOption] {
+        allOptions.filter { $0.config?.isForTransaction == true }
     }
     
     private var isStandardCurrency: Bool {
@@ -125,7 +106,8 @@ struct TransactionDetailSheet: View {
                 
                 // MARK: - 2.5 Log Options
                 DynamicOptionsSection(
-                    mappings: combinedOptionMappings,
+                    mappings: viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? [],
+                    globalOptions: globalTransactionOptions,
                     decodedLogDetails: $viewModel.editor.decodedLogDetails,
                     isShowingOptionSelector: $isShowingOptionSelector
                 )
@@ -275,7 +257,8 @@ struct TransactionDetailSheet: View {
             }
             .dynamicOptionSelectorSheet(
                 isPresented: $isShowingOptionSelector,
-                mappings: combinedOptionMappings,
+                mappings: viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? [],
+                globalOptions: globalTransactionOptions,
                 decodedLogDetails: $viewModel.editor.decodedLogDetails
             )
         }

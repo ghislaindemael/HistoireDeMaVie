@@ -17,10 +17,8 @@ struct InteractionDetailSheet: View {
     @Query(filter: #Predicate<DataLogOption> { $0.archived == false }) 
     private var allOptions: [DataLogOption]
     
-    private var optionMappings: [DataLogOptionMapping] {
-        allOptions
-            .filter { $0.config?.isForInteraction == true }
-            .map { DataLogOptionMapping(transientOption: $0) }
+    private var globalInteractionOptions: [DataLogOption] {
+        allOptions.filter { $0.config?.isForInteraction == true }
     }
     
     let interaction: Interaction
@@ -55,7 +53,8 @@ struct InteractionDetailSheet: View {
             })
             .dynamicOptionSelectorSheet(
                 isPresented: $isShowingOptionSelector,
-                mappings: optionMappings,
+                mappings: [],
+                globalOptions: globalInteractionOptions,
                 decodedLogDetails: $viewModel.editor.log_details
             )
         }
@@ -98,7 +97,8 @@ struct InteractionDetailSheet: View {
     private var detailsSection: some View {
         Group {
             DynamicOptionsSection(
-                mappings: optionMappings,
+                mappings: [],
+                globalOptions: globalInteractionOptions,
                 decodedLogDetails: $viewModel.editor.log_details,
                 isShowingOptionSelector: $isShowingOptionSelector
             )

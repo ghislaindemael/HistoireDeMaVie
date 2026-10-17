@@ -13,29 +13,31 @@ struct DynamicOptionsSection: View {
     @Query(sort: \DataLogOption.name) private var allOptions: [DataLogOption]
     
     let mappings: [DataLogOptionMapping]
+    var globalOptions: [DataLogOption] = []
     @Binding var decodedLogDetails: LogDetails?
     @Binding var isShowingOptionSelector: Bool
     
-    // We sort the mappings by priority without duplicate slugs
-    var sortedMappings: [DataLogOptionMapping] {
-        var result: [DataLogOptionMapping] = []
+    // We sort the items by priority without duplicate slugs
+    var sortedItems: [DynamicOptionItem] {
+        var result: [DynamicOptionItem] = []
         var seenSlugs = Set<String>()
         var seenOptionIds = Set<PersistentIdentifier>()
         
-        for mapping in mappings.filter({ !$0.isDeleted && !$0.archived }).sorted(by: { $0.priority < $1.priority }) {
-            let opt = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug })
+        let mappingItems = mappings.filter({ !$0.isDeleted && !$0.archived }).map { DynamicOptionItem(mapping: $0) }
+        let globalItems = globalOptions.filter({ !$0.archived }).map { DynamicOptionItem(option: $0) }
+        let allItems = (mappingItems + globalItems).sorted { $0.priority < $1.priority }
+        
+        for item in allItems {
+            let opt = item.option ?? allOptions.first(where: { $0.slug == item.slug })
             if let opt = opt {
                 if seenOptionIds.contains(opt.persistentModelID) { continue }
                 seenOptionIds.insert(opt.persistentModelID)
             }
             
-            let slug = opt?.slug ?? mapping.optionSlug
+            let slug = opt?.slug ?? item.slug
             if !slug.isEmpty && !seenSlugs.contains(slug) {
                 seenSlugs.insert(slug)
-                if !mapping.optionSlug.isEmpty {
-                    seenSlugs.insert(mapping.optionSlug)
-                }
-                result.append(mapping)
+                result.append(item)
             }
         }
         return result
@@ -43,9 +45,9 @@ struct DynamicOptionsSection: View {
     
     private var mappedOptionSlugs: Set<String> {
         var slugs = Set<String>()
-        for mapping in sortedMappings {
-            slugs.insert(mapping.optionSlug)
-            if let opt = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug }) {
+        for item in sortedItems {
+            slugs.insert(item.slug)
+            if let opt = item.option ?? allOptions.first(where: { $0.slug == item.slug }) {
                 slugs.insert(opt.slug)
             }
         }
@@ -65,8 +67,8 @@ struct DynamicOptionsSection: View {
     
     var body: some View {
         Section(header: headerView("Options")) {
-            ForEach(sortedMappings, id: \.optionSlug) { mapping in
-                if let option = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug }) {
+            ForEach(sortedItems) { item in
+                if let option = item.option ?? allOptions.first(where: { $0.slug == item.slug }) {
                     DynamicOptionRow(
                         option: option,
                         details: $decodedLogDetails
@@ -119,11 +121,13 @@ struct DynamicOptionsSection: View {
 }
 
 struct DynamicOptionSelectorSheet: View {
-    let mappings: [DataLogOptionMapping]
+    var mappings: [DataLogOptionMapping] = []
+    var globalOptions: [DataLogOption] = []
     @Binding var decodedLogDetails: LogDetails?
     
     private var allUsedSlugs: Set<String> {
         var slugs = Set(mappings.map(\.optionSlug))
+        slugs.formUnion(globalOptions.map(\.slug))
         if let options = decodedLogDetails?.options {
             slugs.formUnion(options.keys)
         }
@@ -161,11 +165,13 @@ extension View {
     func dynamicOptionSelectorSheet(
         isPresented: Binding<Bool>,
         mappings: [DataLogOptionMapping] = [],
+        globalOptions: [DataLogOption] = [],
         decodedLogDetails: Binding<LogDetails?>
     ) -> some View {
         self.sheet(isPresented: isPresented) {
             DynamicOptionSelectorSheet(
                 mappings: mappings,
+                globalOptions: globalOptions,
                 decodedLogDetails: decodedLogDetails
             )
         }

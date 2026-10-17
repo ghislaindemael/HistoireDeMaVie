@@ -43,16 +43,21 @@ class DataLogOptionsPageViewModel: BasePageViewModel {
     func refreshFromServer() async {
         isLoading = true
         defer { isLoading = false }
-        guard let syncer = optionSyncer else { return }
-        do {
-            try await syncer.pullChanges()
-            if let mappingSyncer = mappingSyncer {
-                try await mappingSyncer.pullChanges()
+        if let syncer = optionSyncer {
+            do {
+                try await syncer.pullChanges()
+            } catch {
+                print("Failed to pull options: \(error)")
             }
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh options from server: \(error)")
         }
+        if let mappingSyncer = mappingSyncer {
+            do {
+                try await mappingSyncer.pullChanges()
+            } catch {
+                print("Failed to pull option mappings: \(error)")
+            }
+        }
+        fetchFromCache()
     }
     
     func fetchArchivedFromServer() async {
@@ -66,16 +71,21 @@ class DataLogOptionsPageViewModel: BasePageViewModel {
     func uploadLocalChanges() async {
         isLoading = true
         defer { isLoading = false }
-        guard let syncer = optionSyncer else { return }
-        do {
-            _ = try await syncer.pushChanges()
-            if let mappingSyncer = mappingSyncer {
-                _ = try await mappingSyncer.pushChanges()
+        if let syncer = optionSyncer {
+            do {
+                try await syncer.pushChanges()
+            } catch {
+                print("Failed to push options: \(error)")
             }
-            fetchFromCache()
-        } catch {
-            print("Failed to push options to server: \(error)")
         }
+        if let mappingSyncer = mappingSyncer {
+            do {
+                try await mappingSyncer.pushChanges()
+            } catch {
+                print("Failed to push option mappings: \(error)")
+            }
+        }
+        fetchFromCache()
     }
     
     @discardableResult

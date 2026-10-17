@@ -15,8 +15,8 @@ struct LifeEventDetailSheet: View {
     @StateObject var viewModel: LifeEventDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
     
-    private var combinedOptionMappings: [DataLogOptionMapping] {
-        viewModel.editor.type?.optionMappings.filter { !$0.archived }.sorted { $0.priority < $1.priority } ?? []
+    private var typeOptionMappings: [DataLogOptionMapping] {
+        viewModel.editor.type?.optionMappings.filter { !$0.archived } ?? []
     }
     
     let lifeEvent: LifeEvent
@@ -56,7 +56,7 @@ struct LifeEventDetailSheet: View {
             }
             .dynamicOptionSelectorSheet(
                 isPresented: $isShowingOptionSelector,
-                mappings: combinedOptionMappings,
+                mappings: typeOptionMappings,
                 decodedLogDetails: $viewModel.editor.log_details
             )
         }
@@ -69,7 +69,7 @@ struct LifeEventDetailSheet: View {
     private var detailsSection: some View {
         Group {
             DynamicOptionsSection(
-                mappings: combinedOptionMappings,
+                mappings: typeOptionMappings,
                 decodedLogDetails: $viewModel.editor.log_details,
                 isShowingOptionSelector: $isShowingOptionSelector
             )

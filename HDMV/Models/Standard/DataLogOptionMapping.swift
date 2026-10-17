@@ -61,15 +61,6 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.syncStatus = syncStatus
     }
     
-    convenience init(transientOption: DataLogOption) {
-        self.init(
-            optionSlug: transientOption.slug,
-            priority: transientOption.config?.priority ?? 0,
-            required: transientOption.config?.required ?? false
-        )
-        self.option = transientOption
-    }
-    
     convenience init(fromDto dto: DataLogOptionMappingDTO) {
         self.init()
         self.rid = dto.id
