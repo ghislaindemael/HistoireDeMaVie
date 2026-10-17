@@ -62,16 +62,14 @@ final class Transaction: LogModel {
         var seenSlugs = Set<String>()
         
         let typeMappings = self.type?.optionMappings.filter { !$0.archived } ?? []
-        let globalMappings: [DataLogOptionMapping]
+        var globalMappings: [DataLogOptionMapping] = []
         if let context = self.modelContext {
-            let descriptor = FetchDescriptor<DataLogOptionMapping>(
-                predicate: #Predicate<DataLogOptionMapping> {
-                    $0.isForTransaction && !$0.archived
-                }
-            )
-            globalMappings = (try? context.fetch(descriptor)) ?? []
-        } else {
-            globalMappings = []
+            let descriptor = FetchDescriptor<DataLogOption>()
+            if let allOptions = try? context.fetch(descriptor) {
+                globalMappings = allOptions
+                    .filter { $0.config?.isForTransaction == true && !$0.archived }
+                    .map { DataLogOptionMapping(transientOption: $0) }
+            }
         }
         
         let allMappings = (globalMappings + typeMappings).sorted { $0.priority < $1.priority }

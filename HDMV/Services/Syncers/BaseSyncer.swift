@@ -87,12 +87,17 @@ Payload.Model == Model
         print("   - Unsynced (New): \(unsyncedItems.count)")
         print("   - Local (Edited): \(localItems.count)")
         print("   - Failed (Retry): \(failedItems.count)")
+        if !failedItems.isEmpty {
+            for item in failedItems {
+                print("   ⚠️ Failed item: \(item)")
+            }
+        }
         
         guard !itemsToSync.isEmpty else { return }
         
         for item in itemsToSync {
             guard let payload = Payload(from: item) else {
-                print("Invalid payload for: \(item.id)")
+                print("⚠️ Invalid payload for item: \(item)")
                 continue
             }
             
@@ -109,7 +114,7 @@ Payload.Model == Model
                 }
             } catch {
                 item.syncStatus = .failed
-                print("❌ Failed to sync item \(item.id): \(error)")
+                print("❌ Failed to sync item \(item): \(error)")
             }
         }
         try modelContext.save()

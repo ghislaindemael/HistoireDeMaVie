@@ -17,9 +17,6 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
     var vehicleTypeSlug: String?
     var transactionTypeRid: Int?
     var lifeEventTypeRid: Int?
-    var isForInteraction: Bool = false
-    var isForTransaction: Bool = false
-    var isForLifeEvent: Bool = false
     
     var optionSlug: String
     var priority: Int
@@ -47,9 +44,6 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         vehicleTypeSlug: String? = nil,
         transactionTypeRid: Int? = nil,
         lifeEventTypeRid: Int? = nil,
-        isForInteraction: Bool = false,
-        isForTransaction: Bool = false,
-        isForLifeEvent: Bool = false,
         optionSlug: String = "",
         priority: Int = 0,
         required: Bool = false,
@@ -61,13 +55,19 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.vehicleTypeSlug = vehicleTypeSlug
         self.transactionTypeRid = transactionTypeRid
         self.lifeEventTypeRid = lifeEventTypeRid
-        self.isForInteraction = isForInteraction
-        self.isForTransaction = isForTransaction
-        self.isForLifeEvent = isForLifeEvent
         self.optionSlug = optionSlug
         self.priority = priority
         self.required = required
         self.syncStatus = syncStatus
+    }
+    
+    convenience init(transientOption: DataLogOption) {
+        self.init(
+            optionSlug: transientOption.slug,
+            priority: transientOption.config?.priority ?? 0,
+            required: transientOption.config?.required ?? false
+        )
+        self.option = transientOption
     }
     
     convenience init(fromDto dto: DataLogOptionMappingDTO) {
@@ -78,9 +78,6 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.vehicleTypeSlug = dto.vehicle_type_slug
         self.transactionTypeRid = dto.transaction_type_id
         self.lifeEventTypeRid = dto.life_event_type_id
-        self.isForInteraction = dto.is_for_interaction
-        self.isForTransaction = dto.is_for_transaction ?? false
-        self.isForLifeEvent = dto.is_for_life_event ?? false
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
         self.required = dto.required ?? false
@@ -93,9 +90,6 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
         self.vehicleTypeSlug = dto.vehicle_type_slug
         self.transactionTypeRid = dto.transaction_type_id
         self.lifeEventTypeRid = dto.life_event_type_id
-        self.isForInteraction = dto.is_for_interaction
-        self.isForTransaction = dto.is_for_transaction ?? false
-        self.isForLifeEvent = dto.is_for_life_event ?? false
         self.optionSlug = dto.option_slug
         self.priority = dto.priority
         self.required = dto.required ?? false
@@ -108,12 +102,15 @@ final class DataLogOptionMapping: Identifiable, Hashable, CatalogueModel {
             vehicleRid != nil,
             vehicleTypeSlug != nil,
             transactionTypeRid != nil,
-            lifeEventTypeRid != nil,
-            isForInteraction,
-            isForLifeEvent,
-            isForTransaction
+            lifeEventTypeRid != nil
         ]
-        return targets.filter { $0 }.count == 1 && !optionSlug.isEmpty
+        guard targets.filter({ $0 }).count == 1 else { return false }
+        let effectiveSlug = option?.slug ?? optionSlug
+        guard effectiveSlug.isNotUnset() && !effectiveSlug.isEmpty && effectiveSlug != "!unset" else { return false }
+        if let option = option {
+            guard option.isValid() && option.rid != nil else { return false }
+        }
+        return true
     }
     
     var hasUnsyncedChanges: Bool {
@@ -130,9 +127,6 @@ struct DataLogOptionMappingDTO: Codable, Identifiable {
     let vehicle_type_slug: String?
     let transaction_type_id: Int?
     let life_event_type_id: Int?
-    let is_for_interaction: Bool
-    let is_for_transaction: Bool?
-    let is_for_life_event: Bool?
     
     let option_slug: String
     let priority: Int
@@ -147,9 +141,6 @@ struct DataLogOptionMappingPayload: Codable, InitializableWithModel {
     let vehicle_type_slug: String?
     let transaction_type_id: Int?
     let life_event_type_id: Int?
-    let is_for_interaction: Bool
-    let is_for_transaction: Bool
-    let is_for_life_event: Bool
     
     let option_slug: String
     let priority: Int
@@ -162,10 +153,7 @@ struct DataLogOptionMappingPayload: Codable, InitializableWithModel {
         self.vehicle_type_slug = model.vehicleTypeSlug
         self.transaction_type_id = model.transactionTypeRid
         self.life_event_type_id = model.lifeEventTypeRid
-        self.is_for_interaction = model.isForInteraction
-        self.is_for_transaction = model.isForTransaction
-        self.is_for_life_event = model.isForLifeEvent
-        self.option_slug = model.optionSlug
+        self.option_slug = model.option?.slug ?? model.optionSlug
         self.priority = model.priority
         self.required = model.required
     }
@@ -184,10 +172,6 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
     
     var lifeEventType: LifeEventType?
     var lifeEventTypeRid: Int?
-    
-    var isForInteraction: Bool = false
-    var isForTransaction: Bool = false
-    var isForLifeEvent: Bool = false
     
     var option: DataLogOption?
     var optionSlug: String
@@ -212,10 +196,6 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         self.lifeEventType = model.lifeEventType
         self.lifeEventTypeRid = model.lifeEventTypeRid
         
-        self.isForInteraction = model.isForInteraction
-        self.isForTransaction = model.isForTransaction
-        self.isForLifeEvent = model.isForLifeEvent
-        
         self.option = model.option
         self.optionSlug = model.optionSlug
         self.priority = model.priority
@@ -238,16 +218,18 @@ struct DataLogOptionMappingEditor: CachableModel, EditorProtocol {
         model.lifeEventType = self.lifeEventType
         model.lifeEventTypeRid = self.lifeEventTypeRid
         
-        model.isForInteraction = self.isForInteraction
-        model.isForTransaction = self.isForTransaction
-        model.isForLifeEvent = self.isForLifeEvent
-        
         model.option = self.option
         model.optionSlug = self.optionSlug
         model.priority = self.priority
         model.required = self.required
         model.cache = self.cache
         model.archived = self.archived
+    }
+}
+
+extension DataLogOptionMapping: CustomStringConvertible {
+    var description: String {
+        "DataLogOptionMapping(id: \(id), rid: \(String(describing: rid)), slug: '\(optionSlug)', vehicleType: \(vehicleTypeSlug ?? "nil"), activityRid: \(activityRid ?? -1), txTypeRid: \(transactionTypeRid ?? -1), status: \(syncStatusRaw))"
     }
 }
 

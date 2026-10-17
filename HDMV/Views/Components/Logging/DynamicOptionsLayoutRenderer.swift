@@ -57,18 +57,19 @@ class DynamicOptionsLayoutEngine {
         
         for mapping in mappings.filter({ !$0.isDeleted && !$0.archived }).sorted(by: { $0.priority < $1.priority }) {
             let opt = mapping.option ?? getOption(for: mapping.optionSlug)
+            let primarySlug = opt?.slug ?? mapping.optionSlug
+            guard primarySlug.isNotUnset() && primarySlug != "!unset" && !primarySlug.isEmpty else {
+                continue
+            }
             if let opt = opt {
                 if seenIds.contains(opt.persistentModelID) { continue }
                 seenIds.insert(opt.persistentModelID)
             }
             
-            let primarySlug = opt?.slug ?? mapping.optionSlug
-            if !primarySlug.isEmpty {
-                if seenSlugs.contains(primarySlug) { continue }
-                seenSlugs.insert(primarySlug)
-                if !mapping.optionSlug.isEmpty {
-                    seenSlugs.insert(mapping.optionSlug)
-                }
+            if seenSlugs.contains(primarySlug) { continue }
+            seenSlugs.insert(primarySlug)
+            if !mapping.optionSlug.isEmpty {
+                seenSlugs.insert(mapping.optionSlug)
             }
             activeMappings.append(mapping)
         }
@@ -77,27 +78,32 @@ class DynamicOptionsLayoutEngine {
         
         // Consume any slug that replaces the activity name so it doesn't draw a pill
         for mapping in activeMappings {
+            let effectiveSlug = mapping.option?.slug ?? mapping.optionSlug
             if mapping.option?.config?.replacesActivityName == true {
-                markConsumed(slug: mapping.optionSlug, mapping: mapping)
+                markConsumed(slug: effectiveSlug, mapping: mapping)
             }
         }
         
         // Find all slugs that are handled by any custom layout
         for mapping in activeMappings {
-            if isConsumed(mapping.optionSlug) { continue }
+            let effectiveSlug = mapping.option?.slug ?? mapping.optionSlug
+            guard effectiveSlug.isNotUnset() && effectiveSlug != "!unset" && !effectiveSlug.isEmpty else {
+                continue
+            }
+            if isConsumed(effectiveSlug) || isConsumed(mapping.optionSlug) { continue }
             
             if let layout = mapping.option?.config?.layoutNode {
                 for ref in layout.referencedSlugs {
                     markConsumed(slug: ref)
                 }
-                markConsumed(slug: mapping.optionSlug, mapping: mapping)
+                markConsumed(slug: effectiveSlug, mapping: mapping)
                 views.append(render(node: layout))
             } else {
-                if slugsHandledByLayouts.contains(mapping.optionSlug) {
+                if slugsHandledByLayouts.contains(effectiveSlug) || slugsHandledByLayouts.contains(mapping.optionSlug) {
                     continue
                 }
                 
-                let isLogged = getValue(for: mapping.optionSlug) != nil
+                let isLogged = getValue(for: effectiveSlug) != nil || getValue(for: mapping.optionSlug) != nil
                 let isRequired = mapping.required == true
                 let shouldShow: Bool
                 if isLogged {
@@ -111,9 +117,9 @@ class DynamicOptionsLayoutEngine {
                 }
                 
                 if shouldShow {
-                    views.append(AnyView(defaultPill(forSlug: mapping.optionSlug, mapping: mapping, isLogged: isLogged, isRequired: isRequired)))
+                    views.append(AnyView(defaultPill(forSlug: effectiveSlug, mapping: mapping, isLogged: isLogged, isRequired: isRequired)))
                 }
-                markConsumed(slug: mapping.optionSlug, mapping: mapping)
+                markConsumed(slug: effectiveSlug, mapping: mapping)
             }
         }
         

@@ -14,8 +14,14 @@ struct InteractionDetailSheet: View {
     @StateObject private var viewModel: InteractionDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
     
-    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForInteraction && $0.archived == false }) 
-    private var optionMappings: [DataLogOptionMapping]
+    @Query(filter: #Predicate<DataLogOption> { $0.archived == false }) 
+    private var allOptions: [DataLogOption]
+    
+    private var optionMappings: [DataLogOptionMapping] {
+        allOptions
+            .filter { $0.config?.isForInteraction == true }
+            .map { DataLogOptionMapping(transientOption: $0) }
+    }
     
     let interaction: Interaction
     

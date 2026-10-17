@@ -6,9 +6,15 @@ struct TransactionDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     @Query(filter: #Predicate<DataBankAccount> { $0.archived == false }) private var bankAccounts: [DataBankAccount]
-    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForTransaction && $0.archived == false }) private var globalTransactionMappings: [DataLogOptionMapping]
+    @Query(filter: #Predicate<DataLogOption> { $0.archived == false }) private var allOptions: [DataLogOption]
     @StateObject var viewModel: TransactionDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
+    
+    private var globalTransactionMappings: [DataLogOptionMapping] {
+        allOptions
+            .filter { $0.config?.isForTransaction == true }
+            .map { DataLogOptionMapping(transientOption: $0) }
+    }
     
     private var combinedOptionMappings: [DataLogOptionMapping] {
         var result: [DataLogOptionMapping] = []

@@ -9,8 +9,14 @@ import SwiftUI
 import SwiftData
 
 struct InteractionRowView: View {
-    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForInteraction && $0.archived == false })
-    private var optionMappings: [DataLogOptionMapping]
+    @Query(filter: #Predicate<DataLogOption> { $0.archived == false })
+    private var allOptions: [DataLogOption]
+    
+    private var optionMappings: [DataLogOptionMapping] {
+        allOptions
+            .filter { $0.config?.isForInteraction == true }
+            .map { DataLogOptionMapping(transientOption: $0) }
+    }
     
     let interaction: Interaction
     let onEnd: (() -> Void)?

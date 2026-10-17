@@ -12,8 +12,9 @@ struct LifeEventRowView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var settings = SettingsStore.shared
     
-    @Query(filter: #Predicate<DataLogOptionMapping> { $0.isForLifeEvent && $0.archived == false })
-    private var optionMappings: [DataLogOptionMapping]
+    private var optionMappings: [DataLogOptionMapping] {
+        event.type?.optionMappings.filter { !$0.archived }.sorted { $0.priority < $1.priority } ?? []
+    }
     
     let event: LifeEvent
     let selectedDate: Date

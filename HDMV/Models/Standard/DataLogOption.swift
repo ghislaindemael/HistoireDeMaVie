@@ -41,6 +41,12 @@ struct DataLogOptionConfig: Codable, Equatable {
     var dependsOnSlug: String?
     var showIfValues: [String]?
     var hideIfValues: [String]?
+    
+    // Global scopes
+    var isForTransaction: Bool?
+    var isForInteraction: Bool?
+    var priority: Int?
+    var required: Bool?
 }
 
 @Model
@@ -235,6 +241,11 @@ struct DataLogOptionEditor: CachableModel, EditorProtocol {
     func apply(to model: DataLogOption) {
         if !model.slug.isNotUnset() || model.slug == "!unset" {
             model.slug = self.slug
+            if self.slug.isNotUnset() && self.slug != "!unset" {
+                for mapping in model.mappings ?? [] {
+                    mapping.optionSlug = self.slug
+                }
+            }
         }
         model.name = self.name
         model.type = self.type

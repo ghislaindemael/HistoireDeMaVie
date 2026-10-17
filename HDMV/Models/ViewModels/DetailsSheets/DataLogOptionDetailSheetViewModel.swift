@@ -26,53 +26,28 @@ class DataLogOptionDetailSheetViewModel: BaseDetailSheetViewModel<DataLogOption,
         editor.config?.choices?.remove(at: index)
     }
 
-    // MARK: - Global Mappings Management
+    // MARK: - Global Scopes (Option Config)
     
-    private func getGlobalMapping(condition: (DataLogOptionMapping) -> Bool) -> DataLogOptionMapping? {
-        return model.mappings?.first(where: condition)
-    }
-    
-    private func setGlobalMapping(isOn: Bool, keyPath: ReferenceWritableKeyPath<DataLogOptionMapping, Bool>) {
-        let existingMapping = model.mappings?.first(where: { $0[keyPath: keyPath] == true })
-        
-        if isOn {
-            if existingMapping == nil {
-                let newMapping = DataLogOptionMapping(optionSlug: model.slug)
-                newMapping[keyPath: keyPath] = true
-                newMapping.option = model
-                modelContext.insert(newMapping)
-                if model.mappings == nil {
-                    model.mappings = []
-                }
-                model.mappings?.append(newMapping)
-            }
-        } else {
-            if let mapping = existingMapping {
-                modelContext.delete(mapping)
-                model.mappings?.removeAll(where: { $0.id == mapping.id })
-            }
+    var isForTransaction: Bool {
+        get { editor.config?.isForTransaction ?? false }
+        set {
+            if editor.config == nil { editor.config = DataLogOptionConfig() }
+            editor.config?.isForTransaction = newValue
         }
     }
     
-    var isForTransaction: Bool {
-        get { getGlobalMapping { $0.isForTransaction } != nil }
-        set { setGlobalMapping(isOn: newValue, keyPath: \DataLogOptionMapping.isForTransaction) }
-    }
-    
     var isForInteraction: Bool {
-        get { getGlobalMapping { $0.isForInteraction } != nil }
-        set { setGlobalMapping(isOn: newValue, keyPath: \DataLogOptionMapping.isForInteraction) }
-    }
-    
-    var isForLifeEvent: Bool {
-        get { getGlobalMapping { $0.isForLifeEvent } != nil }
-        set { setGlobalMapping(isOn: newValue, keyPath: \DataLogOptionMapping.isForLifeEvent) }
+        get { editor.config?.isForInteraction ?? false }
+        set {
+            if editor.config == nil { editor.config = DataLogOptionConfig() }
+            editor.config?.isForInteraction = newValue
+        }
     }
     
     // MARK: - Vehicle Type Mappings
     
     func isForVehicleType(_ type: VehicleType) -> Bool {
-        return getGlobalMapping { $0.vehicleTypeSlug == type.rawValue } != nil
+        return model.mappings?.first(where: { $0.vehicleTypeSlug == type.rawValue }) != nil
     }
     
     func setForVehicleType(_ type: VehicleType, isOn: Bool) {
@@ -92,6 +67,18 @@ class DataLogOptionDetailSheetViewModel: BaseDetailSheetViewModel<DataLogOption,
                 modelContext.delete(mapping)
                 model.mappings?.removeAll(where: { $0.id == mapping.id })
             }
+        }
+    }
+    
+    override func onDone() {
+        super.onDone()
+        if model.slug.isNotUnset() && model.slug != "!unset" {
+            for mapping in model.mappings ?? [] {
+                if mapping.optionSlug != model.slug {
+                    mapping.optionSlug = model.slug
+                }
+            }
+            try? modelContext.save()
         }
     }
 

@@ -156,7 +156,7 @@ struct DataLogOptionDetailSheet: View {
                     Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
                 
-                Section("Global Mappings") {
+                Section("Applies Globally To") {
                     Toggle("All Transactions", isOn: Binding(
                         get: { viewModel.isForTransaction },
                         set: { viewModel.isForTransaction = $0 }
@@ -164,10 +164,6 @@ struct DataLogOptionDetailSheet: View {
                     Toggle("All Interactions", isOn: Binding(
                         get: { viewModel.isForInteraction },
                         set: { viewModel.isForInteraction = $0 }
-                    ))
-                    Toggle("All Life Events", isOn: Binding(
-                        get: { viewModel.isForLifeEvent },
-                        set: { viewModel.isForLifeEvent = $0 }
                     ))
                 }
                 
@@ -177,7 +173,50 @@ struct DataLogOptionDetailSheet: View {
                             get: { viewModel.isForVehicleType(type) },
                             set: { viewModel.setForVehicleType(type, isOn: $0) }
                         )) {
-                            type.labelView
+                            HStack {
+                                type.labelView
+                                Spacer()
+                                if let mapping = viewModel.model.mappings?.first(where: { $0.vehicleTypeSlug == type.rawValue }) {
+                                    SyncStatusIndicator(status: mapping.syncStatus)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if let mappings = viewModel.model.mappings?.filter({ !$0.archived }), !mappings.isEmpty {
+                    Section("Attached Mappings") {
+                        ForEach(mappings) { mapping in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    if let act = mapping.activity {
+                                        Text("Activity: \(act.name)")
+                                            .font(.subheadline)
+                                    } else if let veh = mapping.vehicle {
+                                        Text("Vehicle: \(veh.name)")
+                                            .font(.subheadline)
+                                    } else if let vSlug = mapping.vehicleTypeSlug {
+                                        Text("Vehicle Type: \(vSlug.capitalized)")
+                                            .font(.subheadline)
+                                    } else if let txType = mapping.transactionType {
+                                        Text("Transaction Type: \(txType.name)")
+                                            .font(.subheadline)
+                                    } else if let leType = mapping.lifeEventType {
+                                        Text("Life Event Type: \(leType.name)")
+                                            .font(.subheadline)
+                                    } else {
+                                        Text("Mapping: \(mapping.optionSlug)")
+                                            .font(.subheadline)
+                                    }
+                                    if let rid = mapping.rid {
+                                        Text("Server ID: #\(rid)")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                SyncStatusIndicator(status: mapping.syncStatus)
+                            }
                         }
                     }
                 }

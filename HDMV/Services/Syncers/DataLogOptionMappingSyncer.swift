@@ -12,9 +12,50 @@ import SwiftData
 final class DataLogOptionMappingSyncer: BaseSyncer<DataLogOptionMapping, DataLogOptionMappingDTO, DataLogOptionMappingPayload> {
     
     private let mappingService = DataLogOptionMappingService()
+    
+    override func pushChanges() async throws {
+        let allMappings = try modelContext.fetch(FetchDescriptor<DataLogOptionMapping>())
+        var didModify = false
+        for mapping in allMappings {
+            let hasTarget = mapping.activity != nil || mapping.activityRid != nil ||
+                mapping.vehicle != nil || mapping.vehicleRid != nil ||
+                mapping.vehicleTypeSlug != nil ||
+                mapping.transactionType != nil || mapping.transactionTypeRid != nil ||
+                mapping.lifeEventType != nil || mapping.lifeEventTypeRid != nil
+            
+            if !hasTarget {
+                // Delete legacy targetless mapping without altering option config
+                if let rid = mapping.rid {
+                    try? await self.deleteFromServer(rid)
+                }
+                modelContext.delete(mapping)
+                didModify = true
+                continue
+            }
+            
+            if let option = mapping.option, option.slug.isNotUnset() && option.slug != "!unset" {
+                if mapping.optionSlug != option.slug {
+                    mapping.optionSlug = option.slug
+                    didModify = true
+                }
+            }
+        }
+        if didModify {
+            try? modelContext.save()
+        }
+        try await super.pushChanges()
+    }
         
     override func fetchRemoteModels(date: Date?) async throws -> [DataLogOptionMappingDTO] {
-        return try await mappingService.fetchMappings()
+        let dtos = try await mappingService.fetchMappings()
+        // Ignore any legacy remote mappings without an entity or vehicle-type target
+        return dtos.filter { dto in
+            dto.activity_id != nil ||
+            dto.vehicle_id != nil ||
+            dto.vehicle_type_slug != nil ||
+            dto.transaction_type_id != nil ||
+            dto.life_event_type_id != nil
+        }
     }
     
     override func createOnServer(payload: DataLogOptionMappingPayload) async throws -> DataLogOptionMappingDTO {
