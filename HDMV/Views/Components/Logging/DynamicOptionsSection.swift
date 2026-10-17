@@ -65,7 +65,7 @@ struct DynamicOptionsSection: View {
     
     var body: some View {
         Section(header: headerView("Options")) {
-            ForEach(sortedMappings) { mapping in
+            ForEach(sortedMappings, id: \.optionSlug) { mapping in
                 if let option = mapping.option ?? allOptions.first(where: { $0.slug == mapping.optionSlug }) {
                     DynamicOptionRow(
                         option: option,
@@ -74,7 +74,7 @@ struct DynamicOptionsSection: View {
                 }
             }
             
-            ForEach(oneOffOptions) { option in
+            ForEach(oneOffOptions, id: \.slug) { option in
                 DynamicOptionRow(
                     option: option,
                     details: $decodedLogDetails
@@ -188,7 +188,11 @@ struct DynamicOptionRow: View {
                 if details?.options == nil {
                     details?.options = [:]
                 }
-                details?.options?[option.slug] = newValue
+                if newValue.isEmpty {
+                    details?.options?.removeValue(forKey: option.slug)
+                } else {
+                    details?.options?[option.slug] = newValue
+                }
             }
         )
     }
