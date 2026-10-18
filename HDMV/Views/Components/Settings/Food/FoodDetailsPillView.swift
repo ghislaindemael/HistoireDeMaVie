@@ -83,6 +83,10 @@ struct FoodDetailsPillView: View {
     }
     
     private func formatFoodItem(_ item: ComposedFood) -> String {
-        return item.rawText ?? "Unknown Food"
+        var text = item.rawText ?? "Unknown Food"
+        if let details = item.details, !details.isEmpty {
+            text += " (\(details))"
+        }
+        return text
     }
 }

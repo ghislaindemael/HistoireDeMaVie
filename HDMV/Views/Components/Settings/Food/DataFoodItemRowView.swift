@@ -7,13 +7,19 @@ struct DataFoodItemRowView: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
                     .font(.headline)
-                if let unit = item.baseUnit {
-                    Text("Base Unit: \(unit)")
+                if let details = item.details, !details.isEmpty {
+                    Text(details)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                if let unit = item.baseUnit {
+                    Text("Base Unit: \(unit)")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
             }
             Spacer()

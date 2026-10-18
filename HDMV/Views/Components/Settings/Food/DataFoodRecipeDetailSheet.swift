@@ -37,12 +37,19 @@ struct DataFoodRecipeDetailSheet: View {
                             itemToEdit = compItem
                         } label: {
                             HStack {
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(compItem.rawText ?? "Unknown Food")
                                         .foregroundColor(.primary)
+                                    if let details = compItem.details, !details.isEmpty {
+                                        Text(details)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                    }
                                     if let qty = compItem.quantity {
                                         Text(String(format: "%.1f", qty) + " " + (compItem.unit?.rawValue ?? ""))
-                                            .font(.caption)
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
                                     }
                                 }
                                 Spacer()

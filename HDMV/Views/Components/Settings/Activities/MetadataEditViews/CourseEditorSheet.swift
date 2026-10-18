@@ -19,14 +19,21 @@ struct CourseEditorSheet: View {
                         itemToEdit = item
                     } label: {
                         HStack {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(item.rawText ?? "Unknown Food")
                                     .foregroundColor(.primary)
                                 
-                                if let qty = item.quantity {
-                                    Text(String(format: "%.1f", qty) + " " + (item.unit ?? ""))
+                                if let details = item.details, !details.isEmpty {
+                                    Text(details)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                                
+                                if let qty = item.quantity {
+                                    Text(String(format: "%.1f", qty) + " " + (item.unit ?? ""))
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
                                 }
                             }
                             Spacer()

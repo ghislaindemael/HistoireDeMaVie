@@ -38,17 +38,10 @@ struct ComposedFoodEditorForm: View {
         if let firstItem = foodItems.first, let servingSizes = firstItem.servingSizes {
             units.append(contentsOf: servingSizes.map { $0.unitName })
         }
+        if let current = item.unit, !units.contains(current) {
+            units.append(current)
+        }
         return units
-    }
-    
-    private func macroBinding(for keyPath: WritableKeyPath<DataFoodItemMacros, Double?>) -> Binding<Double?> {
-        Binding<Double?>(
-            get: { item.snapshottedMacros?[keyPath: keyPath] },
-            set: { newValue in
-                if item.snapshottedMacros == nil { item.snapshottedMacros = DataFoodItemMacros() }
-                item.snapshottedMacros?[keyPath: keyPath] = newValue
-            }
-        )
     }
     
     init(item: Binding<ComposedFood>) {
@@ -77,6 +70,12 @@ struct ComposedFoodEditorForm: View {
                         .font(.headline)
                 }
                 
+                TextField("Details / Notes", text: Binding(
+                    get: { item.details ?? "" },
+                    set: { item.details = $0.isEmpty ? nil : $0 }
+                ), axis: .vertical)
+                .lineLimit(2...4)
+                
                 Picker("Course", selection: Binding(
                     get: { item.course ?? .entree },
                     set: { item.course = $0 }
@@ -95,7 +94,9 @@ struct ComposedFoodEditorForm: View {
                     ), format: .number)
                     .keyboardType(.decimalPad)
                     
-                    Picker("Unit", selection: Binding(
+                    Spacer()
+                    
+                    Picker("", selection: Binding(
                         get: { item.unit ?? "g" },
                         set: { item.unit = $0 }
                     )) {
@@ -103,21 +104,17 @@ struct ComposedFoodEditorForm: View {
                             Text(unit).tag(unit as String?)
                         }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
                 }
             }
             
             Section("Custom Macros") {
-                HStack { Text("Calories"); Spacer(); TextField("kcal", value: macroBinding(for: \.calories), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                HStack { Text("Protein"); Spacer(); TextField("g", value: macroBinding(for: \.protein), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                HStack { Text("Carbs"); Spacer(); TextField("g", value: macroBinding(for: \.carbs), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                HStack { Text("Fat"); Spacer(); TextField("g", value: macroBinding(for: \.fat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                
-                DisclosureGroup("Extended Macros") {
-                    HStack { Text("Fiber"); Spacer(); TextField("g", value: macroBinding(for: \.fiber), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Sugar"); Spacer(); TextField("g", value: macroBinding(for: \.sugar), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Saturated Fat"); Spacer(); TextField("g", value: macroBinding(for: \.saturatedFat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Sodium"); Spacer(); TextField("mg", value: macroBinding(for: \.sodium), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Alcohol"); Spacer(); TextField("g", value: macroBinding(for: \.alcohol), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                NavigationLink(destination: FoodMacrosEditView(
+                    macros: $item.snapshottedMacros,
+                    subtitle: "Custom Macros"
+                )) {
+                    FoodMacrosSummaryView(macros: item.snapshottedMacros)
                 }
             }
             
@@ -171,13 +168,19 @@ struct ComposedFoodEditorForm: View {
                         .navigationTitle(item.children![idx].rawText ?? "Ingredient")
                         ) {
                             HStack {
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(children[idx].rawText ?? "Unknown Food")
                                         .foregroundColor(.primary)
-                                    if let qty = children[idx].quantity {
-                                        Text(String(format: "%.1f", qty) + " " + (children[idx].unit ?? ""))
+                                    if let details = children[idx].details, !details.isEmpty {
+                                        Text(details)
                                             .font(.caption)
                                             .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                    if let qty = children[idx].quantity {
+                                        Text(String(format: "%.1f", qty) + " " + (children[idx].unit ?? ""))
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
                                     }
                                 }
                             }

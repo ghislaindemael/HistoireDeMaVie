@@ -13,16 +13,6 @@ struct DataFoodItemDetailSheet: View {
     @State private var newUnitName = ""
     @State private var newGrams: Double? = nil
     
-    private func macroBinding(for keyPath: WritableKeyPath<DataFoodItemMacros, Double?>) -> Binding<Double?> {
-        Binding<Double?>(
-            get: { editor.macros?[keyPath: keyPath] },
-            set: { newValue in
-                if editor.macros == nil { editor.macros = DataFoodItemMacros() }
-                editor.macros?[keyPath: keyPath] = newValue
-            }
-        )
-    }
-    
     init(item: DataFoodItem, modelContext: ModelContext) {
         self.item = item
         self.modelContext = modelContext
@@ -34,6 +24,12 @@ struct DataFoodItemDetailSheet: View {
             Form {
                 Section("Basic Info") {
                     TextField("Name", text: $editor.name)
+                    
+                    TextField("Details / Notes", text: Binding(
+                        get: { editor.details ?? "" },
+                        set: { val in editor.details = val.isEmpty ? nil : val }
+                    ), axis: .vertical)
+                    .lineLimit(2...4)
                     
                     TextField("Base Unit (e.g. g, ml, cl)", text: Binding(
                         get: { editor.baseUnit ?? "" },
@@ -67,17 +63,11 @@ struct DataFoodItemDetailSheet: View {
                 }
                 
                 Section("Macros (per 100 base units)") {
-                    HStack { Text("Calories"); Spacer(); TextField("kcal", value: macroBinding(for: \.calories), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Protein"); Spacer(); TextField("g", value: macroBinding(for: \.protein), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Carbs"); Spacer(); TextField("g", value: macroBinding(for: \.carbs), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    HStack { Text("Fat"); Spacer(); TextField("g", value: macroBinding(for: \.fat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                    
-                    DisclosureGroup("Extended Macros") {
-                        HStack { Text("Fiber"); Spacer(); TextField("g", value: macroBinding(for: \.fiber), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                        HStack { Text("Sugar"); Spacer(); TextField("g", value: macroBinding(for: \.sugar), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                        HStack { Text("Saturated Fat"); Spacer(); TextField("g", value: macroBinding(for: \.saturatedFat), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                        HStack { Text("Sodium"); Spacer(); TextField("mg", value: macroBinding(for: \.sodium), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
-                        HStack { Text("Alcohol"); Spacer(); TextField("g", value: macroBinding(for: \.alcohol), format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
+                    NavigationLink(destination: FoodMacrosEditView(
+                        macros: $editor.macros,
+                        subtitle: "Per 100 \(editor.baseUnit ?? "base units")"
+                    )) {
+                        FoodMacrosSummaryView(macros: editor.macros)
                     }
                 }
                 

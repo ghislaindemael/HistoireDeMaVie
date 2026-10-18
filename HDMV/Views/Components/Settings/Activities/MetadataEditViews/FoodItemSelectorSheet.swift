@@ -88,10 +88,13 @@ struct FoodItemSelectorSheet: View {
     @ViewBuilder
     private func itemRow(_ item: DataFoodItem) -> some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(item.name).foregroundColor(.primary)
+                if let details = item.details, !details.isEmpty {
+                    Text(details).font(.caption).foregroundColor(.secondary).lineLimit(1)
+                }
                 if let parent = item.parent {
-                    Text(parent.name).font(.caption).foregroundColor(.secondary)
+                    Text(parent.name).font(.caption2).foregroundStyle(.tertiary)
                 }
             }
             Spacer()
@@ -123,6 +126,7 @@ struct FoodItemSelectorSheet: View {
         let newFood = ComposedFood(
             foodItemRid: nil,
             rawText: text,
+            details: nil,
             course: course,
             options: nil,
             quantity: nil,
@@ -137,6 +141,7 @@ struct FoodItemSelectorSheet: View {
         let newFood = ComposedFood(
             foodItemRid: item.rid,
             rawText: item.name,
+            details: item.details,
             course: course,
             options: nil,
             quantity: nil,
@@ -154,6 +159,7 @@ struct FoodItemSelectorSheet: View {
             let newFood = ComposedFood(
                 foodItemRid: nil,
                 rawText: recipe.name,
+                details: nil,
                 course: course,
                 options: nil,
                 quantity: nil,
@@ -166,6 +172,7 @@ struct FoodItemSelectorSheet: View {
             let newFood = ComposedFood(
                 foodItemRid: nil,
                 rawText: recipe.name,
+                details: nil,
                 course: course,
                 options: nil,
                 quantity: nil,

@@ -9,6 +9,7 @@ struct ComposedFood: Codable, Hashable, Identifiable {
     var foodItemRid: Int?
     var sourceActivityRid: Int? // Link to a batch cooking activity!
     var rawText: String?
+    var details: String?
     
     // Properties
     var course: CourseType?
