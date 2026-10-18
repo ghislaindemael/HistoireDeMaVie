@@ -34,12 +34,32 @@ struct ComposedFoodEditorForm: View {
     @State private var showingItemSelector = false
     
     private var availableUnits: [String] {
-        var units = ["g", "ml"]
-        if let firstItem = foodItems.first, let servingSizes = firstItem.servingSizes {
-            units.append(contentsOf: servingSizes.map { $0.unitName })
+        var units: [String] = []
+        let base = foodItems.first?.effectiveBaseUnit?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        if base == "g" {
+            units.append("g")
+        } else if base == "ml" {
+            units.append("ml")
+        } else if let base = base, !base.isEmpty {
+            units.append(base)
+        } else {
+            units.append(contentsOf: ["g", "ml"])
         }
+        
+        if let firstItem = foodItems.first {
+            for size in firstItem.effectiveServingSizes {
+                if !units.contains(size.unitName) {
+                    units.append(size.unitName)
+                }
+            }
+        }
+        
         if let current = item.unit, !units.contains(current) {
-            units.append(current)
+            let isConflicting = (base == "g" && current.lowercased() == "ml") || (base == "ml" && current.lowercased() == "g")
+            if !isConflicting {
+                units.append(current)
+            }
         }
         return units
     }

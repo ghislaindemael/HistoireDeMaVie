@@ -110,6 +110,42 @@ final class DataFoodItem: Identifiable, Hashable, CatalogueModel, TreeSelectable
         }
     }
     
+    var effectiveBaseUnit: String? {
+        if let unit = baseUnit, !unit.isEmpty {
+            return unit
+        }
+        return parent?.effectiveBaseUnit
+    }
+    
+    var effectiveServingSizes: [FoodServingSize] {
+        var result: [FoodServingSize] = []
+        var seen = Set<String>()
+        
+        // Own serving sizes first
+        if let own = servingSizes {
+            for size in own {
+                let key = size.unitName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                if !key.isEmpty && !seen.contains(key) {
+                    seen.insert(key)
+                    result.append(size)
+                }
+            }
+        }
+        
+        // Inherit from parent hierarchy
+        if let parentSizes = parent?.effectiveServingSizes {
+            for size in parentSizes {
+                let key = size.unitName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                if !key.isEmpty && !seen.contains(key) {
+                    seen.insert(key)
+                    result.append(size)
+                }
+            }
+        }
+        
+        return result
+    }
+    
     convenience init(fromDto dto: DataFoodItemDTO) {
         self.init()
         self.rid = dto.id

@@ -4,6 +4,7 @@ import UIKit
 struct FoodClipboardManager {
     static let coursePrefix = "HDMV_COURSE:"
     static let foodPrefix = "HDMV_FOOD:"
+    static let servingSizesPrefix = "HDMV_SERVING_SIZES:"
     
     // MARK: - Copying
     
@@ -18,6 +19,13 @@ struct FoodClipboardManager {
         if let data = try? JSONEncoder().encode(food),
            let json = String(data: data, encoding: .utf8) {
             UIPasteboard.general.string = foodPrefix + json
+        }
+    }
+    
+    static func copy(servingSizes: [FoodServingSize]) {
+        if let data = try? JSONEncoder().encode(servingSizes),
+           let json = String(data: data, encoding: .utf8) {
+            UIPasteboard.general.string = servingSizesPrefix + json
         }
     }
     
@@ -41,6 +49,13 @@ struct FoodClipboardManager {
         return regenerateIDs(for: item)
     }
     
+    static func getServingSizes() -> [FoodServingSize]? {
+        guard let string = UIPasteboard.general.string, string.hasPrefix(servingSizesPrefix) else { return nil }
+        let json = String(string.dropFirst(servingSizesPrefix.count))
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode([FoodServingSize].self, from: data)
+    }
+    
     // MARK: - Helpers
     
     static var hasCourse: Bool {
@@ -49,6 +64,10 @@ struct FoodClipboardManager {
     
     static var hasFood: Bool {
         return UIPasteboard.general.string?.hasPrefix(foodPrefix) == true
+    }
+    
+    static var hasServingSizes: Bool {
+        return UIPasteboard.general.string?.hasPrefix(servingSizesPrefix) == true
     }
     
     private static func regenerateIDs(for food: ComposedFood) -> ComposedFood {
