@@ -129,9 +129,19 @@ final class ActivityInstance: LogModel {
             guard let selectedValueSlug = mappedOptions[option.slug] else { continue }
             
             let config = option.config
-            let choice = config?.choices?.first(where: { $0.slug == selectedValueSlug })
-            let label = choice?.label ?? selectedValueSlug
-            let icon = choice?.icon
+            let selections = selectedValueSlug.components(separatedBy: ",").filter { !$0.isEmpty }
+            var labels: [String] = []
+            var icons: [String] = []
+            for sel in selections {
+                if let c = config?.choices?.first(where: { $0.slug == sel }) {
+                    labels.append(c.label)
+                    if let icon = c.icon { icons.append(icon) }
+                } else {
+                    labels.append(sel)
+                }
+            }
+            let label = labels.isEmpty ? selectedValueSlug : labels.joined(separator: ", ")
+            let icon = icons.first
             let isDefault = (selectedValueSlug == config?.defaultValue)
             let replaces = config?.replacesActivityName ?? false
             

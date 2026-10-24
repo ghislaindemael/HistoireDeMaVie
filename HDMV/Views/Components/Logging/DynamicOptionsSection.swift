@@ -79,22 +79,9 @@ struct DynamicOptionsSection: View {
             ForEach(oneOffOptions, id: \.slug) { option in
                 DynamicOptionRow(
                     option: option,
-                    details: $decodedLogDetails
+                    details: $decodedLogDetails,
+                    onRemove: { removeOneOffOption(option.slug) }
                 )
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        removeOneOffOption(option.slug)
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        removeOneOffOption(option.slug)
-                    } label: {
-                        Label("Remove Option", systemImage: "trash")
-                    }
-                }
             }
             
             Button {
@@ -181,6 +168,15 @@ extension View {
 struct DynamicOptionRow: View {
     let option: DataLogOption
     @Binding var details: LogDetails?
+    var onRemove: (() -> Void)? = nil
+    
+    @State private var isPromotedToMultiSelect: Bool = false
+    
+    private var isMultiSelect: Bool {
+        if option.config?.multiselect == true { return true }
+        if optionValue.wrappedValue.contains(",") { return true }
+        return isPromotedToMultiSelect
+    }
     
     private var optionValue: Binding<String> {
         Binding(
@@ -201,6 +197,16 @@ struct DynamicOptionRow: View {
                 }
             }
         )
+    }
+    
+    private func demoteToSingleChoice() {
+        withAnimation {
+            isPromotedToMultiSelect = false
+            var current = optionValue.wrappedValue.components(separatedBy: ",").filter { !$0.isEmpty }
+            if current.count > 1 {
+                optionValue.wrappedValue = current.first ?? ""
+            }
+        }
     }
     
     var body: some View {
@@ -240,17 +246,37 @@ struct DynamicOptionRow: View {
                 
             case .dropdown:
                 if let config = option.config, let choices = config.choices {
-                    if config.multiselect == true {
+                    let selectedSlugs = Set(optionValue.wrappedValue.components(separatedBy: ",").filter { !$0.isEmpty })
+                    let visibleChoices = choices.filter { choice in
+                        choice.archived != true || selectedSlugs.contains(choice.slug)
+                    }
+                    
+                    if isMultiSelect {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(option.name)
+                            HStack {
+                                Text(option.name)
+                                if config.multiselect != true {
+                                    Text("(Multi)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        demoteToSingleChoice()
+                                    } label: {
+                                        Text("Single choice")
+                                            .font(.caption)
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                            }
                             FlowLayout(spacing: 6) {
-                                ForEach(choices, id: \.slug) { choice in
-                                    let isSelected = optionValue.wrappedValue.components(separatedBy: ",").contains(choice.slug)
+                                ForEach(visibleChoices, id: \.slug) { choice in
+                                    let isSelected = selectedSlugs.contains(choice.slug)
                                     HStack(spacing: 4) {
                                         if let icon = choice.icon {
                                             Image(systemName: icon)
                                         }
-                                        Text(choice.label)
+                                        Text(choice.label + (choice.archived == true ? " (Archived)" : ""))
                                     }
                                         .font(.subheadline)
                                         .padding(.horizontal, 12)
@@ -274,8 +300,8 @@ struct DynamicOptionRow: View {
                     } else {
                         Picker(option.name, selection: optionValue) {
                             Text("None").tag("")
-                            ForEach(choices, id: \.slug) { choice in
-                                Text(choice.label).tag(choice.slug)
+                            ForEach(visibleChoices, id: \.slug) { choice in
+                                Text(choice.label + (choice.archived == true ? " (Archived)" : "")).tag(choice.slug)
                             }
                         }
                     }
@@ -328,6 +354,62 @@ struct DynamicOptionRow: View {
             default:
                 Text("Unsupported type: \(option.typeRaw)")
                     .foregroundStyle(.red)
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if let onRemove = onRemove {
+                Button(role: .destructive) {
+                    onRemove()
+                } label: {
+                    Label("Remove", systemImage: "trash")
+                }
+            }
+            
+            if option.type == .dropdown, let config = option.config, config.choices != nil, config.multiselect != true {
+                if isMultiSelect {
+                    Button {
+                        demoteToSingleChoice()
+                    } label: {
+                        Label("Single", systemImage: "arrow.uturn.backward")
+                    }
+                    .tint(.orange)
+                } else {
+                    Button {
+                        withAnimation {
+                            isPromotedToMultiSelect = true
+                        }
+                    } label: {
+                        Label("Multi-choice", systemImage: "checklist")
+                    }
+                    .tint(.blue)
+                }
+            }
+        }
+        .contextMenu {
+            if option.type == .dropdown, let config = option.config, config.choices != nil, config.multiselect != true {
+                if isMultiSelect {
+                    Button {
+                        demoteToSingleChoice()
+                    } label: {
+                        Label("Switch to Single Choice", systemImage: "circle")
+                    }
+                } else {
+                    Button {
+                        withAnimation {
+                            isPromotedToMultiSelect = true
+                        }
+                    } label: {
+                        Label("Allow Multiple Choices", systemImage: "checklist")
+                    }
+                }
+            }
+            
+            if let onRemove = onRemove {
+                Button(role: .destructive) {
+                    onRemove()
+                } label: {
+                    Label("Remove Option", systemImage: "trash")
+                }
             }
         }
     }

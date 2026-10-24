@@ -30,10 +30,11 @@ struct DataLogOptionSelectorView: View {
     }
     
     private var availableOptions: [DataLogOption] {
+        let activeOptions = allOptions.filter { !$0.archived }
         if excludedSlugs.isEmpty {
-            return allOptions
+            return activeOptions
         }
-        return allOptions.filter { !excludedSlugs.contains($0.slug) }
+        return activeOptions.filter { !excludedSlugs.contains($0.slug) }
     }
     
     private var filteredOptions: [DataLogOption] {
