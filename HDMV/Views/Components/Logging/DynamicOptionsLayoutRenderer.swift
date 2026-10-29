@@ -175,7 +175,7 @@ class DynamicOptionsLayoutEngine {
         
         // Handle any unmapped logged slugs that weren't consumed
         if let decoded = decodedOptions {
-            let sortedUnmapped = decoded.keys.filter { !isConsumed($0) }.sorted()
+            let sortedUnmapped = decoded.keys.filter { !isConsumed($0) && !(decoded[$0]?.isEmpty ?? true) }.sorted()
             for slug in sortedUnmapped {
                 views.append(AnyView(defaultPill(forSlug: slug, isLogged: true, isRequired: false)))
                 markConsumed(slug: slug)

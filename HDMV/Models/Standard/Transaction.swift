@@ -41,7 +41,9 @@ final class Transaction: LogModel {
             return try? JSONDecoder().decode(LogDetails.self, from: data)
         }
         set {
-            log_details = try? JSONEncoder().encode(newValue)
+            var details = newValue
+            details?.cleanEmptyOptions()
+            log_details = try? JSONEncoder().encode(details)
         }
     }
     

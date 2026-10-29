@@ -191,7 +191,13 @@ struct DynamicOptionRow: View {
                     details?.options = [:]
                 }
                 if newValue.isEmpty {
-                    details?.options?.removeValue(forKey: option.slug)
+                    if onRemove != nil {
+                        // For one-off options, keep the key so the row does not disappear while editing
+                        details?.options?[option.slug] = ""
+                    } else {
+                        // For mapped options, removing the key is safe as mapped options are always retained in the UI
+                        details?.options?.removeValue(forKey: option.slug)
+                    }
                 } else {
                     details?.options?[option.slug] = newValue
                 }

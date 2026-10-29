@@ -51,4 +51,11 @@ struct LogDetails: Codable, @unchecked Sendable {
     mutating func removeFields() {
         place?.removeFields()
     }
+    
+    mutating func cleanEmptyOptions() {
+        if let opts = options {
+            let filtered = opts.filter { !$0.value.isEmpty }
+            options = filtered.isEmpty ? nil : filtered
+        }
+    }
 }
