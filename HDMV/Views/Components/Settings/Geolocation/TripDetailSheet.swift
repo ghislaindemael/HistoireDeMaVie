@@ -10,6 +10,7 @@ import SwiftData
 
 struct TripDetailSheet: View {
     
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: TripDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
@@ -35,7 +36,11 @@ struct TripDetailSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                TimeSection(editor: $viewModel.editor)
+                TimeSection(
+                    editor: $viewModel.editor,
+                    startTimeZone: viewModel.editor.resolvedStartTimeZone(in: modelContext),
+                    endTimeZone: viewModel.editor.resolvedEndTimeZone(in: modelContext)
+                )
                 vehicleSection
                 
                 Section(header: headerView("Start Place")) {

@@ -35,7 +35,11 @@ struct QuoteDetailSheet: View {
         NavigationView {
             Form {
                 
-                TimeSection(editor: $viewModel.editor, hideEndTime: true)
+                TimeSection(
+                    editor: $viewModel.editor,
+                    hideEndTime: true,
+                    startTimeZone: quote.resolvedStartTimeZone(in: modelContext)
+                )
                 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {

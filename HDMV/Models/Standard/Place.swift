@@ -158,6 +158,23 @@ final class Place: CatalogueModel, EditableModel {
     func isValid() -> Bool {
         return name != "Unset" && name.count > 0 && cityRid != nil
     }
+    
+    var resolvedCity: City? {
+        if let city = self.city {
+            return city
+        }
+        if let cRid = self.cityRid, let context = self.modelContext {
+            let predicate = #Predicate<City> { $0.rid == cRid }
+            var descriptor = FetchDescriptor(predicate: predicate)
+            descriptor.fetchLimit = 1
+            return try? context.fetch(descriptor).first
+        }
+        return nil
+    }
+    
+    var resolvedTimeZone: TimeZone? {
+        resolvedCity?.resolvedTimeZone
+    }
 }
 
 // MARK: - Geometry Support

@@ -24,7 +24,10 @@ struct TransactionDetailSheet: View {
         return cur == "CHF" || cur == "EUR"
     }
     
+    let transaction: Transaction
+    
     init(transaction: Transaction, modelContext: ModelContext) {
+        self.transaction = transaction
         _viewModel = StateObject(wrappedValue: TransactionDetailSheetViewModel(
             model: transaction,
             modelContext: modelContext
@@ -57,14 +60,17 @@ struct TransactionDetailSheet: View {
                 
                 // MARK: - 1. Time & Details
                 Section("Basics") {
+                    let txTZ = transaction.resolvedStartTimeZone(in: modelContext)
                     FullTimePicker(
                         label: "Transaction Date",
-                        selection: $viewModel.editor.timeStart
+                        selection: $viewModel.editor.timeStart,
+                        timeZone: txTZ
                     )
                     
                     FullTimePicker(
                         label: "Execution Date",
-                        selection: $viewModel.editor.executionDate
+                        selection: $viewModel.editor.executionDate,
+                        timeZone: txTZ
                     )
                     
                     TextField("Description / Notes", text: Binding(

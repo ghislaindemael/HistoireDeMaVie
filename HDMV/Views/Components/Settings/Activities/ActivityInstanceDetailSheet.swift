@@ -37,7 +37,11 @@ struct ActivityInstanceDetailSheet: View {
         NavigationView {
             Form {
                 
-                TimeSection(editor: $viewModel.editor)
+                TimeSection(
+                    editor: $viewModel.editor,
+                    startTimeZone: viewModel.editor.resolvedStartTimeZone(for: instance, in: modelContext),
+                    endTimeZone: viewModel.editor.resolvedEndTimeZone(for: instance, in: modelContext)
+                )
                 
                 basicsSection
                 detailsSection

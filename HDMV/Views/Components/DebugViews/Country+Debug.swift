@@ -12,6 +12,7 @@ extension Country: DebugViewable {
             }
             NamedStringDisplayView(name: "Name", value: name)
             NamedStringDisplayView(name: "Slug", value: slug)
+            NamedStringDisplayView(name: "TimeZone", value: effectiveTimeZoneIdentifier)
             NamedStringDisplayView(name: "SyncStatus", value: syncStatusRaw)
         }
     }

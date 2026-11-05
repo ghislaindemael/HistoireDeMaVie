@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct InteractionRowView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<DataLogOption> { $0.archived == false })
     private var allOptions: [DataLogOption]
     
@@ -17,10 +18,12 @@ struct InteractionRowView: View {
     }
     
     let interaction: Interaction
+    let selectedDate: Date?
     let onEnd: (() -> Void)?
     
-    init(interaction: Interaction, onEnd: (() -> Void)? = nil) {
+    init(interaction: Interaction, selectedDate: Date? = nil, onEnd: (() -> Void)? = nil) {
         self.interaction = interaction
+        self.selectedDate = selectedDate
         self.onEnd = onEnd
     }
     
@@ -49,7 +52,9 @@ struct InteractionRowView: View {
                 DateRangeDisplayView(
                     startDate: interaction.timeStart,
                     endDate: interaction.timeEnd,
-                    selectedDate: interaction.timeStart
+                    selectedDate: selectedDate ?? interaction.timeStart,
+                    startTimeZone: interaction.resolvedStartTimeZone(in: modelContext),
+                    endTimeZone: interaction.resolvedEndTimeZone(in: modelContext)
                 )
             }
             

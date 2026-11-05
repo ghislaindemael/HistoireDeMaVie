@@ -87,7 +87,10 @@ struct MyTransactionsPage: View {
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(viewModel.transactions) { transaction in
-                        TransactionRowView(transaction: transaction)
+                        TransactionRowView(
+                            transaction: transaction,
+                            selectedDate: viewModel.filterMode == .daily ? viewModel.filterDate : transaction.transactionTime
+                        )
                             .onTapGesture {
                                 transactionToEdit = transaction
                             }

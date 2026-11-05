@@ -63,7 +63,9 @@ struct LifeEventRowView: View {
                         DateRangeDisplayView(
                             startDate: event.timeStart,
                             endDate: event.timeEnd,
-                            selectedDate: selectedDate
+                            selectedDate: selectedDate,
+                            startTimeZone: event.resolvedStartTimeZone(in: modelContext),
+                            endTimeZone: event.resolvedEndTimeZone(in: modelContext)
                         )
                         .font(.subheadline)
                         

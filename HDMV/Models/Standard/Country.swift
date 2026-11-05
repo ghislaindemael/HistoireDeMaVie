@@ -13,11 +13,12 @@ import Foundation
 import SwiftData
 
 @Model
-final class Country: CatalogueModel {
+final class Country: CatalogueModel, EditableModel {
     
     @Attribute(.unique) var rid: Int?
     @Attribute(.unique) var slug: String
     @Attribute(.unique) var name: String
+    var timezone: String?
     var cache: Bool = false
     var archived: Bool = false
     var syncStatusRaw: String = SyncStatus.unsynced.rawValue
@@ -37,6 +38,7 @@ final class Country: CatalogueModel {
         slug: String = "!unset",
         name: String = "Unset",
         rid: Int? = nil,
+        timezone: String? = nil,
         cache: Bool = false,
         archived: Bool = false,
         syncStatus: SyncStatus = .unsynced
@@ -44,6 +46,7 @@ final class Country: CatalogueModel {
         self.slug = slug
         self.name = name
         self.rid = rid
+        self.timezone = timezone ?? Self.defaultTimeZoneIdentifier(forSlug: slug)
         self.cache = cache
         self.archived = archived
         self.syncStatusRaw = syncStatus.rawValue
@@ -57,15 +60,72 @@ final class Country: CatalogueModel {
     }
     
     convenience init(fromDto dto: CountryDTO) {
-        self.init(slug: dto.slug, name: dto.name, rid: dto.id, archived: dto.archived, syncStatus: .synced)
+        self.init(
+            slug: dto.slug,
+            name: dto.name,
+            rid: dto.id,
+            timezone: dto.timezone ?? Self.defaultTimeZoneIdentifier(forSlug: dto.slug),
+            archived: dto.archived,
+            syncStatus: .synced
+        )
     }
     
     func update(fromDto dto: CountryDTO) {
         self.rid = dto.id
         self.slug = dto.slug
         self.name = dto.name
+        if let dtoTz = dto.timezone, !dtoTz.isEmpty {
+            self.timezone = dtoTz
+        } else if self.timezone == nil {
+            self.timezone = Self.defaultTimeZoneIdentifier(forSlug: dto.slug)
+        }
         self.archived = dto.archived
         self.syncStatusRaw = SyncStatus.synced.rawValue
+    }
+    
+    var effectiveTimeZoneIdentifier: String? {
+        if let tz = timezone, !tz.isEmpty {
+            return tz
+        }
+        return Self.defaultTimeZoneIdentifier(forSlug: slug)
+    }
+    
+    var resolvedTimeZone: TimeZone? {
+        guard let id = effectiveTimeZoneIdentifier else { return nil }
+        return TimeZone(identifier: id)
+    }
+    
+    static func defaultTimeZoneIdentifier(forSlug slug: String) -> String? {
+        switch slug.lowercased() {
+        case "england", "wales", "uk", "unitedkingdom":
+            return "Europe/London"
+        case "france":
+            return "Europe/Paris"
+        case "switzerland", "ch":
+            return "Europe/Zurich"
+        case "italy":
+            return "Europe/Rome"
+        case "egypt":
+            return "Africa/Cairo"
+        case "japan":
+            return "Asia/Tokyo"
+        case "netherlands":
+            return "Europe/Amsterdam"
+        case "unitedstates", "usa":
+            return "America/New_York"
+        case "tunisia":
+            return "Africa/Tunis"
+        case "austria":
+            return "Europe/Vienna"
+        case "germany", "allemagne":
+            return "Europe/Berlin"
+        case "monaco":
+            return "Europe/Monaco"
+        case "vatican":
+            return "Europe/Vatican"
+        default:
+            return nil
+        }
     }
     
     var sortedCities: [City] {
@@ -81,20 +141,22 @@ struct CountryDTO: Codable, Identifiable, Sendable {
     var id: Int
     var slug: String
     var name: String
+    var timezone: String? = nil
     var archived: Bool = false
-    
 }
 
 struct CountryPayload: Codable, InitializableWithModel {
     typealias Model = Country
     var slug: String
     var name: String
+    var timezone: String?
     var archived: Bool
     
     init?(from country: Country) {
         guard country.isValid() else { return nil }
         self.slug = country.slug
         self.name = country.name
+        self.timezone = country.effectiveTimeZoneIdentifier
         self.archived = country.archived
     }
 }
@@ -103,6 +165,7 @@ struct CountryEditor: CachableModel, EditorProtocol {
     var rid: Int?
     var slug: String
     var name: String
+    var timezone: String?
     var cache: Bool
     var archived: Bool
     
@@ -112,6 +175,7 @@ struct CountryEditor: CachableModel, EditorProtocol {
         self.rid = country.rid
         self.slug = country.slug
         self.name = country.name
+        self.timezone = country.effectiveTimeZoneIdentifier
         self.cache = country.cache
         self.archived = country.archived
     }
@@ -120,6 +184,7 @@ struct CountryEditor: CachableModel, EditorProtocol {
         country.rid = self.rid
         country.slug = self.slug
         country.name = self.name
+        country.timezone = (self.timezone?.isEmpty == true) ? nil : self.timezone
         country.cache = self.cache
         country.archived = self.archived
     }

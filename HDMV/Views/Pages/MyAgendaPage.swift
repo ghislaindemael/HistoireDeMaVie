@@ -97,7 +97,7 @@ struct MyAgendaPage: View {
                                 eventToEdit = event
                             }
                         case .quote(let quote):
-                            QuoteRowView(quote: quote)
+                            QuoteRowView(quote: quote, selectedDate: viewModel.filterDate)
                                 .onTapGesture {
                                     quoteToEdit = quote
                                 }

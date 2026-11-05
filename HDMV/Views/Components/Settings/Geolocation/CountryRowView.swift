@@ -14,11 +14,25 @@ struct CountryRowView: View {
     
     var body: some View {
         HStack {
-            UnsettableTextView(
-                text: country.name,
-                font: .title3.bold(),
-                isItalicized: country.archived
-            )
+            VStack(alignment: .leading, spacing: 2) {
+                UnsettableTextView(
+                    text: country.name,
+                    font: .title3.bold(),
+                    isItalicized: country.archived
+                )
+                if let tzId = country.effectiveTimeZoneIdentifier {
+                    HStack(spacing: 4) {
+                        Image(systemName: "globe")
+                        Text(tzId)
+                        if let badge = TimeZoneFormatUtils.offsetBadgeString(for: .now, in: country.resolvedTimeZone) {
+                            Text(badge)
+                                .fontWeight(.medium)
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+            }
             Spacer()
             CatalogueRowControlsView(model: country, onToggle: onToggle)
         }

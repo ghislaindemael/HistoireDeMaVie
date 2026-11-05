@@ -9,7 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct QuoteRowView: View {
+    @Environment(\.modelContext) private var modelContext
     let quote: Quote
+    var selectedDate: Date? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -19,9 +21,13 @@ struct QuoteRowView: View {
                     size: 24,
                     tint: .primary
                 )
-                Text(quote.timeStart.formatted(date: .omitted, time: .shortened))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                DateDisplayView(
+                    date: quote.timeStart,
+                    selectedDate: selectedDate ?? quote.timeStart,
+                    timeZone: quote.resolvedStartTimeZone(in: modelContext)
+                )
+                .font(.subheadline)
+                .foregroundColor(.secondary)
                 Spacer()
                 SyncStatusIndicator(status: quote.syncStatus)
             }

@@ -10,6 +10,8 @@ import SwiftUI
 struct TimeSection<Editor: TimeBound>: View {
     @Binding var editor: Editor
     var hideEndTime: Bool = false
+    var startTimeZone: TimeZone = .current
+    var endTimeZone: TimeZone? = nil
     
     private var isTrackable: Bool {
         editor is any TimeTrackable
@@ -49,13 +51,18 @@ struct TimeSection<Editor: TimeBound>: View {
     
     var body: some View {
         Section("Time") {
-            FullTimePicker(label: "Start Time", selection: $editor.timeStart)
+            FullTimePicker(
+                label: "Start Time",
+                selection: $editor.timeStart,
+                timeZone: startTimeZone
+            )
             
             if !hideEndTime {
                 FullTimePicker(
                     label: "End Time",
                     selection: $editor.timeEnd,
-                    minimumDate: editor.timeStart
+                    minimumDate: editor.timeStart,
+                    timeZone: endTimeZone ?? startTimeZone
                 )
             }
             

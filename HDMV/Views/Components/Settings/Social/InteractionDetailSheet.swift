@@ -10,6 +10,7 @@ import SwiftData
 
 struct InteractionDetailSheet: View {
     
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: InteractionDetailSheetViewModel
     @State private var isShowingOptionSelector: Bool = false
@@ -88,8 +89,17 @@ struct InteractionDetailSheet: View {
                 }
             }
             
-            FullTimePicker(label: "Start Time", selection: $viewModel.editor.time_start)
-            FullTimePicker(label: "End Time", selection: $viewModel.editor.time_end, minimumDate: viewModel.editor.time_start)
+            FullTimePicker(
+                label: "Start Time",
+                selection: $viewModel.editor.time_start,
+                timeZone: interaction.resolvedStartTimeZone(in: modelContext)
+            )
+            FullTimePicker(
+                label: "End Time",
+                selection: $viewModel.editor.time_end,
+                minimumDate: viewModel.editor.time_start,
+                timeZone: interaction.resolvedEndTimeZone(in: modelContext)
+            )
             
         }
     }

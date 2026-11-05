@@ -80,6 +80,7 @@ struct MyInteractionsPage: View {
                     ForEach(viewModel.interactions) { interaction in
                         InteractionRowView(
                             interaction: interaction,
+                            selectedDate: viewModel.filterMode == .daily ? viewModel.filterDate : interaction.timeStart,
                             onEnd: {
                                 viewModel.endInteraction(interaction: interaction)
                             }

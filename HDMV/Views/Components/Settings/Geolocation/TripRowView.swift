@@ -10,13 +10,16 @@ import SwiftUI
 import SwiftData
 
 struct TripRowView: View {
+    @Environment(\.modelContext) private var modelContext
     let trip: Trip
+    let selectedDate: Date?
     let onEnd: (() -> Void)?
     
     @Query private var tripOptionMappings: [DataLogOptionMapping]
 
-    init(trip: Trip, onEnd: (() -> Void)? = nil) {
+    init(trip: Trip, selectedDate: Date? = nil, onEnd: (() -> Void)? = nil) {
         self.trip = trip
+        self.selectedDate = selectedDate
         self.onEnd = onEnd
         
         let vId = trip.vehicleRid ?? -1
@@ -46,7 +49,9 @@ struct TripRowView: View {
                 DateRangeDisplayView(
                     startDate: trip.timeStart,
                     endDate: trip.timeEnd,
-                    selectedDate: trip.timeStart
+                    selectedDate: selectedDate ?? trip.timeStart,
+                    startTimeZone: trip.resolvedStartTimeZone(in: modelContext),
+                    endTimeZone: trip.resolvedEndTimeZone(in: modelContext)
                 )
                 PlaceDisplayView(placeRid: trip.placeStartRid)
                 HStack {

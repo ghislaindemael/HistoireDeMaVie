@@ -112,7 +112,7 @@ struct MyActivitiesPage: View {
                                 }
                                 .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
                         } else if let quote = item as? Quote {
-                            QuoteRowView(quote: quote)
+                            QuoteRowView(quote: quote, selectedDate: viewModel.filterDate)
                                 .onTapGesture(count: 2) {
                                     quoteToEdit = quote
                                 }

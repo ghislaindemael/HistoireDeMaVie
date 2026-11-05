@@ -31,7 +31,7 @@ struct CountriesPage: View {
                 viewModel.setup(modelContext: modelContext)
             }
             .sheet(item: $countryToEdit) { country in
-                //TODO: Add country editor sheet
+                CountryDetailSheet(country: country, modelContext: modelContext)
             }
         }
     }
@@ -40,11 +40,16 @@ struct CountriesPage: View {
     private var countriesList: some View {
         Section("") {
             ForEach(viewModel.items) { country in
-                CountryRowView(country: country) { c in
-                    withAnimation(.snappy) {
-                        viewModel.updateModel(c) { $0.cache.toggle() }
+                Button {
+                    countryToEdit = country
+                } label: {
+                    CountryRowView(country: country) { c in
+                        withAnimation(.snappy) {
+                            viewModel.updateModel(c) { $0.cache.toggle() }
+                        }
                     }
                 }
+                .buttonStyle(.plain)
             }
             .onDelete { offsets in
                 for index in offsets {

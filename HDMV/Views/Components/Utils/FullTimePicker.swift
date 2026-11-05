@@ -5,7 +5,6 @@
 //  Created by Ghislain Demael on 24.06.2025.
 //
 
-
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -14,6 +13,7 @@ struct FullTimePicker: View {
     @Binding var selection: Date?
     let minimumDate: Date?
     let hideDatePicker: Bool
+    let timeZone: TimeZone
     
     private let placeholderColor = Color(.systemGray4)
     private let placeholderCornerRadius: CGFloat = 8
@@ -32,15 +32,32 @@ struct FullTimePicker: View {
     private var minute: Int { minuteVirtualIndex % 60 }
     private var second: Int { secondVirtualIndex % 60 }
     
-    // MARK: - Initializers updated to accept minimumDate
-    init(label: String, selection: Binding<Date?>, minimumDate: Date? = nil, hideDatePicker: Bool = false) {
+    private var targetCalendar: Calendar {
+        TimeZoneFormatUtils.calendar(for: timeZone)
+    }
+    
+    // MARK: - Initializers
+    init(
+        label: String,
+        selection: Binding<Date?>,
+        minimumDate: Date? = nil,
+        hideDatePicker: Bool = false,
+        timeZone: TimeZone = .current
+    ) {
         self.label = label
         self._selection = selection
         self.minimumDate = minimumDate
         self.hideDatePicker = hideDatePicker
+        self.timeZone = timeZone
     }
     
-    init(label: String, selection: Binding<Date>, minimumDate: Date? = nil, hideDatePicker: Bool = false) {
+    init(
+        label: String,
+        selection: Binding<Date>,
+        minimumDate: Date? = nil,
+        hideDatePicker: Bool = false,
+        timeZone: TimeZone = .current
+    ) {
         self.label = label
         self._selection = Binding<Date?>(
             get: { selection.wrappedValue },
@@ -48,12 +65,22 @@ struct FullTimePicker: View {
         )
         self.minimumDate = minimumDate
         self.hideDatePicker = hideDatePicker
+        self.timeZone = timeZone
     }
     
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(label)
+                HStack(spacing: 4) {
+                    Text(label)
+                    if let refDate = selection ?? minimumDate,
+                       let badge = TimeZoneFormatUtils.offsetBadgeString(for: refDate, in: timeZone) {
+                        Text(badge)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
                 if selection != nil {
                     picker
@@ -77,6 +104,9 @@ struct FullTimePicker: View {
             }
             if newDate == nil { isExpanded = false }
         }
+        .onChange(of: timeZone) { _, _ in
+            updateComponentStates(from: selection)
+        }
     }
     
     // MARK: - State Management
@@ -91,7 +121,7 @@ struct FullTimePicker: View {
     }
     
     private func updateComponentStates(from date: Date?) {
-        let calendar = Calendar.current
+        let calendar = targetCalendar
         let dateForComponents = date ?? Date()
         
         let actualHour = calendar.component(.hour, from: dateForComponents)
@@ -108,8 +138,9 @@ struct FullTimePicker: View {
     private func updateDateFromWheels() {
         guard isExpanded, let existingDate = selection else { return }
         
-        let calendar = Calendar.current
+        let calendar = targetCalendar
         var components = calendar.dateComponents([.year, .month, .day], from: existingDate)
+        components.timeZone = timeZone
         components.hour = hour
         components.minute = minute
         components.second = second
@@ -134,8 +165,9 @@ struct FullTimePicker: View {
     }
     
     private func mergeDateOnly(_ newDateOnlyPart: Date) {
-        let calendar = Calendar.current
+        let calendar = targetCalendar
         var components = calendar.dateComponents([.year, .month, .day], from: newDateOnlyPart)
+        components.timeZone = timeZone
         components.hour = hour
         components.minute = minute
         components.second = second
@@ -159,12 +191,15 @@ struct FullTimePicker: View {
     
     @ViewBuilder
     private var nativeDatePicker: some View {
-        // Restricts the calendar popup to hide days before the minimum date
-        if let minDate = minimumDate {
-            DatePicker("", selection: $selectedDateOnly, in: minDate..., displayedComponents: .date)
-        } else {
-            DatePicker("", selection: $selectedDateOnly, displayedComponents: .date)
+        Group {
+            if let minDate = minimumDate {
+                DatePicker("", selection: $selectedDateOnly, in: minDate..., displayedComponents: .date)
+            } else {
+                DatePicker("", selection: $selectedDateOnly, displayedComponents: .date)
+            }
         }
+        .environment(\.timeZone, timeZone)
+        .environment(\.calendar, targetCalendar)
     }
     
     @ViewBuilder
@@ -178,7 +213,7 @@ struct FullTimePicker: View {
                     }
             }
             
-            Text(DateFormatter.timeWithSeconds.string(from: selection!))
+            Text(TimeZoneFormatUtils.formatTimeWithSeconds(selection!, in: timeZone))
                 .font(.body)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
@@ -287,6 +322,8 @@ struct FullTimePicker: View {
     private var clipboardFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = timeZone
         return formatter
     }
     

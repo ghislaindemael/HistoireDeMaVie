@@ -58,9 +58,13 @@ struct LogItemRowView: View {
                 )
                 
             case let interaction as Interaction:
-                InteractionRowView(interaction: interaction, onEnd: {
-                    viewModel.endInteraction(interaction: interaction)
-                })
+                InteractionRowView(
+                    interaction: interaction,
+                    selectedDate: viewModel.filterDate,
+                    onEnd: {
+                        viewModel.endInteraction(interaction: interaction)
+                    }
+                )
                 .onTapGesture(count: 2){
                     interactionToEdit = interaction
                 }
@@ -74,14 +78,14 @@ struct LogItemRowView: View {
                     .draggable(DraggableLogItem.lifeEvent(lifeEvent.persistentModelID))
             
             case let quote as Quote:
-                QuoteRowView(quote: quote)
+                QuoteRowView(quote: quote, selectedDate: viewModel.filterDate)
                     .onTapGesture(count: 2) {
                         quoteToEdit = quote
                     }
                     .draggable(DraggableLogItem.quote(quote.persistentModelID))
                     
             case let transaction as Transaction:
-                TransactionRowView(transaction: transaction)
+                TransactionRowView(transaction: transaction, selectedDate: viewModel.filterDate)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) {
                         transactionToEdit = transaction

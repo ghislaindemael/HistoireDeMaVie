@@ -58,23 +58,13 @@ struct ActivityInstanceRowView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundStyle(instance.activity != nil ? Color.primary : Color.red)
-                        HStack(spacing: 4) {
-                            if let startDateString = displayDateIfNeeded(for: instance.timeStart, comparedTo: selectedDate) {
-                                Text("\(startDateString) ")
-                            }
-                            Text(instance.timeStart, style: .time)
-                            
-                            Image(systemName: "arrow.right")
-                            
-                            if let timeEnd = instance.timeEnd {
-                                if let endDateString = displayDateIfNeeded(for: timeEnd, comparedTo: selectedDate) {
-                                    Text("\(endDateString) ")
-                                }
-                                Text(timeEnd, style: .time)
-                            } else {
-                                Text("—").foregroundStyle(.secondary)
-                            }
-                        }
+                        DateRangeDisplayView(
+                            startDate: instance.timeStart,
+                            endDate: instance.timeEnd,
+                            selectedDate: selectedDate,
+                            startTimeZone: instance.resolvedStartTimeZone(in: modelContext),
+                            endTimeZone: instance.resolvedEndTimeZone(in: modelContext)
+                        )
                         .font(.subheadline)
                         
         
@@ -222,16 +212,6 @@ struct ActivityInstanceRowView: View {
                 isRequired: mustLink
             )
         }
-    }
-    
-    private func displayDateIfNeeded(for date: Date, comparedTo selectedDate: Date) -> String? {
-        let calendar = Calendar.current
-        if !calendar.isDate(date, inSameDayAs: selectedDate) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "dd/MM"
-            return formatter.string(from: date)
-        }
-        return nil
     }
     
 }

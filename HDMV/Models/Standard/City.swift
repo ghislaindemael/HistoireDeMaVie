@@ -90,6 +90,28 @@ final class City: CatalogueModel{
     var sortedChildren: [City] {
         children?.sorted { $0.slug < $1.slug } ?? []
     }
+    
+    var resolvedCountry: Country? {
+        if let country = self.country {
+            return country
+        }
+        if let cRid = self.countryRid, let context = self.modelContext {
+            let predicate = #Predicate<Country> { $0.rid == cRid }
+            var descriptor = FetchDescriptor(predicate: predicate)
+            descriptor.fetchLimit = 1
+            if let fetched = try? context.fetch(descriptor).first {
+                return fetched
+            }
+        }
+        if let parent = self.parentCity {
+            return parent.resolvedCountry
+        }
+        return nil
+    }
+    
+    var resolvedTimeZone: TimeZone? {
+        resolvedCountry?.resolvedTimeZone
+    }
 }
 
 struct CityDTO: Codable, Identifiable, Sendable {

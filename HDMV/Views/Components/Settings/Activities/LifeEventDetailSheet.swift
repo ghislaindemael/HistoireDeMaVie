@@ -36,7 +36,11 @@ struct LifeEventDetailSheet: View {
         NavigationView {
             Form {
                 
-                TimeSection(editor: $viewModel.editor)
+                TimeSection(
+                    editor: $viewModel.editor,
+                    startTimeZone: lifeEvent.resolvedStartTimeZone(in: modelContext),
+                    endTimeZone: lifeEvent.resolvedEndTimeZone(in: modelContext)
+                )
                 detailsSection
                 
                 HierarchySectionView(

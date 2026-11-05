@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 
 struct TransactionRowView: View {
+    @Environment(\.modelContext) private var modelContext
     let transaction: Transaction
     let selectedDate: Date
     init(
@@ -58,14 +59,24 @@ struct TransactionRowView: View {
                         .foregroundStyle(transaction.type != nil ? Color.primary : Color.red)
                     
                     if let execDate = transaction.executionDate {
-                        Text("Executed: \(execDate.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        let tz = transaction.resolvedStartTimeZone(in: modelContext)
+                        HStack(spacing: 4) {
+                            Text("Executed:")
+                            DateDisplayView(
+                                date: execDate,
+                                selectedDate: selectedDate,
+                                timeZone: tz
+                            )
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     } else {
                         DateRangeDisplayView(
                             startDate: transaction.transactionTime,
                             endDate: transaction.timeEnd,
-                            selectedDate: selectedDate
+                            selectedDate: selectedDate,
+                            startTimeZone: transaction.resolvedStartTimeZone(in: modelContext),
+                            endTimeZone: transaction.resolvedEndTimeZone(in: modelContext)
                         )
                         .font(.caption)
                         .foregroundStyle(.secondary)
