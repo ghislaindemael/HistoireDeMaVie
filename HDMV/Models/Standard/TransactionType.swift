@@ -10,7 +10,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class TransactionType: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject {
+final class TransactionType: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject, CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
     var name: String

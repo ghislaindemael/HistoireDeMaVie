@@ -23,8 +23,7 @@ struct DataFoodItemRowView: View {
                 }
             }
             Spacer()
-            CacheToggleButton(model: item, onToggle: onToggleCache)
-            SyncStatusIndicator(status: item.syncStatus)
+            CatalogueRowControlsView(model: item, onToggle: onToggleCache)
         }
     }
 }

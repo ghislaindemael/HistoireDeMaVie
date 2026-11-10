@@ -18,6 +18,23 @@ struct PlacesPage: View {
     private var cities: [City]
     
     @State private var placeToEdit: Place?
+    @State private var searchText: String = ""
+    
+    private var searchFilteredPlaces: [Place] {
+        guard !searchText.isEmpty else { return viewModel.filteredPlaces }
+        return viewModel.filteredPlaces.filter { place in
+            place.name.localizedCaseInsensitiveContains(searchText) ||
+            (place.city?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+    
+    private var unsetPlaces: [Place] {
+        searchFilteredPlaces.filter { $0.name == "Unset" || $0.name.isEmpty }
+    }
+    
+    private var validPlaces: [Place] {
+        searchFilteredPlaces.filter { $0.name != "Unset" && !$0.name.isEmpty }
+    }
 
     var body: some View {
         NavigationStack {
@@ -26,6 +43,7 @@ struct PlacesPage: View {
                 placesList
             }
             .navigationTitle("Places")
+            .searchable(text: $searchText, prompt: "Search Places")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -57,8 +75,21 @@ struct PlacesPage: View {
     
     @ViewBuilder
     private var placesList: some View {
-        let favorites = viewModel.filteredPlaces.filter { $0.isFavorite }
-        let others = viewModel.filteredPlaces.filter { !$0.isFavorite }
+        if !unsetPlaces.isEmpty {
+            Section("Needs Configuration / Unset") {
+                ForEach(unsetPlaces) { place in
+                    placeRow(place)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deletePlace(unsetPlaces[index])
+                    }
+                }
+            }
+        }
+        
+        let favorites = validPlaces.filter { $0.isFavorite }
+        let others = validPlaces.filter { !$0.isFavorite }
         
         if !favorites.isEmpty {
             Section("Favorites") {
@@ -84,6 +115,10 @@ struct PlacesPage: View {
                     }
                 }
             }
+        }
+        
+        if validPlaces.isEmpty && unsetPlaces.isEmpty && !searchText.isEmpty {
+            ContentUnavailableView.search(text: searchText)
         }
     }
     

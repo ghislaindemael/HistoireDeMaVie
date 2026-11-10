@@ -20,6 +20,7 @@ final class LifeEvent: LogModel {
     var parentInstanceRid: Int?
     var parentTripRid: Int?
     var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
 
     var log_details: Data?
     
@@ -61,6 +62,7 @@ final class LifeEvent: LogModel {
          details: String? = nil,
          parentInstance: ActivityInstance? = nil,
          contextRids: [Int] = [],
+         linkedFilePaths: [String] = [],
          syncStatus: SyncStatus = .unsynced
     ){
         self.rid = rid
@@ -71,6 +73,7 @@ final class LifeEvent: LogModel {
         self.details = details
         self.parentInstance = parentInstance
         self.contextRids = contextRids
+        self.linkedFilePaths = linkedFilePaths
         self.syncStatus = syncStatus
     }
     
@@ -84,6 +87,7 @@ final class LifeEvent: LogModel {
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
@@ -96,6 +100,7 @@ final class LifeEvent: LogModel {
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
         self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
@@ -115,6 +120,7 @@ struct LifeEventDTO: Identifiable, Codable, Sendable {
     let parent_instance_id: Int?
     let parent_trip_id: Int?
     let context_ids: [Int]?
+    let linked_file_paths: [String]?
     let log_details: LogDetails?
 }
 
@@ -128,6 +134,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
     var context_ids: [Int]
+    let linked_file_paths: [String]?
     let log_details: LogDetails?
     
     typealias Model = LifeEvent
@@ -143,6 +150,7 @@ struct LifeEventPayload: Codable, InitializableWithModel {
         self.parent_instance_id = event.parentInstance?.rid ?? event.parentInstanceRid
         self.parent_trip_id = event.parentTrip?.rid ?? event.parentTripRid
         self.context_ids = event.contextRids
+        self.linked_file_paths = event.linkedFilePaths.isEmpty ? nil : event.linkedFilePaths
         
         if var details = event.decodedLogDetails {
             details.removeFields()
@@ -167,6 +175,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
     var parentTrip: Trip?
     var parentTripRid: Int?
     var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
     
     typealias Model = LifeEvent
     
@@ -182,6 +191,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         self.parentTrip = event.parentTrip
         self.parentTripRid = event.parentTripRid
         self.contextRids = event.contextRids
+        self.linkedFilePaths = event.linkedFilePaths
     }
     
     func apply(to event: LifeEvent) {
@@ -197,6 +207,7 @@ struct LifeEventEditor: TimeBound, EditorProtocol, LinkedParent {
         event.parentTrip = self.parentTrip
         event.parentTripRid = self.parentTrip?.rid ?? self.parentTripRid
         event.contextRids = self.contextRids
+        event.linkedFilePaths = self.linkedFilePaths
         
         event.markAsModified()
     }

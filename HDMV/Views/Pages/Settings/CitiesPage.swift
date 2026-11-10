@@ -23,14 +23,27 @@ struct CitiesPage: View {
     ) private var orphanedCities: [City]
     
     @State private var cityToEdit: City?
+    @State private var searchText: String = ""
+    @Query(sort: \City.name) private var allCities: [City]
+    
+    private var searchResults: [City] {
+        guard !searchText.isEmpty else { return [] }
+        return allCities.filter { city in
+            city.name.localizedCaseInsensitiveContains(searchText) ||
+            city.slug.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         NavigationStack {
             Form {
-                countryFilter
+                if searchText.isEmpty {
+                    countryFilter
+                }
                 citiesList
             }
             .navigationTitle("Cities")
+            .searchable(text: $searchText, prompt: "Search Cities")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -61,7 +74,24 @@ struct CitiesPage: View {
     
     @ViewBuilder
     private var citiesList: some View {
-        if let selectedCountry = viewModel.selectedCountry {
+        if !searchText.isEmpty {
+            if !searchResults.isEmpty {
+                Section("Search Results") {
+                    ForEach(searchResults) { city in
+                        Button(action: { cityToEdit = city }) {
+                            CityRowView(city: city) { c in
+                                withAnimation(.snappy) {
+                                    viewModel.updateModel(c) { $0.cache.toggle() }
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            } else {
+                ContentUnavailableView.search(text: searchText)
+            }
+        } else if let selectedCountry = viewModel.selectedCountry {
             Section("Cities in \(selectedCountry.name)") {
                 ForEach(selectedCountry.rootCities) { city in
                     CityNodeView(city: city, viewModel: viewModel, cityToEdit: $cityToEdit)

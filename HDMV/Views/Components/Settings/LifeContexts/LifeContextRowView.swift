@@ -24,22 +24,13 @@ struct LifeContextRowView: View {
             
             Spacer()
                 
-            if context.archived {
-                Image(systemName: "archivebox")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            
-            CacheToggleButton(model: context) { c in
-                onCacheToggle(c)
-            }
-            
             if let start = context.timeStart {
                 Text(start.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year()))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            SyncStatusIndicator(status: context.syncStatus)
+            
+            CatalogueRowControlsView(model: context, onToggle: onCacheToggle)
         }
         .foregroundStyle(context.archived ? .secondary : .primary)
         .opacity(context.archived ? 0.7 : 1.0)

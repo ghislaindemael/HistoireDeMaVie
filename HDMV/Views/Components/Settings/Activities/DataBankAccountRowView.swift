@@ -18,10 +18,7 @@ struct DataBankAccountRowView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            CacheToggleButton(model: account) { acc in
-                onCacheToggle(acc)
-            }
-            SyncStatusIndicator(status: account.syncStatus)
+            CatalogueRowControlsView(model: account, onToggle: onCacheToggle)
         }
         .foregroundStyle(.primary)
     }

@@ -1,10 +1,9 @@
 //
-//  ActivitiesPage.swift
+//  PathsPage.swift
 //  HDMV
 //
 //  Created by Ghislain Demael on 31.07.2025.
 //
-
 
 import SwiftUI
 import SwiftData
@@ -20,12 +19,13 @@ struct PathsPage: View {
     
     @State private var pathToEdit: Path?
     @State private var selectedCity: City? = nil
+    @State private var searchText: String = ""
     
     private var hasLocalChanges: Bool {
         return paths.contains(where: { $0.syncStatus != .synced })
     }
     
-    private var filteredPaths: [Path] {
+    private var cityFilteredPaths: [Path] {
         guard let selectedCity = selectedCity else {
             return paths
         }
@@ -43,7 +43,23 @@ struct PathsPage: View {
             return placeIDSet.contains(startID) || placeIDSet.contains(endID)
         }
     }
-
+    
+    private var searchFilteredPaths: [Path] {
+        guard !searchText.isEmpty else { return cityFilteredPaths }
+        return cityFilteredPaths.filter { path in
+            path.name.localizedCaseInsensitiveContains(searchText) ||
+            (path.placeStart?.name.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            (path.placeEnd?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+    
+    private var unsetPaths: [Path] {
+        searchFilteredPaths.filter { $0.name == "Unset" || $0.name.isEmpty }
+    }
+    
+    private var validPaths: [Path] {
+        searchFilteredPaths.filter { $0.name != "Unset" && !$0.name.isEmpty }
+    }
     
     var body: some View {
         NavigationStack {
@@ -52,6 +68,7 @@ struct PathsPage: View {
                 pathsList
             }
             .navigationTitle("Paths")
+            .searchable(text: $searchText, prompt: "Search Paths")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -82,19 +99,42 @@ struct PathsPage: View {
         }
     }
     
-    
     @ViewBuilder
     private var pathsList: some View {
-        Section() {
-            ForEach(filteredPaths) { path in
-                Button(action: {
-                    pathToEdit = path
-                }) {
-                    PathRowView(path: path, showSyncStatus:true)
-                    
+        if !unsetPaths.isEmpty {
+            Section("Needs Configuration / Unset") {
+                ForEach(unsetPaths) { path in
+                    pathRow(path)
                 }
-                .buttonStyle(.plain)
             }
         }
+        
+        if !validPaths.isEmpty {
+            Section("Paths") {
+                ForEach(validPaths) { path in
+                    pathRow(path)
+                }
+            }
+        } else if unsetPaths.isEmpty && !searchText.isEmpty {
+            ContentUnavailableView.search(text: searchText)
+        }
+    }
+    
+    @ViewBuilder
+    private func pathRow(_ path: Path) -> some View {
+        Button(action: {
+            pathToEdit = path
+        }) {
+            PathRowView(
+                path: path,
+                showSyncStatus: true,
+                onToggle: { p in
+                    withAnimation(.snappy) {
+                        viewModel.updateModel(p) { $0.cache.toggle() }
+                    }
+                }
+            )
+        }
+        .buttonStyle(.plain)
     }
 }

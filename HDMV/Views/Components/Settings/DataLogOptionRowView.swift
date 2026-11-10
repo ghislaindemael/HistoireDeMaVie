@@ -36,8 +36,7 @@ struct DataLogOptionRowView: View {
             
             Spacer()
             
-            CacheToggleButton(model: option, onToggle: onToggleCache)
-            SyncStatusIndicator(status: option.syncStatus)
+            CatalogueRowControlsView(model: option, onToggle: onToggleCache)
         }
     }
 }

@@ -245,6 +245,19 @@ struct TransactionDetailSheet: View {
                         }
                     }
                 }
+                
+                HierarchySectionView(
+                    model: transaction,
+                    hasParent: !viewModel.editor.hasNoParent(),
+                    parentInstance: viewModel.editor.parentInstance,
+                    parentTrip: viewModel.editor.parentTrip,
+                    onSelectParent: { newParent in
+                        viewModel.editor.setParent(newParent)
+                    },
+                    onRemoveFromParent: {
+                        viewModel.editor.clearParents()
+                    }
+                )
             }
             .navigationTitle("Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)

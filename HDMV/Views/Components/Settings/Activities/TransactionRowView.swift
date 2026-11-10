@@ -174,6 +174,8 @@ struct TransactionRowView: View {
             
             LifeContextsDisplayView(contextRids: transaction.contextRids)
             
+            LinkedFilesPillView(transaction: transaction)
+            
             optionsPillsView
         }
     }

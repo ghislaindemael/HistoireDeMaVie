@@ -18,13 +18,16 @@ struct LifeEventRowView: View {
     
     let event: LifeEvent
     let selectedDate: Date
+    var showParentBadge: Bool = false
     
     init(
         event: LifeEvent,
         selectedDate: Date,
+        showParentBadge: Bool = false
     ) {
         self.event = event
         self.selectedDate = selectedDate
+        self.showParentBadge = showParentBadge
     }
     
     
@@ -98,10 +101,36 @@ struct LifeEventRowView: View {
                     .font(.body)
             }
             
+            if showParentBadge {
+                if let parent = event.parentInstance {
+                    HStack(spacing: 8) {
+                        Label(parent.activity?.name ?? "Activity", systemImage: parent.activity?.icon ?? "flowchart.fill")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(Color.secondaryBackground)
+                            .cornerRadius(4)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else if let parentTrip = event.parentTrip {
+                    HStack(spacing: 8) {
+                        Label(parentTrip.vehicle?.name ?? "Trip", systemImage: parentTrip.vehicle?.icon ?? "car.fill")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(Color.secondaryBackground)
+                            .cornerRadius(4)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            
             
             // TODO: Show metrics sliders
             
             LifeContextsDisplayView(contextRids: event.contextRids)
+            
+            LinkedFilesPillView(lifeEvent: event)
             
             optionsPillsView
         }

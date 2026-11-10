@@ -18,6 +18,7 @@ struct PathDetailSheet: View {
     let path: Path
     
     @State private var isShowingGpxFileImporter = false
+    @State private var isShowingTrackMap = false
     
     init(path: Path, modelContext: ModelContext) {
         self.path = path
@@ -68,6 +69,15 @@ struct PathDetailSheet: View {
                 allowedContentTypes: [.gpx],
                 onCompletion: viewModel.handleFileImport
             )
+            .sheet(isPresented: $isShowingTrackMap) {
+                if let track = viewModel.editor.geojson_track {
+                    TrackMapView(
+                        track: track,
+                        title: viewModel.editor.name.isEmpty ? "Path Track" : viewModel.editor.name,
+                        strokeColor: .orange
+                    )
+                }
+            }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil), actions: {
                 Button("OK") { viewModel.errorMessage = nil }
             }, message: {
@@ -88,6 +98,13 @@ struct PathDetailSheet: View {
             Text("Elevation Gain (D+): \(viewModel.editor.metrics.elevationGain, specifier: "%.1f") m")
             Text("Elevation Loss (D-): \(viewModel.editor.metrics.elevationLoss, specifier: "%.1f") m")
             Text("GeoJSON track points: \(viewModel.editor.geojson_track?.coordinates.count ?? 0)")
+            
+            if let track = viewModel.editor.geojson_track {
+                Button(action: { isShowingTrackMap = true }) {
+                    Label("View GPS Track", systemImage: "map")
+                        .foregroundStyle(.blue)
+                }
+            }
             
             Button(action: { isShowingGpxFileImporter = true }) {
                 Label("Import GPX", systemImage: "square.and.arrow.up.circle.fill")

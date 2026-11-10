@@ -81,6 +81,7 @@ struct MyInteractionsPage: View {
                         InteractionRowView(
                             interaction: interaction,
                             selectedDate: viewModel.filterMode == .daily ? viewModel.filterDate : interaction.timeStart,
+                            showParentBadge: true,
                             onEnd: {
                                 viewModel.endInteraction(interaction: interaction)
                             }

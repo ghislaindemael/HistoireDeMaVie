@@ -59,6 +59,11 @@ struct ActivityInstanceDetailSheet: View {
                 HierarchySectionView(
                     model: instance,
                     hasParent: !viewModel.editor.hasNoParent(),
+                    parentInstance: viewModel.editor.parentInstance,
+                    parentTrip: viewModel.editor.parentTrip,
+                    onSelectParent: { newParent in
+                        viewModel.editor.setParent(newParent)
+                    },
                     onRemoveFromParent: {
                         viewModel.editor.clearParents()
                     }

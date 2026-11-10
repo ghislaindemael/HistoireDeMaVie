@@ -13,13 +13,47 @@ struct CountriesPage: View {
     @StateObject private var viewModel = CountriesPageViewModel()
     
     @State private var countryToEdit: Country?
+    @State private var searchText: String = ""
+    
+    private var filteredCountries: [Country] {
+        guard !searchText.isEmpty else { return viewModel.items }
+        return viewModel.items.filter { country in
+            country.name.localizedCaseInsensitiveContains(searchText) ||
+            country.slug.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+    
+    private var unsetCountries: [Country] {
+        filteredCountries.filter { $0.name == "Unset" || $0.name.isEmpty }
+    }
+    
+    private var validCountries: [Country] {
+        filteredCountries.filter { $0.name != "Unset" && !$0.name.isEmpty }
+    }
     
     var body: some View {
         NavigationStack {
             Form {
-                countriesList
+                if !unsetCountries.isEmpty {
+                    Section("Needs Configuration / Unset") {
+                        ForEach(unsetCountries) { country in
+                            countryRow(country)
+                        }
+                    }
+                }
+                
+                if !validCountries.isEmpty {
+                    Section("Countries") {
+                        ForEach(validCountries) { country in
+                            countryRow(country)
+                        }
+                    }
+                } else if unsetCountries.isEmpty && !searchText.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                }
             }
             .navigationTitle("Countries")
+            .searchable(text: $searchText, prompt: "Search Countries")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -37,44 +71,23 @@ struct CountriesPage: View {
     }
     
     @ViewBuilder
-    private var countriesList: some View {
-        Section("") {
-            ForEach(viewModel.items) { country in
-                Button {
-                    countryToEdit = country
-                } label: {
-                    CountryRowView(country: country) { c in
-                        withAnimation(.snappy) {
-                            viewModel.updateModel(c) { $0.cache.toggle() }
-                        }
-                    }
+    private func countryRow(_ country: Country) -> some View {
+        Button {
+            countryToEdit = country
+        } label: {
+            CountryRowView(country: country) { c in
+                withAnimation(.snappy) {
+                    viewModel.updateModel(c) { $0.cache.toggle() }
                 }
-                .buttonStyle(.plain)
             }
-            .onDelete { offsets in
-                for index in offsets {
-                    viewModel.deleteItem(viewModel.items[index])
-                }
+        }
+        .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.deleteItem(country)
+            } label: {
+                Label("Delete", systemImage: "trash")
             }
         }
     }
-}
-
-
-#Preview {
-    let container: ModelContainer = {
-        let schema = Schema([Country.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        do {
-            let container = try ModelContainer(for: schema, configurations: [config])
-            
-            let switzerland = Country(slug: "ch", name: "Switzerland")
-            container.mainContext.insert(switzerland)
-            return container
-        } catch {
-            fatalError("Failed to create container: \(error)")
-        }
-    }()
-    
-    CountriesPage().modelContainer(container)
 }

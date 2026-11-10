@@ -31,6 +31,7 @@ final class Transaction: LogModel {
     var sourceAccountRid: Int?
     var targetAccountRid: Int?
     var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
     
     var details: String?
     var log_details: Data?
@@ -96,6 +97,7 @@ final class Transaction: LogModel {
         sourceAccountRid: Int? = nil,
         targetAccountRid: Int? = nil,
         contextRids: [Int] = [],
+        linkedFilePaths: [String] = [],
         details: String? = nil,
         syncStatus: SyncStatus = SyncStatus.unsynced,
         parentInstance: ActivityInstance? = nil,
@@ -120,6 +122,7 @@ final class Transaction: LogModel {
         self.sourceAccountRid = sourceAccountRid
         self.targetAccountRid = targetAccountRid
         self.contextRids = contextRids
+        self.linkedFilePaths = linkedFilePaths
         self.details = details
         self.syncStatus = syncStatus
         self.parentInstance = parentInstance
@@ -146,6 +149,7 @@ final class Transaction: LogModel {
         self.sourceAccountRid = dto.source_account_id
         self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -165,6 +169,7 @@ final class Transaction: LogModel {
         self.sourceAccountRid = dto.source_account_id
         self.targetAccountRid = dto.target_account_id
         self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
         self.details = dto.details
         self.syncStatusRaw = SyncStatus.synced.rawValue
     }
@@ -194,6 +199,7 @@ struct TransactionDTO: Codable, Identifiable {
     let source_account_id: Int?
     let target_account_id: Int?
     let context_ids: [Int]?
+    let linked_file_paths: [String]?
         
     let details: String?
     let log_details: LogDetails?
@@ -219,6 +225,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
     let source_account_id: Int?
     let target_account_id: Int?
     let context_ids: [Int]
+    let linked_file_paths: [String]?
     
     let details: String?
     let log_details: LogDetails?
@@ -246,6 +253,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
         self.source_account_id = transaction.sourceAccountRid
         self.target_account_id = transaction.targetAccountRid
         self.context_ids = transaction.contextRids
+        self.linked_file_paths = transaction.linkedFilePaths.isEmpty ? nil : transaction.linkedFilePaths
         
         self.details = transaction.details
         if var details = transaction.decodedLogDetails {
@@ -283,6 +291,7 @@ struct TransactionEditor: EditorProtocol, LinkedParent {
     var sourceAccountRid: Int?
     var targetAccountRid: Int?
     var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
     
     var details: String?
     var decodedLogDetails: LogDetails?
@@ -325,6 +334,7 @@ struct TransactionEditor: EditorProtocol, LinkedParent {
         self.targetAccountRid = transaction.targetAccountRid
         
         self.contextRids = transaction.contextRids
+        self.linkedFilePaths = transaction.linkedFilePaths
         
         self.details = transaction.details
         self.decodedLogDetails = transaction.decodedLogDetails
@@ -365,6 +375,7 @@ struct TransactionEditor: EditorProtocol, LinkedParent {
         transaction.targetAccountRid = self.targetAccount?.rid ?? self.targetAccountRid
         
         transaction.contextRids = self.contextRids
+        transaction.linkedFilePaths = self.linkedFilePaths
         
         transaction.details = self.details
         transaction.decodedLogDetails = self.decodedLogDetails

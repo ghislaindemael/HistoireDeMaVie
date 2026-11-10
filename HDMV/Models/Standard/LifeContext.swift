@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class LifeContext: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject {
+final class LifeContext: Identifiable, Hashable, SyncableModel, EditableModel, CachableObject, CatalogueModel {
     
     @Attribute(.unique) var rid: Int?
     var name: String

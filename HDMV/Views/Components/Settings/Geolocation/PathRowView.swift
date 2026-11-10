@@ -12,11 +12,13 @@ struct PathRowView: View {
     let path: Path
     let showSyncStatus: Bool
     let bubble: Bool
+    var onToggle: ((Path) -> Void)? = nil
     
-    init(path: Path, showSyncStatus: Bool = false, bubble: Bool = false) {
+    init(path: Path, showSyncStatus: Bool = false, bubble: Bool = false, onToggle: ((Path) -> Void)? = nil) {
         self.path = path
         self.showSyncStatus = showSyncStatus
         self.bubble = bubble
+        self.onToggle = onToggle
     }
     
     
@@ -26,9 +28,9 @@ struct PathRowView: View {
                 Text(path.name)
                     .bold(path.name == "Unset")
                     .foregroundStyle(path.name == "Unset" ? .red : .primary)
-                if(showSyncStatus){
-                    Spacer()
-                    SyncStatusIndicator(status: path.syncStatus)
+                Spacer()
+                if showSyncStatus || onToggle != nil || path.archived {
+                    CatalogueRowControlsView(model: path, onToggle: onToggle)
                 }
             }
             PlaceDisplayView(placeRid: path.placeStart?.rid)

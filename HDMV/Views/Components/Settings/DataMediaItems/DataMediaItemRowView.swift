@@ -23,17 +23,7 @@ struct DataMediaItemRowView: View {
             
             Spacer()
                 
-            if item.archived {
-                Image(systemName: "archivebox")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            
-            CacheToggleButton(model: item) { c in
-                onCacheToggle(c)
-            }
-            
-            SyncStatusIndicator(status: item.syncStatus)
+            CatalogueRowControlsView(model: item, onToggle: onCacheToggle)
         }
         .foregroundStyle(item.archived ? .secondary : .primary)
         .opacity(item.archived ? 0.7 : 1.0)

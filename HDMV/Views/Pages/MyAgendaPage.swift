@@ -91,16 +91,21 @@ struct MyAgendaPage: View {
                         case .lifeEvent(let event):
                             LifeEventRowView(
                                 event: event,
-                                selectedDate: viewModel.filterDate
+                                selectedDate: viewModel.filterDate,
+                                showParentBadge: true
                             )
                             .onTapGesture {
                                 eventToEdit = event
                             }
                         case .quote(let quote):
-                            QuoteRowView(quote: quote, selectedDate: viewModel.filterDate)
-                                .onTapGesture {
-                                    quoteToEdit = quote
-                                }
+                            QuoteRowView(
+                                quote: quote,
+                                selectedDate: viewModel.filterDate,
+                                showParentBadge: true
+                            )
+                            .onTapGesture {
+                                quoteToEdit = quote
+                            }
                         }
                     }
                 }

@@ -13,6 +13,23 @@ struct VehiclesPage: View {
     @StateObject var viewModel = VehiclesPageViewModel()
     
     @State private var vehicleToEdit: Vehicle?
+    @State private var searchText: String = ""
+    
+    private var searchFilteredVehicles: [Vehicle] {
+        guard !searchText.isEmpty else { return viewModel.filteredVehicles }
+        return viewModel.filteredVehicles.filter { vehicle in
+            vehicle.name.localizedCaseInsensitiveContains(searchText) ||
+            (vehicle.type?.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+    
+    private var unsetVehicles: [Vehicle] {
+        searchFilteredVehicles.filter { $0.name == "Unset" || $0.name.isEmpty }
+    }
+    
+    private var validVehicles: [Vehicle] {
+        searchFilteredVehicles.filter { $0.name != "Unset" && !$0.name.isEmpty }
+    }
     
     var body: some View {
         NavigationStack {
@@ -21,6 +38,7 @@ struct VehiclesPage: View {
                 vehiclesList
             }
             .navigationTitle("Vehicles")
+            .searchable(text: $searchText, prompt: "Search Vehicles")
             .simpleLogToolbar(
                 refreshAction: { await viewModel.refreshFromServer() },
                 syncAction: { await viewModel.uploadLocalChanges() },
@@ -53,27 +71,49 @@ struct VehiclesPage: View {
     
     @ViewBuilder
     private var vehiclesList: some View {
-        Section("Vehicles") {
-            ForEach(viewModel.filteredVehicles) { vehicle in
-                Button(action: {
-                    vehicleToEdit = vehicle
-                }) {
-                    VehicleRowView(vehicle: vehicle) { v in
-                        withAnimation(.snappy) {
-                            viewModel.updateModel(v) { concreteVehicle in
-                                concreteVehicle.cache.toggle()
-                            }
-                        }
-                    }
+        if !unsetVehicles.isEmpty {
+            Section("Needs Configuration / Unset") {
+                ForEach(unsetVehicles) { vehicle in
+                    vehicleRow(vehicle)
                 }
-                .buttonStyle(.plain)
-            }
-            .onDelete { offsets in
-                for index in offsets {
-                    viewModel.deleteVehicle(viewModel.filteredVehicles[index])
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deleteVehicle(unsetVehicles[index])
+                    }
                 }
             }
         }
+        
+        if !validVehicles.isEmpty {
+            Section("Vehicles") {
+                ForEach(validVehicles) { vehicle in
+                    vehicleRow(vehicle)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deleteVehicle(validVehicles[index])
+                    }
+                }
+            }
+        } else if unsetVehicles.isEmpty && !searchText.isEmpty {
+            ContentUnavailableView.search(text: searchText)
+        }
+    }
+    
+    @ViewBuilder
+    private func vehicleRow(_ vehicle: Vehicle) -> some View {
+        Button(action: {
+            vehicleToEdit = vehicle
+        }) {
+            VehicleRowView(vehicle: vehicle) { v in
+                withAnimation(.snappy) {
+                    viewModel.updateModel(v) { concreteVehicle in
+                        concreteVehicle.cache.toggle()
+                    }
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
     
 }

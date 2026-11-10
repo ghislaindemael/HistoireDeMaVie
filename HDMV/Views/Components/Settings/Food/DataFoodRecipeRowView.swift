@@ -10,8 +10,7 @@ struct DataFoodRecipeRowView: View {
             Text(recipe.name)
                 .font(.headline)
             Spacer()
-            CacheToggleButton(model: recipe, onToggle: onToggleCache)
-            SyncStatusIndicator(status: recipe.syncStatus)
+            CatalogueRowControlsView(model: recipe, onToggle: onToggleCache)
         }
     }
 }

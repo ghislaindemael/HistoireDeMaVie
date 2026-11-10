@@ -24,6 +24,7 @@ struct TripDetailSheet: View {
     }
 
     let trip: Trip
+    @State private var isShowingTrackMap: Bool = false
     
     init(trip: Trip, modelContext: ModelContext) {
         self.trip = trip
@@ -100,6 +101,11 @@ struct TripDetailSheet: View {
                 HierarchySectionView(
                     model: trip,
                     hasParent: !viewModel.editor.hasNoParent(),
+                    parentInstance: viewModel.editor.parentInstance,
+                    parentTrip: viewModel.editor.parentTrip,
+                    onSelectParent: { newParent in
+                        viewModel.editor.setParent(newParent)
+                    },
                     onRemoveFromParent: {
                         viewModel.editor.clearParents()
                     }
@@ -135,6 +141,11 @@ struct TripDetailSheet: View {
                     selectedVehicle: viewModel.editor.vehicle,
                     onSelect: viewModel.selectTransitLine
                 )
+            }
+            .sheet(isPresented: $isShowingTrackMap) {
+                if let track = viewModel.editor.geojsonTrack {
+                    TrackMapView(track: track, title: "Trip Track")
+                }
             }
             .sheet(isPresented: $viewModel.isShowingMetricsEditSheet) {
                 PathMetricsEditSheet(
@@ -209,10 +220,9 @@ struct TripDetailSheet: View {
                     }
                 )
             }
-            if viewModel.editor.geojsonTrack != nil {
+            if let track = viewModel.editor.geojsonTrack {
                 Button {
-                    // TODO: Open a full-screen map to view the route
-                    print("Show Map View")
+                    isShowingTrackMap = true
                 } label: {
                     Label("View GPS Track", systemImage: "map")
                         .foregroundStyle(.blue)

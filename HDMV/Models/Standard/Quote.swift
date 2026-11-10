@@ -19,6 +19,7 @@ final class Quote: LogModel, TimeBound {
     
     var personRid: Int?
     var context: String?
+    var contextRids: [Int] = []
     var mediaDetailsData: Data?
     
     var parentInteractionRid: Int?
@@ -56,6 +57,7 @@ final class Quote: LogModel, TimeBound {
          person: Person? = nil,
          mediaDetailsData: Data? = nil,
          context: String? = nil,
+         contextRids: [Int] = [],
          parentInteraction: Interaction? = nil,
          parentInstance: ActivityInstance? = nil,
          parentTrip: Trip? = nil,
@@ -68,6 +70,7 @@ final class Quote: LogModel, TimeBound {
         self.person = person
         self.mediaDetailsData = mediaDetailsData
         self.context = context
+        self.contextRids = contextRids
         self.parentInteraction = parentInteraction
         self.parentInstance = parentInstance
         self.parentTrip = parentTrip
@@ -93,6 +96,7 @@ final class Quote: LogModel, TimeBound {
         }
         
         self.context = dto.context
+        self.contextRids = dto.context_ids ?? []
         self.parentInteractionRid = dto.parent_interaction_id
         self.parentInstanceRid = dto.parent_instance_id
         self.parentTripRid = dto.parent_trip_id
@@ -113,6 +117,7 @@ final class Quote: LogModel, TimeBound {
         }
         
         self.context = dto.context
+        self.contextRids = dto.context_ids ?? []
         
         self.personRid = dto.person_id
         self.parentInteractionRid = dto.parent_interaction_id
@@ -141,6 +146,7 @@ struct QuoteDTO: Identifiable, Codable, Sendable {
     let parent_instance_id: Int?
     let parent_trip_id: Int?
     let context: String?
+    let context_ids: [Int]?
 }
 
 struct QuotePayload: Codable, InitializableWithModel {
@@ -155,6 +161,7 @@ struct QuotePayload: Codable, InitializableWithModel {
     @ExplicitNull var parent_instance_id: Int?
     @ExplicitNull var parent_trip_id: Int?
     let context: String?
+    var context_ids: [Int]
     
     typealias Model = Quote
     
@@ -179,6 +186,7 @@ struct QuotePayload: Codable, InitializableWithModel {
         self.parent_instance_id = quote.parentInstance?.rid ?? quote.parentInstanceRid
         self.parent_trip_id = quote.parentTrip?.rid ?? quote.parentTripRid
         self.context = quote.context
+        self.context_ids = quote.contextRids
     }
 }
 
@@ -195,6 +203,7 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
     
     var mediaDetails: MediaDetails?
     var context: String?
+    var contextRids: [Int] = []
     
     var parentInteraction: Interaction?
     var parentInteractionRid: Int?
@@ -222,6 +231,7 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
         }
         
         self.context = quote.context
+        self.contextRids = quote.contextRids
         
         self.parentInteraction = quote.parentInteraction
         self.parentInteractionRid = quote.parentInteractionRid
@@ -247,6 +257,7 @@ struct QuoteEditor: EditorProtocol, LinkedParent, TimeBound {
         }
         
         quote.context = self.context
+        quote.contextRids = self.contextRids
         
         quote.parentInteraction = self.parentInteraction
         quote.parentInteractionRid = self.parentInteraction?.rid ?? self.parentInteractionRid

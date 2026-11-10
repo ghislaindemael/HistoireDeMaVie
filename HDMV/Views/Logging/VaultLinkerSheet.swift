@@ -9,9 +9,11 @@ import SwiftUI
 import SwiftData
 import Supabase
 
-enum VaultLinkTarget {
-    case trip
-    case activity
+enum VaultLinkTarget: String, CaseIterable {
+    case trip = "Trips"
+    case activity = "Activities"
+    case transaction = "Transactions"
+    case lifeEvent = "Life Events"
 }
 
 struct VaultLinkerSheet: View {
@@ -42,6 +44,12 @@ struct VaultLinkerSheet: View {
                     },
                     onActivitySelected: { activity in
                         Task { await attachAndUpload(toActivity: activity) }
+                    },
+                    onTransactionSelected: { transaction in
+                        Task { await attachAndUpload(toTransaction: transaction) }
+                    },
+                    onLifeEventSelected: { event in
+                        Task { await attachAndUpload(toLifeEvent: event) }
                     }
                 )
             }
@@ -109,8 +117,9 @@ struct VaultLinkerSheet: View {
     private var targetPickerSection: some View {
         Section {
             Picker("Target", selection: $selectedTarget) {
-                Text("Trips").tag(VaultLinkTarget.trip)
-                Text("Activities").tag(VaultLinkTarget.activity)
+                ForEach(VaultLinkTarget.allCases, id: \.self) { target in
+                    Text(target.rawValue).tag(target)
+                }
             }
             .pickerStyle(.segmented)
             .listRowInsets(EdgeInsets())
@@ -226,6 +235,84 @@ struct VaultLinkerSheet: View {
             errorMessage = error.localizedDescription
         }
     }
+    
+    // MARK: - Upload Logic (Transaction)
+    @MainActor
+    private func attachAndUpload(toTransaction transaction: Transaction) async {
+        isUploading = true
+        defer { isUploading = false }
+        
+        do {
+            guard let client = SupabaseService.shared.client else {
+                throw NSError(domain: "HDMV", code: 1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized."])
+            }
+            
+            let fileData = try Data(contentsOf: fileURL)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy/MM/yyyy-MM-dd_HH-mm"
+            let datePrefix = formatter.string(from: transaction.timeStart)
+            
+            guard let transactionId = transaction.rid else { return }
+            
+            let fileExtension = fileURL.pathExtension.isEmpty ? "pdf" : fileURL.pathExtension
+            let storagePath = "linked_files/\(datePrefix)_transaction_\(transactionId).\(fileExtension)"
+            
+            try await client.storage.from("vault").upload(
+                storagePath,
+                data: fileData,
+                options: FileOptions(contentType: "application/octet-stream", upsert: true)
+            )
+            
+            if !transaction.linkedFilePaths.contains(storagePath) {
+                transaction.linkedFilePaths.append(storagePath)
+            }
+            transaction.markAsModified()
+            try modelContext.save()
+            VaultImportService.shared.cleanupFile()
+            
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+    
+    // MARK: - Upload Logic (Life Event)
+    @MainActor
+    private func attachAndUpload(toLifeEvent event: LifeEvent) async {
+        isUploading = true
+        defer { isUploading = false }
+        
+        do {
+            guard let client = SupabaseService.shared.client else {
+                throw NSError(domain: "HDMV", code: 1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized."])
+            }
+            
+            let fileData = try Data(contentsOf: fileURL)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy/MM/yyyy-MM-dd_HH-mm"
+            let datePrefix = formatter.string(from: event.timeStart)
+            
+            guard let eventId = event.rid else { return }
+            
+            let fileExtension = fileURL.pathExtension.isEmpty ? "pdf" : fileURL.pathExtension
+            let storagePath = "linked_files/\(datePrefix)_life_event_\(eventId).\(fileExtension)"
+            
+            try await client.storage.from("vault").upload(
+                storagePath,
+                data: fileData,
+                options: FileOptions(contentType: "application/octet-stream", upsert: true)
+            )
+            
+            if !event.linkedFilePaths.contains(storagePath) {
+                event.linkedFilePaths.append(storagePath)
+            }
+            event.markAsModified()
+            try modelContext.save()
+            VaultImportService.shared.cleanupFile()
+            
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 }
 
 // MARK: - Query Subview
@@ -235,14 +322,27 @@ struct VaultFilteredResultsView: View {
     
     @Query private var trips: [Trip]
     @Query private var activities: [ActivityInstance]
+    @Query private var transactions: [Transaction]
+    @Query private var lifeEvents: [LifeEvent]
     
     let onTripSelected: (Trip) -> Void
     let onActivitySelected: (ActivityInstance) -> Void
+    let onTransactionSelected: (Transaction) -> Void
+    let onLifeEventSelected: (LifeEvent) -> Void
     
-    init(targetDate: Date, selectedTarget: VaultLinkTarget, onTripSelected: @escaping (Trip) -> Void, onActivitySelected: @escaping (ActivityInstance) -> Void) {
+    init(
+        targetDate: Date,
+        selectedTarget: VaultLinkTarget,
+        onTripSelected: @escaping (Trip) -> Void,
+        onActivitySelected: @escaping (ActivityInstance) -> Void,
+        onTransactionSelected: @escaping (Transaction) -> Void,
+        onLifeEventSelected: @escaping (LifeEvent) -> Void
+    ) {
         self.selectedTarget = selectedTarget
         self.onTripSelected = onTripSelected
         self.onActivitySelected = onActivitySelected
+        self.onTransactionSelected = onTransactionSelected
+        self.onLifeEventSelected = onLifeEventSelected
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: targetDate)
@@ -253,6 +353,12 @@ struct VaultFilteredResultsView: View {
         
         let activityPredicate = #Predicate<ActivityInstance> { $0.timeStart >= startOfDay && $0.timeStart < endOfDay && $0.rid != nil }
         _activities = Query(filter: activityPredicate, sort: \.timeStart, order: .reverse)
+
+        let transactionPredicate = #Predicate<Transaction> { $0.timeStart >= startOfDay && $0.timeStart < endOfDay && $0.rid != nil }
+        _transactions = Query(filter: transactionPredicate, sort: \.timeStart, order: .reverse)
+
+        let eventPredicate = #Predicate<LifeEvent> { $0.timeStart >= startOfDay && $0.timeStart < endOfDay && $0.rid != nil }
+        _lifeEvents = Query(filter: eventPredicate, sort: \.timeStart, order: .reverse)
     }
     
     private var unlinkedTrips: [Trip] { trips.filter { $0.linkedFilePaths.isEmpty } }
@@ -261,8 +367,15 @@ struct VaultFilteredResultsView: View {
     private var unlinkedActivities: [ActivityInstance] { activities.filter { $0.linkedFilePaths.isEmpty } }
     private var linkedActivities: [ActivityInstance] { activities.filter { !$0.linkedFilePaths.isEmpty } }
     
+    private var unlinkedTransactions: [Transaction] { transactions.filter { $0.linkedFilePaths.isEmpty } }
+    private var linkedTransactions: [Transaction] { transactions.filter { !$0.linkedFilePaths.isEmpty } }
+    
+    private var unlinkedLifeEvents: [LifeEvent] { lifeEvents.filter { $0.linkedFilePaths.isEmpty } }
+    private var linkedLifeEvents: [LifeEvent] { lifeEvents.filter { !$0.linkedFilePaths.isEmpty } }
+    
     var body: some View {
-        if selectedTarget == .trip {
+        switch selectedTarget {
+        case .trip:
             if trips.isEmpty {
                 Section {
                     Text("No synced trips found for this date.")
@@ -286,7 +399,7 @@ struct VaultFilteredResultsView: View {
                     }
                 }
             }
-        } else {
+        case .activity:
             if activities.isEmpty {
                 Section {
                     Text("No synced activities found for this date.")
@@ -305,6 +418,54 @@ struct VaultFilteredResultsView: View {
                     Section("Already Vaulted") {
                         ForEach(linkedActivities) { act in
                             Button { onActivitySelected(act) } label: { ActivityInstanceRowView(instance: act) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        case .transaction:
+            if transactions.isEmpty {
+                Section {
+                    Text("No synced transactions found for this date.")
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                if !unlinkedTransactions.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedTransactions) { transaction in
+                            Button { onTransactionSelected(transaction) } label: { TransactionRowView(transaction: transaction) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !linkedTransactions.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedTransactions) { transaction in
+                            Button { onTransactionSelected(transaction) } label: { TransactionRowView(transaction: transaction) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        case .lifeEvent:
+            if lifeEvents.isEmpty {
+                Section {
+                    Text("No synced life events found for this date.")
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                if !unlinkedLifeEvents.isEmpty {
+                    Section("Needs File") {
+                        ForEach(unlinkedLifeEvents) { event in
+                            Button { onLifeEventSelected(event) } label: { LifeEventRowView(event: event, selectedDate: event.timeStart) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !linkedLifeEvents.isEmpty {
+                    Section("Already Vaulted") {
+                        ForEach(linkedLifeEvents) { event in
+                            Button { onLifeEventSelected(event) } label: { LifeEventRowView(event: event, selectedDate: event.timeStart) }
                                 .buttonStyle(.plain)
                         }
                     }

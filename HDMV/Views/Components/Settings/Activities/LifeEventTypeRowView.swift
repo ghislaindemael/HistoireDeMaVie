@@ -10,10 +10,7 @@ struct LifeEventTypeRowView: View {
             IconView(iconString: type.icon ?? "")
             Text(type.name)
             Spacer()
-            CacheToggleButton(model: type) { t in
-                onCacheToggle(t)
-            }
-            SyncStatusIndicator(status: type.syncStatus)
+            CatalogueRowControlsView(model: type, onToggle: onCacheToggle)
         }
         .foregroundStyle(.primary)
     }
