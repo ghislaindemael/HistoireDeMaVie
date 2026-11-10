@@ -32,4 +32,27 @@ struct FoodDetails: Codable, Hashable {
     
     var generalNotes: String?
     var appliedRecipeRids: [Int]?
+    var courseNotes: [String: String]? // [CourseType.rawValue: Note]
+    
+    var hasAnyCourseNotes: Bool {
+        guard let courseNotes else { return false }
+        return courseNotes.values.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+    
+    func note(for course: CourseType) -> String? {
+        courseNotes?[course.rawValue]
+    }
+    
+    mutating func setNote(_ note: String?, for course: CourseType) {
+        if var notes = courseNotes {
+            if let note = note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                notes[course.rawValue] = note
+            } else {
+                notes.removeValue(forKey: course.rawValue)
+            }
+            courseNotes = notes.isEmpty ? nil : notes
+        } else if let note = note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            courseNotes = [course.rawValue: note]
+        }
+    }
 }

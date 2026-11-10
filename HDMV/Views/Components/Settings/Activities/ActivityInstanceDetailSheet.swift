@@ -56,18 +56,7 @@ struct ActivityInstanceDetailSheet: View {
                 }
                 
                 
-                HierarchySectionView(
-                    model: instance,
-                    hasParent: !viewModel.editor.hasNoParent(),
-                    parentInstance: viewModel.editor.parentInstance,
-                    parentTrip: viewModel.editor.parentTrip,
-                    onSelectParent: { newParent in
-                        viewModel.editor.setParent(newParent)
-                    },
-                    onRemoveFromParent: {
-                        viewModel.editor.clearParents()
-                    }
-                )
+                HierarchySectionView(model: instance, editor: $viewModel.editor)
                 
                 OrphanLogItemConnector(
                     parent: instance,
@@ -128,16 +117,7 @@ struct ActivityInstanceDetailSheet: View {
                 }
             }
             
-            NavigationLink {
-                MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
-            } label: {
-                HStack {
-                    Text("Contexts")
-                    Spacer()
-                    Text("\(viewModel.editor.contextRids.count) selected")
-                        .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
-                }
-            }
+            LifeContextSelectorLink(selectedContexts: $viewModel.editor.contextRids)
         }
     }
     

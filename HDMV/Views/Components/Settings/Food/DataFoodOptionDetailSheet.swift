@@ -34,10 +34,7 @@ struct DataFoodOptionDetailSheet: View {
                     Toggle("Is Required", isOn: $viewModel.editor.isRequired)
                 }
                 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
             }
             .navigationTitle("Edit Option")
             .navigationBarTitleDisplayMode(.inline)

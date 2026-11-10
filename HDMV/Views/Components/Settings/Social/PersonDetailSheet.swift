@@ -39,10 +39,7 @@ struct PersonDetailSheet: View {
                         displayedComponents: .date
                     )                }
 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 
             }
             .navigationTitle("Edit Person")

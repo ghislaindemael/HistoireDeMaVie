@@ -18,17 +18,17 @@ struct VehiclesPage: View {
     private var searchFilteredVehicles: [Vehicle] {
         guard !searchText.isEmpty else { return viewModel.filteredVehicles }
         return viewModel.filteredVehicles.filter { vehicle in
-            vehicle.name.localizedCaseInsensitiveContains(searchText) ||
-            (vehicle.type?.localizedCaseInsensitiveContains(searchText) ?? false)
+            (vehicle.name?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+            vehicle.typeSlug.localizedCaseInsensitiveContains(searchText)
         }
     }
     
     private var unsetVehicles: [Vehicle] {
-        searchFilteredVehicles.filter { $0.name == "Unset" || $0.name.isEmpty }
+        searchFilteredVehicles.filter { ($0.name ?? "").isEmpty || $0.name == "Unset" || $0.typeSlug.isUnset() }
     }
     
     private var validVehicles: [Vehicle] {
-        searchFilteredVehicles.filter { $0.name != "Unset" && !$0.name.isEmpty }
+        searchFilteredVehicles.filter { !($0.name ?? "").isEmpty && $0.name != "Unset" && $0.typeSlug.isNotUnset() }
     }
     
     var body: some View {

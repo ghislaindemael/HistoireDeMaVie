@@ -124,6 +124,22 @@ final class Trip: LogModel {
         }
     }
     
+    var name: String {
+        if let line = transitLine?.name, !line.isEmpty {
+            return line
+        }
+        if let pathName = path?.name, !pathName.isEmpty {
+            return pathName
+        }
+        if let vName = vehicle?.name, !vName.isEmpty {
+            return vName
+        }
+        if let start = placeStart?.name, let end = placeEnd?.name {
+            return "\(start) → \(end)"
+        }
+        return "Trip"
+    }
+    
     // MARK: Init
     
     init(rid: Int? = nil,

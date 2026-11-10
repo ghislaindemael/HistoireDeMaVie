@@ -127,6 +127,10 @@ final class Vehicle: CatalogueModel {
             typeSlug = newValue.rawValue
         }
     }
+    
+    var icon: String {
+        type.icon
+    }
 }
 
 

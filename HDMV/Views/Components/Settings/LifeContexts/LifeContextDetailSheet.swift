@@ -85,11 +85,11 @@ struct LifeContextDetailSheet: View {
                     .foregroundColor(.red)
                 }
                 
-                Section("Settings") {
-                    Toggle("Selectable", isOn: $viewModel.editor.selectable)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                }
+                UsageSectionView(
+                    isCached: $viewModel.editor.cache,
+                    isArchived: $viewModel.editor.archived,
+                    isSelectable: $viewModel.editor.selectable
+                )
                 
                 if viewModel.editor.parent != nil || viewModel.editor.parentRid != nil {
                     Section("Hierarchy") {

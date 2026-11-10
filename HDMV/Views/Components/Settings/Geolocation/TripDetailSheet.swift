@@ -86,30 +86,10 @@ struct TripDetailSheet: View {
                         }
                     }
                     
-                    NavigationLink {
-                        MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
-                    } label: {
-                        HStack {
-                            Text("Contexts")
-                            Spacer()
-                            Text("\(viewModel.editor.contextRids.count) selected")
-                                .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
-                        }
-                    }
+                    LifeContextSelectorLink(selectedContexts: $viewModel.editor.contextRids)
                 }
                 
-                HierarchySectionView(
-                    model: trip,
-                    hasParent: !viewModel.editor.hasNoParent(),
-                    parentInstance: viewModel.editor.parentInstance,
-                    parentTrip: viewModel.editor.parentTrip,
-                    onSelectParent: { newParent in
-                        viewModel.editor.setParent(newParent)
-                    },
-                    onRemoveFromParent: {
-                        viewModel.editor.clearParents()
-                    }
-                )
+                HierarchySectionView(model: trip, editor: $viewModel.editor)
                 
                 OrphanLogItemConnector(
                     parent: trip,

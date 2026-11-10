@@ -22,11 +22,11 @@ struct InteractionRowView: View {
     let onEnd: (() -> Void)?
     let showParentBadge: Bool
     
-    init(interaction: Interaction, selectedDate: Date? = nil, onEnd: (() -> Void)? = nil, showParentBadge: Bool = false) {
+    init(interaction: Interaction, selectedDate: Date? = nil, showParentBadge: Bool = false, onEnd: (() -> Void)? = nil) {
         self.interaction = interaction
         self.selectedDate = selectedDate
-        self.onEnd = onEnd
         self.showParentBadge = showParentBadge
+        self.onEnd = onEnd
     }
     
     var body: some View {
@@ -89,25 +89,7 @@ struct InteractionRowView: View {
             }
             
             if showParentBadge {
-                if let parent = interaction.parentInstance {
-                    HStack(spacing: 8) {
-                        Label(parent.activity?.name ?? "Activity", systemImage: parent.activity?.icon ?? "flowchart.fill")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(Color.secondaryBackground)
-                            .cornerRadius(4)
-                    }
-                } else if let parentTrip = interaction.parentTrip {
-                    HStack(spacing: 8) {
-                        Label(parentTrip.vehicle?.name ?? "Trip", systemImage: parentTrip.vehicle?.icon ?? "car.fill")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(Color.secondaryBackground)
-                            .cornerRadius(4)
-                    }
-                }
+                ParentBadgeRowView(parentInstance: interaction.parentInstance, parentTrip: interaction.parentTrip)
             }
             
             LifeContextsDisplayView(contextRids: interaction.contextRids)

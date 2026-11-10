@@ -4,7 +4,14 @@ struct CourseEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     let course: CourseType
+    @Binding var note: String?
     @Binding var consumedItems: [ComposedFood]
+    
+    init(course: CourseType, note: Binding<String?> = .constant(nil), consumedItems: Binding<[ComposedFood]>) {
+        self.course = course
+        self._note = note
+        self._consumedItems = consumedItems
+    }
     
     @State private var showingItemSelector = false
     @State private var itemToEdit: ComposedFood? = nil
@@ -12,68 +19,78 @@ struct CourseEditorSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                let itemsInCourse = consumedItems.filter { $0.course == course }
+                Section("Course Notes") {
+                    TextField("Notes for \(course.rawValue)...", text: Binding(
+                        get: { note ?? "" },
+                        set: { note = $0.isEmpty ? nil : $0 }
+                    ), axis: .vertical)
+                    .lineLimit(2...5)
+                }
                 
-                ForEach(itemsInCourse) { item in
-                    Button {
-                        itemToEdit = item
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(item.rawText ?? "Unknown Food")
-                                    .foregroundColor(.primary)
-                                
-                                if let details = item.details, !details.isEmpty {
-                                    Text(details)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
-                                }
-                                
-                                if let qty = item.quantity {
-                                    Text(String(format: "%.1f", qty) + " " + (item.unit ?? ""))
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .imageScale(.small)
-                        }
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            if let idx = consumedItems.firstIndex(where: { $0.id == item.id }) {
-                                consumedItems.remove(at: idx)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        
+                Section("Items") {
+                    let itemsInCourse = consumedItems.filter { $0.course == course }
+                    
+                    ForEach(itemsInCourse) { item in
                         Button {
-                            FoodClipboardManager.copy(food: item)
+                            itemToEdit = item
                         } label: {
-                            Label("Copy", systemImage: "doc.on.doc")
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.rawText ?? "Unknown Food")
+                                        .foregroundColor(.primary)
+                                    
+                                    if let details = item.details, !details.isEmpty {
+                                        Text(details)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                    
+                                    if let qty = item.quantity {
+                                        Text(String(format: "%.1f", qty) + " " + (item.unit ?? ""))
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                                    .imageScale(.small)
+                            }
                         }
-                        .tint(.blue)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                if let idx = consumedItems.firstIndex(where: { $0.id == item.id }) {
+                                    consumedItems.remove(at: idx)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            
+                            Button {
+                                FoodClipboardManager.copy(food: item)
+                            } label: {
+                                Label("Copy", systemImage: "doc.on.doc")
+                            }
+                            .tint(.blue)
+                        }
                     }
-                }
-                
-                Button(action: {
-                    showingItemSelector = true
-                }) {
-                    Label("Add Food", systemImage: "plus.circle")
-                }
-                
-                if FoodClipboardManager.hasFood {
+                    
                     Button(action: {
-                        if var pastedFood = FoodClipboardManager.getFoodWithNewIDs() {
-                            pastedFood.course = course
-                            consumedItems.append(pastedFood)
-                        }
+                        showingItemSelector = true
                     }) {
-                        Label("Paste Food", systemImage: "doc.on.clipboard")
+                        Label("Add Food", systemImage: "plus.circle")
+                    }
+                    
+                    if FoodClipboardManager.hasFood {
+                        Button(action: {
+                            if var pastedFood = FoodClipboardManager.getFoodWithNewIDs() {
+                                pastedFood.course = course
+                                consumedItems.append(pastedFood)
+                            }
+                        }) {
+                            Label("Paste Food", systemImage: "doc.on.clipboard")
+                        }
                     }
                 }
             }

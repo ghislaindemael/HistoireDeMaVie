@@ -43,18 +43,7 @@ struct LifeEventDetailSheet: View {
                 )
                 detailsSection
                 
-                HierarchySectionView(
-                    model: lifeEvent,
-                    hasParent: !viewModel.editor.hasNoParent(),
-                    parentInstance: viewModel.editor.parentInstance,
-                    parentTrip: viewModel.editor.parentTrip,
-                    onSelectParent: { newParent in
-                        viewModel.editor.setParent(newParent)
-                    },
-                    onRemoveFromParent: {
-                        viewModel.editor.clearParents()
-                    }
-                )
+                HierarchySectionView(model: lifeEvent, editor: $viewModel.editor)
 
             }
             .navigationTitle("Edit Life Event")
@@ -98,16 +87,7 @@ struct LifeEventDetailSheet: View {
                     }
                 }
             
-            NavigationLink {
-                MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
-            } label: {
-                HStack {
-                    Text("Contexts")
-                    Spacer()
-                    Text("\(viewModel.editor.contextRids.count) selected")
-                        .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
-                }
-            }
+            LifeContextSelectorLink(selectedContexts: $viewModel.editor.contextRids)
             TextEditor(text: Binding(
                 get: { viewModel.editor.details ?? "" },
                 set: { viewModel.editor.details = $0.isEmpty ? nil : $0 }

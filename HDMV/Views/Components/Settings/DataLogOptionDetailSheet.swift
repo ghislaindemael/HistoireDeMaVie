@@ -151,10 +151,7 @@ struct DataLogOptionDetailSheet: View {
                 }
                 
 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 
                 Section("Applies Globally To") {
                     Toggle("All Transactions", isOn: Binding(

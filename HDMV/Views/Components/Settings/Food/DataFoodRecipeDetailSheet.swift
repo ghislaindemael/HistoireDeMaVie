@@ -42,7 +42,8 @@ struct DataFoodRecipeDetailSheet: View {
                                             .lineLimit(1)
                                     }
                                     if let qty = compItem.quantity {
-                                        Text(String(format: "%.1f", qty) + " " + (compItem.unit?.rawValue ?? ""))
+                                        let unitStr = compItem.unit?.rawValue ?? ""
+                                        Text("\(qty, specifier: "%.1f") \(unitStr)")
                                             .font(.caption2)
                                             .foregroundStyle(.tertiary)
                                     }
@@ -80,10 +81,7 @@ struct DataFoodRecipeDetailSheet: View {
                     }
                 }
                 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
             }
             .navigationTitle("Edit Recipe")
             .navigationBarTitleDisplayMode(.inline)
@@ -91,15 +89,13 @@ struct DataFoodRecipeDetailSheet: View {
                 viewModel.onDone()
             }
             .sheet(isPresented: $showingItemSelector) {
-                FoodItemSelectorSheet { newItem in
+                FoodItemSelectorSheet(course: nil) { newItem in
                     viewModel.ingredients.append(newItem)
                 }
             }
             .sheet(item: $itemToEdit) { compItem in
-                ComposedFoodEditSheet(item: compItem) { updated in
-                    if let index = viewModel.ingredients.firstIndex(where: { $0.id == updated.id }) {
-                        viewModel.ingredients[index] = updated
-                    }
+                if let index = viewModel.ingredients.firstIndex(where: { $0.id == compItem.id }) {
+                    ComposedFoodEditorSheet(item: $viewModel.ingredients[index])
                 }
             }
         }

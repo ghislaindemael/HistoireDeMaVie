@@ -7,6 +7,11 @@ struct FoodItemSelectorSheet: View {
     let course: CourseType?
     let onSelect: (ComposedFood) -> Void
     
+    init(course: CourseType? = nil, onSelect: @escaping (ComposedFood) -> Void) {
+        self.course = course
+        self.onSelect = onSelect
+    }
+    
     @State private var searchText = ""
     @State private var selectedTab: Int = 0 // 0: Items, 1: Recipes
     

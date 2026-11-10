@@ -75,16 +75,7 @@ struct QuoteDetailSheet: View {
                         set: { viewModel.editor.context = $0.isEmpty ? nil : $0 }
                     ))
                     
-                    NavigationLink {
-                        MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
-                    } label: {
-                        HStack {
-                            Text("Contexts")
-                            Spacer()
-                            Text("\(viewModel.editor.contextRids.count) selected")
-                                .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
-                        }
-                    }
+                    LifeContextSelectorLink(selectedContexts: $viewModel.editor.contextRids)
                 } header: {
                     Text("Details")
                 }
@@ -153,18 +144,7 @@ struct QuoteDetailSheet: View {
                     }
                 }
                 
-                HierarchySectionView(
-                    model: quote,
-                    hasParent: !viewModel.editor.hasNoParent(),
-                    parentInstance: viewModel.editor.parentInstance,
-                    parentTrip: viewModel.editor.parentTrip,
-                    onSelectParent: { newParent in
-                        viewModel.editor.setParent(newParent)
-                    },
-                    onRemoveFromParent: {
-                        viewModel.editor.clearParents()
-                    }
-                )
+                HierarchySectionView(model: quote, editor: $viewModel.editor)
 
             }
             .navigationTitle("Edit Quote")

@@ -25,6 +25,13 @@ struct FoodDetailsPillView: View {
     }
     
     var body: some View {
+        let items = foodDetails?.consumedItems ?? []
+        let grouped = Dictionary(grouping: items) { $0.course ?? .divers }
+        let coursesWithNotes = CourseType.allCases.filter { foodDetails?.note(for: $0) != nil }
+        let allActiveCourses = CourseType.allCases.filter { grouped.keys.contains($0) || coursesWithNotes.contains($0) }
+        let hasContent = !items.isEmpty || !allActiveCourses.isEmpty
+        let hasGeneralNotes = foodDetails?.generalNotes?.isEmpty == false
+        
         HStack(alignment: .top, spacing: 10) {
             VStack(spacing: 4) {
                 Image(systemName: "fork.knife")
@@ -32,7 +39,7 @@ struct FoodDetailsPillView: View {
                     .frame(width: 20)
                     .padding(.top, 2)
                 
-                if (foodDetails?.consumedItems.isEmpty == false) {
+                if hasContent || hasGeneralNotes {
                     Rectangle()
                         .fill(alertColor)
                         .frame(width: 2)
@@ -44,24 +51,27 @@ struct FoodDetailsPillView: View {
                     Text(notes)
                         .font(.headline)
                         .foregroundColor(themeColor)
-                } else if foodDetails?.consumedItems.isEmpty != false {
+                } else if !hasContent && !hasGeneralNotes {
                     Text("Food not logged.")
                         .foregroundColor(alertColor)
                         .fontWeight((isMissingRequiredDetails || isMissingOptionalDetails) ? .bold : .regular)
                         .font(.headline)
                 }
                 
-                if let items = foodDetails?.consumedItems, !items.isEmpty {
-                    let grouped = Dictionary(grouping: items) { $0.course ?? .divers }
-                    let sortedCourses = CourseType.allCases.filter { grouped.keys.contains($0) }
-                    
-                    ForEach(sortedCourses, id: \.self) { course in
+                if !allActiveCourses.isEmpty {
+                    ForEach(allActiveCourses, id: \.self) { course in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(course.rawValue)
                                 .font(.body)
                                 .fontWeight(.semibold)
                                 .foregroundColor(themeColor)
                                 .textCase(.uppercase)
+                            
+                            if let courseNote = foodDetails?.note(for: course), !courseNote.isEmpty {
+                                Text(courseNote)
+                                    .font(.callout)
+                                    .foregroundColor(themeColor.opacity(0.85))
+                            }
                             
                             ForEach(grouped[course] ?? [], id: \.id) { item in
                                 Text("• \(formatFoodItem(item))")

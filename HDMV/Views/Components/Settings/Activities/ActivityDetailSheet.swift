@@ -76,11 +76,11 @@ struct ActivityDetailSheet: View {
                     .animation(.default, value: viewModel.editor.allowedCapabilities)
                 }
 
-                Section("Usage") {
-                    Toggle("Selectable", isOn: $viewModel.editor.selectable)
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(
+                    isCached: $viewModel.editor.cache,
+                    isArchived: $viewModel.editor.archived,
+                    isSelectable: $viewModel.editor.selectable
+                )
                 
                 if viewModel.editor.parent != nil || viewModel.editor.parentRid != nil {
                     Section("Hierarchy") {

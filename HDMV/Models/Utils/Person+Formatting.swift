@@ -8,6 +8,16 @@
 
 import Foundation
 
+extension Person {
+    var formattedName: String {
+        var parts: [String] = [name]
+        if !familyName.isEmpty && familyName.isNotUnset() {
+            parts.append(familyName)
+        }
+        return parts.joined(separator: " ")
+    }
+}
+
 extension Collection where Element == Person {
     
     /// Formats an array of Person objects into a readable string (e.g., "Alice, Bob & 2 others")

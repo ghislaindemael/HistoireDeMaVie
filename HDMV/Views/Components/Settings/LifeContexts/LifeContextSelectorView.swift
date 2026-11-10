@@ -29,6 +29,24 @@ struct LifeContextSelectorView: View {
     }
 }
 
+struct LifeContextSelectorLink: View {
+    @Binding var selectedContexts: [Int]
+    var title: String = "Contexts"
+    
+    var body: some View {
+        NavigationLink {
+            MultiLifeContextSelector(selectedContexts: $selectedContexts)
+        } label: {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(selectedContexts.count) selected")
+                    .foregroundStyle(selectedContexts.isEmpty ? .secondary : .primary)
+            }
+        }
+    }
+}
+
 struct MultiLifeContextSelector: View {
     @Binding var selectedContexts: [Int]
     @Query var contextTree: [LifeContext]

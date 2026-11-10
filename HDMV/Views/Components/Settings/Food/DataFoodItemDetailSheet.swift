@@ -133,11 +133,11 @@ struct DataFoodItemDetailSheet: View {
                         Text("Add custom units (e.g., 1 biscuit = 15g).")
                         
                         HStack(spacing: 8) {
-                            if FoodClipboardManager.shared.hasServingSizes {
+                            if FoodClipboardManager.hasServingSizes, let sizes = FoodClipboardManager.getServingSizes() {
                                 Button {
-                                    pasteServingSizes(FoodClipboardManager.shared.servingSizes)
+                                    pasteServingSizes(sizes)
                                 } label: {
-                                    Label("Paste (\(FoodClipboardManager.shared.servingSizes.count))", systemImage: "doc.on.clipboard")
+                                    Label("Paste (\(sizes.count))", systemImage: "doc.on.clipboard")
                                 }
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
@@ -187,10 +187,7 @@ struct DataFoodItemDetailSheet: View {
                     }
                 }
                 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 
                 Section("Custom Options") {
                     let sortedMappings = (item.optionMappings ?? []).sorted { 

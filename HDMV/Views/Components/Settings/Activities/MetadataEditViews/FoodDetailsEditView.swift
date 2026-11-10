@@ -23,9 +23,11 @@ struct FoodDetailsEditView: View {
     }
     
     private var activeCourses: [CourseType] {
-        let items = foodDetailsBinding.wrappedValue.consumedItems
+        let details = foodDetailsBinding.wrappedValue
+        let items = details.consumedItems
         let filledCourses = Set(items.compactMap { $0.course })
-        return CourseType.allCases.filter { filledCourses.contains($0) || emptyCourses.contains($0) }
+        let coursesWithNotes = Set(CourseType.allCases.filter { details.note(for: $0) != nil })
+        return CourseType.allCases.filter { filledCourses.contains($0) || emptyCourses.contains($0) || coursesWithNotes.contains($0) }
     }
     
     var body: some View {
@@ -41,13 +43,23 @@ struct FoodDetailsEditView: View {
             if !activeCourses.isEmpty {
                 ForEach(activeCourses) { course in
                     let itemsInCourse = foodDetailsBinding.wrappedValue.consumedItems.filter { $0.course == course }
+                    let courseNote = foodDetailsBinding.wrappedValue.note(for: course)
                     
                     Button {
                         selectedCourseToEdit = course
                     } label: {
                         HStack {
-                            Text(course.rawValue)
-                                .foregroundColor(.primary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(course.rawValue)
+                                    .foregroundColor(.primary)
+                                
+                                if let courseNote = courseNote, !courseNote.isEmpty {
+                                    Text(courseNote)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+                                }
+                            }
                             Spacer()
                             Text("\(itemsInCourse.count) items")
                                 .foregroundColor(.secondary)
@@ -60,12 +72,13 @@ struct FoodDetailsEditView: View {
                         Button(role: .destructive) {
                             emptyCourses.remove(course)
                             foodDetailsBinding.wrappedValue.consumedItems.removeAll { $0.course == course }
+                            foodDetailsBinding.wrappedValue.setNote(nil, for: course)
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
                         
                         Button {
-                            FoodClipboardManager.copy(course: itemsInCourse)
+                            FoodClipboardManager.copy(course: itemsInCourse, note: courseNote)
                         } label: {
                             Label("Copy", systemImage: "doc.on.doc")
                         }
@@ -94,16 +107,34 @@ struct FoodDetailsEditView: View {
             .sheet(item: Binding<CourseType?>(
                 get: { selectedCourseToEdit },
                 set: { selectedCourseToEdit = $0 }
-            )) { course in
-                CourseEditorSheet(course: course, consumedItems: Binding(
-                    get: { foodDetailsBinding.wrappedValue.consumedItems },
-                    set: { foodDetailsBinding.wrappedValue.consumedItems = $0 }
-                ))
+            ), onDismiss: {
+                emptyCourses = emptyCourses.filter { course in
+                    let hasItems = foodDetailsBinding.wrappedValue.consumedItems.contains { $0.course == course }
+                    let hasNote = foodDetailsBinding.wrappedValue.note(for: course) != nil
+                    return hasItems || hasNote
+                }
+            }) { course in
+                CourseEditorSheet(
+                    course: course,
+                    note: Binding(
+                        get: { foodDetailsBinding.wrappedValue.note(for: course) },
+                        set: { foodDetailsBinding.wrappedValue.setNote($0, for: course) }
+                    ),
+                    consumedItems: Binding(
+                        get: { foodDetailsBinding.wrappedValue.consumedItems },
+                        set: { foodDetailsBinding.wrappedValue.consumedItems = $0 }
+                    )
+                )
             }
             if FoodClipboardManager.hasCourse {
                 Button(action: {
-                    if let pastedItems = FoodClipboardManager.getCourseWithNewIDs() {
-                        foodDetailsBinding.wrappedValue.consumedItems.append(contentsOf: pastedItems)
+                    if let pasted = FoodClipboardManager.getCourseWithNewIDs() {
+                        foodDetailsBinding.wrappedValue.consumedItems.append(contentsOf: pasted.items)
+                        if let targetCourse = pasted.items.first?.course, let pastedNote = pasted.note {
+                            if foodDetailsBinding.wrappedValue.note(for: targetCourse) == nil {
+                                foodDetailsBinding.wrappedValue.setNote(pastedNote, for: targetCourse)
+                            }
+                        }
                     }
                 }) {
                     Label("Paste Course", systemImage: "doc.on.clipboard")

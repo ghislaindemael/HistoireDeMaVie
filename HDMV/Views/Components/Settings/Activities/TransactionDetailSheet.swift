@@ -97,16 +97,7 @@ struct TransactionDetailSheet: View {
                         }
                     }
                     
-                    NavigationLink {
-                        MultiLifeContextSelector(selectedContexts: $viewModel.editor.contextRids)
-                    } label: {
-                        HStack {
-                            Text("Contexts")
-                            Spacer()
-                            Text("\(viewModel.editor.contextRids.count) selected")
-                                .foregroundStyle(viewModel.editor.contextRids.isEmpty ? .secondary : .primary)
-                        }
-                    }
+                    LifeContextSelectorLink(selectedContexts: $viewModel.editor.contextRids)
                     
                 }
                 
@@ -246,33 +237,13 @@ struct TransactionDetailSheet: View {
                     }
                 }
                 
-                HierarchySectionView(
-                    model: transaction,
-                    hasParent: !viewModel.editor.hasNoParent(),
-                    parentInstance: viewModel.editor.parentInstance,
-                    parentTrip: viewModel.editor.parentTrip,
-                    onSelectParent: { newParent in
-                        viewModel.editor.setParent(newParent)
-                    },
-                    onRemoveFromParent: {
-                        viewModel.editor.clearParents()
-                    }
-                )
+                HierarchySectionView(model: transaction, editor: $viewModel.editor)
             }
             .navigationTitle("Edit Transaction")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        
-                        viewModel.onDone()
-                        dismiss()
-                    }
-                }
+            .standardSheetToolbar {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                viewModel.onDone()
             }
             .dynamicOptionSelectorSheet(
                 isPresented: $isShowingOptionSelector,

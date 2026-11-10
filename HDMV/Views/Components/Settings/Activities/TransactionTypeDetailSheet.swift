@@ -53,10 +53,7 @@ struct TransactionTypeDetailSheet: View {
                     }
                 }
                 
-                Section("Usage") {
-                    Toggle("Cached", isOn: $viewModel.editor.cache)
-                    Toggle("Archived", isOn: $viewModel.editor.archived)
-                }
+                UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 
                 if viewModel.editor.parent != nil || viewModel.editor.parentRid != nil {
                     Section("Hierarchy") {

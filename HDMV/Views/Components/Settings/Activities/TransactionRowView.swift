@@ -137,27 +137,7 @@ struct TransactionRowView: View {
         VStack(alignment: .leading, spacing: 6) {
             
             if showParentBadge {
-                if let parent = transaction.parentInstance {
-                    HStack(spacing: 8) {
-                        Label(parent.activity?.name ?? "Activity", systemImage: parent.activity?.icon ?? "flowchart.fill")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(Color.secondaryBackground)
-                            .cornerRadius(4)
-                    }
-                    .padding(.bottom, 2)
-                } else if let parentTrip = transaction.parentTrip {
-                    HStack(spacing: 8) {
-                        Label(parentTrip.vehicle?.name ?? "Trip", systemImage: parentTrip.vehicle?.icon ?? "car.fill")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 4)
-                            .background(Color.secondaryBackground)
-                            .cornerRadius(4)
-                    }
-                    .padding(.bottom, 2)
-                }
+                ParentBadgeRowView(parentInstance: transaction.parentInstance, parentTrip: transaction.parentTrip)
             }
             
             if let details = transaction.details, !details.isEmpty {

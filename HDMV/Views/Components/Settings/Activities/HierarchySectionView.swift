@@ -14,6 +14,35 @@ struct HierarchySectionView: View {
     @State private var justCreatedTrip = false
     @State private var justCreatedInstance = false
     
+    init(
+        model: any LogModel,
+        hasParent: Bool,
+        parentInstance: ActivityInstance? = nil,
+        parentTrip: Trip? = nil,
+        onSelectParent: @escaping ((any ParentModel)?) -> Void = { _ in },
+        onRemoveFromParent: @escaping () -> Void
+    ) {
+        self.model = model
+        self.hasParent = hasParent
+        self.parentInstance = parentInstance
+        self.parentTrip = parentTrip
+        self.onSelectParent = onSelectParent
+        self.onRemoveFromParent = onRemoveFromParent
+    }
+    
+    init<E: LinkedParent>(model: any LogModel, editor: Binding<E>) {
+        self.model = model
+        self.hasParent = !editor.wrappedValue.hasNoParent()
+        self.parentInstance = editor.wrappedValue.parentInstance
+        self.parentTrip = editor.wrappedValue.parentTrip
+        self.onSelectParent = { newParent in
+            editor.wrappedValue.setParent(newParent)
+        }
+        self.onRemoveFromParent = {
+            editor.wrappedValue.clearParents()
+        }
+    }
+    
     var body: some View {
         Section("Parent") {
             // 1. Current Parent Inspector
@@ -38,9 +67,9 @@ struct HierarchySectionView: View {
                 }
             } else if let trip = parentTrip {
                 HStack(spacing: 8) {
-                    IconView(iconString: trip.vehicle?.icon ?? "car.fill", size: 22, tint: .indigo)
+                    IconView(iconString: trip.vehicle?.type.icon ?? "car.fill", size: 22, tint: .indigo)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(trip.name ?? trip.vehicle?.name ?? "Trip")
+                        Text(trip.name)
                             .font(.subheadline)
                             .fontWeight(.medium)
                         Text(trip.timeStart, style: .date)
@@ -241,9 +270,9 @@ struct ParentSelectionFilteredList: View {
                         onSelect(trip)
                     } label: {
                         HStack(spacing: 8) {
-                            IconView(iconString: trip.vehicle?.icon ?? "car.fill", size: 22, tint: .indigo)
+                            IconView(iconString: trip.vehicle?.type.icon ?? "car.fill", size: 22, tint: .indigo)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(trip.name ?? trip.vehicle?.name ?? "Trip")
+                                Text(trip.name)
                                     .font(.subheadline)
                                     .foregroundColor(.primary)
                                 Text(trip.timeStart, style: .time)
