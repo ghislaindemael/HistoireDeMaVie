@@ -258,7 +258,7 @@ struct TransactionPayload: Codable, InitializableWithModel {
 }
 
 
-struct TransactionEditor: EditorProtocol {
+struct TransactionEditor: EditorProtocol, LinkedParent {
     
     var timeStart: Date
     var executionDate: Date?

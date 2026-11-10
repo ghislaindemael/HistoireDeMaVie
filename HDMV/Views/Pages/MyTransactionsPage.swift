@@ -89,7 +89,8 @@ struct MyTransactionsPage: View {
                     ForEach(viewModel.transactions) { transaction in
                         TransactionRowView(
                             transaction: transaction,
-                            selectedDate: viewModel.filterMode == .daily ? viewModel.filterDate : transaction.transactionTime
+                            selectedDate: viewModel.filterMode == .daily ? viewModel.filterDate : transaction.transactionTime,
+                            showParentBadge: true
                         )
                             .onTapGesture {
                                 transactionToEdit = transaction

@@ -23,10 +23,7 @@ struct DateDisplayView: View {
             }
             
             if showOffsetBadge, let badge = TimeZoneFormatUtils.offsetBadgeString(for: date, in: timeZone) {
-                Text(badge)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                TimeZoneBadgeView(badge: badge)
             }
         }
     }

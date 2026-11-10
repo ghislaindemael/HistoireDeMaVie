@@ -71,14 +71,11 @@ struct FullTimePicker: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Text(label)
                     if let refDate = selection ?? minimumDate,
                        let badge = TimeZoneFormatUtils.offsetBadgeString(for: refDate, in: timeZone) {
-                        Text(badge)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
+                        TimeZoneBadgeView(badge: badge)
                     }
                 }
                 Spacer()

@@ -9,102 +9,51 @@ import Foundation
 import SwiftData
 
 @MainActor
-class PathsPageViewModel: ObservableObject {
+class PathsPageViewModel: BasePageViewModel {
     
-    private var modelContext: ModelContext?
-    private var pathSyncer: PathSyncer?
+    var syncer: AnySyncer?
+    var sortDescriptors: [SortDescriptor<Path>] = [SortDescriptor(\.name)]
     
-    @Published var isLoading = false
     @Published var paths: [Path] = []
     
-    private let tripsService = TripsService()
-    private var gpxParser = GPXParserService()
-    private let storageService = StorageService()
-    
-    func setup(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        self.pathSyncer = PathSyncer(modelContext: modelContext)
+    override func setup(modelContext: ModelContext) {
+        super.setup(modelContext: modelContext)
+        self.syncer = PathSyncer(modelContext: modelContext)
+        fetchFromCache()
     }
-    
-    // MARK: - Data Fetching and Management
     
     func fetchFromCache() {
-        guard let context = modelContext else { return }
-        let descriptor = FetchDescriptor<Path>()
-        do {
-            self.paths = try context.fetch(descriptor)
-        } catch {
-            print("Failed to fetch interactions: \(error)")
-        }
+        self.paths = super.fetchFromCache(sortDescriptors: sortDescriptors)
     }
     
+    // MARK: - Sync & Data Lifecycle
+    
     func refreshFromServer() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = pathSyncer else {
-            print("⚠️ [PathsPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            try await syncer.pullChanges()
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
+        self.paths = await super.refreshFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func uploadLocalChanges() async {
-        isLoading = true
-        defer { isLoading = false }
-        guard let syncer = pathSyncer else {
-            print("⚠️ [PathsPageViewModel] countriesSyncer is nil")
-            return
-        }
-        do {
-            _ = try await syncer.pushChanges()
-            fetchFromCache()
-        } catch {
-            print("Failed to refresh data from server: \(error)")
-        }
-    }
-    
-        
-    // MARK: User Actions
-    
-    func createLocalPath() {
-        guard let context = modelContext else { return }
-        let newPath =
-            Path(
-                syncStatus: .unsynced
-            )
-        context.insert(newPath)
-        do {
-            try context.save()
-        } catch {
-            print("Failed to create path: \(error)")
-        }
+        self.paths = await super.uploadLocalChanges(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func fetchArchivedFromServer() async {
-        SettingsStore.shared.includeArchived = true
-        defer { SettingsStore.shared.includeArchived = false }
-        await refreshFromServer()
+        self.paths = await super.fetchArchivedFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func purgeArchivedFromCache() {
-        guard let context = modelContext else { return }
-        do {
-            let allPaths = try context.fetch(FetchDescriptor<Path>())
-            for path in allPaths {
-                if path.archived {
-                    context.delete(path)
-                }
-            }
-            try context.save()
-            fetchFromCache()
-        } catch {
-            print("Failed to purge archived paths: \(error)")
+        self.paths = super.purgeArchivedFromCache(sortDescriptors: sortDescriptors)
+    }
+    
+    func deleteItem(_ item: Path) {
+        self.paths = super.deleteItem(item, sortDescriptors: sortDescriptors)
+    }
+    
+    func createLocalPath() {
+        if let updated = super.createPlaceholderIfNeeded(
+            factory: { Path(syncStatus: .unsynced) },
+            sortDescriptors: sortDescriptors
+        ) {
+            self.paths = updated
         }
     }
-
 }

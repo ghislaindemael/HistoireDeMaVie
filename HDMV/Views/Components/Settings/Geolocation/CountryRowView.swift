@@ -21,12 +21,11 @@ struct CountryRowView: View {
                     isItalicized: country.archived
                 )
                 if let tzId = country.effectiveTimeZoneIdentifier {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "globe")
                         Text(tzId)
                         if let badge = TimeZoneFormatUtils.offsetBadgeString(for: .now, in: country.resolvedTimeZone) {
-                            Text(badge)
-                                .fontWeight(.medium)
+                            TimeZoneBadgeView(badge: badge)
                         }
                     }
                     .font(.caption)

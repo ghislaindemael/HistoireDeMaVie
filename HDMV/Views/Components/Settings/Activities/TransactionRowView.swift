@@ -13,12 +13,16 @@ struct TransactionRowView: View {
     @Environment(\.modelContext) private var modelContext
     let transaction: Transaction
     let selectedDate: Date
+    let showParentBadge: Bool
+    
     init(
         transaction: Transaction,
-        selectedDate: Date = .now
+        selectedDate: Date = .now,
+        showParentBadge: Bool = false
     ) {
         self.transaction = transaction
         self.selectedDate = selectedDate
+        self.showParentBadge = showParentBadge
     }
     
     var body: some View {
@@ -132,11 +136,9 @@ struct TransactionRowView: View {
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             
-            let hasParent = transaction.parentInstance != nil
-            
-            if hasParent {
-                HStack(spacing: 8) {
-                    if let parent = transaction.parentInstance {
+            if showParentBadge {
+                if let parent = transaction.parentInstance {
+                    HStack(spacing: 8) {
                         Label(parent.activity?.name ?? "Activity", systemImage: parent.activity?.icon ?? "flowchart.fill")
                             .font(.caption)
                             .padding(.horizontal, 6)
@@ -144,8 +146,18 @@ struct TransactionRowView: View {
                             .background(Color.secondaryBackground)
                             .cornerRadius(4)
                     }
+                    .padding(.bottom, 2)
+                } else if let parentTrip = transaction.parentTrip {
+                    HStack(spacing: 8) {
+                        Label(parentTrip.vehicle?.name ?? "Trip", systemImage: parentTrip.vehicle?.icon ?? "car.fill")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(Color.secondaryBackground)
+                            .cornerRadius(4)
+                    }
+                    .padding(.bottom, 2)
                 }
-                .padding(.bottom, 2)
             }
             
             if let details = transaction.details, !details.isEmpty {
