@@ -17,6 +17,7 @@ class MasterSyncer {
     private let lifeEventSyncer: LifeEventSyncer
     private let quoteSyncer: QuoteSyncer
     private let transactionSyncer: TransactionSyncer
+    private let agendaEntrySyncer: AgendaEntrySyncer
 
     init(modelContext: ModelContext) {
         self.activityInstanceSyncer = ActivityInstanceSyncer(modelContext: modelContext)
@@ -25,6 +26,7 @@ class MasterSyncer {
         self.lifeEventSyncer = LifeEventSyncer(modelContext: modelContext)
         self.quoteSyncer = QuoteSyncer(modelContext: modelContext)
         self.transactionSyncer = TransactionSyncer(modelContext: modelContext)
+        self.agendaEntrySyncer = AgendaEntrySyncer(modelContext: modelContext)
     }
 
     func sync(
@@ -51,6 +53,7 @@ class MasterSyncer {
                     try await lifeEventSyncer.pullChanges(date: date)
                     try await quoteSyncer.pullChanges(date: date)
                     try await transactionSyncer.pullChanges(date: date)
+                    try await agendaEntrySyncer.pullChanges(date: date)
                 case .advanced:
                     guard let start = startDate, let end = endDate else {
                         print("❌ MasterSyncer: Missing date parameters for advanced sync.")
@@ -92,6 +95,7 @@ class MasterSyncer {
             _ = try await lifeEventSyncer.pushChanges()
             _ = try await quoteSyncer.pushChanges()
             _ = try await transactionSyncer.pushChanges()
+            _ = try await agendaEntrySyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")
             ToastManager.shared.showToast(message: "Push Failed", systemImage: "arrow.up.icloud", color: .red)

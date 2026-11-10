@@ -40,11 +40,11 @@ struct MyAgendaPage: View {
                 .logPageToolbar(
                     refreshAction: { await viewModel.refreshFromServer() },
                     syncAction: { await viewModel.uploadLocalChanges() },
-                    onAdd: { viewModel.createLifeEvent() },
+                    onAdd: { viewModel.createAgendaEntry() },
                     trailingOptions: {
                         Section("Create New") {
-                            Button(action: { viewModel.createAgendaEntry() }) {
-                                Label("Agenda Entry", systemImage: "book.pages")
+                            Button(action: { viewModel.createLifeEvent() }) {
+                                Label("Life Event", systemImage: "flag.fill")
                             }
                             Button(action: { viewModel.createQuote() }) {
                                 Label("Quote", systemImage: "quote.bubble")
@@ -106,6 +106,7 @@ struct MyAgendaPage: View {
                 }
                 .padding(.horizontal)
             }
+            .id(viewModel.scrollResetID)
         }
         
     }

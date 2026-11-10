@@ -23,7 +23,13 @@ class MyAgendaPageViewModel: ObservableObject {
         return (events + qs).sorted { $0.timeStart > $1.timeStart }
     }
     
-    @Published var filterDate: Date = Date()
+    @Published var filterDate: Date = Date() {
+        didSet {
+            scrollResetID = UUID()
+            fetchDailyData()
+        }
+    }
+    @Published var scrollResetID = UUID()
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var syncStatus: SyncStatus = .undef

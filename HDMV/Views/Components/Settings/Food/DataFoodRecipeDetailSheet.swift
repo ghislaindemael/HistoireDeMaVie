@@ -6,8 +6,7 @@ struct DataFoodRecipeDetailSheet: View {
     var item: DataFoodRecipe
     var modelContext: ModelContext
     
-    @State private var editor: DataFoodRecipeEditor
-    @State private var ingredients: [ComposedFood] = []
+    @StateObject var viewModel: DataFoodRecipeDetailSheetViewModel
     
     @State private var showingItemSelector = false
     @State private var itemToEdit: ComposedFood? = nil
@@ -17,22 +16,18 @@ struct DataFoodRecipeDetailSheet: View {
     init(item: DataFoodRecipe, modelContext: ModelContext) {
         self.item = item
         self.modelContext = modelContext
-        self._editor = State(initialValue: DataFoodRecipeEditor(from: item))
-        
-        if let raw = item.compositionRaw, let decoded = try? JSONDecoder().decode([ComposedFood].self, from: raw) {
-            self._ingredients = State(initialValue: decoded)
-        }
+        self._viewModel = StateObject(wrappedValue: DataFoodRecipeDetailSheetViewModel(model: item, modelContext: modelContext))
     }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Info") {
-                    TextField("Name", text: $editor.name)
+                    TextField("Name", text: $viewModel.editor.name)
                 }
                 
                 Section("Ingredients") {
-                    ForEach(ingredients) { compItem in
+                    ForEach(viewModel.ingredients) { compItem in
                         Button {
                             itemToEdit = compItem
                         } label: {
@@ -60,7 +55,7 @@ struct DataFoodRecipeDetailSheet: View {
                         }
                     }
                     .onDelete { indices in
-                        ingredients.remove(atOffsets: indices)
+                        viewModel.ingredients.remove(atOffsets: indices)
                     }
                     
                     Button("Add Ingredient") {
@@ -72,42 +67,39 @@ struct DataFoodRecipeDetailSheet: View {
                     NavigationLink(destination: GenericTreeSelectorView(
                         items: allItems.filter { $0.parent == nil && $0.rid != item.rid },
                         childrenKeyPath: \.optionalChildren,
-                        selection: $editor.parent,
+                        selection: $viewModel.editor.parent,
                         title: "Select Parent",
                         noneButtonText: "No Parent"
                     )) {
                         HStack {
                             Text("Parent")
                             Spacer()
-                            Text(editor.parent?.name ?? "None")
+                            Text(viewModel.editor.parent?.name ?? "None")
                                 .foregroundColor(.secondary)
                         }
                     }
                 }
                 
                 Section("Usage") {
-                    Toggle("Cached", isOn: $editor.cache)
-                    Toggle("Archived", isOn: $editor.archived)
+                    Toggle("Cached", isOn: $viewModel.editor.cache)
+                    Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
             }
             .navigationTitle("Edit Recipe")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
-                editor.apply(to: item)
-                item.compositionRaw = try? JSONEncoder().encode(ingredients)
-                item.markAsModified()
-                try? modelContext.save()
+                viewModel.onDone()
             }
             .sheet(isPresented: $showingItemSelector) {
-                FoodItemSelectorSheet(course: nil) { newFood in
-                    ingredients.append(newFood)
+                FoodItemSelectorSheet { newItem in
+                    viewModel.ingredients.append(newItem)
                 }
             }
             .sheet(item: $itemToEdit) { compItem in
-                if let idx = ingredients.firstIndex(where: { $0.id == compItem.id }) {
-                    ComposedFoodEditorSheet(item: $ingredients[idx])
-                } else {
-                    Text("Error: Item not found")
+                ComposedFoodEditSheet(item: compItem) { updated in
+                    if let index = viewModel.ingredients.firstIndex(where: { $0.id == updated.id }) {
+                        viewModel.ingredients[index] = updated
+                    }
                 }
             }
         }

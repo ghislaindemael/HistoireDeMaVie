@@ -6,45 +6,43 @@ struct DataFoodOptionDetailSheet: View {
     var item: DataFoodOption
     var modelContext: ModelContext
     
-    @State private var editor: DataFoodOptionEditor
+    @StateObject var viewModel: DataFoodOptionDetailSheetViewModel
     
     init(item: DataFoodOption, modelContext: ModelContext) {
         self.item = item
         self.modelContext = modelContext
-        self._editor = State(initialValue: DataFoodOptionEditor(from: item))
+        self._viewModel = StateObject(wrappedValue: DataFoodOptionDetailSheetViewModel(model: item, modelContext: modelContext))
     }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Info") {
-                    TextField("Name", text: $editor.name)
-                    TextField("Slug", text: $editor.slug)
+                    TextField("Name", text: $viewModel.editor.name)
+                    TextField("Slug", text: $viewModel.editor.slug)
                         .autocapitalization(.none)
                 }
                 
                 Section("Type") {
-                    Picker("Type", selection: $editor.typeRaw) {
+                    Picker("Type", selection: $viewModel.editor.typeRaw) {
                         Text("Boolean").tag("boolean")
                         Text("Integer").tag("integer")
                         Text("Decimal").tag("decimal")
                         Text("Text").tag("text")
                         Text("Dropdown").tag("dropdown")
                     }
-                    Toggle("Is Required", isOn: $editor.isRequired)
+                    Toggle("Is Required", isOn: $viewModel.editor.isRequired)
                 }
                 
                 Section("Usage") {
-                    Toggle("Cached", isOn: $editor.cache)
-                    Toggle("Archived", isOn: $editor.archived)
+                    Toggle("Cached", isOn: $viewModel.editor.cache)
+                    Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
             }
             .navigationTitle("Edit Option")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
-                editor.apply(to: item)
-                item.markAsModified()
-                try? modelContext.save()
+                viewModel.onDone()
             }
         }
     }

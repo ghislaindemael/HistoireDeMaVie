@@ -2,69 +2,35 @@ import SwiftUI
 import SwiftData
 
 @MainActor
-class DataFoodRecipesPageViewModel: ObservableObject {
-    private var modelContext: ModelContext?
-    @Published var isLoading: Bool = false
-    private var syncer: DataFoodRecipeSyncer?
+class DataFoodRecipesPageViewModel: BasePageViewModel {
+    var syncer: AnySyncer?
+    var sortDescriptors: [SortDescriptor<DataFoodRecipe>] = [SortDescriptor(\.name)]
     
-    func setup(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    override func setup(modelContext: ModelContext) {
+        super.setup(modelContext: modelContext)
         self.syncer = DataFoodRecipeSyncer(modelContext: modelContext)
     }
     
     func refreshFromServer() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            try await syncer?.pullChanges()
-        } catch {
-            print("Error refreshing DataFoodRecipe: \(error)")
-        }
-    }
-    
-    func fetchArchivedFromServer() async {
-        SettingsStore.shared.includeArchived = true
-        defer { SettingsStore.shared.includeArchived = false }
-        
-        await refreshFromServer()
-    }
-    
-    func purgeArchivedFromCache() {
-        guard let context = modelContext else { return }
-        
-        do {
-            let predicate = #Predicate<DataFoodRecipe> { $0.archived == true }
-            let descriptor = FetchDescriptor<DataFoodRecipe>(predicate: predicate)
-            let archivedItems = try context.fetch(descriptor)
-            
-            for item in archivedItems {
-                context.delete(item)
-            }
-            try? context.save()
-        } catch {
-            print("Failed to purge archived recipes: \(error)")
-        }
+        _ = await super.refreshFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
     }
     
     func uploadLocalChanges() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            try await syncer?.pushChanges()
-        } catch {
-            print("Error uploading DataFoodRecipe: \(error)")
-        }
+        _ = await super.uploadLocalChanges(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func fetchArchivedFromServer() async {
+        _ = await super.fetchArchivedFromServer(syncer: syncer, sortDescriptors: sortDescriptors)
+    }
+    
+    func purgeArchivedFromCache() {
+        _ = super.purgeArchivedFromCache(sortDescriptors: sortDescriptors)
     }
     
     func createItem() {
-        guard let context = modelContext else { return }
-        let newItem = DataFoodRecipe()
-        context.insert(newItem)
-        try? context.save()
-    }
-    
-    func updateModel(_ model: DataFoodRecipe, modifier: (DataFoodRecipe) -> Void) {
-        modifier(model)
-        try? modelContext?.save()
+        _ = super.createPlaceholderIfNeeded(
+            factory: { DataFoodRecipe(syncStatus: .unsynced) },
+            sortDescriptors: sortDescriptors
+        )
     }
 }

@@ -8,29 +8,29 @@ struct DataFoodItemDetailSheet: View {
     var item: DataFoodItem
     var modelContext: ModelContext
     
-    @State private var editor: DataFoodItemEditor
+    @StateObject var viewModel: DataFoodItemDetailSheetViewModel
     @State private var isShowingOptionSelector = false
     @State private var newUnitName = ""
     @State private var newGrams: Double? = nil
     
     private var baseUnitLabel: String {
-        let u = (editor.baseUnit ?? editor.parent?.effectiveBaseUnit)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let u = (viewModel.editor.baseUnit ?? viewModel.editor.parent?.effectiveBaseUnit)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return u == "ml" ? "ml" : "g"
     }
     
     private func pasteServingSizes(_ newSizes: [FoodServingSize]) {
-        if editor.servingSizes == nil { editor.servingSizes = [] }
+        if viewModel.editor.servingSizes == nil { viewModel.editor.servingSizes = [] }
         for size in newSizes {
-            editor.servingSizes?.removeAll(where: { $0.unitName.lowercased() == size.unitName.lowercased() })
-            editor.servingSizes?.append(size)
+            viewModel.editor.servingSizes?.removeAll(where: { $0.unitName.lowercased() == size.unitName.lowercased() })
+            viewModel.editor.servingSizes?.append(size)
         }
     }
     
     private func importParentServingSizes(_ parentSizes: [FoodServingSize]) {
-        if editor.servingSizes == nil { editor.servingSizes = [] }
+        if viewModel.editor.servingSizes == nil { viewModel.editor.servingSizes = [] }
         for size in parentSizes {
-            if !(editor.servingSizes?.contains(where: { $0.unitName.lowercased() == size.unitName.lowercased() }) ?? false) {
-                editor.servingSizes?.append(size)
+            if !(viewModel.editor.servingSizes?.contains(where: { $0.unitName.lowercased() == size.unitName.lowercased() }) ?? false) {
+                viewModel.editor.servingSizes?.append(size)
             }
         }
     }
@@ -38,24 +38,24 @@ struct DataFoodItemDetailSheet: View {
     init(item: DataFoodItem, modelContext: ModelContext) {
         self.item = item
         self.modelContext = modelContext
-        self._editor = State(initialValue: DataFoodItemEditor(from: item))
+        self._viewModel = StateObject(wrappedValue: DataFoodItemDetailSheetViewModel(model: item, modelContext: modelContext))
     }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Info") {
-                    TextField("Name", text: $editor.name)
+                    TextField("Name", text: $viewModel.editor.name)
                     
                     TextField("Details / Notes", text: Binding(
-                        get: { editor.details ?? "" },
-                        set: { val in editor.details = val.isEmpty ? nil : val }
+                        get: { viewModel.editor.details ?? "" },
+                        set: { val in viewModel.editor.details = val.isEmpty ? nil : val }
                     ), axis: .vertical)
                     .lineLimit(2...4)
                     
                     TextField("Base Unit (g or ml)", text: Binding(
-                        get: { editor.baseUnit ?? "" },
-                        set: { val in editor.baseUnit = val.isEmpty ? nil : val }
+                        get: { viewModel.editor.baseUnit ?? "" },
+                        set: { val in viewModel.editor.baseUnit = val.isEmpty ? nil : val }
                     ))
                     .autocapitalization(.none)
                 }
@@ -64,128 +64,132 @@ struct DataFoodItemDetailSheet: View {
                     NavigationLink(destination: GenericTreeSelectorView(
                         items: allItems.filter { $0.parent == nil },
                         childrenKeyPath: \.optionalChildren,
-                        selection: $editor.parent,
+                        selection: $viewModel.editor.parent,
                         title: "Select Parent",
                         noneButtonText: "No Parent"
                     )) {
                         HStack {
                             Text("Parent Item")
                             Spacer()
-                            if let p = editor.parent {
+                            if let p = viewModel.editor.parent {
                                 Text(p.name).foregroundStyle(.secondary)
                             }
                         }
                     }
-                    if editor.parent != nil {
+                    if viewModel.editor.parent != nil {
                         Button("Remove from Parent", role: .destructive) {
-                            editor.parent = nil
-                            editor.parentId = nil
+                            viewModel.editor.parent = nil
+                            viewModel.editor.parentId = nil
                         }
                     }
                 }
                 
                 Section("Macros (per 100 base units)") {
                     NavigationLink(destination: FoodMacrosEditView(
-                        macros: $editor.macros,
-                        subtitle: "Per 100 \(editor.baseUnit ?? "base units")"
+                        macros: $viewModel.editor.macros,
+                        subtitle: "Per 100 \(viewModel.editor.baseUnit ?? "base units")"
                     )) {
-                        FoodMacrosSummaryView(macros: editor.macros)
+                        FoodMacrosSummaryView(macros: viewModel.editor.macros)
                     }
                 }
                 
                 Section {
-                    if let sizes = editor.servingSizes {
+                    if let sizes = viewModel.editor.servingSizes {
                         ForEach(sizes, id: \.unitName) { size in
                             HStack {
                                 Text(size.unitName)
                                 Spacer()
-                                Text("\(size.gramsPerUnit, specifier: "%.1f") \(baseUnitLabel)")
+                                Text(String(format: "%.1f", size.gramsPerUnit) + " \(baseUnitLabel)")
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         .onDelete { indices in
-                            editor.servingSizes?.remove(atOffsets: indices)
-                            if editor.servingSizes?.isEmpty == true {
-                                editor.servingSizes = nil
-                            }
+                            viewModel.editor.servingSizes?.remove(atOffsets: indices)
                         }
                     }
                     
                     HStack {
-                        TextField("New Unit (e.g. slice)", text: $newUnitName)
-                        TextField(baseUnitLabel == "ml" ? "ml" : "Grams", value: $newGrams, format: .number)
+                        TextField("Unit Name (e.g. piece, cup)", text: $newUnitName)
+                        TextField("\(baseUnitLabel)", value: $newGrams, format: .number)
                             .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                        Button("Add") {
-                            if !newUnitName.isEmpty, let grams = newGrams, grams > 0 {
-                                if editor.servingSizes == nil { editor.servingSizes = [] }
-                                editor.servingSizes?.removeAll(where: { $0.unitName.lowercased() == newUnitName.lowercased() })
-                                editor.servingSizes?.append(FoodServingSize(unitName: newUnitName, gramsPerUnit: grams))
-                                newUnitName = ""
-                                newGrams = nil
-                            }
+                            .frame(width: 80)
+                        
+                        Button {
+                            guard !newUnitName.isEmpty, let grams = newGrams else { return }
+                            let newSize = FoodServingSize(unitName: newUnitName, gramsPerUnit: grams)
+                            if viewModel.editor.servingSizes == nil { viewModel.editor.servingSizes = [] }
+                            viewModel.editor.servingSizes?.append(newSize)
+                            newUnitName = ""
+                            newGrams = nil
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
                         }
-                        .disabled(newUnitName.isEmpty || (newGrams ?? 0) <= 0)
+                        .disabled(newUnitName.isEmpty || newGrams == nil)
                     }
                 } header: {
-                    HStack {
-                        Text("Custom Serving Sizes")
-                        Spacer()
-                        Menu {
-                            if let sizes = editor.servingSizes, !sizes.isEmpty {
+                    Text("Serving Sizes")
+                } footer: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Add custom units (e.g., 1 biscuit = 15g).")
+                        
+                        HStack(spacing: 8) {
+                            if FoodClipboardManager.shared.hasServingSizes {
                                 Button {
-                                    FoodClipboardManager.copy(servingSizes: sizes)
+                                    pasteServingSizes(FoodClipboardManager.shared.servingSizes)
                                 } label: {
-                                    Label("Copy Serving Sizes", systemImage: "doc.on.doc")
+                                    Label("Paste (\(FoodClipboardManager.shared.servingSizes.count))", systemImage: "doc.on.clipboard")
                                 }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            if FoodClipboardManager.hasServingSizes {
+                            
+                            if let pSizes = viewModel.editor.parent?.servingSizes, !pSizes.isEmpty {
                                 Button {
-                                    if let pasted = FoodClipboardManager.getServingSizes() {
-                                        pasteServingSizes(pasted)
-                                    }
+                                    importParentServingSizes(pSizes)
                                 } label: {
-                                    Label("Paste Serving Sizes", systemImage: "doc.on.clipboard")
+                                    Label("Import from Parent (\(pSizes.count))", systemImage: "arrow.down.doc")
                                 }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            if let parentSizes = editor.parent?.effectiveServingSizes, !parentSizes.isEmpty {
-                                Button {
-                                    importParentServingSizes(parentSizes)
-                                } label: {
-                                    Label("Copy from Parent (\(editor.parent?.name ?? "Parent"))", systemImage: "arrow.down.doc")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.subheadline)
                         }
-                    }
-                }
-                
-                if let parentSizes = editor.parent?.effectiveServingSizes, !parentSizes.isEmpty {
-                    let unoverridden = parentSizes.filter { pSize in
-                        !(editor.servingSizes ?? []).contains(where: { $0.unitName.lowercased() == pSize.unitName.lowercased() })
-                    }
-                    if !unoverridden.isEmpty {
-                        Section("Inherited from \(editor.parent?.name ?? "Parent")") {
-                            ForEach(unoverridden, id: \.unitName) { size in
-                                HStack {
-                                    Text(size.unitName)
-                                    Spacer()
-                                    Text("\(size.gramsPerUnit, specifier: "%.1f") \(baseUnitLabel)")
-                                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                        
+                        // Inherited Preview
+                        if let p = viewModel.editor.parent, let pSizes = p.servingSizes, !pSizes.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Inherited from \(p.name):")
+                                    .font(.caption2.bold())
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 4)
+                                
+                                ForEach(pSizes, id: \.unitName) { size in
+                                    let isOverridden = viewModel.editor.servingSizes?.contains(where: { $0.unitName.lowercased() == size.unitName.lowercased() }) ?? false
+                                    
+                                    HStack {
+                                        Text("• \(size.unitName)")
+                                        Spacer()
+                                        Text(String(format: "%.1f", size.gramsPerUnit) + " \(baseUnitLabel)")
+                                        if isOverridden {
+                                            Text("(overridden)")
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                        }
+                                    }
+                                    .font(.caption2)
+                                    .foregroundStyle(isOverridden ? .tertiary : .secondary)
                                 }
                             }
-                            Button("Copy All to Custom") {
-                                importParentServingSizes(parentSizes)
-                            }
-                            .font(.footnote)
+                            .padding(8)
+                            .background(Color.secondaryBackground)
+                            .cornerRadius(6)
                         }
                     }
                 }
                 
                 Section("Usage") {
-                    Toggle("Cached", isOn: $editor.cache)
-                    Toggle("Archived", isOn: $editor.archived)
+                    Toggle("Cached", isOn: $viewModel.editor.cache)
+                    Toggle("Archived", isOn: $viewModel.editor.archived)
                 }
                 
                 Section("Custom Options") {
@@ -234,9 +238,7 @@ struct DataFoodItemDetailSheet: View {
             .navigationTitle("Edit Item")
             .navigationBarTitleDisplayMode(.inline)
             .standardSheetToolbar() {
-                editor.apply(to: item)
-                item.markAsModified()
-                try? modelContext.save()
+                viewModel.onDone()
             }
             .sheet(isPresented: $isShowingOptionSelector) {
                 DataFoodOptionSelectorView { selectedOption in
