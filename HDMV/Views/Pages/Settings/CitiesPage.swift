@@ -26,11 +26,17 @@ struct CitiesPage: View {
     @State private var searchText: String = ""
     @Query(sort: \City.name) private var allCities: [City]
     
+    private var unsetCities: [City] {
+        allCities.filter { $0.name.isUnset() }
+    }
+    
     private var searchResults: [City] {
         guard !searchText.isEmpty else { return [] }
         return allCities.filter { city in
-            city.name.localizedCaseInsensitiveContains(searchText) ||
-            city.slug.localizedCaseInsensitiveContains(searchText)
+            city.name.isNotUnset() && (
+                city.name.localizedCaseInsensitiveContains(searchText) ||
+                city.slug.localizedCaseInsensitiveContains(searchText)
+            )
         }
     }
     
@@ -74,6 +80,26 @@ struct CitiesPage: View {
     
     @ViewBuilder
     private var citiesList: some View {
+        if !unsetCities.isEmpty && searchText.isEmpty {
+            Section("Needs Configuration / Unset") {
+                ForEach(unsetCities) { city in
+                    Button(action: { cityToEdit = city }) {
+                        CityRowView(city: city) { c in
+                            withAnimation(.snappy) {
+                                viewModel.updateModel(c) { $0.cache.toggle() }
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                .onDelete { offsets in
+                    for index in offsets {
+                        viewModel.deleteItem(unsetCities[index])
+                    }
+                }
+            }
+        }
+        
         if !searchText.isEmpty {
             if !searchResults.isEmpty {
                 Section("Search Results") {
@@ -92,24 +118,26 @@ struct CitiesPage: View {
                 ContentUnavailableView.search(text: searchText)
             }
         } else if let selectedCountry = viewModel.selectedCountry {
+            let validRoots = selectedCountry.rootCities.filter { $0.name.isNotUnset() }
             Section("Cities in \(selectedCountry.name)") {
-                ForEach(selectedCountry.rootCities) { city in
+                ForEach(validRoots) { city in
                     CityNodeView(city: city, viewModel: viewModel, cityToEdit: $cityToEdit)
                 }
                 .onDelete { offsets in
                     for index in offsets {
-                        viewModel.deleteItem(selectedCountry.rootCities[index])
+                        viewModel.deleteItem(validRoots[index])
                     }
                 }
             }
         } else {
+            let validOrphans = orphanedCities.filter { $0.name.isNotUnset() }
             Section("Cities (No Country)") {
-                ForEach(orphanedCities) { city in
+                ForEach(validOrphans) { city in
                     CityNodeView(city: city, viewModel: viewModel, cityToEdit: $cityToEdit)
                 }
                 .onDelete { offsets in
                     for index in offsets {
-                        viewModel.deleteItem(orphanedCities[index])
+                        viewModel.deleteItem(validOrphans[index])
                     }
                 }
             }

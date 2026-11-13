@@ -98,19 +98,31 @@ class TripDetailSheetViewModel: BaseDetailSheetViewModel<Trip, TripEditor> {
         let trimmedName = newPathName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return }
         
+        var startRids: [Int] = []
+        if let startRid = editor.placeStart?.rid ?? editor.placeStartRid {
+            startRids.append(startRid)
+        }
+        var endRids: [Int] = []
+        if let endRid = editor.placeEnd?.rid ?? editor.placeEndRid {
+            endRids.append(endRid)
+        }
+        var vehicleRids: [Int] = []
+        if let vRid = editor.vehicle?.rid ?? editor.vehicleRid {
+            vehicleRids.append(vRid)
+        }
+        
         let newPath = Path(
             name: trimmedName,
             details: "Created from trip on \(editor.timeStart.formatted(date: .abbreviated, time: .omitted))",
-            placeStart: editor.placeStart,
-            placeEnd: editor.placeEnd,
+            placeStartRids: startRids,
+            placeEndRids: endRids,
+            isBidirectional: true,
+            allowedVehicleRids: vehicleRids,
             metrics: editor.pathMetrics ?? PathMetrics(),
             geojsonTrack: editor.geojsonTrack,
             cache: true,
             syncStatus: .local
         )
-        
-        newPath.placeStartRid = editor.placeStart?.rid ?? editor.placeStartRid
-        newPath.placeEndRid = editor.placeEnd?.rid ?? editor.placeEndRid
         
         modelContext.insert(newPath)
         

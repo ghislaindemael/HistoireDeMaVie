@@ -31,27 +31,62 @@ struct PathDetailSheet: View {
                 Section("Basics") {
                     TextField("Name", text: $viewModel.editor.name)
                     TextField("Details", text: $viewModel.editor.details.orEmpty())
+                    Toggle("Bidirectional (A ↔ B)", isOn: $viewModel.editor.isBidirectional)
                 }
-                Section("Start place"){
-                    PlaceSelectorView(
-                        selectedPlace: Binding(
-                            get: { viewModel.editor.placeStart },
-                            set: { viewModel.editor.placeStart = $0 }
-                        ),
-                        isForTrip: true
-                    )
-                }
-                Section("End place"){
-                    PlaceSelectorView(
-                        selectedPlace: Binding(
-                            get: { viewModel.editor.placeEnd},
-                            set: { viewModel.editor.placeEnd = $0 }
-                        ),
-                        isForTrip: true
-                    )
+                Section("Endpoints") {
+                    NavigationLink {
+                        MultiPlaceSelectorView(
+                            selectedRids: $viewModel.editor.placeStartRids,
+                            title: "Start Places"
+                        )
+                    } label: {
+                        HStack {
+                            Text("Start Places")
+                            Spacer()
+                            Text("\(viewModel.editor.placeStartRids.count) selected")
+                                .foregroundStyle(viewModel.editor.placeStartRids.isEmpty ? .secondary : .primary)
+                        }
+                    }
+                    
+                    NavigationLink {
+                        MultiPlaceSelectorView(
+                            selectedRids: $viewModel.editor.placeEndRids,
+                            title: "End Places"
+                        )
+                    } label: {
+                        HStack {
+                            Text("End Places")
+                            Spacer()
+                            Text("\(viewModel.editor.placeEndRids.count) selected")
+                                .foregroundStyle(viewModel.editor.placeEndRids.isEmpty ? .secondary : .primary)
+                        }
+                    }
                 }
                 pathSection
                 
+                Section("Restrictions") {
+                    NavigationLink {
+                        MultiVehicleSelectorView(selectedRids: $viewModel.editor.allowedVehicleRids)
+                    } label: {
+                        HStack {
+                            Text("Allowed Specific Vehicles")
+                            Spacer()
+                            Text("\(viewModel.editor.allowedVehicleRids.count) selected")
+                                .foregroundStyle(viewModel.editor.allowedVehicleRids.isEmpty ? .secondary : .primary)
+                        }
+                    }
+                    
+                    NavigationLink {
+                        MultiVehicleTypeSelectorView(selectedSlugs: $viewModel.editor.allowedVehicleTypeSlugs)
+                    } label: {
+                        HStack {
+                            Text("Allowed Generic Types")
+                            Spacer()
+                            Text("\(viewModel.editor.allowedVehicleTypeSlugs.count) selected")
+                                .foregroundStyle(viewModel.editor.allowedVehicleTypeSlugs.isEmpty ? .secondary : .primary)
+                        }
+                    }
+                }
             
                 UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 

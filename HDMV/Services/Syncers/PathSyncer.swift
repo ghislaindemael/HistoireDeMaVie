@@ -33,25 +33,7 @@ final class PathSyncer: BaseSyncer<Path, PathDTO, PathPayload> {
     }
     
     override func resolveRelationships() throws {
-        print("Resolving Path relationships...")
-        
-        let placeLookup: [Int: Place] = try getLookupMap()
-        
-        try resolveRelationship(
-            for: Path.self,
-            relationshipKeyPath: \Path.placeStart,
-            ridKeyPath: \Path.placeStartRid,
-            lookupMap: placeLookup
-        )
-        
-        try resolveRelationship(
-            for: Path.self,
-            relationshipKeyPath: \Path.placeEnd,
-            ridKeyPath: \Path.placeEndRid,
-            lookupMap: placeLookup
-        )
-        
-        print("All Path relationships resolved.")
+        // Path V2 stores placeStartRids and placeEndRids directly as ID arrays.
     }
     
 }

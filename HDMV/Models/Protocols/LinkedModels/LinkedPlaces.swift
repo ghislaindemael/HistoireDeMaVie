@@ -42,5 +42,4 @@ extension LinkedPlaces {
 }
 
 extension Trip: LinkedPlaces {}
-extension Path: LinkedPlaces {}
 

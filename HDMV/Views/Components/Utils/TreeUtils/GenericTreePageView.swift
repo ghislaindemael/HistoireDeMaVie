@@ -28,23 +28,27 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
     
     @State private var itemToEdit: T?
     
+    private var unsetItems: [T] {
+        items.filter { $0.name.isUnset() }
+    }
+    
+    private var validItems: [T] {
+        items.filter { $0.name.isNotUnset() }
+    }
+    
     var body: some View {
         List {
-            OutlineGroup(items, children: childrenKeyPath) { item in
-                Button(action: {
-                    itemToEdit = item
-                }) {
-                    rowContent(item)
-                }
-                .buttonStyle(.plain)
-                .swipeActions(edge: .trailing) {
-                    if let onDeleteItem = onDeleteItem {
-                        Button(role: .destructive) {
-                            onDeleteItem(item)
-                        } label: {
-                            Label("Delete Cache", systemImage: "trash")
-                        }
+            if !unsetItems.isEmpty {
+                Section("Needs Configuration / Unset") {
+                    ForEach(unsetItems) { item in
+                        itemRow(item)
                     }
+                }
+            }
+            
+            Section {
+                OutlineGroup(validItems, children: childrenKeyPath) { item in
+                    itemRow(item)
                 }
             }
         }
@@ -60,5 +64,24 @@ struct GenericTreePageView<T: TreeSelectable & Identifiable, RowView: View, Shee
             sheetContent(item)
         }
         .syncingOverlay(isLoading)
+    }
+    
+    @ViewBuilder
+    private func itemRow(_ item: T) -> some View {
+        Button(action: {
+            itemToEdit = item
+        }) {
+            rowContent(item)
+        }
+        .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            if let onDeleteItem = onDeleteItem {
+                Button(role: .destructive) {
+                    onDeleteItem(item)
+                } label: {
+                    Label("Delete Cache", systemImage: "trash")
+                }
+            }
+        }
     }
 }

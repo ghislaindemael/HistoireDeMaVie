@@ -10,7 +10,7 @@ import Foundation
 final class PathService: SupabaseDataService<PathDTO, PathPayload> {
     
     init() {
-        super.init(tableName: "data_paths")
+        super.init(tableName: "data_paths_v2")
     }
     
     // MARK: Semantic methods
