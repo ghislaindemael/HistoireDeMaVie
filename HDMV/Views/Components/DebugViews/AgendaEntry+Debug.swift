@@ -11,8 +11,8 @@ extension AgendaEntry: DebugViewable {
                     .foregroundStyle(.orange)
             }
             NamedStringDisplayView(name: "Summary", value: daySummary)
-            Text("Mood: \((mood))%")
-            NamedStringDisplayView(name: "MoodComments", value: moodComments)
+            Text("Contexts: \(contextRids.count)")
+            Text("Linked Files: \(linkedFilePaths.count)")
             
             NamedStringDisplayView(name: "SyncStatus", value: syncStatusRaw)
         }

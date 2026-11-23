@@ -44,6 +44,14 @@ class DataLogOptionDetailSheetViewModel: BaseDetailSheetViewModel<DataLogOption,
         }
     }
     
+    var isForAgenda: Bool {
+        get { editor.config?.isForAgenda ?? false }
+        set {
+            if editor.config == nil { editor.config = DataLogOptionConfig() }
+            editor.config?.isForAgenda = newValue
+        }
+    }
+    
     // MARK: - Vehicle Type Mappings
     
     func isForVehicleType(_ type: VehicleType) -> Bool {
