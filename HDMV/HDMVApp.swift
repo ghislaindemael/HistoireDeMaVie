@@ -48,6 +48,7 @@ struct HDMVApp: App {
         }
     }()
     
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject var settings = SettingsStore.shared
     @StateObject var appNavigator = AppNavigator.shared
     @StateObject private var vaultService = VaultImportService.shared
@@ -56,7 +57,12 @@ struct HDMVApp: App {
         WindowGroup {
                     AppView()
                         .withGlobalToasts()
-                        .onAppear {}
+                        .onAppear {
+                            AutoPushService.shared.configure(modelContainer: HDMVApp.sharedModelContainer)
+                            Task {
+                                await AutoPushService.shared.triggerAutoPush(reason: "app launch")
+                            }
+                        }
                         .onOpenURL { url in
                             vaultService.handleIncomingURL(url)
                         }
@@ -74,6 +80,17 @@ struct HDMVApp: App {
         .modelContainer(HDMVApp.sharedModelContainer)
         .environmentObject(settings)
         .environmentObject(appNavigator)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background {
+                Task {
+                    await AutoPushService.shared.triggerAutoPush(reason: "background")
+                }
+            } else if newPhase == .active {
+                Task {
+                    await AutoPushService.shared.triggerAutoPush(reason: "active")
+                }
+            }
+        }
         
     }
 }

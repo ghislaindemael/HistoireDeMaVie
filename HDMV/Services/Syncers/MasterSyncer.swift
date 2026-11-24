@@ -81,12 +81,23 @@ class MasterSyncer {
         }
     }
 
-    func pushChanges() async throws {
-        guard NetworkMonitor.shared.isConnected else {
-            print("⚠️ MasterSyncer: Skipping push, no network connection.")
-            ToastManager.shared.showToast(message: "No Internet Connection", systemImage: "wifi.exclamationmark", color: .orange)
+    private static var isPushInFlight = false
+
+    func pushChanges(silent: Bool = false) async throws {
+        guard !Self.isPushInFlight else {
+            print("⏳ MasterSyncer: Push already in flight, skipping duplicate call.")
             return
         }
+        guard NetworkMonitor.shared.isConnected else {
+            print("⚠️ MasterSyncer: Skipping push, no network connection.")
+            if !silent {
+                ToastManager.shared.showToast(message: "No Internet Connection", systemImage: "wifi.exclamationmark", color: .orange)
+            }
+            return
+        }
+
+        Self.isPushInFlight = true
+        defer { Self.isPushInFlight = false }
         
         do {
             _ = try await activityInstanceSyncer.pushChanges()            
@@ -98,7 +109,9 @@ class MasterSyncer {
             _ = try await agendaEntrySyncer.pushChanges()
         } catch {
             print("❌ MasterSyncer push failed: \(error)")
-            ToastManager.shared.showToast(message: "Push Failed", systemImage: "arrow.up.icloud", color: .red)
+            if !silent {
+                ToastManager.shared.showToast(message: "Push Failed", systemImage: "arrow.up.icloud", color: .red)
+            }
         }
     }
 }

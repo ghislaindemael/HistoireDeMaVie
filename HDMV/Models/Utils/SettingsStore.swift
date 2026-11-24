@@ -15,4 +15,5 @@ class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
     @AppStorage("includeArchived") var includeArchived: Bool = false
     @AppStorage("appMode") var appMode: AppMode = .live
+    @AppStorage("autoPushEnabled") var autoPushEnabled: Bool = true
 }
