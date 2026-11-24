@@ -36,6 +36,7 @@ struct DataLogOptionConfig: Codable, Equatable {
     var step: Double?
     var layoutNode: ActivityLayoutNode?
     var replacesActivityName: Bool?
+    var multiline: Bool?
     
     // Conditionals
     var dependsOnSlug: String?
@@ -45,6 +46,7 @@ struct DataLogOptionConfig: Codable, Equatable {
     // Global scopes
     var isForTransaction: Bool?
     var isForInteraction: Bool?
+    var isForAgenda: Bool?
     var priority: Int?
     var required: Bool?
 }

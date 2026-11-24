@@ -5,7 +5,6 @@
 //  Created by Ghislain Demael on 27.09.2025.
 //
 
-
 import SwiftUI
 import SwiftData
 
@@ -15,9 +14,11 @@ struct PathSelectorSheet: View {
     
     let startPlaceId: Int?
     let endPlaceId: Int?
+    let selectedVehicle: Vehicle?
     let onPathSelected: (Path) -> Void
     
-    @State private var exactMatches: [Path] = []
+    @State private var forwardMatches: [Path] = []
+    @State private var reverseMatches: [Path] = []
     @State private var partialMatches: [Path] = []
     @State private var otherPaths: [Path] = []
     
@@ -26,29 +27,38 @@ struct PathSelectorSheet: View {
     init(
         startPlaceId: Int? = nil,
         endPlaceId: Int? = nil,
+        selectedVehicle: Vehicle? = nil,
         onPathSelected: @escaping (Path) -> Void
     ) {
         self.startPlaceId = startPlaceId
         self.endPlaceId = endPlaceId
+        self.selectedVehicle = selectedVehicle
         self.onPathSelected = onPathSelected
     }
     
     var body: some View {
         NavigationView {
             Form {
-                if !exactMatches.isEmpty {
+                if !forwardMatches.isEmpty {
                     Section("Exact Matches") {
-                        ForEach(exactMatches) { path in
-                            pathRow(for: path)
+                        ForEach(forwardMatches) { path in
+                            pathRow(for: path, isReversed: false)
                         }
                     }
                 }
                 
+                if !reverseMatches.isEmpty {
+                    Section("Reverse Matches") {
+                        ForEach(reverseMatches) { path in
+                            pathRow(for: path, isReversed: true)
+                        }
+                    }
+                }
                 
                 if !partialMatches.isEmpty {
                     Section("Partial Matches") {
                         ForEach(partialMatches) { path in
-                            pathRow(for: path)
+                            pathRow(for: path, isReversed: false)
                         }
                     }
                 }
@@ -57,12 +67,10 @@ struct PathSelectorSheet: View {
                     Toggle("Show All Other Cached Paths", isOn: $showAllPaths)
                     if showAllPaths {
                         ForEach(otherPaths) { path in
-                            pathRow(for: path)
+                            pathRow(for: path, isReversed: false)
                         }
                     }
                 }
-                
-                
             }
             .navigationTitle("Select a Path")
             .navigationBarTitleDisplayMode(.inline)
@@ -84,42 +92,62 @@ struct PathSelectorSheet: View {
     
     // MARK: - Data Fetching Methods
     
-    private func fetchInitialPaths() {
-        guard let startId = startPlaceId, let endId = endPlaceId else { return }
-        
-        let predicate = #Predicate<Path> { $0.cache == true }
+    private func fetchCachedPaths() -> [Path] {
+        let predicate = #Predicate<Path> { $0.cache == true && $0.archived == false }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Path.name)])
-        guard let cachedPaths = try? modelContext.fetch(descriptor) else { return }
+        let allCached = (try? modelContext.fetch(descriptor)) ?? []
+        return allCached.filter { $0.matchesVehicle(selectedVehicle) }
+    }
+    
+    private func fetchInitialPaths() {
+        let cachedPaths = fetchCachedPaths()
         
-        self.exactMatches = cachedPaths.filter { $0.placeStart?.rid == startId && $0.placeEnd?.rid == endId }
-        
-        let exactMatchIds = Set(self.exactMatches.map { $0.id })
-        self.partialMatches = cachedPaths.filter { path in
-            guard !exactMatchIds.contains(path.id) else { return false }
-            return path.placeStart?.rid == startId || path.placeEnd?.rid == endId
+        guard let startId = startPlaceId, let endId = endPlaceId else {
+            self.forwardMatches = []
+            self.reverseMatches = []
+            self.partialMatches = cachedPaths.filter { $0.matchesAnyPlace(startRid: startPlaceId, endRid: endPlaceId) }
+            return
         }
+        
+        var forward: [Path] = []
+        var reverse: [Path] = []
+        var partial: [Path] = []
+        
+        for path in cachedPaths {
+            switch path.matchDirection(startRid: startId, endRid: endId) {
+            case .forward:
+                forward.append(path)
+            case .reverse:
+                reverse.append(path)
+            case nil:
+                if path.matchesAnyPlace(startRid: startId, endRid: endId) {
+                    partial.append(path)
+                }
+            }
+        }
+        
+        self.forwardMatches = forward
+        self.reverseMatches = reverse
+        self.partialMatches = partial
     }
     
     private func fetchOtherPaths() {
-        let predicate = #Predicate<Path> { $0.cache == true }
-        let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\Path.name)])
-        guard let cachedPaths = try? modelContext.fetch(descriptor) else { return }
+        let cachedPaths = fetchCachedPaths()
         
-        var displayedIds = Set(partialMatches.map { $0.id })
-        let exactMatchIds = Set(exactMatches.map { $0.id })
-        displayedIds.formUnion(exactMatchIds)
+        var displayedIds = Set(forwardMatches.map { $0.id })
+        displayedIds.formUnion(reverseMatches.map { $0.id })
+        displayedIds.formUnion(partialMatches.map { $0.id })
         
         self.otherPaths = cachedPaths.filter { !displayedIds.contains($0.id) }
     }
     
-    /// A helper view builder to avoid repeating the button/row code.
     @ViewBuilder
-    private func pathRow(for path: Path) -> some View {
+    private func pathRow(for path: Path, isReversed: Bool) -> some View {
         Button(action: {
             onPathSelected(path)
             dismiss()
         }) {
-            PathRowView(path: path)
+            PathRowView(path: path, isReversed: isReversed)
         }
         .buttonStyle(.plain)
     }

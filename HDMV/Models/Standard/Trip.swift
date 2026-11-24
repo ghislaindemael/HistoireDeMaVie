@@ -182,7 +182,7 @@ final class Trip: LogModel {
         self.placeEndRid = dto.place_end_id
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
-        self.pathRid = dto.path_id
+        self.pathRid = dto.path_v2_id
         self.transitLineRid = dto.transit_line_id
         self.personRids = dto.person_ids ?? []
         self.linkedFilePaths = dto.linked_file_paths ?? []
@@ -203,7 +203,7 @@ final class Trip: LogModel {
         self.placeEndRid = dto.place_end_id
         self.vehicleRid = dto.vehicle_id
         self.amDriver = dto.am_driver
-        self.pathRid = dto.path_id
+        self.pathRid = dto.path_v2_id
         self.transitLineRid = dto.transit_line_id
         self.linkedFilePaths = dto.linked_file_paths ?? []
         
@@ -239,7 +239,7 @@ struct TripDTO: Identifiable, Codable, Sendable {
     let place_start_id: Int?
     let place_end_id: Int?
     let am_driver: Bool
-    let path_id: Int?
+    let path_v2_id: Int?
     let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
@@ -262,7 +262,7 @@ struct TripPayload: Codable, InitializableWithModel {
     let place_end_id: Int
     let vehicle_id: Int?
     let am_driver: Bool
-    let path_id: Int?
+    @ExplicitNull var path_v2_id: Int?
     let transit_line_id: Int?
     let path_metrics: PathMetrics?
     let geojson_track: GeoJSONLineString?
@@ -287,7 +287,7 @@ struct TripPayload: Codable, InitializableWithModel {
         self.place_start_id = placeStartId
         self.place_end_id = placeEndId
         self.am_driver = trip.amDriver
-        self.path_id = trip.pathRid
+        self.path_v2_id = trip.path?.rid ?? trip.pathRid
         self.transit_line_id = trip.transitLineRid
         self.path_metrics = trip.pathMetrics
         self.geojson_track = trip.geojsonTrack

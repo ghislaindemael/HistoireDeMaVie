@@ -30,26 +30,28 @@ struct PathsPage: View {
             return paths
         }
         
-        let placeIDsInCity = places
+        let placeRidSet = Set(places
             .filter { $0.cityRid == selectedCity.rid }
-            .map { $0.id }
-        
-        let placeIDSet = Set(placeIDsInCity)
+            .compactMap { $0.rid })
         
         return paths.filter { path in
-            guard let startID = path.placeStart?.id, let endID = path.placeEnd?.id else {
-                return false
-            }
-            return placeIDSet.contains(startID) || placeIDSet.contains(endID)
+            let hasStart = path.placeStartRids.contains { placeRidSet.contains($0) }
+            let hasEnd = path.placeEndRids.contains { placeRidSet.contains($0) }
+            return hasStart || hasEnd
         }
     }
     
     private var searchFilteredPaths: [Path] {
         guard !searchText.isEmpty else { return cityFilteredPaths }
+        let matchingPlaceRids = Set(
+            places
+                .filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+                .compactMap { $0.rid }
+        )
         return cityFilteredPaths.filter { path in
             path.name.localizedCaseInsensitiveContains(searchText) ||
-            (path.placeStart?.name.localizedCaseInsensitiveContains(searchText) ?? false) ||
-            (path.placeEnd?.name.localizedCaseInsensitiveContains(searchText) ?? false)
+            path.placeStartRids.contains { matchingPlaceRids.contains($0) } ||
+            path.placeEndRids.contains { matchingPlaceRids.contains($0) }
         }
     }
     
@@ -136,5 +138,12 @@ struct PathsPage: View {
             )
         }
         .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.deleteItem(path)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 }

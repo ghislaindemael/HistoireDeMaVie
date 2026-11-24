@@ -16,6 +16,7 @@ struct DynamicOptionsSection: View {
     var globalOptions: [DataLogOption] = []
     @Binding var decodedLogDetails: LogDetails?
     @Binding var isShowingOptionSelector: Bool
+    var groupByCategory: Bool = false
     
     // We sort the items by priority without duplicate slugs
     var sortedItems: [DynamicOptionItem] {
@@ -65,10 +66,67 @@ struct DynamicOptionsSection: View {
         }
     }
     
+    private var resolvedMappedOptions: [DataLogOption] {
+        sortedItems.compactMap { item in
+            item.option ?? allOptions.first(where: { $0.slug == item.slug })
+        }
+    }
+    
+    private var groupedMappedOptions: [(category: String, options: [DataLogOption])] {
+        var order: [String] = []
+        var buckets: [String: [DataLogOption]] = [:]
+        for opt in resolvedMappedOptions {
+            let cat = (opt.category?.isEmpty == false ? opt.category! : "Other")
+            if buckets[cat] == nil {
+                order.append(cat)
+                buckets[cat] = []
+            }
+            buckets[cat]?.append(opt)
+        }
+        return order.map { (category: $0, options: buckets[$0] ?? []) }
+    }
+    
+    private func setCount(for options: [DataLogOption]) -> Int {
+        guard let values = decodedLogDetails?.options else { return 0 }
+        return options.filter { opt in
+            if let val = values[opt.slug], !val.isEmpty {
+                return true
+            }
+            return false
+        }.count
+    }
+    
     var body: some View {
         Section(header: headerView("Options")) {
-            ForEach(sortedItems) { item in
-                if let option = item.option ?? allOptions.first(where: { $0.slug == item.slug }) {
+            if groupByCategory {
+                ForEach(groupedMappedOptions, id: \.category) { group in
+                    let activeCount = setCount(for: group.options)
+                    DisclosureGroup {
+                        ForEach(group.options, id: \.slug) { option in
+                            DynamicOptionRow(
+                                option: option,
+                                details: $decodedLogDetails
+                            )
+                        }
+                    } label: {
+                        HStack {
+                            Text(group.category)
+                                .font(.body)
+                            Spacer()
+                            if activeCount > 0 {
+                                Text("\(activeCount)/\(group.options.count)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("\(group.options.count)")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                    }
+                }
+            } else {
+                ForEach(resolvedMappedOptions, id: \.slug) { option in
                     DynamicOptionRow(
                         option: option,
                         details: $decodedLogDetails
@@ -243,11 +301,21 @@ struct DynamicOptionRow: View {
                 }
                 
             case .text:
-                HStack {
-                    Text(option.name)
-                    Spacer()
-                    TextField("Value", text: optionValue)
-                        .multilineTextAlignment(.trailing)
+                if option.config?.multiline == true {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(option.name)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        TextField("Value", text: optionValue, axis: .vertical)
+                            .lineLimit(3...8)
+                    }
+                } else {
+                    HStack {
+                        Text(option.name)
+                        Spacer()
+                        TextField("Value", text: optionValue)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
                 
             case .dropdown:
@@ -314,6 +382,31 @@ struct DynamicOptionRow: View {
                 } else {
                     Text("Invalid Dropdown Config")
                         .foregroundStyle(.red)
+                }
+                
+            case .range:
+                let minVal = option.config?.min ?? 0
+                let maxVal = option.config?.max ?? 10
+                let stepVal = option.config?.step ?? 1
+                let sliderBinding = Binding<Double>(
+                    get: { Double(optionValue.wrappedValue) ?? minVal },
+                    set: { newValue in
+                        if stepVal.truncatingRemainder(dividingBy: 1) == 0 {
+                            optionValue.wrappedValue = String(Int(newValue.rounded()))
+                        } else {
+                            optionValue.wrappedValue = String(newValue)
+                        }
+                    }
+                )
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(option.name)
+                        Spacer()
+                        Text(optionValue.wrappedValue.isEmpty ? "Unset" : optionValue.wrappedValue)
+                            .foregroundStyle(optionValue.wrappedValue.isEmpty ? .secondary : .primary)
+                            .monospacedDigit()
+                    }
+                    Slider(value: sliderBinding, in: minVal...maxVal, step: stepVal)
                 }
                 
             case .rating:

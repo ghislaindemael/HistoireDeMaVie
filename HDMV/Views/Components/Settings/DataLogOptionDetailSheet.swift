@@ -68,6 +68,7 @@ struct DataLogOptionDetailSheet: View {
                         Text("Boolean").tag(DataLogOptionType.boolean)
                         Text("Integer").tag(DataLogOptionType.integer)
                         Text("Decimal").tag(DataLogOptionType.decimal)
+                        Text("Range").tag(DataLogOptionType.range)
                         Text("Rating").tag(DataLogOptionType.rating)
                         Text("Text").tag(DataLogOptionType.text)
                         Text("Dropdown").tag(DataLogOptionType.dropdown)
@@ -81,6 +82,18 @@ struct DataLogOptionDetailSheet: View {
                             viewModel.editor.config?.replacesActivityName = val
                         }
                     ))
+                }
+                
+                if viewModel.editor.type == .text {
+                    Section("Text Config") {
+                        Toggle("Multiline", isOn: Binding(
+                            get: { viewModel.editor.config?.multiline ?? false },
+                            set: { val in
+                                if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                                viewModel.editor.config?.multiline = val
+                            }
+                        ))
+                    }
                 }
                 
                 if viewModel.editor.type == .dropdown {
@@ -150,6 +163,50 @@ struct DataLogOptionDetailSheet: View {
                     }
                 }
                 
+                if viewModel.editor.type == .range {
+                    Section("Range Config") {
+                        HStack {
+                            Text("Min")
+                            Spacer()
+                            TextField("0", value: Binding(
+                                get: { viewModel.editor.config?.min ?? 0 },
+                                set: { val in
+                                    if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                                    viewModel.editor.config?.min = val
+                                }
+                            ), format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        }
+                        HStack {
+                            Text("Max")
+                            Spacer()
+                            TextField("10", value: Binding(
+                                get: { viewModel.editor.config?.max ?? 10 },
+                                set: { val in
+                                    if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                                    viewModel.editor.config?.max = val
+                                }
+                            ), format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        }
+                        HStack {
+                            Text("Step")
+                            Spacer()
+                            TextField("1", value: Binding(
+                                get: { viewModel.editor.config?.step ?? 1 },
+                                set: { val in
+                                    if viewModel.editor.config == nil { viewModel.editor.config = DataLogOptionConfig() }
+                                    viewModel.editor.config?.step = val
+                                }
+                            ), format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        }
+                    }
+                }
+                
 
                 UsageSectionView(isCached: $viewModel.editor.cache, isArchived: $viewModel.editor.archived)
                 
@@ -161,6 +218,10 @@ struct DataLogOptionDetailSheet: View {
                     Toggle("All Interactions", isOn: Binding(
                         get: { viewModel.isForInteraction },
                         set: { viewModel.isForInteraction = $0 }
+                    ))
+                    Toggle("All Agenda Entries", isOn: Binding(
+                        get: { viewModel.isForAgenda },
+                        set: { viewModel.isForAgenda = $0 }
                     ))
                 }
                 

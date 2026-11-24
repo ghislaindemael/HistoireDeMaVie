@@ -47,6 +47,10 @@ struct LinkedFilesPillView: View {
         self.init(filePaths: lifeEvent.linkedFilePaths)
     }
     
+    init(agendaEntry: AgendaEntry) {
+        self.init(filePaths: agendaEntry.linkedFilePaths)
+    }
+    
     var body: some View {
         if !fileTypes.isEmpty {
             HStack(spacing: 6) {

@@ -113,6 +113,7 @@ struct TripDetailSheet: View {
                 PathSelectorSheet(
                     startPlaceId: viewModel.editor.placeStart?.rid,
                     endPlaceId: viewModel.editor.placeEnd?.rid,
+                    selectedVehicle: viewModel.editor.vehicle,
                     onPathSelected: viewModel.selectPath
                 )
             }

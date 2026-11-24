@@ -15,9 +15,22 @@ final class AgendaEntry: LogModel {
     @Attribute(.unique) var date: String
     @Attribute(.unique) var rid: Int?
     var daySummary: String = ""
-    var mood: Int = 5
-    var moodComments: String = ""
+    var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
+    var log_details: Data?
     @Attribute var syncStatusRaw: String = SyncStatus.unsynced.rawValue
+    
+    var decodedLogDetails: LogDetails? {
+        get {
+            guard let data = log_details else { return nil }
+            return try? JSONDecoder().decode(LogDetails.self, from: data)
+        }
+        set {
+            var details = newValue
+            details?.cleanEmptyOptions()
+            log_details = try? JSONEncoder().encode(details)
+        }
+    }
         
     var timeStart: Date {
         get {
@@ -53,15 +66,15 @@ final class AgendaEntry: LogModel {
         rid: Int? = nil,
         date: String? = dateFormatter.string(from: .now),
         daySummary: String = "",
-        mood: Int = 5,
-        moodComments: String = "",
+        contextRids: [Int] = [],
+        linkedFilePaths: [String] = [],
         syncStatus: SyncStatus = .unsynced
     ) {
         self.rid = rid
         self.date = date ?? Self.dateFormatter.string(from: .now)
         self.daySummary = daySummary
-        self.mood = mood
-        self.moodComments = moodComments
+        self.contextRids = contextRids
+        self.linkedFilePaths = linkedFilePaths
         self.syncStatus = syncStatus
     }
     
@@ -69,30 +82,36 @@ final class AgendaEntry: LogModel {
         self.init()
         self.rid = dto.id
         self.date = dto.date
-        self.daySummary = dto.day_summary
-        self.mood = dto.mood
-        self.moodComments = dto.mood_comments
+        self.daySummary = dto.day_summary ?? ""
+        self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
     func update(fromDto dto: AgendaEntryDTO) {
-        self.daySummary = dto.day_summary
-        self.mood = dto.mood
-        self.moodComments = dto.mood_comments
+        self.daySummary = dto.day_summary ?? ""
+        self.contextRids = dto.context_ids ?? []
+        self.linkedFilePaths = dto.linked_file_paths ?? []
+        self.decodedLogDetails = dto.log_details
         self.syncStatus = .synced
     }
     
     func isValid() -> Bool {
         return !daySummary.isEmpty
+            || !(decodedLogDetails?.options?.isEmpty ?? true)
+            || !contextRids.isEmpty
+            || !linkedFilePaths.isEmpty
     }
 }
 
 struct AgendaEntryDTO: Codable, Sendable, Identifiable {
     var id: Int
     var date: String
-    var day_summary: String
-    var mood: Int
-    var mood_comments: String
+    var day_summary: String?
+    var context_ids: [Int]?
+    var linked_file_paths: [String]?
+    var log_details: LogDetails?
 }
 
 struct AgendaEntryPayload: Codable, InitializableWithModel {
@@ -101,8 +120,9 @@ struct AgendaEntryPayload: Codable, InitializableWithModel {
     let id: Int
     let date: String
     let day_summary: String
-    let mood: Int
-    let mood_comments: String
+    let context_ids: [Int]
+    let linked_file_paths: [String]
+    let log_details: LogDetails?
     
     init?(from entry: AgendaEntry) {
         guard entry.isValid(), let rid = entry.rid else { return nil }
@@ -110,8 +130,15 @@ struct AgendaEntryPayload: Codable, InitializableWithModel {
         self.id = rid
         self.date = entry.date
         self.day_summary = entry.daySummary
-        self.mood = entry.mood
-        self.mood_comments = entry.moodComments
+        self.context_ids = entry.contextRids
+        self.linked_file_paths = entry.linkedFilePaths
+        
+        if var details = entry.decodedLogDetails {
+            details.removeFields()
+            self.log_details = details
+        } else {
+            self.log_details = nil
+        }
     }
 }
 
@@ -119,19 +146,23 @@ struct AgendaEntryEditor: EditorProtocol {
     typealias Model = AgendaEntry
     
     var daySummary: String
-    var mood: Int
-    var moodComments: String
+    var contextRids: [Int] = []
+    var linkedFilePaths: [String] = []
+    var log_details: LogDetails?
     
     init(from entry: AgendaEntry) {
         self.daySummary = entry.daySummary
-        self.mood = entry.mood
-        self.moodComments = entry.moodComments
+        self.contextRids = entry.contextRids
+        self.linkedFilePaths = entry.linkedFilePaths
+        self.log_details = entry.decodedLogDetails
     }
     
     func apply(to entry: AgendaEntry) {
         entry.daySummary = self.daySummary
-        entry.mood = self.mood
-        entry.moodComments = self.moodComments
+        entry.contextRids = self.contextRids
+        entry.linkedFilePaths = self.linkedFilePaths
+        entry.decodedLogDetails = self.log_details
+        entry.markAsModified()
     }
 }
 

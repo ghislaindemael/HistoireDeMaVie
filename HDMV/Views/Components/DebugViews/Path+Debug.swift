@@ -12,8 +12,9 @@ extension Path: DebugViewable {
             }
             NamedStringDisplayView(name: "Name", value: name)
             Text("Details: \(details ?? "Unset")")
-            Text("Start place id: \(placeStart?.rid ?? -1)")
-            Text("End place id: \(placeEnd?.rid ?? -1)")
+            Text("Start place IDs: \(placeStartRids.map(String.init).joined(separator: ", "))")
+            Text("End place IDs: \(placeEndRids.map(String.init).joined(separator: ", "))")
+            Text("Bidirectional: \(isBidirectional ? "Yes" : "No")")
         }
     }
 }

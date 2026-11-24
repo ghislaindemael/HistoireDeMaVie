@@ -76,12 +76,6 @@ final class Place: CatalogueModel, EditableModel {
     @Relationship(deleteRule: .nullify, inverse: \Trip.placeEnd)
     var endTrips: [Trip]?
     
-    @Relationship(deleteRule: .nullify, inverse: \Path.placeStart)
-    var startPaths: [Path]?
-    
-    @Relationship(deleteRule: .nullify, inverse: \Path.placeEnd)
-    var endPaths: [Path]?
-    
     // MARK: - Init
 
     init(rid: Int? = nil,
